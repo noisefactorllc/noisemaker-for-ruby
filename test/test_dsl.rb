@@ -6,31 +6,22 @@
 # plus a few render_dsl integration checks. Compile tests run against the
 # real bundle metadata, exactly as the Perl/Python tests do.
 #
-# dsl.rb itself has zero cross-worker dependencies (DSL.pm doesn't require
+# dsl.rb itself has zero engine dependencies (DSL.pm doesn't require
 # Renderer/bundle metadata at compile time -- effects/metadata are always
-# handed in by the caller), so tokenizer/parser tests and the
-# bundle-independent error paths always run. Tests that need the REAL
-# effect catalog (compiler param/kind checks) or a full render (Worker C's
-# renderer.rb + Worker E's generated bundle) are skip-guarded on the bundle
-# actually being present on disk.
+# handed in by the caller). Compile and render tests run against the real
+# committed bundle via Renderer, exactly as the Perl/Python tests do.
 
 require "minitest/autorun"
 require_relative "../lib/noisemaker_cpu/dsl"
 
 D = NoisemakerCpu::DSL
 
-BUNDLE_METADATA_PATH = File.expand_path("../lib/noisemaker_cpu/bundle/metadata.json", __dir__)
-BUNDLE_AVAILABLE = File.exist?(BUNDLE_METADATA_PATH)
-RENDERER_PATH = File.expand_path("../lib/noisemaker_cpu/renderer.rb", __dir__)
-RENDER_DSL_AVAILABLE = BUNDLE_AVAILABLE && File.exist?(RENDERER_PATH)
+require "json"
+require_relative "../lib/noisemaker_cpu/renderer"
 
-EFFECTS =
-  if BUNDLE_AVAILABLE
-    require "json"
-    JSON.parse(File.read(BUNDLE_METADATA_PATH))["effects"]
-  end
-
-require_relative "../lib/noisemaker_cpu/renderer" if RENDER_DSL_AVAILABLE
+EFFECTS = JSON.parse(
+  File.read(File.expand_path("../lib/noisemaker_cpu/bundle/metadata.json", __dir__))
+)["effects"]
 
 # Run the block, returning '' on success or the raised error's message.
 def err_str
@@ -70,7 +61,6 @@ class TestDsl < Minitest::Test
   # --- compiler: resolution + surface split ----------------------------------
 
   def test_compile_effect_id_resolved_through_search
-    skip "needs real bundle metadata (lib/noisemaker_cpu/bundle/metadata.json)" unless BUNDLE_AVAILABLE
 
     plan = D.compile_dsl("search synth, mixer\nnoise().cellSplit(tex: o1).write(o0)\nrender(o0)", EFFECTS)
     step = plan["chains"][0]["steps"][1]
@@ -79,7 +69,6 @@ class TestDsl < Minitest::Test
   end
 
   def test_compile_render_surface_defaults_to_last_write
-    skip "needs real bundle metadata (lib/noisemaker_cpu/bundle/metadata.json)" unless BUNDLE_AVAILABLE
 
     plan = D.compile_dsl("search synth\nsolid().write(o3)", EFFECTS)
     assert_equal "o3", plan["render_surface"]
@@ -93,14 +82,12 @@ class TestDsl < Minitest::Test
   end
 
   def test_error_unknown_effect
-    skip "needs real bundle metadata (lib/noisemaker_cpu/bundle/metadata.json)" unless BUNDLE_AVAILABLE
 
     msg = err_str { D.compile_dsl("search synth\nwat().write(o0)\nrender(o0)", EFFECTS) }
     assert_match(/Unknown effect "wat" in search namespaces synth/, msg)
   end
 
   def test_error_unknown_parameter_lists_accepted_params_in_param_order
-    skip "needs real bundle metadata (lib/noisemaker_cpu/bundle/metadata.json)" unless BUNDLE_AVAILABLE
 
     msg = err_str { D.compile_dsl("search synth\nnoise(bogus: 1).write(o0)\nrender(o0)", EFFECTS) }
     assert_match(
@@ -110,7 +97,6 @@ class TestDsl < Minitest::Test
   end
 
   def test_error_generator_chain_must_end_with_write
-    skip "needs real bundle metadata (lib/noisemaker_cpu/bundle/metadata.json)" unless BUNDLE_AVAILABLE
 
     msg = err_str { D.compile_dsl("search synth\nnoise()\nrender(o0)", EFFECTS) }
     assert_match(/Generator chain must end with write/, msg)
@@ -134,7 +120,6 @@ class TestDsl < Minitest::Test
   # --- render_dsl integration --------------------------------------------------
 
   def test_render_solid_exact_color_bytes
-    skip "needs Renderer + a built bundle (worker C/E)" unless RENDER_DSL_AVAILABLE
 
     surface = NoisemakerCpu::Renderer.render_dsl(
       "search synth\nsolid(color: #336699).write(o0)\nrender(o0)", width: 4, height: 4
@@ -144,7 +129,6 @@ class TestDsl < Minitest::Test
   end
 
   def test_render_generator_filter_chain_dimensions
-    skip "needs Renderer + a built bundle (worker C/E)" unless RENDER_DSL_AVAILABLE
 
     surface = NoisemakerCpu::Renderer.render_dsl(
       "search synth, filter\nnoise(seed: 3, scaleX: 8, scaleY: 8).vignette().write(o0)\nrender(o0)",
@@ -155,7 +139,6 @@ class TestDsl < Minitest::Test
   end
 
   def test_render_read_of_unwritten_surface_dies
-    skip "needs Renderer + a built bundle (worker C/E)" unless RENDER_DSL_AVAILABLE
 
     msg = err_str do
       NoisemakerCpu::Renderer.render_dsl(
@@ -168,7 +151,6 @@ class TestDsl < Minitest::Test
   # let value + partial bindings merge into a chain call
   # (python: test_render_let_value_and_partial_bindings)
   def test_let_value_and_partial_bindings_merge_into_a_chain_call
-    skip "needs real bundle metadata (lib/noisemaker_cpu/bundle/metadata.json)" unless BUNDLE_AVAILABLE
 
     program = "search synth, filter\n" \
               "let amt = 3\n" \
@@ -183,7 +165,6 @@ class TestDsl < Minitest::Test
     post = plan["chains"][0]["steps"][1]
     assert_equal 3, post["params"]["levels"]
 
-    skip "needs Renderer + a built bundle (worker C/E)" unless RENDER_DSL_AVAILABLE
 
     surface = NoisemakerCpu::Renderer.render_dsl(program, width: 8, height: 8, seed: 1)
     assert_equal 8, surface.width
@@ -191,14 +172,12 @@ class TestDsl < Minitest::Test
 
   # arithmetic + vector/array values (python: test_arithmetic_and_array_values_render)
   def test_arithmetic_and_array_values_render
-    skip "needs real bundle metadata (lib/noisemaker_cpu/bundle/metadata.json)" unless BUNDLE_AVAILABLE
 
     plan = D.compile_dsl("search synth\nnoise(scaleX: 4 * 2, scaleY: 16 / 2, seed: 3).write(o0)\nrender(o0)", EFFECTS)
     step = plan["chains"][0]["steps"][0]
     assert_equal 8, step["params"]["scaleX"]
     assert_equal 8, step["params"]["scaleY"]
 
-    skip "needs Renderer + a built bundle (worker C/E)" unless RENDER_DSL_AVAILABLE
 
     surface = NoisemakerCpu::Renderer.render_dsl(
       "search synth\nsolid(color: [0.2, 0.4, 0.6]).write(o0)\nrender(o0)", width: 2, height: 2

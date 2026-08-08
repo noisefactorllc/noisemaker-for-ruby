@@ -42,14 +42,13 @@ class TestParity < Minitest::Test
   CPU_DIR = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path(File.join(__dir__, "..", "..", "noisemaker-cpu"))
   CLI = File.join(CPU_DIR, "bin", "noisemaker-cpu.js")
 
-  # Session-scoped reference path for the perl port's "PRIMARY template"
-  # (docs/2026-08-08-ruby-port-contract.md) -- override via
-  # NOISEMAKER_PERL_LOCK once the perl port lands at a durable
-  # (non-scratchpad) location. Skips gracefully when absent so this never
-  # becomes a false failure later.
+  # Cross-port bootstrap check: the perl port's committed lock, expected at a
+  # sibling checkout (same convention as NOISEMAKER_CPU_DIR), overridable via
+  # NOISEMAKER_PERL_LOCK. Skips gracefully when absent -- the durable source
+  # of truth for this repo's pins is its own committed bundle-lock.json.
   PERL_LOCK_PATH = ENV["NOISEMAKER_PERL_LOCK"] ||
-                   "/private/tmp/claude-502/-Users-alex-platform-scaffold/6cd0af2e-26f9-432d-84b6-539d2b8d9983/" \
-                   "scratchpad/noisemaker-for-perl/lib/Math/Fractal/Noisemaker/bundle/bundle-lock.json"
+                   File.expand_path("../../noisemaker-for-perl/lib/Math/Fractal/Noisemaker/bundle/bundle-lock.json",
+                                    __dir__)
 
   TMP_DIR = Dir.mktmpdir
   at_exit { FileUtils.remove_entry(TMP_DIR) }

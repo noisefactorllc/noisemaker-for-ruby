@@ -5,16 +5,11 @@
 # the same way an end user invokes it -- shell-free (Open3 with an argv
 # array), so args like "color=#f30" need no quoting/escaping.
 #
-# cli.rb only "fully works at integration": NoisemakerCpu::Renderer.meta
-# reads lib/noisemaker_cpu/bundle/metadata.json (Worker E's generated
-# bundle), which is not produced by any of the hand-written lib/*.rb files
-# this port's workers write, and every CLI path that resolves a real effect
-# id touches it eagerly (even error paths like "--param without =", since
-# `_prologue` resolves the effect -- and therefore calls Renderer.meta --
-# before params are ever parsed; this mirrors bin/make-noise's own
-# statement order exactly). Every test that needs the bundle is
-# skip-guarded on its presence; help/version/flag-parsing/missing-argument
-# checks that raise before any effect lookup are not, and should pass today.
+# Every CLI path that resolves a real effect id reads the committed bundle
+# eagerly (even error paths like "--param without =", since `_prologue`
+# resolves the effect -- and therefore calls Renderer.meta -- before params
+# are ever parsed; this mirrors bin/make-noise's own statement order
+# exactly).
 
 require "minitest/autorun"
 require "open3"
@@ -24,8 +19,6 @@ require "tmpdir"
 DIST_ROOT = File.expand_path("..", __dir__)
 NOISEMAKER_RB = File.join(DIST_ROOT, "exe", "noisemaker-rb")
 RUBY_BIN = "/opt/homebrew/opt/ruby/bin/ruby"
-BUNDLE_METADATA_PATH = File.join(DIST_ROOT, "lib", "noisemaker_cpu", "bundle", "metadata.json")
-BUNDLE_AVAILABLE = File.exist?(BUNDLE_METADATA_PATH)
 
 # Run exe/noisemaker-rb as a subprocess. Returns [exit_code, stdout, stderr].
 # opts: stdin: STRING, env: { "VAR" => "VALUE" } (merged over the current
@@ -119,7 +112,6 @@ class TestCli < Minitest::Test
   # --- generate --------------------------------------------------------------
 
   def test_generate_synth_solid
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       solid_png = File.join(dir, "solid.png")
@@ -141,7 +133,6 @@ class TestCli < Minitest::Test
   end
 
   def test_generate_creates_missing_parent_dirs
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       nested = File.join(dir, "a", "b", "out.png")
@@ -155,7 +146,6 @@ class TestCli < Minitest::Test
   # --- apply -------------------------------------------------------------
 
   def test_apply_filter_invert
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       solid_png = File.join(dir, "solid.png")
@@ -181,7 +171,6 @@ class TestCli < Minitest::Test
   # --- error paths -----------------------------------------------------------
 
   def test_generate_unknown_effect_exits_nonzero
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       filename = File.join(dir, "unknown-effect.png")
@@ -193,7 +182,6 @@ class TestCli < Minitest::Test
   end
 
   def test_generate_param_without_equals_exits_nonzero
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       filename = File.join(dir, "badparam.png")
@@ -208,7 +196,6 @@ class TestCli < Minitest::Test
   # --- random is partitioned by kind -----------------------------------------
 
   def test_generate_random_is_partitioned_by_kind
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       filename = File.join(dir, "random.png")
@@ -219,7 +206,7 @@ class TestCli < Minitest::Test
       refute_nil echoed_id
       refute_empty echoed_id
 
-      meta = JSON.parse(File.read(BUNDLE_METADATA_PATH))
+      meta = JSON.parse(File.read(File.join(DIST_ROOT, "lib", "noisemaker_cpu", "bundle", "metadata.json")))
       assert meta["effects"].key?(echoed_id), "echoed id '#{echoed_id}' should be a known catalog effect"
       assert_equal "generator", meta["effects"][echoed_id]["kind"]
     end
@@ -228,7 +215,6 @@ class TestCli < Minitest::Test
   # --- animate: ffmpeg absent -------------------------------------------------
 
   def test_animate_with_save_frames_exits_zero_even_without_ffmpeg
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       frames_dir = File.join(dir, "frames")
@@ -244,7 +230,6 @@ class TestCli < Minitest::Test
   end
 
   def test_animate_without_save_frames_and_no_ffmpeg_exits_nonzero
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       filename = File.join(dir, "no-ffmpeg.mp4")
@@ -260,7 +245,6 @@ class TestCli < Minitest::Test
   # --- run: DSL renderer -------------------------------------------------
 
   def test_run_reads_dsl_program_from_stdin
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       filename = File.join(dir, "run.png")
@@ -274,7 +258,6 @@ class TestCli < Minitest::Test
   end
 
   def test_run_with_input_and_texture_and_dsl_error
-    skip "needs a built bundle (lib/noisemaker_cpu/bundle/metadata.json, worker E)" unless BUNDLE_AVAILABLE
 
     Dir.mktmpdir do |dir|
       tex = File.join(dir, "tex.png")
