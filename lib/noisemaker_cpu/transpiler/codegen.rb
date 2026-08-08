@@ -84,8 +84,24 @@ module NoisemakerCpu
       # entry (Perl's ABI never defines $T either).
       RESERVED = %w[rt g u t ctx out kernel run_pixel].each_with_object({}) { |n, h| h[n] = true }.freeze
 
+      # Ruby treats any bare identifier starting with an uppercase ASCII
+      # letter as a CONSTANT reference, never a local variable -- constants
+      # are not lexically/binding-scoped the way locals are (they resolve
+      # against the shared cref, land in one namespace across every
+      # separately-eval'd kernel, warn "already initialized constant" on
+      # re-assignment/re-eval, and a conditionally-assigned one reads a
+      # STALE value from a DIFFERENT kernel rather than the hoisted nil when
+      # its own assignment didn't run). GLSL identifiers are case-sensitive
+      # and routinely start uppercase (`NUM_SAMPLES`, `L`, `C`, `H`, `K`,
+      # `MAX_OCT`, a user function literally named `Foo`, ...) -- mangle
+      # those with the SAME underscore-prefix scheme already used for
+      # reserved-name collisions, so the result is always a lowercase-class
+      # (local-variable-shaped) Ruby identifier. This only matters for BARE
+      # identifiers (locals, params, function-holder names); string hash
+      # keys (`g['TAU']`) are never at risk and are deliberately left
+      # untouched -- see the `g[...]` construction in `emit`.
       def self.p_ident(name)
-        RESERVED[name] ? "_#{name}" : name
+        (RESERVED[name] || name =~ /\A[A-Z]/) ? "_#{name}" : name
       end
 
       def self.base_of(t)
@@ -256,7 +272,10 @@ module NoisemakerCpu
         collect
         @uniforms.each { |u| @root.define(u["name"], u["type"], "_u_#{Codegen.p_ident(u["name"])}") }
         @globals.each do |g|
-          rb = @varyings[g["name"]] ? "ctx.uv" : "g['#{Codegen.p_ident(g["name"])}']"
+          # String hash key -- never a bare Ruby identifier, so it is never
+          # at risk of the uppercase-constant trap and is left unmangled
+          # (raw GLSL name), same as every other g['...'] site below.
+          rb = @varyings[g["name"]] ? "ctx.uv" : "g['#{g["name"]}']"
           @root.define(g["name"], g["type"], rb)
         end
 
@@ -290,7 +309,7 @@ module NoisemakerCpu
             else
               _default(gg["type"])
             end
-          l << "  g['#{Codegen.p_ident(gg["name"])}'] = #{code}"
+          l << "  g['#{gg["name"]}'] = #{code}"
         end
 
         main = nil
@@ -305,7 +324,7 @@ module NoisemakerCpu
 
         _emit_func(l, main)
         l << "  #{main["mangled"]}.call"
-        out_name = @varyings[@outputs[0]] ? "ctx.uv" : "g['#{Codegen.p_ident(@outputs[0])}']"
+        out_name = @varyings[@outputs[0]] ? "ctx.uv" : "g['#{@outputs[0]}']"
         l << "  c = #{out_name}"
         l << "  out[0] = rt.f32(c[0]); out[1] = rt.f32(c[1]); out[2] = rt.f32(c[2]); out[3] = rt.f32(c[3])"
         l << "end"
