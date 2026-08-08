@@ -46,16 +46,16 @@ run_pixel = lambda do |ctx, out|
     return _u_color4
   end
   blendColors__float = lambda do |_t|
-    idx = nil; localT = nil; next = nil; segment = nil
+    _next = nil; idx = nil; localT = nil; segment = nil
     _t = rt.component_wise('fract', _t)
     segment = rt.binary('*', _t, rt.construct(1, _u_colorCount), 1, 'float')
     idx = rt.construct(1, rt.component_wise('floor', segment), 'int')
     localT = rt.component_wise('fract', segment)
-    next = rt.binary('+', idx, rt.i(1), 1, 'int')
-    if rt.bool(rt.binary('>=', next, _u_colorCount))
-      next = rt.i(0)
+    _next = rt.binary('+', idx, rt.i(1), 1, 'int')
+    if rt.bool(rt.binary('>=', _next, _u_colorCount))
+      _next = rt.i(0)
     end
-    return rt.component_wise('mix', getColor__int.call(idx), getColor__int.call(next), localT)
+    return rt.component_wise('mix', getColor__int.call(idx), getColor__int.call(_next), localT)
   end
   pcg__uvec3 = lambda do |v|
     v = rt.copy(v, 'uint')

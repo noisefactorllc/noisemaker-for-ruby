@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  map__float_float_float_float_float = pcg__uvec3 = prng__vec3 = rotate2D__vec2_float = periodicFunction__float = randomFromLatticeWithOffset__vec2_float_float_float_ivec2 = constant__vec2_float_float_float = value__vec2_float_float_float = modi__int_int = or__int_int = and__int_int = not2__int = xor__int_int = or__float_float = and__float_float = not3__float = xor__float_float = bitValue__vec2_float_float = bitField__vec2 = hsv2rgb__vec3 = rgb2hsv__vec3 = maskValue__vec2_float_float_float = maskValue__vec2_float_float = arecibo__vec2_float_float_float = areciboNum__vec2_float_float = glyphs__vec2_float_float = invaders__vec2_float_float = bitMaskValue__vec2_float_float = bitMask__vec2 = main__void = nil
+  map__float_float_float_float_float = pcg__uvec3 = prng__vec3 = rotate2D__vec2_float = periodicFunction__float = randomFromLatticeWithOffset__vec2_float_float_float_ivec2 = constant__vec2_float_float_float = value__vec2_float_float_float = modi__int_int = _or__int_int = _and__int_int = not2__int = xor__int_int = _or__float_float = _and__float_float = not3__float = xor__float_float = bitValue__vec2_float_float = bitField__vec2 = hsv2rgb__vec3 = rgb2hsv__vec3 = maskValue__vec2_float_float_float = maskValue__vec2_float_float = arecibo__vec2_float_float_float = areciboNum__vec2_float_float = glyphs__vec2_float_float = invaders__vec2_float_float = bitMaskValue__vec2_float_float = bitMask__vec2 = main__void = nil
   _retc = nil
   _u__COLOR_SCHEME = u.key?('COLOR_SCHEME') ? u['COLOR_SCHEME'] : 0
   _u__FORMULA = u.key?('FORMULA') ? u['FORMULA'] : 0
@@ -120,10 +120,10 @@ run_pixel = lambda do |ctx, out|
   modi__int_int = lambda do |x, y|
     return rt.binary('&', rt.binary('%', x, y, 1, 'int'), g['mask'], 1, 'int')
   end
-  or__int_int = lambda do |a, b|
+  _or__int_int = lambda do |a, b|
     return rt.binary('|', rt.binary('&', a, g['mask'], 1, 'int'), rt.binary('&', b, g['mask'], 1, 'int'), 1, 'int')
   end
-  and__int_int = lambda do |a, b|
+  _and__int_int = lambda do |a, b|
     return rt.binary('&', rt.binary('&', a, g['mask'], 1, 'int'), rt.binary('&', b, g['mask'], 1, 'int'), 1, 'int')
   end
   not2__int = lambda do |a|
@@ -132,11 +132,11 @@ run_pixel = lambda do |ctx, out|
   xor__int_int = lambda do |a, b|
     return rt.binary('^', rt.binary('&', a, g['mask'], 1, 'int'), rt.binary('&', b, g['mask'], 1, 'int'), 1, 'int')
   end
-  or__float_float = lambda do |a, b|
-    return rt.construct(1, or__int_int.call(rt.construct(1, a, 'int'), rt.construct(1, b, 'int')))
+  _or__float_float = lambda do |a, b|
+    return rt.construct(1, _or__int_int.call(rt.construct(1, a, 'int'), rt.construct(1, b, 'int')))
   end
-  and__float_float = lambda do |a, b|
-    return rt.construct(1, and__int_int.call(rt.construct(1, a, 'int'), rt.construct(1, b, 'int')))
+  _and__float_float = lambda do |a, b|
+    return rt.construct(1, _and__int_int.call(rt.construct(1, a, 'int'), rt.construct(1, b, 'int')))
   end
   not3__float = lambda do |a|
     return rt.construct(1, not2__int.call(rt.construct(1, a, 'int')))
@@ -153,7 +153,7 @@ run_pixel = lambda do |ctx, out|
       v = rt.component_wise('mod', xor__float_float.call(rt.binary('*', rt.swizzle(st, 'x'), freq, 1, 'float'), rt.binary('*', rt.swizzle(st, 'y'), freq, 1, 'float')), blendy)
     else
       if rt.bool(rt.binary('==', _u__FORMULA, rt.i(1)))
-        v = rt.component_wise('mod', or__float_float.call(rt.binary('*', rt.swizzle(st, 'x'), freq, 1, 'float'), rt.binary('*', rt.swizzle(st, 'y'), freq, 1, 'float')), blendy)
+        v = rt.component_wise('mod', _or__float_float.call(rt.binary('*', rt.swizzle(st, 'x'), freq, 1, 'float'), rt.binary('*', rt.swizzle(st, 'y'), freq, 1, 'float')), blendy)
       else
         if rt.bool(rt.binary('==', _u__FORMULA, rt.i(2)))
           v = rt.component_wise('mod', rt.binary('*', rt.binary('*', rt.swizzle(st, 'x'), freq, 1, 'float'), rt.binary('*', rt.swizzle(st, 'y'), freq, 1, 'float'), 1, 'float'), blendy)
