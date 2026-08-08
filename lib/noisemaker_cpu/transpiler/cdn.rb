@@ -269,6 +269,36 @@ module NoisemakerCpu
             i += 1 # explicit plus sign on a number -- drop it
             next
           end
+          # DELIBERATE DEVIATION FROM PERL: Transpiler/CDN.pm's _json5_decode
+          # has no number-literal handling at all, so JS's bare-leading-dot
+          # decimal shorthand (`.5` for `0.5`, `-.5` for `-0.5`) reaches
+          # JSON::PP / JSON.parse as-is and both reject it as invalid strict
+          # JSON. Confirmed empirically that the live CDN actually serves
+          # this: synth/solid's `default:[.5,.5,.5]`, filter/invert's
+          # `randMin:.5`, classicNoisedeck/colorLab's palette table (dozens
+          # of `.NN` entries), all fetched live in this session. Perl's own
+          # CDN.pm fails identically against the same content -- it only
+          # ever looked correct off a python-seeded warm cache that no
+          # longer exists (a fresh fetch self-heals nothing here, unlike the
+          # paramOrder gap below: a parse failure never reaches the cache
+          # write at all). The scaffold's standing rule is durable,
+          # reproducible builds, so a cold fetch must succeed on its own;
+          # Python's `json5` library -- a real JSON5 parser, and the
+          # reference for what this CDN content means -- already accepts
+          # this construct. Scope is deliberately narrow (leading-dot
+          # decimals only, not a full JSON5 number grammar) per empirical
+          # survey of live payloads across 4 effects: no trailing-dot, hex,
+          # or exponent literals were found inside any parsed field.
+          if c == "." && i + 1 < n && text[i + 1] =~ /\d/
+            # Insert the implied "0" unless this "." is already the
+            # fractional part of a number whose integer part we already
+            # copied (previous emitted char is a digit, as in "1.5" -- do
+            # not turn that into "1.05" by double-normalizing it).
+            out << "0" unless out.last && out.last =~ /\A\d\z/
+            out << c
+            i += 1
+            next
+          end
           out << c
           i += 1
         end
@@ -332,6 +362,23 @@ module NoisemakerCpu
       # explicit raw-text key scan 1:1 since paramOrder is captured this way
       # for CACHED documents too (see fetch_effect) where the source is a
       # canonical (rewritten) JSON text, not the original bundle.
+      #
+      # DELIBERATE DEVIATION FROM PERL: Transpiler/CDN.pm's own
+      # ordered_object_keys only recognizes QUOTED string keys, so run
+      # against RAW bundle text -- where object keys are bareword/unquoted
+      # in the common minified-JS style, e.g. `{mode:{type:"int",...}}` --
+      # it always returns []. Confirmed identical in perl's actual CDN.pm
+      # live in this session. It only ever looked right because perl's
+      # development history cold-built once against a python-seeded warm
+      # cache: a fresh fetch bakes the empty paramOrder into its own cache
+      # write, and only the *next* fetch self-heals (fetch_effect's
+      # cache-hit branch below re-derives it via params_key_order against
+      # that now-quoted JSON text, where the identical bareword gap doesn't
+      # apply). That seed cache no longer exists, and the scaffold calls for
+      # durable, reproducible builds, so a genuinely cold fetch must derive
+      # the same paramOrder a warm one does -- this recognizes bareword
+      # identifier keys too, using the same identifier grammar
+      # (`[A-Za-z_$][A-Za-z0-9_$]*`) already used elsewhere in this file.
       def self.ordered_object_keys(text)
         keys = []
         i = text.index("{")
@@ -350,6 +397,17 @@ module NoisemakerCpu
               keys << body if k < n && text[k] == ":"
             end
             i = end_idx
+            next
+          end
+          if c =~ /[A-Za-z_$]/
+            j = i
+            j += 1 while j < n && text[j] =~ /[A-Za-z0-9_$]/
+            if depth == 1
+              k = j
+              k += 1 while k < n && text[k] =~ /\s/
+              keys << text[i, j - i] if k < n && text[k] == ":"
+            end
+            i = j
             next
           end
           if c == "{" || c == "["
