@@ -223,7 +223,7 @@ module NoisemakerCpu
       unless transparency.nil?
         raise "Grayscale PNG tRNS must contain one 16-bit sample\n" if color_type == 0 && transparency.bytesize != 2
         raise "True-color PNG tRNS must contain three 16-bit samples\n" if color_type == 2 && transparency.bytesize != 6
-        if color_type == 3 && transparency.bytesize > palette.bytesize / 3
+        if color_type == 3 && transparency.bytesize > palette.bytesize.fdiv(3)
           raise "Indexed PNG tRNS exceeds its palette length\n"
         end
         raise "PNG color type #{color_type} cannot contain tRNS\n" if color_type == 4 || color_type == 6

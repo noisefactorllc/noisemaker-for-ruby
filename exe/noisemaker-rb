@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# noisemaker-rb -- thin executable wrapper. All behavior lives in
+# NoisemakerCpu::CLI (lib/noisemaker_cpu/cli.rb); this file only wires ARGV
+# to it and sets the process exit code, mirroring bin/make-noise's
+# `exit main(@ARGV);` tail call.
+
+require_relative "../lib/noisemaker_cpu"
+require_relative "../lib/noisemaker_cpu/cli"
+
+exit(NoisemakerCpu::CLI.main(ARGV))
