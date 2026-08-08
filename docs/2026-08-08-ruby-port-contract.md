@@ -163,9 +163,12 @@ Rules:
 - Kernel-internal state dict `g` and uniforms use **string** keys.
 - The trailing hash uses symbol keys and Ruby booleans:
   `{ kernel: run_pixel, uses_derivatives: true|false }`.
-- Loading: `KernelCache` does `eval(File.read(path), TOPLEVEL_BINDING.dup, path)`
-  and caches the resulting hash — mirror perl's `KernelCache.pm` semantics (LRU,
-  keying) exactly.
+- Loading: `KernelCache` evals kernel source in a **fresh empty binding** per
+  load (`def self.empty_binding; binding; end`) and caches the resulting hash —
+  mirror perl's `KernelCache.pm` semantics (LRU, keying) exactly. Never
+  `TOPLEVEL_BINDING(.dup)`: `Binding#dup` shares the host script's local
+  environment, so kernel locals like `size`/`seed` would clobber host locals
+  (observed live during integration).
 
 ## The Ruby traps (read twice)
 

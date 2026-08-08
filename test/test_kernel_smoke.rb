@@ -203,4 +203,35 @@ class TestKernelSmoke < Minitest::Test
     s2 = NoisemakerCpu::Renderer.render_effect("synth/noise", {}, nil, width: 8, height: 8, seed: 2, time: 0.25)
     refute_equal s1.to_rgba8, s2.to_rgba8, "render seed threads into the seed param"
   end
+
+  # Regression: kernel eval must not share the host program's local scope.
+  # TOPLEVEL_BINDING.dup shares the main script's local environment, so a
+  # kernel local named `size`/`seed` (13 generated kernels have one) would
+  # assign straight into the host's variables — this clobbered the parity
+  # harness's `size` local with a texture-size array during integration.
+  def test_kernel_eval_cannot_clobber_host_locals
+    src = <<~KERNEL
+      run_pixel = lambda do |ctx, out|
+        size = [64.0, 64.0]
+        seed = 999
+        out[0] = size[0]
+        out[1] = seed.to_f
+        out[2] = 0.0
+        out[3] = 1.0
+      end
+      { kernel: run_pixel, uses_derivatives: false }
+    KERNEL
+    probe = lambda do
+      size = 8
+      seed = 1
+      k = NoisemakerCpu::KernelCache.load_kernel(src, "clobber-probe")
+      out = [0.0, 0.0, 0.0, 0.0]
+      k[:kernel].call(nil, out)
+      [size, seed, out]
+    end
+    size, seed, out = probe.call
+    assert_equal 8, size, "kernel-local `size` leaked into host scope"
+    assert_equal 1, seed, "kernel-local `seed` leaked into host scope"
+    assert_equal [64.0, 999.0], out[0, 2], "kernel body executed with its own locals"
+  end
 end

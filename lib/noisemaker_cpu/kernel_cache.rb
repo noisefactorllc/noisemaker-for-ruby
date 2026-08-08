@@ -9,10 +9,19 @@
 
 module NoisemakerCpu
   class KernelCache
+    # A fresh, empty binding per kernel load. Never TOPLEVEL_BINDING(.dup):
+    # Binding#dup shares the main script's local-variable environment, so a
+    # kernel local named `size`/`seed` would assign straight into the host
+    # program's variables (observed live: a kernel clobbered the parity
+    # harness's `size` with a texture-size array).
+    def self.empty_binding
+      binding
+    end
+
     def self.load_kernel(source, name = nil)
       name = "<kernel>" if name.nil?
       begin
-        result = eval(source, TOPLEVEL_BINDING.dup, name) # rubocop:disable Security/Eval -- this is the codegen contract
+        result = eval(source, empty_binding, name) # rubocop:disable Security/Eval -- this is the codegen contract
       rescue ScriptError, StandardError => e
         raise "kernel '#{name}' failed to compile: #{e.message}"
       end
