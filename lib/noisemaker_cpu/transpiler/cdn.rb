@@ -170,6 +170,27 @@ module NoisemakerCpu
 
       # Replace value-position bare identifiers with 0 (UI-metadata fields may
       # reference minified module-scope constants). Keys and true/false/null kept.
+      #
+      # DELIBERATE DEVIATION FROM PERL: this had the identical exponent-marker
+      # bug as _json5_decode's old identifier branch (see that method's
+      # DELIBERATE DEVIATION comment for the full corruption story) --
+      # `e`/`E` immediately after digits was misidentified as a standalone
+      # bare identifier VALUE and replaced with "0". This function runs
+      # BEFORE _json5_decode (only for the "globals" field), so fixing
+      # _json5_decode's own number handling was NOT sufficient on its own:
+      # by the time _json5_decode saw synth/newton's `min:1e-4`, this
+      # function had already mangled it to `min:10-4` (a syntactically
+      # broken token, hence newton's hard parse failure), and had already
+      # silently mangled synth/julia's `max:1e3`, classicNoisedeck/coalesce's
+      # `hueAB:1e3`, and synth/osc2d's `max:1e3` to `10` apiece -- confirmed
+      # by generating a full bundle and diffing it against perl's committed
+      # metadata.json. Perl's Transpiler/CDN.pm has the identical gap and
+      # would corrupt/fail identically against this live content. Fix:
+      # recognize (and pass through byte-for-byte, via the same
+      # _scan_json5_number used by _json5_decode) a number literal wherever
+      # one can start, before ever considering the bare-identifier branch --
+      # numbers are never "value-position bare identifiers" needing
+      # sanitization, only genuine JS-computed-constant references are.
       def self._sanitize_bare_identifiers(text)
         out = []
         i = 0
@@ -181,6 +202,15 @@ module NoisemakerCpu
             i = _skip_string(text, i)
             out << text[start, i - start]
             next
+          end
+          if c =~ /[-+.0-9]/
+            scanned = _scan_json5_number(text, i)
+            if scanned
+              normalized, new_i = scanned
+              out << normalized
+              i = new_i
+              next
+            end
           end
           if c =~ /[A-Za-z_$]/
             j = i
@@ -204,6 +234,63 @@ module NoisemakerCpu
         k = Regexp.escape(key)
         m = text.match(/(?:\b#{k}\b\s*:|["']#{k}["']\s*,)\s*/)
         m ? m.end(0) : nil
+      end
+
+      # Scan one JS/JSON5 number literal starting at text[i]: optional sign,
+      # integer part, optional fraction (`.` + digits -- including a
+      # leading dot with no integer part), optional exponent (`e`/`E`,
+      # optional sign, digits). Returns [normalized_text, end_index] if a
+      # number starts at i, or nil if it doesn't (no digits at all, e.g. a
+      # bare "-" or "." not followed by a digit). A leading-dot number gets
+      # the implied "0" (`.5` -> `0.5`, `-.5` -> `-0.5`); a leading unary
+      # "+" is dropped (`+5` -> `5`, matching perl's old plus-sign special
+      # case); everything else -- the integer part, the fraction, and the
+      # WHOLE exponent including its own sign -- passes through unchanged,
+      # since strict JSON's number grammar already accepts it.
+      def self._scan_json5_number(text, i)
+        n = text.length
+        pos = i
+        sign = ""
+        if text[pos] == "-"
+          sign = "-"
+          pos += 1
+        elsif text[pos] == "+"
+          pos += 1 # explicit leading plus -- dropped, not part of strict JSON
+        end
+
+        int_start = pos
+        pos += 1 while pos < n && text[pos] =~ /\d/
+        int_part = text[int_start...pos]
+
+        frac_part = ""
+        if pos < n && text[pos] == "." && pos + 1 < n && text[pos + 1] =~ /\d/
+          frac_start = pos
+          pos += 1
+          pos += 1 while pos < n && text[pos] =~ /\d/
+          frac_part = text[frac_start...pos]
+        end
+
+        return nil if int_part.empty? && frac_part.empty? # no digits anywhere -- not a number
+
+        exp_part = ""
+        if pos < n && (text[pos] == "e" || text[pos] == "E")
+          exp_start = pos
+          exp_pos = pos + 1
+          exp_pos += 1 if exp_pos < n && (text[exp_pos] == "+" || text[exp_pos] == "-")
+          digit_start = exp_pos
+          exp_pos += 1 while exp_pos < n && text[exp_pos] =~ /\d/
+          if exp_pos > digit_start # at least one exponent digit -- a real exponent, consume it
+            exp_part = text[exp_start...exp_pos]
+            pos = exp_pos
+          end
+          # else: bare trailing "e"/"E" with no digits after it isn't a
+          # valid exponent -- leave pos where it was and let the "e" itself
+          # be handled by whatever comes next in the walk (the identifier
+          # branch above, same as any other bareword).
+        end
+
+        int_part = "0" if int_part.empty? # leading-dot form: `.5` -> `0.5`
+        [sign + int_part + frac_part + exp_part, pos]
       end
 
       # Convert a JSON5-shaped literal (unquoted keys, single quotes, trailing
@@ -265,39 +352,51 @@ module NoisemakerCpu
               next
             end
           end
-          if c == "+" && i + 1 < n && text[i + 1] =~ /\d/
-            i += 1 # explicit plus sign on a number -- drop it
-            next
-          end
           # DELIBERATE DEVIATION FROM PERL: Transpiler/CDN.pm's _json5_decode
-          # has no number-literal handling at all, so JS's bare-leading-dot
-          # decimal shorthand (`.5` for `0.5`, `-.5` for `-0.5`) reaches
-          # JSON::PP / JSON.parse as-is and both reject it as invalid strict
-          # JSON. Confirmed empirically that the live CDN actually serves
-          # this: synth/solid's `default:[.5,.5,.5]`, filter/invert's
-          # `randMin:.5`, classicNoisedeck/colorLab's palette table (dozens
-          # of `.NN` entries), all fetched live in this session. Perl's own
-          # CDN.pm fails identically against the same content -- it only
-          # ever looked correct off a python-seeded warm cache that no
-          # longer exists (a fresh fetch self-heals nothing here, unlike the
-          # paramOrder gap below: a parse failure never reaches the cache
-          # write at all). The scaffold's standing rule is durable,
-          # reproducible builds, so a cold fetch must succeed on its own;
-          # Python's `json5` library -- a real JSON5 parser, and the
-          # reference for what this CDN content means -- already accepts
-          # this construct. Scope is deliberately narrow (leading-dot
-          # decimals only, not a full JSON5 number grammar) per empirical
-          # survey of live payloads across 4 effects: no trailing-dot, hex,
-          # or exponent literals were found inside any parsed field.
-          if c == "." && i + 1 < n && text[i + 1] =~ /\d/
-            # Insert the implied "0" unless this "." is already the
-            # fractional part of a number whose integer part we already
-            # copied (previous emitted char is a digit, as in "1.5" -- do
-            # not turn that into "1.05" by double-normalizing it).
-            out << "0" unless out.last && out.last =~ /\A\d\z/
-            out << c
-            i += 1
-            next
+          # has no number-literal handling at all (its only special cases
+          # before this point are string/identifier/comma; a lone leading
+          # "+" before a digit was dropped and everything else, including
+          # digits, fell through to verbatim copy). That is not just a
+          # leading-dot gap: JS's bare-leading-dot decimal shorthand (`.5`
+          # for `0.5`) reaches JSON::PP / JSON.parse as invalid strict JSON,
+          # AND -- discovered only by diffing a full generated
+          # metadata.json against perl's committed one, not by the earlier
+          # per-effect empirical survey -- falling through per-character
+          # let the identifier branch above misidentify an exponent marker
+          # (`e`/`E` immediately after digits, as in `1e3`) as a bare
+          # identifier VALUE and silently replace it with "0", corrupting
+          # `1e3` to `10`, `2E+4` to `204`, `-1e3` to `-10`, and leaving
+          # `1.5e-7` with a dangling, unparseable "-7". This corrupted real
+          # committed values (classicNoisedeck/coalesce hueAB 1000->10,
+          # synth/julia iterations.max 1000->10, synth/osc2d seed.max
+          # 1000->10) and broke synth/newton's parse outright (its globals
+          # use negative-exponent constants). Perl's own CDN.pm has the
+          # identical gap and would corrupt/fail identically against this
+          # live content -- it only ever looked correct off a python-seeded
+          # warm cache that no longer exists. The scaffold's standing rule
+          # is durable, reproducible builds, so a cold fetch must succeed
+          # AND be correct on its own; Python's `json5` library -- a real
+          # JSON5 parser, and the reference for what this CDN content means
+          # -- already handles the full number grammar correctly.
+          #
+          # Fix: scan a whole JS/JSON5 number literal as one token (see
+          # _scan_json5_number) wherever one can start (digit, sign, or
+          # leading dot), rather than processing digit/sign/dot/exponent
+          # characters individually through the generic per-character
+          # branches above. Leading-dot forms get the implied "0"; every
+          # other numeric form (plain integers, `-1e3`, `1.5e-7`, `2E+4`,
+          # explicit unary `+` dropped as before) passes through UNCHANGED,
+          # since strict JSON already accepts standard exponent notation --
+          # this is not "no innovation" scope creep, it is fixing the
+          # PARSE, not changing what any value means.
+          if c =~ /[-+.0-9]/
+            scanned = _scan_json5_number(text, i)
+            if scanned
+              normalized, new_i = scanned
+              out << normalized
+              i = new_i
+              next
+            end
           end
           out << c
           i += 1

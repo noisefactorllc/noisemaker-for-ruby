@@ -2,16 +2,13 @@
 
 # Mirror of t/02-primitives.t (Perl), assertion-for-assertion. Goldens
 # generated from the Python port (proven vs the JS oracle), copied verbatim
-# from the Perl test. The PNG round-trip / error-path sections depend on
-# Math::Fractal::Noisemaker::PNG (lib/noisemaker_cpu/png.rb, Worker D, not
-# yet written) -- those are ported as explicit `skip`s per the port contract
-# rather than silently dropped. Every other assertion in t/02-primitives.t
-# is ported in full below.
+# from the Perl test.
 
 require "minitest/autorun"
 require_relative "../lib/noisemaker_cpu/surface"
 require_relative "../lib/noisemaker_cpu/texture_format"
 require_relative "../lib/noisemaker_cpu/sampler"
+require_relative "../lib/noisemaker_cpu/png"
 
 class TestPrimitives < Minitest::Test
   Surface = NoisemakerCpu::Surface
@@ -86,11 +83,23 @@ class TestPrimitives < Minitest::Test
   end
 
   def test_png_round_trip
-    skip "needs Math::Fractal::Noisemaker::PNG (lib/noisemaker_cpu/png.rb, worker D)"
+    img = Surface.new(3, 2, (0..23).map { |v| v.fdiv(23) })
+    png = NoisemakerCpu::PNG.encode_png(img)
+    assert_equal "PNG", png[1, 3], "encode produces PNG signature"
+    back = NoisemakerCpu::PNG.decode_png(png)
+    assert_equal 3, back.width, "decode width"
+    assert_equal 2, back.height, "decode height"
+    assert_equal img.to_rgba8, back.to_rgba8, "PNG round trip rgba8-exact"
   end
 
   def test_png_error_paths
-    skip "needs Math::Fractal::Noisemaker::PNG (lib/noisemaker_cpu/png.rb, worker D)"
+    img = Surface.new(3, 2, (0..23).map { |v| v.fdiv(23) })
+    png = NoisemakerCpu::PNG.encode_png(img)
+    err = assert_raises(RuntimeError) { NoisemakerCpu::PNG.decode_png("not a png") }
+    assert_match(/not a PNG/, err.message, "decode rejects non-PNG")
+    corrupt = png.dup
+    corrupt.setbyte(20, corrupt.getbyte(20) ^ 0x01)
+    assert_raises(RuntimeError) { NoisemakerCpu::PNG.decode_png(corrupt) }
   end
 
   def test_rgba8_quantize_nan_propagates_and_clamps

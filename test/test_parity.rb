@@ -138,6 +138,38 @@ class TestParity < Minitest::Test
     skip "cdn.rb requires Worker B's transpiler/computed_defs.rb (not yet present)" unless CDN_DEPS_READY
   end
 
+  # Offline unit test for _json5_decode's number grammar -- no network
+  # needed. This is the coordinator's exact repro for the exponent-literal
+  # corruption bug: before the fix, the bare "e"/"E" of an exponent (e.g.
+  # `1e3`) was misidentified by the bare-identifier branch as a value
+  # bareword and replaced with "0", corrupting `1e3`->`10`, `2E+4`->`204`,
+  # `-1e3`->`-10`, and leaving `1.5e-7` with a dangling, unparseable "-7".
+  def test_json5_decode_number_grammar
+    skip "cdn.rb requires Worker B's transpiler/computed_defs.rb (not yet present)" unless CDN_DEPS_READY
+
+    result = NoisemakerCpu::Transpiler::CDN._json5_decode("{a:1e3,b:1.5e-7,c:.5,d:-1e3,e:2E+4,f:1001}")
+    assert_equal 1000, result["a"]
+    assert_equal 1.5e-7, result["b"]
+    assert_equal 0.5, result["c"]
+    assert_equal(-1000, result["d"])
+    assert_equal 20000, result["e"]
+    assert_equal 1001, result["f"]
+    assert_kind_of Integer, result["f"], "a plain integer literal should decode as JSON's Integer class"
+    assert_kind_of Float, result["a"], "an exponent literal should decode as JSON's Float class"
+
+    # A handful of individually-named cases, for a clearer failure signal
+    # than the combined repro above if the grammar regresses on just one.
+    {
+      "1e3" => 1000, "1E3" => 1000, "2E+4" => 20000, "1e-3" => 0.001,
+      "-1e3" => -1000, "1.5e-7" => 1.5e-7, ".5" => 0.5, "-.5" => -0.5,
+      "0.5" => 0.5, "1.5" => 1.5, "1001" => 1001, "-1001" => -1001,
+      "+5" => 5, "0" => 0, ".5e3" => 500,
+    }.each do |literal, expected|
+      decoded = NoisemakerCpu::Transpiler::CDN._json5_decode("[#{literal}]").first
+      assert_equal expected, decoded, "_json5_decode(#{literal.inspect}) should be #{expected}"
+    end
+  end
+
   # Fetches effect_id live, verifies every program's sha256 against perl's
   # committed lock, and confirms a second fetch hits the disk cache (mtime
   # unchanged, identical result) rather than re-fetching.
