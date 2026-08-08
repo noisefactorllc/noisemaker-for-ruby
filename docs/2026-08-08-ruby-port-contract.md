@@ -20,14 +20,19 @@ matching today's measured perl baseline (164 byte-exact; known ≤2 near-misses:
 
 ## References (all READ-ONLY)
 
-| Role | Path |
+| Role | Repo (checked out as a sibling directory during the build) |
 |---|---|
-| **PRIMARY template — translate from this** | `/private/tmp/claude-502/-Users-alex-platform-scaffold/6cd0af2e-26f9-432d-84b6-539d2b8d9983/scratchpad/noisemaker-for-perl` |
-| Secondary cross-check (python port) | `/Users/alex/platform/noisemaker-for-python` |
-| JS oracle / reference engine | `/Users/alex/platform/noisemaker-for-cpu` |
-| Shared design doc | `/Users/alex/platform/noisemaker-for-python/docs/2026-07-15-noisemaker-python-perl-design.md` |
+| **PRIMARY template — translate from this** | [noisemaker-for-perl](https://github.com/noisefactorllc/noisemaker-for-perl) |
+| Secondary cross-check (python port) | [noisemaker-for-python](https://github.com/noisefactorllc/noisemaker-for-python) |
+| JS oracle / reference engine | [noisemaker-for-cpu](https://github.com/noisefactorllc/noisemaker-for-cpu) |
+| Shared design doc | `noisemaker-for-python/docs/2026-07-15-noisemaker-python-perl-design.md` |
 
-Never create, modify, or delete anything outside `/Users/alex/platform/noisemaker-for-ruby`.
+(During the build session the perl repo was read from a temporary local
+clone; path literals elsewhere in this doc reflect that session. The durable
+convention is sibling checkouts, as `scripts/parity.rb` assumes for the JS
+oracle.)
+
+Never create, modify, or delete anything outside the `noisemaker-for-ruby` checkout.
 
 ## Identity & toolchain
 
