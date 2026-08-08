@@ -167,11 +167,20 @@ class TestParity < Minitest::Test
     end
 
     # Cache round-trip: a second fetch_effect for the same id must read the
-    # disk cache rather than re-fetching (mtime must not change).
+    # disk cache rather than re-fetching (mtime must not change). Compared
+    # field-by-field EXCLUDING paramOrder -- see
+    # test_cdn_live_param_order_fresh_fetch_bug for why that one field is
+    # expected to legitimately differ between a fresh and a cache-hit fetch.
     second = NoisemakerCpu::Transpiler::CDN.fetch_effect(effect_id)
-    assert_equal effect, second, "second fetch_effect should return identical data (cache round-trip)"
     assert_equal mtime_before, File.mtime(cache_path),
                  "second fetch_effect should hit the disk cache, not re-fetch (cache file mtime changed)"
+    %w[id namespace func params passes textures programs externalTexture].each do |field|
+      if effect[field].nil?
+        assert_nil second[field], "field #{field.inspect} should round-trip identically"
+      else
+        assert_equal effect[field], second[field], "field #{field.inspect} should round-trip identically"
+      end
+    end
   end
 
   def test_cdn_live_manifest
@@ -239,5 +248,55 @@ class TestParity < Minitest::Test
                    "expected the known bare-decimal ('.5') JSON5 gap -- error text changed, " \
                    "re-check whether this is still the same issue")
     end
+  end
+
+  # KNOWN, CONFIRMED gap -- characterizes rather than verifies.
+  # ordered_object_keys (perl's Transpiler/CDN.pm and this file's 1:1
+  # translation) only recognizes QUOTED string keys while scanning raw text
+  # for an object's key order. CDN bundles write `globals` objects with
+  # bareword (unquoted) keys in the common minified-JS style, e.g.
+  # `{mode:{type:"int",...}}` for filter/invert -- so on a genuinely FRESH
+  # (uncached) fetch, paramOrder always comes back [] for such effects. It
+  # self-heals on the NEXT fetch of the same effect: fetch_effect's
+  # cache-hit path re-derives paramOrder via params_key_order() against the
+  # CACHED file, which is real JSON (quoted keys), where the identical
+  # key-scan logic works correctly.
+  #
+  # Verified directly against perl's real CDN.pm in this session with the
+  # cache cleared each time:
+  #   ordered_object_keys('{mode:{type:"int",...}}')   => []            (bareword keys; Ruby matches)
+  #   fetch_effect("filter/invert"), cache cleared      => paramOrder=[] (perl AND ruby)
+  #   fetch_effect("filter/invert") again (cache warm)  => paramOrder=["mode"] (both self-heal)
+  #
+  # This is why the committed lib/.../bundle/metadata.json (built over
+  # multiple runs against an already-warm cache) shows correct paramOrder
+  # values while a COLD, first-ever `--all` build would not until run
+  # twice -- a real, build-affecting finding for the coordinator / perl
+  # port, not something this port's Build/CDN translation should paper over
+  # independently (translation doctrine: "no innovation").
+  def test_cdn_live_param_order_fresh_fetch_bug
+    skip_unless_cdn_live_ready
+
+    version_dir = NoisemakerCpu::Transpiler::CDN._cache_dir(NoisemakerCpu::Transpiler::CDN::CDN_VERSION)
+    cache_path = File.join(version_dir, "effects", "filter/invert.json")
+    FileUtils.rm_f(cache_path) # force a genuinely fresh fetch for this specific check
+
+    fresh =
+      begin
+        NoisemakerCpu::Transpiler::CDN.fetch_effect("filter/invert")
+      rescue StandardError => e
+        skip "shaders.noisedeck.app unreachable: #{e.message}" if network_error?(e.message)
+        raise
+      end
+    if fresh["paramOrder"] != []
+      flunk "fetch_effect('filter/invert') on a fresh (uncached) fetch returned a non-empty paramOrder " \
+            "(#{fresh["paramOrder"].inspect}) -- the known ordered_object_keys bareword-key gap looks " \
+            "fixed; delete this characterization test and fold a plain equality assertion into " \
+            "verify_effect_hash_and_roundtrip instead"
+    end
+
+    warmed = NoisemakerCpu::Transpiler::CDN.fetch_effect("filter/invert")
+    assert_equal ["mode"], warmed["paramOrder"],
+                 "cache-hit re-fetch should self-heal paramOrder via params_key_order"
   end
 end
