@@ -107,6 +107,26 @@ module NoisemakerCpu
           end
           dest_row = height - 1 - dest_y
           do_ = (dest_row * width + dest_x) * 4
+          # _wrap_mirror(value, size) can return -1 (its formula's range is
+          # [-1, size-1], not [0, size-1] -- reachable whenever `mirrored`
+          # lands on size*2-1; verified against the JS oracle's identical
+          # wrapMirror in wormhole.js). destinationRow == height then pushes
+          # do_ to/past odata.length. The JS oracle's typed-array semantics
+          # make an out-of-range element read `undefined` (poisoning the
+          # accumulate with NaN) and SILENTLY DROP an out-of-range element
+          # write (a documented TypedArray no-op) -- net effect: this pixel's
+          # deposit is discarded. Perl/Ruby have no such silent-drop: a
+          # negative index wraps to read/write from the array's end (a
+          # DIFFERENT pixel, wrong) and a >=length index reads nil/undef,
+          # which Perl's `+` numifies to 0 (with a warning) while Ruby's `+`
+          # raises. Skipping the deposit when do_ falls outside the
+          # destination data range reproduces the JS oracle's observable
+          # behavior exactly (see worker report -- flagged dispute, resolved
+          # via the JS oracle per the contract's tie-break rule).
+          if do_.negative? || do_ >= odata.length
+            next
+          end
+
           weight = _mul(lightness, lightness)
           odata[do_] = NoisemakerCpu::TextureFormat.float16_truncate(_add(odata[do_], _mul(idata[so], weight)))
           odata[do_ + 1] =
