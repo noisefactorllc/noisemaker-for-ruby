@@ -76,13 +76,35 @@ module NoisemakerCpu
       BOOL = TYPE["bool"]
       VEC4 = TYPE["vec4"]
 
-      # Names that would collide with emitted-kernel infrastructure locals.
-      # Ruby's ABI (unlike Perl's) uses lowercase `u` for uniforms (not `U`)
-      # and has no `T` textures map (samplers bind directly via
-      # ctx.texture_binding, matching Perl) -- `t` is kept anyway as a
+      # Names that would collide with emitted-kernel infrastructure locals,
+      # PLUS every identifier-shaped Ruby keyword. Perl never had this
+      # problem (Perl scalars carry a `$` sigil, so a GLSL local named
+      # `next` becomes `$next` -- never confusable with Perl's own `next`
+      # keyword); Ruby locals are bare words, so a GLSL local named `next`
+      # emitted unmangled is a Ruby SYNTAX ERROR at both the hoist (`next =
+      # nil`) and every assignment ("target cannot be written") -- observed
+      # live in synth/gradient. The keyword list below is Ruby's full
+      # reserved-word set restricted to identifier-shaped entries (`defined?`
+      # carries a `?` and is not a legal GLSL identifier to begin with, so
+      # it is omitted -- nothing to collide with). `lambda`/`proc` are not
+      # keywords but ARE reserved here: the emitted kernel ABI calls bare
+      # `lambda do ... end`, and a GLSL local named `lambda` would shadow
+      # Kernel#lambda into a NoMethodError on the next nested function def.
+      # `p` is deliberately NOT reserved -- Ruby's Kernel#p is legally
+      # shadowed by a local of the same name with no behavioral effect, a
+      # live bundle scan found 73 kernels using a GLSL local literally
+      # named `p`, and all 73 already compile and pass parity byte-exact;
+      # reserving it would churn 73 generated files for zero behavior change.
+      # Ruby's `U` uniform casing (not Perl's `U`) and lack of a `T` textures
+      # map are covered by the ABI's own lowercase `u`; `t` is kept as a
       # harmless defensive reservation mirroring Perl's own vestigial `T`
       # entry (Perl's ABI never defines $T either).
-      RESERVED = %w[rt g u t ctx out kernel run_pixel].each_with_object({}) { |n, h| h[n] = true }.freeze
+      RESERVED = (%w[rt g u t ctx out kernel run_pixel lambda proc] + %w[
+        alias and begin break case class def do else elsif end ensure false
+        for if in module next nil not or redo retry rescue return self super
+        then true undef unless until when while yield BEGIN END
+        __FILE__ __LINE__ __ENCODING__
+      ]).each_with_object({}) { |n, h| h[n] = true }.freeze
 
       # Ruby treats any bare identifier starting with an uppercase ASCII
       # letter as a CONSTANT reference, never a local variable -- constants

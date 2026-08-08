@@ -635,12 +635,71 @@ class TestTranspilerPipeline < Minitest::Test
     assert_in_delta 1.0, out[0], 1e-6
   end
 
+  # ---- GLSL locals that spell Ruby KEYWORDS (next, end, begin, self, when,
+  # lambda, ...) must never reach a bare Ruby identifier position either --
+  # unlike the uppercase case above, Perl never hit this (a GLSL local named
+  # `next` becomes Perl's sigiled `$next`, never confusable with the `next`
+  # keyword), but an unmangled Ruby local named `next` is a flat SYNTAX
+  # ERROR at both the hoist and every assignment ("target cannot be
+  # written") -- this is what broke synth/gradient. `next`/`begin`/`end`/
+  # `self`/`when`/`lambda` are all syntactically legal GLSL identifiers
+  # (GLSL's own keyword list is disjoint from Ruby's), so this is a live
+  # bundle-wide risk, not a contrived one. ----
+
+  KEYWORD_LOCALS_GLSL = <<~GLSL
+    out vec4 fragColor;
+    void main() {
+      float next = 1.0;
+      float end = 2.0;
+      float begin = 3.0;
+      float self = 4.0;
+      float when = 5.0;
+      float lambda = 6.0;
+      float total = 0.0;
+      for (int i = 0; i < 5; i++) {
+        if (i == 2) {
+          continue;
+        }
+        if (i == 4) {
+          break;
+        }
+        total += next + end + begin + self + when + lambda;
+      }
+      fragColor = vec4(total, next, end, 1.0);
+    }
+  GLSL
+
+  def test_glsl_keyword_named_locals_never_become_bare_ruby_keywords
+    src = transpile(KEYWORD_LOCALS_GLSL)
+    RubyVM::AbstractSyntaxTree.parse(src) # would raise SyntaxError pre-fix
+    blanked = src.gsub(/'[^']*'/, "''")
+    %w[next end begin self when lambda].each do |kw|
+      refute_match(/\b#{kw}\s*[-+*\/%&|^]?=(?!=)/, blanked, "#{kw.inspect} appears as a bare assignment target")
+    end
+    # The loop-control `next`/`break` KEYWORDS (from GLSL continue/break)
+    # must still be present, unmangled, as their OWN whole line -- only the
+    # GLSL LOCAL named `next` gets renamed (to `_next`), never a `next`/
+    # `break` that codegen itself emits for loop control.
+    assert(src.each_line.any? { |l| l =~ /\A\s*next\s*\z/ }, "no bare `next` control-flow line found")
+    assert(src.each_line.any? { |l| l =~ /\A\s*break\s*\z/ }, "no bare `break` control-flow line found")
+
+    rt = StubRuntime.new
+    ctx = StubCtx.new(rt, uniforms: {})
+    out, = run_kernel(src, ctx)
+    # i=0: total=21; i=1: total=42; i=2: continue (skip); i=3: total=63;
+    # i=4: break (before the add) -- loop exits with total=63.
+    assert_in_delta 63.0, out[0], 1e-6
+    assert_in_delta 1.0, out[1], 1e-6 # next
+    assert_in_delta 2.0, out[2], 1e-6 # end
+    assert_in_delta 1.0, out[3], 1e-6
+  end
+
   # ---- syntax validity across every kernel this test suite generates ----
 
   ALL_SNIPPETS = [
     INVERT_GLSL, FOR_LOOP_GLSL, OVERLOAD_GLSL, MATRIX_GLSL, STRUCT_GLSL,
     ARRAY_GLSL, DERIV_GLSL, NESTED_CALL_GLSL, WHILE_GLSL,
-    UPPERCASE_LOCALS_GLSL, CONDITIONAL_UPPERCASE_GLSL
+    UPPERCASE_LOCALS_GLSL, CONDITIONAL_UPPERCASE_GLSL, KEYWORD_LOCALS_GLSL
   ].freeze
 
   def test_every_emitted_kernel_is_syntactically_valid_ruby
