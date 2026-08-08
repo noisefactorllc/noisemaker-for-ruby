@@ -1,0 +1,6 @@
+.cdn-cache/
+Gemfile.lock
+pkg/
+tmp/
+*.gem
+.DS_Store
