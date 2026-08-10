@@ -28,6 +28,11 @@ require_relative "shared_enums"
 module NoisemakerCpu
   module Transpiler
     module Build
+      SCATTER_ADAPTER_KEYS = %w[
+        points/dla:depositGrid points/lenia:deposit points/physarum:deposit
+        render/pointsRender:deposit render/pointsBillboardRender:deposit
+      ].each_with_object({}) { |key, out| out[key] = true }.freeze
+
       def self.bundle_dir
         here = __dir__ # .../noisemaker_cpu/transpiler
         File.expand_path(File.join(here, "..", "bundle"))
@@ -57,7 +62,11 @@ module NoisemakerCpu
         out
       end
 
-      def self.infer_kind(passes)
+      def self.infer_kind(effect_id, passes)
+        namespace = effect_id.split("/", 2).first
+        return "generator" if namespace == "synth"
+        return "mixer" if namespace == "mixer"
+
         passes.each do |p|
           return "filter" if p["inputs"] && !p["inputs"].empty?
         end
@@ -89,6 +98,21 @@ module NoisemakerCpu
         rescue SystemCallError => e
           raise "cannot write #{path}: #{e.message}\n"
         end
+      end
+
+      def self._adapt_source(effect_id, program, source)
+        if effect_id == "filter/temporalAberration" && program == "temporalAberration"
+          return source.gsub(
+            /slots\[(\d+)\]\s*=\s*\(s\.a\s*<\s*0\.5\)\s*\?\s*cur\s*:\s*s\s*;/,
+            'if (s.a >= 0.5) { slots[\1] = s; }'
+          )
+        end
+        return source unless effect_id == "synth/navierStokes" && program == "nsSplat"
+
+        source.gsub(
+          "p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));",
+          "p.x = dot(p, vec2(127.1, 311.7)); p.y = dot(p, vec2(269.5, 183.3));"
+        )
       end
 
       def self.build(ids, out_dir: nil, update_lock: false)
@@ -125,30 +149,34 @@ module NoisemakerCpu
           defines = runtime_defines(eff["params"])
           passes = []
           eff["passes"].each do |p|
+            key = _key(eid, p["program"])
             glsl = eff["programs"][p["program"]]
-            if glsl.nil?
+            if glsl.nil? || SCATTER_ADAPTER_KEYS.key?(key)
               # A pass without GLSL is a CPU-only draw op (e.g. wormhole's
               # point-scatter deposit). Keep it so the renderer can run its
               # native adapter; it has no transpiled kernel key.
               if p["drawMode"]
-                passes << {
+                pass_record = {
                   "name" => p["name"],
                   "program" => p["program"],
                   "key" => nil,
-                  "drawMode" => p["drawMode"],
                   "inputs" => (p["inputs"] || {}),
                   "outputs" => (p["outputs"] || {}),
                   "uniforms" => (p["uniforms"] || {}),
                 }
+                %w[repeat blend clear drawMode count countUniform type entryPoint drawBuffers conditions].each do |field|
+                  pass_record[field] = p[field] unless p[field].nil?
+                end
+                passes << pass_record
               end
               next
             end
-            key = _key(eid, p["program"])
             stripped = glsl.strip
             h = Digest::SHA256.hexdigest(stripped)
             ruby_src =
               begin
-                norm = NoisemakerCpu::Transpiler::Preprocess.normalize(glsl, defines)
+                adapted = _adapt_source(eid, p["program"], glsl)
+                norm = NoisemakerCpu::Transpiler::Preprocess.normalize(adapted, defines)
                 ast = NoisemakerCpu::Transpiler::Parser.parse(norm["source"])
                 NoisemakerCpu::Transpiler::Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"])
               rescue StandardError => e
@@ -163,7 +191,7 @@ module NoisemakerCpu
             drift << key if old["hashes"] && old["hashes"][key] && old["hashes"][key] != h
             hashes[key] = h
             n_ok += 1
-            passes << {
+            pass_record = {
               "name" => p["name"],
               "program" => p["program"],
               "key" => key,
@@ -171,13 +199,17 @@ module NoisemakerCpu
               "outputs" => (p["outputs"] || {}),
               "uniforms" => (p["uniforms"] || {}),
             }
+            %w[repeat blend clear drawMode count countUniform type entryPoint drawBuffers conditions].each do |field|
+              pass_record[field] = p[field] unless p[field].nil?
+            end
+            passes << pass_record
           end
           next if passes.empty?
 
           bundle["effects"][eid] = {
-            "namespace" => eff["namespace"],
+            "namespace" => (eff["namespace"] || eid.split("/", 2).first),
             "func" => eff["func"],
-            "kind" => infer_kind(eff["passes"]),
+            "kind" => infer_kind(eid, eff["passes"]),
             "params" => eff["params"],
             # Definition order of params -- the oracle binds positional DSL
             # args and mixer surface feeds by this order; Hash key order
@@ -188,6 +220,10 @@ module NoisemakerCpu
             "passes" => passes,
           }
           bundle["effects"][eid]["externalTexture"] = eff["externalTexture"] if eff["externalTexture"]
+          bundle["effects"][eid]["iterated"] = true if eff["iterated"]
+          %w[outputXyz outputVel outputRgba].each do |field|
+            bundle["effects"][eid][field] = eff[field] unless eff[field].nil?
+          end
         end
         if !drift.empty? && !update_lock
           shown = drift[0, [drift.length, 8].min]

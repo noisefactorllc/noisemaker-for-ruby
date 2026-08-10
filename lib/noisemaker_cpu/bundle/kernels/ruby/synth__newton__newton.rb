@@ -183,7 +183,7 @@ run_pixel = lambda do |ctx, out|
     end
     re_df = rt.construct(2, 0.0)
     im_df = rt.construct(2, 0.0)
-    _retc, re_df, im_df = transformCoords_df64__vec2_vec2_vec2_float_float_vec2_vec2.call(globalCoord, rt.construct(2, rt.swizzle(cHi, 'x'), rt.swizzle(cLo, 'x')), rt.construct(2, rt.swizzle(cHi, 'y'), rt.swizzle(cLo, 'y')), zoom, _u_rotation, re_df, im_df)
+    (begin _retc, re_df, im_df = transformCoords_df64__vec2_vec2_vec2_float_float_vec2_vec2.call(globalCoord, rt.construct(2, rt.swizzle(cHi, 'x'), rt.swizzle(cLo, 'x')), rt.construct(2, rt.swizzle(cHi, 'y'), rt.swizzle(cLo, 'y')), zoom, _u_rotation, re_df, im_df); _retc end)
     intDeg = rt.construct(1, rt.component_wise('floor', effDegree), 'int')
     numRoots = intDeg
     roots = rt.new_array(rt.i(8), 2)
@@ -239,13 +239,13 @@ run_pixel = lambda do |ctx, out|
         end
         tr = rt.construct(2, 0.0)
         ti = rt.construct(2, 0.0)
-        _retc, tr, ti = df64_cmul__vec2_vec2_vec2_vec2_vec2_vec2.call(pwr, pwi, zr_df, zi_df, tr, ti)
+        (begin _retc, tr, ti = df64_cmul__vec2_vec2_vec2_vec2_vec2_vec2.call(pwr, pwi, zr_df, zi_df, tr, ti); _retc end)
         pwr.replace((tr).map { |c| rt.f32(c) })
         pwi.replace((ti).map { |c| rt.f32(c) })
       end
       znr = rt.construct(2, 0.0)
       zni = rt.construct(2, 0.0)
-      _retc, znr, zni = df64_cmul__vec2_vec2_vec2_vec2_vec2_vec2.call(pwr, pwi, zr_df, zi_df, znr, zni)
+      (begin _retc, znr, zni = df64_cmul__vec2_vec2_vec2_vec2_vec2_vec2.call(pwr, pwi, zr_df, zi_df, znr, zni); _retc end)
       fzr = df64_sub__vec2_vec2.call(znr, df64_from__float.call(rt.f(1)))
       fzi = zni
       fpzr = df64_mul_f__vec2_float.call(pwr, rt.construct(1, intDeg))

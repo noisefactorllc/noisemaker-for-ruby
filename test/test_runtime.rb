@@ -58,6 +58,13 @@ class TestRuntime < Minitest::Test
     feq @rt.component_wise("atan", @rt.f(1.0), @rt.f(2.0)), 0.46364760398864746, "atan2"
   end
 
+  def test_isnan_builtin_is_available
+    assert_includes NoisemakerCpu::Runtime::COMPONENT, "isnan"
+    assert_equal 1.0, @rt.component_wise("isnan", Float::NAN)
+    assert_equal 0.0, @rt.component_wise("isnan", 1.0)
+    assert_equal [1.0, 0.0], @rt.component_wise("isnan", [Float::NAN, 0.0])
+  end
+
   def test_int_and_uint_vectors
     u = @rt.construct(3, @rt.i(7), @rt.i(11), @rt.i(4294967295), "uint")
     assert_equal [11651675, 18309775, 4293302771],

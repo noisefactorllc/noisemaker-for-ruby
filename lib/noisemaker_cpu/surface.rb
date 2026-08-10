@@ -27,6 +27,7 @@ module NoisemakerCpu
     end
 
     attr_reader :width, :height, :data
+    attr_accessor :format
 
     def initialize(width, height, data = nil)
       self.class._assert_dim(width, "width")
@@ -40,6 +41,7 @@ module NoisemakerCpu
       @width = width
       @height = height
       @data = data
+      @format = "rgba16f"
       # "nearest" (canonical internal default) or "linear" (external images).
       @filter = "nearest"
     end
@@ -66,6 +68,7 @@ module NoisemakerCpu
     def clone
       s = self.class.new(@width, @height, @data.dup)
       s.filter(@filter)
+      s.format = @format
       s
     end
 

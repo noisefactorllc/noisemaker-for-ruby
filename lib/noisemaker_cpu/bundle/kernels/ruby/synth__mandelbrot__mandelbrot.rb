@@ -306,14 +306,14 @@ run_pixel = lambda do |ctx, out|
     dzf = nil; im_df = nil; rI = nil; re_df = nil; sI = nil; sa = nil; tm = nil; zf = nil
     re_df = rt.construct(2, 0.0)
     im_df = rt.construct(2, 0.0)
-    _retc, re_df, im_df = transformCoords_df64__vec2_vec2_vec2_float_float_vec2_vec2.call(fragCoord, cX_df, cY_df, z_zoom, rot, re_df, im_df)
+    (begin _retc, re_df, im_df = transformCoords_df64__vec2_vec2_vec2_float_float_vec2_vec2.call(fragCoord, cX_df, cY_df, z_zoom, rot, re_df, im_df); _retc end)
     sI = rt.f(0.0)
     rI = rt.f(0.0)
     zf = rt.construct(2, 0.0)
     dzf = rt.construct(2, 0.0)
     sa = rt.f(0.0)
     tm = rt.f(0.0)
-    _retc, sI, rI, zf, dzf, sa, tm = mandelbrot_df64__vec2_vec2_int_float_float_vec2_vec2_float_float.call(re_df, im_df, maxIter, sI, rI, zf, dzf, sa, tm)
+    (begin _retc, sI, rI, zf, dzf, sa, tm = mandelbrot_df64__vec2_vec2_int_float_float_vec2_vec2_float_float.call(re_df, im_df, maxIter, sI, rI, zf, dzf, sa, tm); _retc end)
     return outputDistance__vec2_vec2_float_int.call(zf, dzf, rI, maxIter)
   end
   outputNormalMap__vec2_vec2_vec2_float_float_int_float = lambda do |fragCoord, cX_df, cY_df, z_zoom, rot, maxIter, angle|
@@ -350,7 +350,7 @@ run_pixel = lambda do |ctx, out|
     rot = (rt.bool(rt.binary('>', _u_poi, rt.i(0))) ? (rt.f(0)) : (_u_rotation))
     cX_df = rt.construct(2, 0.0)
     cY_df = rt.construct(2, 0.0)
-    _retc, cX_df, cY_df = getPOI__int_vec2_vec2.call(_u_poi, cX_df, cY_df)
+    (begin _retc, cX_df, cY_df = getPOI__int_vec2_vec2.call(_u_poi, cX_df, cY_df); _retc end)
     value = rt.f(0.0)
     dz_final = rt.construct(2, 0.0)
     im_df = rt.construct(2, 0.0)
@@ -371,8 +371,8 @@ run_pixel = lambda do |ctx, out|
       trapMin = rt.f(0.0)
       re_df = rt.construct(2, 0.0)
       im_df = rt.construct(2, 0.0)
-      _retc, re_df, im_df = transformCoords_df64__vec2_vec2_vec2_float_float_vec2_vec2.call(globalCoord, cX_df, cY_df, effZoom, rot, re_df, im_df)
-      _retc, smoothI, rawI, z_final, dz_final, stripeAcc, trapMin = mandelbrot_df64__vec2_vec2_int_float_float_vec2_vec2_float_float.call(re_df, im_df, maxIter, smoothI, rawI, z_final, dz_final, stripeAcc, trapMin)
+      (begin _retc, re_df, im_df = transformCoords_df64__vec2_vec2_vec2_float_float_vec2_vec2.call(globalCoord, cX_df, cY_df, effZoom, rot, re_df, im_df); _retc end)
+      (begin _retc, smoothI, rawI, z_final, dz_final, stripeAcc, trapMin = mandelbrot_df64__vec2_vec2_int_float_float_vec2_vec2_float_float.call(re_df, im_df, maxIter, smoothI, rawI, z_final, dz_final, stripeAcc, trapMin); _retc end)
       if rt.bool(rt.binary('==', _u_outputMode, rt.i(0)))
         value = outputSmoothIteration__float_float_int.call(smoothI, rawI, maxIter)
       else

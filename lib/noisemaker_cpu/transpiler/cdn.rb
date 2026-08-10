@@ -32,16 +32,19 @@ module NoisemakerCpu
       # The "1.0" minor channel is the current release (rolling tag).
       CDN_VERSION = ENV["NM_SHADER_VERSION"] || "1.0"
 
-      # Effects the transpiler does not target (3D, points, mesh/cubemap,
-      # stateful and reactive effects) -- mirrors the Python port's exclusion
-      # sets. Perl builds these as hashes-of-1 for O(1) membership; Ruby
-      # mirrors that (a Hash used purely as a set) rather than a plain Array.
-      NAMESPACE_EXCLUSIONS = %w[filter3d synth3d points render].each_with_object({}) { |k, h| h[k] = true }.freeze
+      NAMESPACE_EXCLUSIONS = %w[filter3d synth3d].each_with_object({}) { |k, h| h[k] = true }.freeze
+      RENDER_ALLOWLIST = %w[pointsEmit pointsRender pointsBillboardRender]
+                         .each_with_object({}) { |k, h| h[k] = true }.freeze
       ID_EXCLUSIONS = %w[
-        filter/convolutionFeedback filter/feedback filter/motionBlur
-        filter/temporalAberration synth/cellularAutomata synth/mnca
-        synth/navierStokes synth/reactionDiffusion synth/roll synth/scope
-        synth/spectrum classicNoisedeck/noise3d classicNoisedeck/shapes3d
+        synth/roll synth/scope synth/spectrum
+        classicNoisedeck/noise3d classicNoisedeck/shapes3d
+      ].each_with_object({}) { |k, h| h[k] = true }.freeze
+      ITERATED_IDS = %w[
+        filter/convolutionFeedback filter/feedback filter/motionBlur filter/temporalAberration
+        points/attractor points/buddhabrot points/dla points/flock points/flow points/hydraulic
+        points/lenia points/life points/physarum points/physical
+        render/pointsBillboardRender render/pointsEmit render/pointsRender
+        synth/cellularAutomata synth/mnca synth/navierStokes synth/reactionDiffusion
       ].each_with_object({}) { |k, h| h[k] = true }.freeze
 
       # <dist>/.cdn-cache, next to lib/ (three levels up from
@@ -538,6 +541,7 @@ module NoisemakerCpu
           unless result["paramOrder"] && !result["paramOrder"].empty?
             result["paramOrder"] = params_key_order(text)
           end
+          _add_cpu_iteration_metadata(effect_id, result)
           return result
         end
 
@@ -570,13 +574,38 @@ module NoisemakerCpu
               "passes" => _parse_field(region, effect_id, "passes", []),
               "textures" => _parse_field(region, effect_id, "textures", {}),
               "externalTexture" => _parse_field(region, effect_id, "externalTexture", nil),
+              "outputXyz" => _parse_field(region, effect_id, "outputXyz", nil),
+              "outputVel" => _parse_field(region, effect_id, "outputVel", nil),
+              "outputRgba" => _parse_field(region, effect_id, "outputRgba", nil),
               "programs" => _extract_programs(bundle),
             }
           end
+        _add_cpu_iteration_metadata(effect_id, result)
         # The cache is written as JSON, so paramOrder is stored explicitly --
         # a raw-text key scan on re-read would see whatever order JSON.parse
         # happened to preserve, not necessarily the CDN bundle's own order.
         _write_file(cache, JSON.generate(result))
+        result
+      end
+
+      def self._add_cpu_iteration_metadata(effect_id, result)
+        return result unless ITERATED_IDS.key?(effect_id)
+
+        result["iterated"] = true
+        result["params"]["iterationCount"] ||= {
+          "type" => "int",
+          "default" => 60,
+          "min" => 0,
+          "max" => 10_000,
+          "cpuOnly" => true,
+        }
+        result["paramOrder"] ||= result["params"].keys
+        result["paramOrder"] << "iterationCount" unless result["paramOrder"].include?("iterationCount")
+        if effect_id == "render/pointsEmit" || effect_id.start_with?("points/")
+          result["outputXyz"] ||= "global_xyz"
+          result["outputVel"] ||= "global_vel"
+          result["outputRgba"] ||= "global_rgba"
+        end
         result
       end
 
@@ -586,6 +615,7 @@ module NoisemakerCpu
         manifest.keys.sort.each do |effect_id|
           namespace = effect_id.split("/", 2).first
           next if NAMESPACE_EXCLUSIONS.key?(namespace)
+          next if namespace == "render" && !RENDER_ALLOWLIST.key?(effect_id.split("/", 2)[1])
           next if effect_id.include?("3d") || effect_id.include?("cubemap") || effect_id.include?("mesh")
           next if ID_EXCLUSIONS.key?(effect_id)
 

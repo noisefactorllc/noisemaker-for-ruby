@@ -82,6 +82,30 @@ module NoisemakerCpu
       surf
     end
 
+    def self.run_pass_mrt(kernel, ctx, width, height, destination_count)
+      surfaces = Array.new(destination_count) { NoisemakerCpu::Surface.new(width, height) }
+      out = Array.new(destination_count * 4, 0.0)
+      fw = 0.0 + width
+      fh = 0.0 + height
+      ctx.resolution = [fw, fh] if ctx.resolution.nil?
+      (0..height - 1).each do |y|
+        fy = height - y - 0.5
+        base = y * width * 4
+        (0..width - 1).each do |x|
+          fx = x + 0.5
+          ctx.frag_coord = [fx, fy, 0.0, 1.0]
+          ctx.uv = [_f32(fx.fdiv(fw)), _f32(fy.fdiv(fh))]
+          kernel.call(ctx, out)
+          destination_index = base + x * 4
+          surfaces.each_index do |chunk|
+            output_index = chunk * 4
+            surfaces[chunk].data[destination_index, 4] = out[output_index, 4]
+          end
+        end
+      end
+      surfaces
+    end
+
     # Pass runner for kernels using dFdx/dFdy/fwidth. Mirrors the reference
     # engine's wrapDerivatives: derivatives are computed in bottom-left pixel
     # space over 2x2 quads. Each quad's 4 corners are probed in 'record' mode

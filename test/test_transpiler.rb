@@ -254,6 +254,39 @@ class TestTranspilerPipeline < Minitest::Test
     assert_equal ["vTexCoord"], norm["varyings"]
   end
 
+  def test_preprocess_records_mrt_outputs_in_location_order
+    norm = Preprocess.normalize(<<~GLSL, {})
+      #version 300 es
+      layout(location = 1) out vec4 outVel;
+      layout(location = 0) out vec4 outXYZ;
+      void main() {
+        outXYZ = vec4(1.0, 0.0, 0.0, 1.0);
+        outVel = vec4(0.0, 1.0, 0.0, 1.0);
+      }
+    GLSL
+    assert_equal [
+      { "name" => "outXYZ", "location" => 0 },
+      { "name" => "outVel", "location" => 1 },
+    ], norm["outputLocations"]
+    assert_equal %w[outXYZ outVel], norm["outputs"]
+  end
+
+  def test_mrt_codegen_writes_every_output_chunk
+    source = <<~GLSL
+      layout(location = 1) out vec4 outVel;
+      layout(location = 0) out vec4 outXYZ;
+      void main() {
+        outXYZ = vec4(1.0, 2.0, 3.0, 4.0);
+        outVel = vec4(5.0, 6.0, 7.0, 8.0);
+      }
+    GLSL
+    result = eval(transpile(source), TOPLEVEL_BINDING.dup, "test_mrt_kernel") # rubocop:disable Security/Eval
+    assert_equal %w[outXYZ outVel], result[:output_names]
+    out = Array.new(8, 0.0)
+    result[:kernel].call(StubCtx.new(StubRuntime.new, uniforms: {}), out)
+    assert_equal (1..8).map(&:to_f), out
+  end
+
   def test_preprocess_static_ifdef_takes_the_defined_branch
     norm = Preprocess.normalize(<<~GLSL, {})
       #ifdef FOO
@@ -801,6 +834,23 @@ class TestTranspilerPipeline < Minitest::Test
     ctx = StubCtx.new(rt, uniforms: {})
     out, = run_kernel(src, ctx)
     assert_in_delta 13.0, out[0], 1e-6 # 2^2 + 3^2
+  end
+
+  def test_end_to_end_inout_call_nested_in_expression
+    src = transpile(<<~GLSL)
+      out vec4 fragColor;
+      float advance(inout float seed) {
+        seed += 1.0;
+        return seed * 2.0;
+      }
+      void main() {
+        float seed = 1.0;
+        float value = advance(seed) * 3.0;
+        fragColor = vec4(value, seed, 0.0, 1.0);
+      }
+    GLSL
+    out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
+    assert_equal [12.0, 2.0, 0.0, 1.0], out
   end
 
   private

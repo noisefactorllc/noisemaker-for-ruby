@@ -35,11 +35,18 @@ module NoisemakerCpu
         body = _preprocess(_strip_comments(source), runtime_defines)
 
         out_lines = []
-        outputs = []
+        output_locations = []
         varyings = []
         body.split("\n", -1).each do |line|
+          if (m = /\A\s*layout\s*\(([^)]*)\)\s*out\s+(\w+)\s+(\w+)\s*;\s*\z/.match(line))
+            location_match = /\blocation\s*=\s*(\d+)/.match(m[1])
+            location = location_match ? location_match[1].to_i : output_locations.length
+            output_locations << { "name" => m[3], "location" => location }
+            out_lines << "#{m[2]} #{m[3]};"
+            next
+          end
           if (m = /\A\s*out\s+(\w+)\s+(\w+)\s*;\s*\z/.match(line))
-            outputs << m[2]
+            output_locations << { "name" => m[2], "location" => 0 }
             out_lines << "#{m[1]} #{m[2]};"
             next
           end
@@ -56,9 +63,12 @@ module NoisemakerCpu
           t = runtime_defines[name] == "float" ? "float" : "int"
           decls += "uniform #{t} #{name};\n"
         end
+        output_locations = [{ "name" => "fragColor", "location" => 0 }] if output_locations.empty?
+        output_locations.sort_by! { |entry| entry["location"] }
         {
           "source" => decls + out_lines.join("\n"),
-          "outputs" => outputs.empty? ? ["fragColor"] : outputs,
+          "outputs" => output_locations.map { |entry| entry["name"] },
+          "outputLocations" => output_locations,
           "varyings" => varyings,
         }
       end

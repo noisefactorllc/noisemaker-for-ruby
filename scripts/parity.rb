@@ -18,7 +18,7 @@ require_relative "../lib/noisemaker_cpu/png"
 require_relative "../lib/noisemaker_cpu/renderer"
 require_relative "../lib/noisemaker_cpu/surface"
 
-cpu_dir = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path(File.join(__dir__, "..", "..", "noisemaker-cpu"))
+cpu_dir = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path(File.join(__dir__, "..", "..", "noisemaker-for-cpu"))
 cli = File.join(cpu_dir, "bin", "noisemaker-cpu.js")
 
 size = 8
@@ -52,11 +52,12 @@ ext_texture = lambda do
   ext_tex
 end
 
-js_effect = lambda do |effect_id, out, input_png|
+js_effect = lambda do |effect_id, out, input_png, params|
   cmd = ["node", cli, "effect", effect_id,
          "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s,
          "--output", out]
   cmd += ["--input", input_png] if input_png
+  params.each { |name, value| cmd += ["--param", "#{name}=#{value}"] }
   ok = system(*cmd, chdir: cpu_dir, out: File::NULL, err: File::NULL)
   raise "oracle failed\n" unless ok
 
@@ -76,10 +77,10 @@ solid = lambda do |color = nil|
   )
 end
 
-ruby_render = lambda do |effect_id, kind, ext|
+ruby_render = lambda do |effect_id, kind, ext, render_params|
   if kind == "generator"
     inputs = ext ? { ext => ext_texture.call } : {}
-    return NoisemakerCpu::Renderer.render_effect(effect_id, {}, inputs,
+    return NoisemakerCpu::Renderer.render_effect(effect_id, render_params, inputs,
                                                   width: size, height: size, seed: seed, time: render_time)
   end
   # Replicate the JS `effect` CLI: primary input is a default solid; each
@@ -96,7 +97,7 @@ ruby_render = lambda do |effect_id, kind, ext|
     names = [spec["uniform"], spec["texture"], pname].compact.uniq
     names.each { |n| inputs[n] = src }
   end
-  NoisemakerCpu::Renderer.render_effect(effect_id, {}, inputs,
+  NoisemakerCpu::Renderer.render_effect(effect_id, render_params, inputs,
                                          width: size, height: size, seed: seed, time: render_time)
 end
 
@@ -111,10 +112,15 @@ exact = 0
 ids.each do |eid|
   kind = effects[eid]["kind"]
   ext = effects[eid]["externalTexture"]
+  render_params = {}
+  if effects[eid]["iterated"]
+    render_params["iterationCount"] = 1
+    render_params["stateSize"] = 64 if effects[eid]["params"].key?("stateSize")
+  end
   input_png = ext ? (ext_texture.call && ext_png) : nil
   js =
     begin
-      js_effect.call(eid, File.join(tmp, "ph_js.png"), input_png)
+      js_effect.call(eid, File.join(tmp, "ph_js.png"), input_png, render_params)
     rescue StandardError
       nil
     end
@@ -124,7 +130,7 @@ ids.each do |eid|
   end
   rb =
     begin
-      ruby_render.call(eid, kind, ext)
+      ruby_render.call(eid, kind, ext, render_params)
     rescue StandardError => e
       key = (e.message.to_s.split("\n", 2).first || "")[0, 70]
       (errors[key] ||= []) << eid

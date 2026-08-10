@@ -211,6 +211,7 @@ module NoisemakerCpu
       "sinh" => ->(x) { Math.sinh(x) },
       "cosh" => ->(x) { Math.cosh(x) },
       "tanh" => ->(x) { Math.tanh(x) },
+      "isnan" => ->(x) { x.is_a?(Float) && x.nan? ? 1 : 0 },
       "exp" => ->(x) { Math.exp(x) },
       "log" => method(:_safe_log),
       "exp2" => ->(x) { 2**x }, # the JS oracle uses Math.pow(2, x) too; base is always positive so no Complex risk

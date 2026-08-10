@@ -117,8 +117,8 @@ run_pixel = lambda do |ctx, out|
     alo = rt.f(0.0)
     bhi = rt.f(0.0)
     blo = rt.f(0.0)
-    _retc, ahi, alo = df64_split__float_float_float.call(rt.swizzle(a, 'x'), ahi, alo)
-    _retc, bhi, blo = df64_split__float_float_float.call(rt.swizzle(b, 'x'), bhi, blo)
+    (begin _retc, ahi, alo = df64_split__float_float_float.call(rt.swizzle(a, 'x'), ahi, alo); _retc end)
+    (begin _retc, bhi, blo = df64_split__float_float_float.call(rt.swizzle(b, 'x'), bhi, blo); _retc end)
     e = rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('-', rt.binary('*', ahi, bhi, 1, 'float'), p, 1, 'float'), rt.binary('*', ahi, blo, 1, 'float'), 1, 'float'), rt.binary('*', alo, bhi, 1, 'float'), 1, 'float'), rt.binary('*', alo, blo, 1, 'float'), 1, 'float')
     e = rt.binary('+', e, rt.binary('+', rt.binary('*', rt.swizzle(a, 'x'), rt.swizzle(b, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(a, 'y'), rt.swizzle(b, 'x'), 1, 'float'), 1, 'float'), 1, 'float')
     return rt.construct(2, p, e)
@@ -131,8 +131,8 @@ run_pixel = lambda do |ctx, out|
     alo = rt.f(0.0)
     bhi = rt.f(0.0)
     blo = rt.f(0.0)
-    _retc, ahi, alo = df64_split__float_float_float.call(rt.swizzle(a, 'x'), ahi, alo)
-    _retc, bhi, blo = df64_split__float_float_float.call(b, bhi, blo)
+    (begin _retc, ahi, alo = df64_split__float_float_float.call(rt.swizzle(a, 'x'), ahi, alo); _retc end)
+    (begin _retc, bhi, blo = df64_split__float_float_float.call(b, bhi, blo); _retc end)
     e = rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('-', rt.binary('*', ahi, bhi, 1, 'float'), p, 1, 'float'), rt.binary('*', ahi, blo, 1, 'float'), 1, 'float'), rt.binary('*', alo, bhi, 1, 'float'), 1, 'float'), rt.binary('*', alo, blo, 1, 'float'), 1, 'float')
     e = rt.binary('+', e, rt.binary('*', rt.swizzle(a, 'y'), b, 1, 'float'), 1, 'float')
     return rt.construct(2, p, e)
@@ -289,7 +289,7 @@ run_pixel = lambda do |ctx, out|
     _for1_first = nil; bail2 = nil; i = nil; imDF = nil; log_zn = nil; n = nil; nu = nil; reDF = nil; zIm = nil; zIm2 = nil; zMag2 = nil; zRe = nil; zRe2 = nil; zReIm = nil
     reDF = rt.construct(2, 0.0)
     imDF = rt.construct(2, 0.0)
-    _retc, reDF, imDF = transformCoords__vec2_float_vec2_vec2.call(fragCoord, zm, reDF, imDF)
+    (begin _retc, reDF, imDF = transformCoords__vec2_float_vec2_vec2.call(fragCoord, zm, reDF, imDF); _retc end)
     zRe = reDF
     zIm = imDF
     i = rt.f(0)
@@ -359,7 +359,7 @@ run_pixel = lambda do |ctx, out|
     else
       reDF = rt.construct(2, 0.0)
       imDF = rt.construct(2, 0.0)
-      _retc, reDF, imDF = transformCoords__vec2_float_vec2_vec2.call(globalCoord, effectiveZoom, reDF, imDF)
+      (begin _retc, reDF, imDF = transformCoords__vec2_float_vec2_vec2.call(globalCoord, effectiveZoom, reDF, imDF); _retc end)
       r = juliaIterate__vec2_vec2_vec2_int_float_int.call(reDF, imDF, c, _u_iterations, _u_stripeFreq, _u_trapShape)
       if rt.bool(rt.binary('==', _u_outputMode, rt.i(0)))
         value = outputSmoothIteration__struct1_float.call(r, rt.construct(1, _u_iterations))

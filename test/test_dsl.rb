@@ -58,6 +58,19 @@ class TestDsl < Minitest::Test
     assert_equal "o0", ast["render"]["name"]
   end
 
+  def test_search_accepts_render_keyword_as_namespace
+    ast = nil
+    message = err_str do
+      ast = D.parse_dsl(
+        "search synth, points, render\nperlin().pointsEmit().write(o0)\nrender(o0)"
+      )
+    end
+    assert_equal "", message
+    assert_equal %w[synth points render], ast["search"]
+    assert_equal %w[perlin pointsEmit write], ast["chains"][0]["calls"].map { |call| call["name"] }
+    assert_equal "o0", ast["render"]["name"]
+  end
+
   # --- compiler: resolution + surface split ----------------------------------
 
   def test_compile_effect_id_resolved_through_search

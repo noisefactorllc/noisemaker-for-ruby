@@ -321,6 +321,16 @@ module NoisemakerCpu
         token
       end
 
+      def search_namespace
+        token = peek
+        valid = token["type"] == "identifier" ||
+          (token["type"] == "keyword" && token["lexeme"] == "render")
+        DSL._throw("Expected namespace after search", DSL._location(token)) unless valid
+
+        @current += 1
+        token
+      end
+
       def parse_program
         ast = {
           "kind" => "DslProgram",
@@ -332,7 +342,7 @@ module NoisemakerCpu
         }
         if match("search")
           loop do
-            ast["search"] << identifier("Expected namespace after search")["lexeme"]
+            ast["search"] << search_namespace["lexeme"]
             break unless match(",")
           end
           match(";")

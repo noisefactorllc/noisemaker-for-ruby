@@ -147,6 +147,19 @@ class TestKernelSmoke < Minitest::Test
     assert_equal({}, NoisemakerCpu::Ctx.new(rt: FakeRt.new).uniforms)
   end
 
+  def test_pass_runner_writes_multiple_render_targets_in_one_pixel_loop
+    assert_respond_to NoisemakerCpu::PassRunner, :run_pass_mrt
+
+    kernel = lambda do |_ctx, out|
+      out[0, 8] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+    end
+    ctx = NoisemakerCpu::Ctx.new
+    surfaces = NoisemakerCpu::PassRunner.run_pass_mrt(kernel, ctx, 2, 1, 2)
+    assert_equal 2, surfaces.length
+    assert_equal [1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0], surfaces[0].data
+    assert_equal [5.0, 6.0, 7.0, 8.0, 5.0, 6.0, 7.0, 8.0], surfaces[1].data
+  end
+
   # ---- (a)/(b): mirror t/04-kernel-smoke.t; skip cleanly until the bundle +
   # Workers A/B/D/E dependency chain is ready ----
 
@@ -175,6 +188,29 @@ class TestKernelSmoke < Minitest::Test
           false
         end
       end
+  end
+
+  def test_bundle_has_complete_iterated_catalog
+    skip @skip_reason || "renderer/bundle dependencies not ready yet" unless renderer_available?
+
+    iterated = %w[
+      filter/convolutionFeedback filter/feedback filter/motionBlur filter/temporalAberration
+      points/attractor points/buddhabrot points/dla points/flock points/flow points/hydraulic
+      points/lenia points/life points/physarum points/physical
+      render/pointsBillboardRender render/pointsEmit render/pointsRender
+      synth/cellularAutomata synth/mnca synth/navierStokes synth/reactionDiffusion
+    ].sort
+    effects = NoisemakerCpu::Renderer.meta.fetch("effects")
+    assert_equal 188, effects.length
+    assert_equal iterated, effects.select { |_id, effect| effect["iterated"] }.keys.sort
+    iterated.each do |effect_id|
+      assert_equal 60, effects.fetch(effect_id).dig("params", "iterationCount", "default"), effect_id
+      assert_includes effects.fetch(effect_id).fetch("paramOrder"), "iterationCount", effect_id
+    end
+    assert_equal "synth", effects.fetch("synth/navierStokes").fetch("namespace")
+    assert_equal "generator", effects.fetch("synth/navierStokes").fetch("kind")
+    assert_equal "mixer", effects.fetch("mixer/blendMode").fetch("kind")
+    assert_equal "global_xyz", effects.fetch("render/pointsEmit").fetch("outputXyz")
   end
 
   def test_bundle_effects_render_finite_deterministic_pixels
