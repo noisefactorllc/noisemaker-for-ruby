@@ -21,8 +21,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     bOut = nil; cur = nil; db = nil; dg = nil; dr = nil; gOut = nil; ib0 = nil; ib1 = nil; ig0 = nil; ig1 = nil; ir0 = nil; ir1 = nil; rOut = nil; s = nil; slots = nil; texSize = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float')
-    cur = rt.texture(_u_inputTex, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
+    cur = rt.construct(4, rt.texture(_u_inputTex, uv))
     slots = rt.new_array(rt.i(9), 4)
     slots[(rt.i(0)).to_i] = cur
     s = rt.construct(4, 0.0)

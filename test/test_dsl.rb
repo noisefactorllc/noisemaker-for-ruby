@@ -32,6 +32,49 @@ rescue StandardError => e
 end
 
 class TestDsl < Minitest::Test
+  def typed_effects
+    {
+      "synth3d/volumeSeed" => {
+        "id" => "synth3d/volumeSeed", "kind" => "generator", "domain" => "volume-generator",
+        "params" => {}, "paramOrder" => [], "passes" => [{ "inputs" => {} }],
+      },
+      "synth3d/volumeState" => {
+        "id" => "synth3d/volumeState", "kind" => "generator", "domain" => "volume-generator",
+        "iterated" => true,
+        "params" => { "iterationCount" => { "type" => "int", "default" => 1 } },
+        "paramOrder" => ["iterationCount"], "passes" => [{ "inputs" => { "seedTex" => "source" } }],
+      },
+      "synth3d/otherSeed" => {
+        "id" => "synth3d/otherSeed", "kind" => "generator", "domain" => "volume-generator",
+        "params" => {}, "paramOrder" => [], "passes" => [{ "inputs" => {} }],
+      },
+      "filter3d/volumeFilter" => {
+        "id" => "filter3d/volumeFilter", "kind" => "filter", "domain" => "volume-filter",
+        "params" => {}, "paramOrder" => [], "passes" => [{ "inputs" => { "volume" => "inputTex3d" } }],
+      },
+      "render/volumeRender" => {
+        "id" => "render/volumeRender", "kind" => "filter", "domain" => "volume-renderer",
+        "params" => {}, "paramOrder" => [], "passes" => [{ "inputs" => { "volume" => "inputTex3d" } }],
+      },
+      "render/loopBegin" => {
+        "id" => "render/loopBegin", "kind" => "filter", "domain" => "loop-begin", "loopRole" => "begin",
+        "params" => {}, "paramOrder" => [], "passes" => [{ "inputs" => { "input" => "inputTex" } }],
+      },
+      "render/loopEnd" => {
+        "id" => "render/loopEnd", "kind" => "filter", "domain" => "loop-end", "loopRole" => "end",
+        "params" => {}, "paramOrder" => [], "passes" => [{ "inputs" => { "input" => "inputTex" } }],
+      },
+      "synth/solid" => {
+        "id" => "synth/solid", "kind" => "generator", "domain" => "image",
+        "params" => {}, "paramOrder" => [], "passes" => [{ "inputs" => {} }],
+      },
+      "filter/blur" => {
+        "id" => "filter/blur", "kind" => "filter", "domain" => "image",
+        "params" => {}, "paramOrder" => [], "passes" => [{ "inputs" => { "input" => "inputTex" } }],
+      },
+    }
+  end
+
   # --- tokenizer: lexeme classification -------------------------------------
 
   def test_tokenize_keyword_and_surface_classification
@@ -128,6 +171,53 @@ class TestDsl < Minitest::Test
   def test_error_malformed_numeric_literal_is_a_dsl_error
     msg = err_str { D.tokenize_dsl("noise(scaleX: 1e)") }
     assert_match(/Invalid numeric literal "1e"/, msg)
+  end
+
+  def test_compile_typed_volume_chain
+    plan = D.compile_dsl(
+      "search synth3d, filter3d, render\n" \
+      "volumeSeed().volumeState(iterationCount: 1).volumeFilter().volumeRender().write(o0)\n" \
+      "render(o0)",
+      typed_effects
+    )
+
+    assert_equal %w[
+      synth3d/volumeSeed synth3d/volumeState filter3d/volumeFilter render/volumeRender
+    ], plan["chains"][0]["steps"].select { |step| step["kind"] == "effect" }.map { |step| step["effect_id"] }
+  end
+
+  def test_compile_rejects_invalid_typed_volume_chains
+    cases = {
+      "search synth, filter3d\nsolid().volumeFilter().write(o0)" =>
+        /volume filter filter3d\/volumeFilter requires a volume input/,
+      "search synth, render\nsolid().volumeRender().write(o0)" =>
+        /volume renderer render\/volumeRender requires a volume input/,
+      "search synth3d\nvolumeSeed().write(o0)" => /write\(surface\) requires a current image/,
+      "search synth3d\nvolumeSeed().otherSeed().write(o0)" =>
+        /Generator synth3d\/otherSeed must begin a chain/,
+    }
+    cases.each do |source, pattern|
+      assert_match pattern, err_str { D.compile_dsl(source, typed_effects) }
+    end
+  end
+
+  def test_compile_balanced_loop_and_rejects_malformed_markers
+    plan = D.compile_dsl(
+      "search synth, filter, render\nsolid().loopBegin().blur().loopEnd().write(o0)\nrender(o0)",
+      typed_effects
+    )
+    assert_equal %w[synth/solid render/loopBegin filter/blur render/loopEnd],
+                 plan["chains"][0]["steps"].select { |step| step["kind"] == "effect" }.map { |step| step["effect_id"] }
+
+    cases = {
+      "search synth, render\nsolid().loopEnd().write(o0)" => /loopEnd has no matching loopBegin/,
+      "search synth, render\nsolid().loopBegin().write(o0)" => /loopBegin must be closed by loopEnd before write/,
+      "search synth, render\nsolid().loopBegin().loopBegin().loopEnd().loopEnd().write(o0)" =>
+        /nested loopBegin regions are not supported/,
+    }
+    cases.each do |source, pattern|
+      assert_match pattern, err_str { D.compile_dsl(source, typed_effects) }
+    end
   end
 
   # --- render_dsl integration --------------------------------------------------

@@ -9,7 +9,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _NUM_SAMPLES = nil; _for0_first = nil; brightestX = nil; coord = nil; lum = nil; maxLum = nil; s = nil; sampleX = nil; size = nil; width = nil; y = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     size = rt.texture_size(_u_lumTex)
     y = rt.swizzle(coord, 'y')
     width = rt.swizzle(size, 'x')

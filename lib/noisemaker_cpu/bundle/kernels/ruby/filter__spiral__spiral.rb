@@ -31,8 +31,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     a = nil; aspectRatio = nil; col = nil; dx = nil; dy = nil; globalCoord = nil; r = nil; sampleUV = nil; spiralAmt = nil; uv = nil
     aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
     uv.replace((rotate2D__vec2_float_float.call(uv, rt.binary('/', _u_rotation, rt.f(180), 1, 'float'), aspectRatio)).map { |c| rt.f32(c) })
     uv.replace((rt.binary('-', uv, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
     if rt.bool(_u_aspectLens)
@@ -57,14 +57,14 @@ run_pixel = lambda do |ctx, out|
       end
     end
     uv.replace((rotate2D__vec2_float_float.call(uv, rt.binary('/', rt.unary('-', _u_rotation), rt.f(180), 1, 'float'), aspectRatio)).map { |c| rt.f32(c) })
-    sampleUV = rt.component_wise('clamp', rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), _u_resolution, 2, 'float'), rt.f(0), rt.f(1))
+    sampleUV = rt.construct(2, rt.component_wise('clamp', rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), _u_resolution, 2, 'float'), rt.f(0), rt.f(1)))
     col = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)
     if rt.bool(_u_antialias)
-      dx = rt.dFdx(sampleUV)
-      dy = rt.dFdy(sampleUV)
-      col = rt.construct(4, rt.f(0))
+      dx = rt.construct(2, rt.dFdx(sampleUV))
+      dy = rt.construct(2, rt.dFdy(sampleUV))
+      col = rt.construct(4, rt.construct(4, rt.f(0)))
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })

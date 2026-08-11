@@ -18,15 +18,15 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     dist = nil; edge0 = nil; edge1 = nil; globalCoord = nil; halfBand = nil; match = nil; outA = nil; outRgb = nil; src = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.component_wise('max', rt.texture_size(_u_inputTex), rt.construct(2, rt.i(1), 'int'))), 2, 'float')
-    src = rt.texture(_u_inputTex, st)
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.component_wise('max', rt.texture_size(_u_inputTex), rt.construct(2, rt.i(1), 'int'))), 2, 'float'))
+    src = rt.construct(4, rt.texture(_u_inputTex, st))
     dist = rt.binary('/', rt.length(rt.binary('-', rt.swizzle(src, 'rgb'), _u_targetColor, 3, 'float')), rt.f(1.7320507999999999), 1, 'float')
     halfBand = rt.binary('*', _u_smoothing, rt.f(0.5), 1, 'float')
     edge0 = rt.component_wise('max', rt.binary('-', _u_sensitivity, halfBand, 1, 'float'), rt.f(0))
     edge1 = rt.binary('+', _u_sensitivity, halfBand, 1, 'float')
     match = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', edge0, edge1, dist), 1, 'float')
-    outRgb = rt.component_wise('mix', rt.swizzle(src, 'rgb'), _u_replaceColor, rt.binary('*', match, _u_colorMix, 1, 'float'))
+    outRgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(src, 'rgb'), _u_replaceColor, rt.binary('*', match, _u_colorMix, 1, 'float')))
     outA = rt.binary('*', rt.swizzle(src, 'a'), rt.component_wise('mix', _u_keepAlpha, _u_replaceAlpha, match), 1, 'float')
     g['fragColor'].replace((rt.construct(4, outRgb, outA)).map { |c| rt.f32(c) })
   end

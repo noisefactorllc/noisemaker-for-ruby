@@ -14,8 +14,8 @@ run_pixel = lambda do |ctx, out|
   tent3x3__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     _for0_first = nil; _for1_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
-    px = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
-    sum = rt.construct(3, rt.f(0))
+    px = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
+    sum = rt.construct(3, rt.construct(3, rt.f(0)))
     wsum = rt.f(0)
     dy = rt.unary('-', rt.i(1))
     _for0_first = true
@@ -46,11 +46,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     c = nil; sharpened = nil; src = nil; tent = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    src = rt.texture(_u_inputTex, uv)
-    c = rt.swizzle(rt.texture(_u_smearTex, uv), 'rgb')
-    tent = tent3x3__vec2.call(uv)
-    sharpened = rt.binary('+', c, rt.binary('*', rt.binary('-', c, tent, 3, 'float'), rt.binary('/', _u_sharpness, rt.f(33), 1, 'float'), 3, 'float'), 3, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    src = rt.construct(4, rt.texture(_u_inputTex, uv))
+    c = rt.construct(3, rt.swizzle(rt.texture(_u_smearTex, uv), 'rgb'))
+    tent = rt.construct(3, tent3x3__vec2.call(uv))
+    sharpened = rt.construct(3, rt.binary('+', c, rt.binary('*', rt.binary('-', c, tent, 3, 'float'), rt.binary('/', _u_sharpness, rt.f(33), 1, 'float'), 3, 'float'), 3, 'float'))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', sharpened, rt.f(0), rt.f(1)), rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

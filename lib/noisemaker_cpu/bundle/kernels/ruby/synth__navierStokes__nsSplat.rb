@@ -30,15 +30,15 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _for0_first = nil; bufferEmpty = nil; c = nil; d = nil; dt = nil; dye = nil; falloff = nil; fragCoord = nil; grad = nil; i = nil; iDye = nil; iForce = nil; idf = nil; lc = nil; lr = nil; lu = nil; prev = nil; r2 = nil; radius = nil; seedF = nil; sign = nil; tangent = nil; texSize = nil; texel = nil; uv = nil; vel = nil
     texSize = rt.texture_size(_u_bufTex)
-    fragCoord = rt.swizzle(ctx.frag_coord, 'xy')
-    uv = rt.binary('/', fragCoord, rt.construct(2, texSize), 2, 'float')
-    prev = rt.texture(_u_bufTex, uv)
+    fragCoord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'))
+    uv = rt.construct(2, rt.binary('/', fragCoord, rt.construct(2, texSize), 2, 'float'))
+    prev = rt.construct(4, rt.texture(_u_bufTex, uv))
     bufferEmpty = rt.binary('==', rt.swizzle(prev, 'a'), rt.f(0))
     dye = rt.f(0.0)
     seedF = rt.f(0.0)
     vel = rt.construct(2, 0.0)
     if rt.bool((rt.bool(_u_resetState) || rt.bool(bufferEmpty) ? 1 : 0))
-      vel = rt.construct(2, rt.f(0))
+      vel = rt.construct(2, rt.construct(2, rt.f(0)))
       dye = rt.f(0)
       seedF = rt.construct(1, _u_seed)
       i = rt.i(0)
@@ -52,20 +52,20 @@ run_pixel = lambda do |ctx, out|
           break
         end
         idf = rt.construct(1, i)
-        c = hash22__vec2.call(rt.construct(2, rt.binary('+', rt.binary('*', idf, rt.f(7.3099999999999996), 1, 'float'), rt.f(1), 1, 'float'), rt.binary('+', rt.binary('*', seedF, rt.f(13.699999999999999), 1, 'float'), idf, 1, 'float')))
+        c = rt.construct(2, hash22__vec2.call(rt.construct(2, rt.binary('+', rt.binary('*', idf, rt.f(7.3099999999999996), 1, 'float'), rt.f(1), 1, 'float'), rt.binary('+', rt.binary('*', seedF, rt.f(13.699999999999999), 1, 'float'), idf, 1, 'float'))))
         sign = (rt.bool(rt.binary('>', hash11__float.call(rt.binary('+', rt.binary('*', idf, rt.f(4.1699999999999999), 1, 'float'), rt.binary('*', seedF, rt.f(5.9000000000000004), 1, 'float'), 1, 'float')), rt.f(0.5))) ? (rt.f(1)) : (rt.unary('-', rt.f(1))))
         radius = rt.binary('+', rt.f(0.10000000000000001), rt.binary('*', rt.f(0.059999999999999998), hash11__float.call(rt.binary('+', rt.binary('*', idf, rt.f(2.1099999999999999), 1, 'float'), seedF, 1, 'float')), 1, 'float'), 1, 'float')
-        d = rt.binary('-', uv, c, 2, 'float')
+        d = rt.construct(2, rt.binary('-', uv, c, 2, 'float'))
         r2 = rt.dot(d, d)
         falloff = rt.component_wise('exp', rt.binary('/', rt.unary('-', r2), rt.binary('*', rt.binary('*', rt.f(2), radius, 1, 'float'), radius, 1, 'float'), 1, 'float'))
-        tangent = rt.construct(2, rt.unary('-', rt.swizzle(d, 'y')), rt.swizzle(d, 'x'))
+        tangent = rt.construct(2, rt.construct(2, rt.unary('-', rt.swizzle(d, 'y')), rt.swizzle(d, 'x')))
         vel.replace((rt.binary('+', vel, rt.binary('*', rt.binary('*', rt.binary('*', tangent, sign, 2, 'float'), falloff, 2, 'float'), rt.f(12), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
         dye = rt.binary('+', dye, falloff, 1, 'float')
       end
       g['fragColor'].replace((rt.construct(4, vel, rt.component_wise('clamp', dye, rt.f(0), rt.f(1)), rt.f(1))).map { |c| rt.f32(c) })
       return
     end
-    vel = rt.swizzle(prev, 'rg')
+    vel = rt.construct(2, rt.swizzle(prev, 'rg'))
     dye = rt.swizzle(prev, 'b')
     dt = rt.binary('*', rt.component_wise('clamp', _u_speed, rt.f(0), rt.f(200)), rt.f(0.0001), 1, 'float')
     iForce = rt.binary('*', rt.component_wise('clamp', _u_inputForce, rt.f(0), rt.f(100)), rt.f(0.01), 1, 'float')
@@ -76,11 +76,11 @@ run_pixel = lambda do |ctx, out|
     lu = rt.f(0.0)
     texel = rt.construct(2, 0.0)
     if rt.bool((rt.bool(rt.binary('>', iForce, rt.f(0))) || rt.bool(rt.binary('>', iDye, rt.f(0))) ? 1 : 0))
-      texel = rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float')
+      texel = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float'))
       lc = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, uv), 'rgb'))
       lr = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
       lu = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
-      grad = rt.construct(2, rt.binary('-', lr, lc, 1, 'float'), rt.binary('-', lu, lc, 1, 'float'))
+      grad = rt.construct(2, rt.construct(2, rt.binary('-', lr, lc, 1, 'float'), rt.binary('-', lu, lc, 1, 'float')))
       vel.replace((rt.binary('+', vel, rt.binary('*', rt.binary('*', grad, iForce, 2, 'float'), rt.f(50), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
       dye = rt.binary('+', dye, rt.binary('*', rt.binary('*', rt.binary('*', lc, iDye, 1, 'float'), dt, 1, 'float'), rt.f(60), 1, 'float'), 1, 'float')
     end

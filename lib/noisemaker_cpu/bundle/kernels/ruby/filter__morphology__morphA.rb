@@ -13,9 +13,9 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; _for2_first = nil; acc = nil; d = nil; hi = nil; i = nil; lo = nil; o = nil; r = nil; r2 = nil; s = nil; sL = nil; sR = nil; texel = nil; uv = nil; x = nil; y = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    texel = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
-    acc = rt.texture(_u_inputTex, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    texel = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
+    acc = rt.construct(4, rt.texture(_u_inputTex, uv))
     r = rt.f(0.0)
     r2 = rt.f(0.0)
     if rt.bool(rt.binary('==', _u__SHAPE, rt.i(1)))
@@ -44,13 +44,13 @@ run_pixel = lambda do |ctx, out|
           if rt.bool((rt.bool(rt.binary('==', x, rt.i(0))) && rt.bool(rt.binary('==', y, rt.i(0))) ? 1 : 0))
             next
           end
-          d = rt.construct(2, rt.construct(1, x), rt.construct(1, y))
+          d = rt.construct(2, rt.construct(2, rt.construct(1, x), rt.construct(1, y)))
           if rt.bool(rt.binary('>', rt.dot(d, d), r2))
             next
           end
-          s = rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', d, texel, 2, 'float'), 2, 'float'))
-          hi = rt.component_wise('max', acc, s)
-          lo = rt.component_wise('min', acc, s)
+          s = rt.construct(4, rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', d, texel, 2, 'float'), 2, 'float')))
+          hi = rt.construct(4, rt.component_wise('max', acc, s))
+          lo = rt.construct(4, rt.component_wise('min', acc, s))
           acc.replace((rt.component_wise('mix', hi, lo, rt.construct(1, _u_mode))).map { |c| rt.f32(c) })
         end
       end
@@ -69,11 +69,11 @@ run_pixel = lambda do |ctx, out|
         if rt.bool(rt.binary('>', rt.construct(1, i), r))
           break
         end
-        o = rt.binary('*', rt.construct(2, rt.construct(1, i), rt.f(0)), texel, 2, 'float')
-        sL = rt.texture(_u_inputTex, rt.binary('-', uv, o, 2, 'float'))
-        sR = rt.texture(_u_inputTex, rt.binary('+', uv, o, 2, 'float'))
-        hi = rt.component_wise('max', acc, rt.component_wise('max', sL, sR))
-        lo = rt.component_wise('min', acc, rt.component_wise('min', sL, sR))
+        o = rt.construct(2, rt.binary('*', rt.construct(2, rt.construct(1, i), rt.f(0)), texel, 2, 'float'))
+        sL = rt.construct(4, rt.texture(_u_inputTex, rt.binary('-', uv, o, 2, 'float')))
+        sR = rt.construct(4, rt.texture(_u_inputTex, rt.binary('+', uv, o, 2, 'float')))
+        hi = rt.construct(4, rt.component_wise('max', acc, rt.component_wise('max', sL, sR)))
+        lo = rt.construct(4, rt.component_wise('min', acc, rt.component_wise('min', sL, sR)))
         acc.replace((rt.component_wise('mix', hi, lo, rt.construct(1, _u_mode))).map { |c| rt.f32(c) })
       end
     end

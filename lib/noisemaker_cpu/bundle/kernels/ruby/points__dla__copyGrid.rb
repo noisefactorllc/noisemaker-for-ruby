@@ -10,7 +10,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
     g['fragColor'].replace((rt.texture(_u_gridTex, uv)).map { |c| rt.f32(c) })
   end
   main__void.call

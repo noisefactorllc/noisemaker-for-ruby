@@ -31,7 +31,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(_u_aspectLens)
       uv = rt.assign_swizzle(uv, 'x', rt.binary('*', rt.swizzle(uv, 'x'), aspect, 1, 'float'))
     end
-    coord = rt.construct(2, rt.binary('+', rt.binary('/', rt.component_wise('atan', rt.swizzle(uv, 'y'), rt.swizzle(uv, 'x')), g['TAU'], 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.length(uv), rt.binary('*', _u_scale, rt.f(0.074999999999999997), 1, 'float'), 1, 'float'))
+    coord = rt.construct(2, rt.construct(2, rt.binary('+', rt.binary('/', rt.component_wise('atan', rt.swizzle(uv, 'y'), rt.swizzle(uv, 'x')), g['TAU'], 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.length(uv), rt.binary('*', _u_scale, rt.f(0.074999999999999997), 1, 'float'), 1, 'float')))
     coord = rt.assign_swizzle(coord, 'x', smod__float_float.call(rt.binary('+', rt.swizzle(coord, 'x'), rt.binary('*', _u_time, rt.unary('-', _u_rotation), 1, 'float'), 1, 'float'), rt.f(1)))
     coord = rt.assign_swizzle(coord, 'y', smod__float_float.call(rt.binary('+', rt.swizzle(coord, 'y'), rt.binary('*', _u_time, _u_speed, 1, 'float'), 1, 'float'), rt.f(1)))
     return coord
@@ -52,9 +52,9 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     aspect = nil; col = nil; coord = nil; dx = nil; dy = nil; fullRes = nil; texSize = nil; tileDims = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    tileDims = rt.construct(2, texSize)
-    fullRes = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims))
-    uv = rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float')
+    tileDims = rt.construct(2, rt.construct(2, texSize))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
+    uv = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
     aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
     coord = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u_polarMode, rt.i(0)))
@@ -66,9 +66,9 @@ run_pixel = lambda do |ctx, out|
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)
     if rt.bool(_u_antialias)
-      dx = rt.dFdx(coord)
-      dy = rt.dFdy(coord)
-      col = rt.construct(4, rt.f(0))
+      dx = rt.construct(2, rt.dFdx(coord))
+      dy = rt.construct(2, rt.dFdy(coord))
+      col = rt.construct(4, rt.construct(4, rt.f(0)))
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', coord, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', coord, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', coord, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })

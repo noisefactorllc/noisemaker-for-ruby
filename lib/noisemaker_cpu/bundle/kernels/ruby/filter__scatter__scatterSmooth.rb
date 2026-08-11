@@ -12,10 +12,10 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; blurred = nil; src = nil; sum = nil; texel = nil; uv = nil; w = nil; wsum = nil; x = nil; y = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    texel = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
-    src = rt.texture(_u_inputTex, uv)
-    sum = rt.construct(4, rt.f(0))
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    texel = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
+    src = rt.construct(4, rt.texture(_u_inputTex, uv))
+    sum = rt.construct(4, rt.construct(4, rt.f(0)))
     wsum = rt.f(0)
     y = rt.unary('-', rt.i(1))
     _for0_first = true
@@ -42,7 +42,7 @@ run_pixel = lambda do |ctx, out|
         wsum = rt.binary('+', wsum, w, 1, 'float')
       end
     end
-    blurred = rt.binary('/', sum, wsum, 4, 'float')
+    blurred = rt.construct(4, rt.binary('/', sum, wsum, 4, 'float'))
     g['fragColor'].replace((rt.component_wise('mix', src, blurred, rt.component_wise('clamp', rt.binary('/', _u_smoothness, rt.f(100), 1, 'float'), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
   end
   main__void.call

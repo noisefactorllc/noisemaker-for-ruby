@@ -31,10 +31,10 @@ run_pixel = lambda do |ctx, out|
   hexCoord__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     a = nil; b = nil; h = nil; s = nil
-    s = rt.construct(2, rt.f(1), rt.f(1.7320507999999999))
-    h = rt.binary('*', s, rt.f(0.5), 2, 'float')
-    a = rt.binary('-', rt.component_wise('mod', uv, s), h, 2, 'float')
-    b = rt.binary('-', rt.component_wise('mod', rt.binary('+', uv, h, 2, 'float'), s), h, 2, 'float')
+    s = rt.construct(2, rt.construct(2, rt.f(1), rt.f(1.7320507999999999)))
+    h = rt.construct(2, rt.binary('*', s, rt.f(0.5), 2, 'float'))
+    a = rt.construct(2, rt.binary('-', rt.component_wise('mod', uv, s), h, 2, 'float'))
+    b = rt.construct(2, rt.binary('-', rt.component_wise('mod', rt.binary('+', uv, h, 2, 'float'), s), h, 2, 'float'))
     return (rt.bool(rt.binary('<', rt.dot(a, a), rt.dot(b, b))) ? (a) : (b))
   end
   rotationalFold__vec2_int = lambda do |uv, n|
@@ -42,7 +42,7 @@ run_pixel = lambda do |ctx, out|
     a = nil; fn = nil; p = nil; r = nil; sectorAngle = nil
     fn = rt.construct(1, n)
     sectorAngle = rt.binary('/', g['TAU'], fn, 1, 'float')
-    p = rt.binary('-', uv, rt.f(0.5), 2, 'float')
+    p = rt.construct(2, rt.binary('-', uv, rt.f(0.5), 2, 'float'))
     a = rt.component_wise('atan', rt.swizzle(p, 'y'), rt.swizzle(p, 'x'))
     r = rt.length(p)
     a = rt.component_wise('mod', rt.component_wise('mod', rt.binary('+', a, g['TAU'], 1, 'float'), g['TAU']), sectorAngle)
@@ -53,10 +53,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     aspect = nil; effectiveScale = nil; globalCoord = nil; globalUV = nil; local = nil; localUV = nil; rep = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    globalUV = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
     aspect = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
-    st = rt.binary('-', globalUV, rt.f(0.5), 2, 'float')
+    st = rt.construct(2, rt.binary('-', globalUV, rt.f(0.5), 2, 'float'))
     if rt.bool(_u_aspectLens)
       st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), aspect, 1, 'float'))
     end
@@ -65,11 +65,11 @@ run_pixel = lambda do |ctx, out|
       st = rt.assign_swizzle(st, 'x', rt.binary('/', rt.swizzle(st, 'x'), aspect, 1, 'float'))
     end
     st.replace((rt.binary('+', st, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
-    rep = (rt.bool(_u_aspectLens) ? (rt.construct(2, rt.binary('*', _u_repeat, aspect, 1, 'float'), _u_repeat)) : (rt.construct(2, _u_repeat)))
+    rep = rt.construct(2, (rt.bool(_u_aspectLens) ? (rt.construct(2, rt.binary('*', _u_repeat, aspect, 1, 'float'), _u_repeat)) : (rt.construct(2, _u_repeat))))
     effectiveScale = rt.f(0.0)
     local = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u_symmetry, rt.i(3)))
-      local = hexCoord__vec2.call(rt.binary('*', rt.binary('+', st, rt.construct(2, _u_offsetX, _u_offsetY), 2, 'float'), rep, 2, 'float'))
+      local = rt.construct(2, hexCoord__vec2.call(rt.binary('*', rt.binary('+', st, rt.construct(2, _u_offsetX, _u_offsetY), 2, 'float'), rep, 2, 'float')))
       local.replace((rt.binary('/', local, _u_scale, 2, 'float')).map { |c| rt.f32(c) })
       st.replace((rotationalFold__vec2_int.call(rt.binary('+', local, rt.f(0.5), 2, 'float'), rt.i(6))).map { |c| rt.f32(c) })
     else
@@ -89,7 +89,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    localUV = rt.component_wise('fract', st)
+    localUV = rt.construct(2, rt.component_wise('fract', st))
     g['fragColor'].replace((rt.construct(4, rt.swizzle(rt.texture(_u_inputTex, localUV), 'rgb'), rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

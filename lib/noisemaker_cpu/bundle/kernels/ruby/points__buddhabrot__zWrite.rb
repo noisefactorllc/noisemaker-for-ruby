@@ -12,9 +12,9 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; cIm = nil; cRe = nil; coord = nil; i = nil; pos = nil; stepI = nil; vel = nil; z = nil; zi = nil; zr = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
-    pos = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
-    vel = rt.texel_fetch(_u_velTex, coord, rt.i(0))
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    pos = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
+    vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
     if rt.bool(rt.binary('<', rt.swizzle(pos, 'w'), rt.f(0.5)))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
@@ -22,7 +22,7 @@ run_pixel = lambda do |ctx, out|
     cRe = rt.swizzle(vel, 'x')
     cIm = rt.swizzle(vel, 'y')
     stepI = rt.construct(1, rt.swizzle(vel, 'z'), 'int')
-    z = rt.construct(2, rt.f(0))
+    z = rt.construct(2, rt.construct(2, rt.f(0)))
     i = rt.i(0)
     _for0_first = true
     (0..1048575).each do |_for0|

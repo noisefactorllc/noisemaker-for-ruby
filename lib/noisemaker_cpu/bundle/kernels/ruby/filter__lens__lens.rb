@@ -15,14 +15,14 @@ run_pixel = lambda do |ctx, out|
   g['HALF_FRAME'] = rt.f(0.5)
   main__void = lambda do
     aDist = nil; aspect = nil; centerWeight = nil; centerWeightSq = nil; col = nil; dims = nil; dispPixels = nil; displacement = nil; dist = nil; distFromCenter = nil; dx = nil; dy = nil; globalCoord = nil; isTileRendering = nil; maxDispPixels = nil; maxDist = nil; normalizedDist = nil; offset = nil; sampledUV = nil; texSize = nil; tileDims = nil; uv = nil; warpedGlobalUV = nil; zoom = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    tileDims = rt.construct(2, texSize)
-    dims = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims))
-    uv = rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), dims, 2, 'float')
+    tileDims = rt.construct(2, rt.construct(2, texSize))
+    dims = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
+    uv = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), dims, 2, 'float'))
     zoom = (rt.bool(rt.binary('<', _u_lensDisplacement, rt.f(0))) ? (rt.binary('*', _u_lensDisplacement, rt.unary('-', rt.f(0.25)), 1, 'float')) : (rt.f(0)))
     aspect = rt.binary('/', rt.swizzle(dims, 'x'), rt.swizzle(dims, 'y'), 1, 'float')
-    dist = rt.binary('-', uv, g['HALF_FRAME'], 2, 'float')
+    dist = rt.construct(2, rt.binary('-', uv, g['HALF_FRAME'], 2, 'float'))
     aDist = dist
     if rt.bool(_u_aspectLens)
       aDist = rt.assign_swizzle(aDist, 'x', rt.binary('*', rt.swizzle(aDist, 'x'), aspect, 1, 'float'))
@@ -32,7 +32,7 @@ run_pixel = lambda do |ctx, out|
     normalizedDist = rt.component_wise('clamp', rt.binary('/', distFromCenter, maxDist, 1, 'float'), rt.f(0), rt.f(1))
     centerWeight = rt.binary('-', rt.f(1), normalizedDist, 1, 'float')
     centerWeightSq = rt.binary('*', centerWeight, centerWeight, 1, 'float')
-    displacement = rt.binary('+', rt.binary('*', aDist, zoom, 2, 'float'), rt.binary('*', rt.binary('*', aDist, centerWeightSq, 2, 'float'), _u_lensDisplacement, 2, 'float'), 2, 'float')
+    displacement = rt.construct(2, rt.binary('+', rt.binary('*', aDist, zoom, 2, 'float'), rt.binary('*', rt.binary('*', aDist, centerWeightSq, 2, 'float'), _u_lensDisplacement, 2, 'float'), 2, 'float'))
     if rt.bool(_u_aspectLens)
       displacement = rt.assign_swizzle(displacement, 'x', rt.binary('/', rt.swizzle(displacement, 'x'), aspect, 1, 'float'))
     end
@@ -46,16 +46,16 @@ run_pixel = lambda do |ctx, out|
         displacement.replace((rt.binary('*', displacement, rt.binary('/', maxDispPixels, dispPixels, 1, 'float'), 2, 'float')).map { |c| rt.f32(c) })
       end
     end
-    warpedGlobalUV = (rt.bool(isTileRendering) ? (rt.binary('-', uv, displacement, 2, 'float')) : (rt.component_wise('fract', rt.binary('-', uv, displacement, 2, 'float'))))
-    offset = rt.binary('/', rt.binary('-', rt.binary('*', warpedGlobalUV, dims, 2, 'float'), _u_tileOffset, 2, 'float'), tileDims, 2, 'float')
+    warpedGlobalUV = rt.construct(2, (rt.bool(isTileRendering) ? (rt.binary('-', uv, displacement, 2, 'float')) : (rt.component_wise('fract', rt.binary('-', uv, displacement, 2, 'float')))))
+    offset = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', warpedGlobalUV, dims, 2, 'float'), _u_tileOffset, 2, 'float'), tileDims, 2, 'float'))
     sampledUV = offset
     col = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)
     if rt.bool(_u_antialias)
-      dx = rt.dFdx(sampledUV)
-      dy = rt.dFdy(sampledUV)
-      col = rt.construct(4, rt.f(0))
+      dx = rt.construct(2, rt.dFdx(sampledUV))
+      dy = rt.construct(2, rt.dFdy(sampledUV))
+      col = rt.construct(4, rt.construct(4, rt.f(0)))
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampledUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampledUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampledUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })

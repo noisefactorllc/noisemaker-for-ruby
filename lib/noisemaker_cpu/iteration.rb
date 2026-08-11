@@ -20,6 +20,7 @@ module NoisemakerCpu
     def self.compute_groups(steps)
       groups = []
       open_group = nil
+      open_loop = nil
       close_group = lambda do
         next if open_group.nil?
 
@@ -28,6 +29,17 @@ module NoisemakerCpu
       end
 
       steps.each do |step|
+        if open_loop
+          raise "Loop iteration group cannot cross a read/write boundary" if step["kind"] == "read" || step["kind"] == "write"
+          raise "Nested loop iteration groups are not supported" if step.dig("definition", "loopRole") == "begin"
+
+          open_loop["steps"] << step
+          if step.dig("definition", "loopRole") == "end"
+            groups << open_loop
+            open_loop = nil
+          end
+          next
+        end
         if step["kind"] == "read" || step["kind"] == "write"
           close_group.call
           groups << { "steps" => [step], "iterated" => false }
@@ -35,6 +47,13 @@ module NoisemakerCpu
         end
 
         definition = step["definition"] || {}
+        raise "loopEnd has no matching loopBegin" if definition["loopRole"] == "end"
+        if definition["loopRole"] == "begin"
+          close_group.call
+          open_loop = { "steps" => [step], "iterated" => true, "loop" => true }
+          next
+        end
+
         declares_xyz = (definition["textures"] || {}).key?("global_xyz")
         if declares_xyz
           close_group.call
@@ -54,6 +73,8 @@ module NoisemakerCpu
         close_group.call
         groups << { "steps" => [step], "iterated" => definition["iterated"] == true }
       end
+      raise "loopBegin has no matching loopEnd" if open_loop
+
       close_group.call
       groups
     end

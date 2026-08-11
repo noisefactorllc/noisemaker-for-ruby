@@ -12,14 +12,14 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     coord = nil; feedback = nil; inputColor = nil; result = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
-    inputColor = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    inputColor = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     if rt.bool(_u_resetState)
       g['fragColor'].replace((inputColor).map { |c| rt.f32(c) })
       return
     end
-    feedback = rt.texel_fetch(_u_feedbackTex, coord, rt.i(0))
-    result = rt.component_wise('mix', rt.swizzle(inputColor, 'rgb'), rt.swizzle(feedback, 'rgb'), _u_intensity)
+    feedback = rt.construct(4, rt.texel_fetch(_u_feedbackTex, coord, rt.i(0)))
+    result = rt.construct(3, rt.component_wise('mix', rt.swizzle(inputColor, 'rgb'), rt.swizzle(feedback, 'rgb'), _u_intensity))
     g['fragColor'].replace((rt.construct(4, result, rt.swizzle(inputColor, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

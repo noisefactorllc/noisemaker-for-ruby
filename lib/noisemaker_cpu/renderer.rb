@@ -33,6 +33,45 @@ module NoisemakerCpu
       [x].pack("e").unpack1("e")
     end
 
+    def self._chain_bundle?(value)
+      value.is_a?(Hash) && value.key?("image")
+    end
+
+    def self._chain_bundle(value)
+      return value if _chain_bundle?(value)
+
+      { "image" => value, "volume" => nil, "geometry" => nil, "volumeSize" => nil }
+    end
+
+    def self._input_bundle(inputs)
+      {
+        "image" => inputs["inputTex"],
+        "volume" => inputs["inputTex3d"],
+        "geometry" => inputs["inputGeo"],
+        "volumeSize" => inputs["inputTex3d"]&.width,
+      }
+    end
+
+    def self._inherit_volume_size(eff, params, bundle)
+      volume = bundle["volume"]
+      domain = eff["domain"] || "image"
+      return params if volume.nil? || !(eff["params"] || {}).key?("volumeSize")
+      return params unless %w[volume-generator volume-filter volume-renderer].include?(domain)
+
+      size = volume.width
+      unless volume.height == size**2
+        raise "#{eff['namespace']}/#{eff['func']} input volume atlas expected #{size}x#{size**2}, " \
+              "received #{volume.width}x#{volume.height}"
+      end
+      params.merge("volumeSize" => size)
+    end
+
+    def self._bundle_output(name, input, resources)
+      return input if name.nil? || name == "inputTex" || name == "inputTex3d" || name == "inputGeo"
+
+      resources[name]
+    end
+
     def self.bundle_dir
       ENV["NOISEMAKER_BUNDLE"] || File.join(File.dirname(__FILE__), "bundle")
     end
@@ -184,9 +223,9 @@ module NoisemakerCpu
       [normalized, effect_uniforms, surface_params]
     end
 
-    def self._texture_dimension(spec, axis, params, width, height)
+    def self._texture_dimension(spec, axis, params, width, height, resources = nil)
       fallback = axis == :width ? width : height
-      return fallback if spec.nil? || spec == "input" || spec == "screen" || spec == "100%"
+      return fallback if spec.nil? || spec == "input" || spec == "screen" || spec == "resolution" || spec == "100%"
       return [1, spec.round].max if spec.is_a?(Numeric)
 
       if spec.is_a?(String)
@@ -196,9 +235,14 @@ module NoisemakerCpu
         raise "unsupported canonical texture dimension #{spec.inspect}"
       end
       if spec.is_a?(Hash)
+        if spec["inputOverride"] && resources
+          input = resources[spec["inputOverride"]]
+          return axis == :width ? input.width : input.height if input.respond_to?(:data)
+        end
         if spec.key?("param")
           value = params[spec["param"]]
           value = spec["paramDefault"] || spec["default"] if value.nil?
+          value = value**spec["power"] if spec.key?("power")
           return [1, value.round].max
         end
         if spec.key?("screenDivide")
@@ -211,11 +255,12 @@ module NoisemakerCpu
       raise "unsupported canonical texture dimension #{spec.inspect}"
     end
 
-    def self._destination(eff, output_name, params, width, height)
+    def self._destination(eff, output_name, params, width, height, pass: nil, resources: nil)
       spec = (eff["textures"] || {})[output_name] || {}
+      viewport = pass && pass["viewport"] || {}
       output = NoisemakerCpu::Surface.new(
-        _texture_dimension(spec["width"], :width, params, width, height),
-        _texture_dimension(spec["height"], :height, params, width, height)
+        _texture_dimension(viewport["width"] || spec["width"], :width, params, width, height, resources),
+        _texture_dimension(viewport["height"] || spec["height"], :height, params, width, height, resources)
       )
       output.format = spec["format"] || "rgba16f"
       output
@@ -256,6 +301,7 @@ module NoisemakerCpu
     end
 
     def self._initialize_iteration_state(eff, params, inputs, seed, width, height, owner_state_size: nil)
+      params = _inherit_volume_size(eff, params, _input_bundle(inputs))
       normalized, effect_uniforms, surface_params = _normalize_iteration_params(eff, params, inputs, seed)
       if !owner_state_size.nil? && (eff["params"] || {}).key?("stateSize")
         normalized["stateSize"] = owner_state_size
@@ -284,6 +330,26 @@ module NoisemakerCpu
       state
     end
 
+    def self._seed_typed_resources(state, input_bundle, width, height)
+      eff = state["effect"]
+      resources = state["resources"]
+      (eff["params"] || {}).each do |name, spec|
+        next unless spec.is_a?(Hash) && %w[volume geometry].include?(spec["type"])
+
+        input = spec["type"] == "volume" ? input_bundle["volume"] : input_bundle["geometry"]
+        if input
+          resources[name] = input
+          next
+        end
+        next if resources.key?(name)
+
+        output_name = spec["type"] == "volume" ? eff["outputTex3d"] : eff["outputGeo"]
+        next unless output_name && (eff["textures"] || {}).key?(output_name)
+
+        resources[name] = _destination(eff, output_name, state["params"], width, height).clear
+      end
+    end
+
     PARTICLE_STATE_FALLBACK_FORMATS = {
       "global_xyz" => "rgba32f",
       "global_vel" => "rgba32f",
@@ -305,15 +371,20 @@ module NoisemakerCpu
       surface
     end
 
-    def self._iteration_destination(name, state, states, width, height)
+    def self._iteration_destination(name, state, states, width, height, pass: nil)
       return _particle_destination(name, states, state, width, height) if NoisemakerCpu::Iteration.particle_state_name?(name)
 
-      _destination(state["effect"], name, state["params"], width, height)
+      _destination(
+        state["effect"], name, state["params"], width, height,
+        pass: pass, resources: state["resources"]
+      )
     end
 
     def self._iteration_resource(name, state, states, group_resources, width, height)
       if NoisemakerCpu::Iteration.particle_state_name?(name)
         group_resources[name] ||= _particle_destination(name, states, state, width, height).clear
+      elsif name == "global_accum"
+        group_resources[name]
       else
         state["resources"][name]
       end
@@ -333,7 +404,12 @@ module NoisemakerCpu
       delta_time:)
       eff = state["effect"]
       resources = state["resources"]
-      resources["inputTex"] = input unless input.nil?
+      input_was_bundle = _chain_bundle?(input)
+      input_bundle = _chain_bundle(input)
+      resources["inputTex"] = input_bundle["image"] unless input_bundle["image"].nil?
+      resources["inputTex3d"] = input_bundle["volume"] unless input_bundle["volume"].nil?
+      resources["inputGeo"] = input_bundle["geometry"] unless input_bundle["geometry"].nil?
+      _seed_typed_resources(state, input_bundle, width, height)
       _ensure_iteration_resources(state, width, height)
       base_uniforms = _canonical_uniforms(
         width, height, time, seed, state["effect_uniforms"], frame: frame, delta_time: delta_time
@@ -358,16 +434,21 @@ module NoisemakerCpu
           output_names = (pass["outputs"] || {}).values
           raise "#{eff['func']} pass #{pass['name'].inspect} has no output" if output_names.empty?
 
-          scatter = pass["drawMode"] == "points" || pass["drawMode"] == "billboards"
-          compiled = _kernel_for(pass["key"]) unless scatter
-          if !scatter && (pass["drawBuffers"] || 0) >= 2 && compiled[:output_names]
+          effect_id = "#{eff['namespace']}/#{eff['func']}"
+          draw_op = pass["drawMode"] ? NoisemakerCpu::DrawOps.get_draw_op(effect_id, pass["program"]) : nil
+          scatter = !pass["drawMode"].nil? && draw_op.nil?
+          compiled = _kernel_for(pass["key"]) unless scatter || draw_op
+          kernel = compiled && compiled[:kernel]
+          adapter = compiled && NoisemakerCpu::Adapters.get_adapter(effect_id, pass["program"])
+          kernel = adapter.call(rt, compiled) if adapter
+          if !scatter && draw_op.nil? && (pass["drawBuffers"] || 0) >= 2 && compiled[:output_names]
             mapped_names = compiled[:output_names].map do |variable|
               destination_name = (pass["outputs"] || {})[variable]
               raise "#{eff['func']} pass #{pass['name'].inspect} has no destination for #{variable}" if destination_name.nil?
 
               destination_name
             end
-            destinations = mapped_names.map { |name| _iteration_destination(name, state, states, width, height) }
+            destinations = mapped_names.map { |name| _iteration_destination(name, state, states, width, height, pass: pass) }
             sizes = destinations.map { |surface| [surface.width, surface.height] }.uniq
             raise "#{eff['func']} pass #{pass['name'].inspect} MRT dimensions differ" unless sizes.length == 1
 
@@ -389,12 +470,12 @@ module NoisemakerCpu
             )
 
             rendered = NoisemakerCpu::PassRunner.run_pass_mrt(
-              compiled[:kernel], ctx, destinations[0].width, destinations[0].height, destinations.length
+              kernel, ctx, destinations[0].width, destinations[0].height, destinations.length
             )
             rendered.each_with_index do |surface, index|
               surface.format = destinations[index].format
               NoisemakerCpu::TextureFormat.quantize_texture(surface, surface.format)
-              if NoisemakerCpu::Iteration.particle_state_name?(mapped_names[index])
+              if NoisemakerCpu::Iteration.particle_state_name?(mapped_names[index]) || mapped_names[index] == "global_accum"
                 group_resources[mapped_names[index]] = surface
               else
                 resources[mapped_names[index]] = surface
@@ -403,7 +484,7 @@ module NoisemakerCpu
             last_output = rendered[-1]
           else
             output_name = output_names[0]
-            destination = _iteration_destination(output_name, state, states, width, height)
+            destination = _iteration_destination(output_name, state, states, width, height, pass: pass)
             pass_uniforms = _pass_uniforms(
               pass,
               state["params"],
@@ -421,7 +502,14 @@ module NoisemakerCpu
               seed: seed,
               blank: blank
             )
-            if scatter
+            if draw_op
+              source_name = (pass["inputs"] || {}).keys.sort.first || "inputTex"
+              source = textures[source_name] || textures["inputTex"] || blank
+              previous = _iteration_resource(output_name, state, states, group_resources, width, height)
+              destination.data.replace(previous.data) if previous && previous.data.length == destination.data.length
+              result = destination
+              draw_op.call(source, result, pass_uniforms)
+            elsif scatter
               previous = _iteration_resource(output_name, state, states, group_resources, width, height)
               destination.data.replace(previous.data) if previous && previous.data.length == destination.data.length
               result = destination
@@ -429,18 +517,18 @@ module NoisemakerCpu
                 pass, pass_uniforms, textures, result)
             else
               result = if compiled[:uses_derivatives]
-                         NoisemakerCpu::PassRunner.run_pass_deriv(
-                           compiled[:kernel], ctx, destination.width, destination.height
+                       NoisemakerCpu::PassRunner.run_pass_deriv(
+                           kernel, ctx, destination.width, destination.height
                          )
                        else
                          NoisemakerCpu::PassRunner.run_pass(
-                           compiled[:kernel], ctx, destination.width, destination.height
+                           kernel, ctx, destination.width, destination.height
                          )
                        end
             end
             result.format = destination.format
             NoisemakerCpu::TextureFormat.quantize_texture(result, result.format)
-            if NoisemakerCpu::Iteration.particle_state_name?(output_name)
+            if NoisemakerCpu::Iteration.particle_state_name?(output_name) || output_name == "global_accum"
               group_resources[output_name] = result
             else
               resources[output_name] = result
@@ -449,26 +537,83 @@ module NoisemakerCpu
           end
         end
       end
-      result = resources["outputTex"] || last_output
-      raise "#{eff['func']} did not produce outputTex" if result.nil?
+      domain = eff["domain"] || "image"
+      volume_domain = !%w[image loop-begin loop-end].include?(domain)
+      image = if eff["outputTex"]
+                _bundle_output(eff["outputTex"], input_bundle["image"], resources)
+              else
+                resources["outputTex"] || (volume_domain ? input_bundle["image"] : last_output)
+              end
+      volume = _bundle_output(eff["outputTex3d"], input_bundle["volume"], resources)
+      geometry = _bundle_output(eff["outputGeo"], input_bundle["geometry"], resources)
+      volume_size = if domain == "volume-generator"
+                      state["params"]["volumeSize"] || volume&.width
+                    else
+                      input_bundle["volumeSize"] || state["params"]["volumeSize"] || volume&.width
+                    end
+      if volume_domain && volume.nil? && domain != "volume-renderer"
+        raise "#{eff['namespace']}/#{eff['func']} did not produce outputTex3d"
+      end
+      if volume && %w[volume-generator volume-filter].include?(domain)
+        expected_width = volume_size
+        expected_height = volume_size**2
+        unless volume.width == expected_width && volume.height == expected_height
+          raise "#{eff['namespace']}/#{eff['func']} volume atlas expected #{expected_width}x#{expected_height}, " \
+                "received #{volume.width}x#{volume.height}"
+        end
+      end
+      result = if input_was_bundle || volume_domain
+                 { "image" => image, "volume" => volume, "geometry" => geometry, "volumeSize" => volume_size }
+               else
+                 image
+               end
+      if image.nil? && !%w[volume-generator volume-filter].include?(domain)
+        raise "#{eff['func']} did not produce outputTex"
+      end
 
       if state["self_surface"]
-        unless state["self_surface"].data.length == result.data.length
+        result_image = _chain_bundle(result)["image"]
+        unless state["self_surface"].data.length == result_image.data.length
           raise "#{eff['func']} selfTex dimensions do not match output"
         end
-        state["self_surface"].data.replace(result.data)
+        state["self_surface"].data.replace(result_image.data)
       end
       result
     end
 
     def self._render_iterated_effect(eff, params, inputs, width:, height:, seed:, time:)
+      input_bundle = _input_bundle(inputs)
+      typed = %w[volume-generator volume-filter volume-renderer].include?(eff["domain"]) ||
+        !input_bundle["volume"].nil? || !input_bundle["geometry"].nil?
+      params = _inherit_volume_size(eff, params, input_bundle)
       state = _initialize_iteration_state(eff, params, inputs, seed, width, height)
       states = [state]
       group_resources = {}
       count = state["params"]["iterationCount"] || 60
       if count <= 0
-        input = inputs["inputTex"]
-        return input.clone unless input.nil?
+        unless typed
+          input = inputs["inputTex"]
+          return input.clone unless input.nil?
+
+          return NoisemakerCpu::Surface.new(width, height)
+        end
+        if typed && input_bundle.values_at("image", "volume", "geometry").any?
+          return {
+            "image" => input_bundle["image"]&.clone,
+            "volume" => input_bundle["volume"]&.clone,
+            "geometry" => input_bundle["geometry"]&.clone,
+            "volumeSize" => input_bundle["volumeSize"],
+          }
+        end
+        if (eff["domain"] || "image") == "volume-generator"
+          output_name = eff["outputTex3d"]
+          volume = _destination(eff, output_name, state["params"], width, height).clear
+          geometry = if eff["outputGeo"] && eff["outputGeo"] != "inputGeo"
+                       _destination(eff, eff["outputGeo"], state["params"], width, height).clear
+                     end
+          return { "image" => nil, "volume" => volume, "geometry" => geometry,
+                   "volumeSize" => state["params"]["volumeSize"] || volume.width }
+        end
 
         return NoisemakerCpu::Surface.new(width, height)
       end
@@ -477,12 +622,22 @@ module NoisemakerCpu
       count.times do |index|
         iteration_time = NoisemakerCpu::Iteration.time_for(time, count, index)
         result = _run_iteration_step(
-          state, inputs["inputTex"], states: states, group_resources: group_resources,
+          state, typed ? input_bundle : inputs["inputTex"], states: states, group_resources: group_resources,
           width: width, height: height, seed: seed,
           time: iteration_time, frame: index, delta_time: NoisemakerCpu::Iteration::DELTA_TIME
         )
       end
       result
+    end
+
+    def self._render_typed_effect(eff, params, inputs, width:, height:, seed:, time:)
+      input_bundle = _input_bundle(inputs)
+      params = _inherit_volume_size(eff, params, input_bundle)
+      state = _initialize_iteration_state(eff, params, inputs, seed, width, height)
+      _run_iteration_step(
+        state, input_bundle, states: [state], group_resources: {},
+        width: width, height: height, seed: seed, time: time, frame: 0, delta_time: 0.0
+      )
     end
 
     def self.render_effect(effect_id, params = nil, inputs = nil, width: 256, height: 256, seed: 1, time: 0.0)
@@ -491,6 +646,9 @@ module NoisemakerCpu
       eff = meta["effects"][effect_id]
       raise "unknown effect '#{effect_id}' (not in bundle)" if eff.nil?
       return _render_iterated_effect(eff, params, inputs, width: width, height: height, seed: seed, time: time) if eff["iterated"]
+      if %w[volume-generator volume-filter volume-renderer].include?(eff["domain"])
+        return _render_typed_effect(eff, params, inputs, width: width, height: height, seed: seed, time: time)
+      end
 
       effect_uniforms = {}
       surface_params = {} # sampler-name -> provided Surface (or nil)
@@ -658,7 +816,7 @@ module NoisemakerCpu
     # '@current' is the chain's current image, ['surface', 'oN'] a named
     # surface that must already have been written.
     def self._resolve_surface_marker(marker, current, surfaces)
-      return current if !marker.is_a?(Array) && marker == "@current"
+      return _chain_bundle(current)["image"] if !marker.is_a?(Array) && marker == "@current"
 
       name = marker[1]
       surf = surfaces[name]
@@ -674,7 +832,10 @@ module NoisemakerCpu
     # and inputTex-defaults win over them.
     def self._run_effect_step(step, current, surfaces, external_textures, width, height, seed, time)
       inputs = (external_textures || {}).dup
-      inputs["inputTex"] = current unless current.nil?
+      bundle = _chain_bundle(current)
+      inputs["inputTex"] = bundle["image"] unless bundle["image"].nil?
+      inputs["inputTex3d"] = bundle["volume"] unless bundle["volume"].nil?
+      inputs["inputGeo"] = bundle["geometry"] unless bundle["geometry"].nil?
       step["surfaces"].keys.sort.each do |pname|
         surf = _resolve_surface_marker(step["surfaces"][pname], current, surfaces)
         inputs[pname] = surf unless surf.nil?
@@ -687,7 +848,10 @@ module NoisemakerCpu
 
     def self._iteration_step_inputs(step, current, surfaces, external_textures)
       inputs = (external_textures || {}).dup
-      inputs["inputTex"] = current unless current.nil?
+      bundle = _chain_bundle(current)
+      inputs["inputTex"] = bundle["image"] unless bundle["image"].nil?
+      inputs["inputTex3d"] = bundle["volume"] unless bundle["volume"].nil?
+      inputs["inputGeo"] = bundle["geometry"] unless bundle["geometry"].nil?
       (step["surfaces"] || {}).each do |name, marker|
         surface = _resolve_surface_marker(marker, current, surfaces)
         inputs[name] = surface unless surface.nil?
@@ -711,10 +875,26 @@ module NoisemakerCpu
       end
 
       count = owner_state["params"]["iterationCount"] || 60
-      return group_input.clone if count <= 0 && group_input
+      if count <= 0 && group_input
+        bundle = _chain_bundle(group_input)
+        return group_input.clone unless _chain_bundle?(group_input)
+
+        return {
+          "image" => bundle["image"]&.clone, "volume" => bundle["volume"]&.clone,
+          "geometry" => bundle["geometry"]&.clone, "volumeSize" => bundle["volumeSize"],
+        }
+      end
       return NoisemakerCpu::Surface.new(width, height) if count <= 0
 
       group_resources = {}
+      if group["loop"]
+        image = _chain_bundle(group_input)["image"]
+        raise "Loop iteration group requires an image input" if image.nil?
+
+        accum = NoisemakerCpu::Surface.new(image.width, image.height)
+        accum.format = image.format
+        group_resources["global_accum"] = accum
+      end
       result = nil
       count.times do |index|
         step_input = group_input
@@ -754,7 +934,10 @@ module NoisemakerCpu
             current = surfaces[step["surface"]]
             raise "Surface #{step['surface']} has not been written" if current.nil?
           when "write"
-            surfaces[step["surface"]] = current
+            image = _chain_bundle(current)["image"]
+            raise "write(surface) requires a current image" if image.nil?
+
+            surfaces[step["surface"]] = image
           else
             if group["iterated"]
               current = _render_iteration_group(

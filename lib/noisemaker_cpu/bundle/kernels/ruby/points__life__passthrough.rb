@@ -9,7 +9,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     coord = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     g['fragColor'].replace((rt.texel_fetch(_u_inputTex, coord, rt.i(0))).map { |c| rt.f32(c) })
   end
   main__void.call

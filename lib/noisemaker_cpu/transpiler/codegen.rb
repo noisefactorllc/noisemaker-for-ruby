@@ -433,6 +433,9 @@ module NoisemakerCpu
             e = scope.define(dc["name"], t)
             _local(e["py"])
             if !init_code.nil?
+              if Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"] && dc["init"]["k"] != "id"
+                init_code = "rt.construct(#{t["width"]}, #{init_code})"
+              end
               out << "#{pad}#{e["py"]} = #{init_code}"
             elsif !dc["array"].nil?
               n_code = dc["array"].is_a?(Hash) ? expr(dc["array"], scope)[0] : "0"
@@ -762,7 +765,20 @@ module NoisemakerCpu
                 break
               end
             end
-            return ["#{obj_code}[#{idx}] = #{v_code}", tt]
+            target_code = "#{obj_code}[#{idx}]"
+            rhs = if base_op
+                    b = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
+                    "rt.binary(#{Codegen.rq(base_op)}, #{target_code}, #{v_code}, #{Codegen.width_of(tt)}, #{Codegen.rq(b)})"
+                  else
+                    v_code
+                  end
+            if Codegen.width_of(tt) > 1
+              if Codegen.base_of(tt) == "int" || Codegen.base_of(tt) == "uint"
+                return ["#{target_code}.replace(#{rhs})", tt]
+              end
+              return ["#{target_code}.replace((#{rhs}).map { |c| rt.f32(c) })", tt]
+            end
+            return ["#{target_code} = #{rhs}", tt]
           end
           sw = target["field"]
           rhs =
@@ -799,6 +815,15 @@ module NoisemakerCpu
           args.each { |a| w = Codegen.width_of(a[1]) if Codegen.width_of(a[1]) > w }
           t = { "base" => "float", "width" => w }
         end
+        if Codegen.base_of(t) == "int" || Codegen.base_of(t) == "uint"
+          elems = args.map do |code, arg_t|
+            if Codegen.base_of(arg_t) == "float" && Codegen.width_of(arg_t) > 1
+              "rt.construct(#{Codegen.width_of(arg_t)}, #{code})"
+            else
+              code
+            end
+          end.join(", ")
+        end
         ["rt.construct(#{t["width"]}#{elems == "" ? "" : ", #{elems}"}#{Codegen._construct_base(t)})", t]
       end
 
@@ -818,6 +843,8 @@ module NoisemakerCpu
         "reflect" => ->(_g, c, a) { ["rt.reflect(#{c[0]}, #{c[1]})", a[0][1]] },
         "refract" => ->(_g, c, a) { ["rt.refract(#{c[0]}, #{c[1]}, #{c[2]})", a[0][1]] },
         "pcg3d" => ->(_g, c, _a) { ["rt.pcg3d(#{c[0]})", TYPE["uvec3"]] },
+        "cpu_cell3d_hash_result" => ->(_g, c, _a) { ["rt.cpu_cell3d_hash_result(#{c[0]})", TYPE["vec3"]] },
+        "cpu_noise3d_hash4" => ->(_g, c, _a) { ["rt.cpu_noise3d_hash4(#{c[0]}, #{c[1]})", FLOAT] },
         "cpu_umul" => ->(_g, c, _a) { ["rt.binary('*', #{c[0]}, #{c[1]}, 1, 'uint')", TYPE["uint"]] },
         "hashUint" => ->(_g, c, _a) { ["rt.hash_uint(#{c[0]})", TYPE["uint"]] },
         "hash_uint" => ->(_g, c, _a) { ["rt.hash_uint(#{c[0]})", TYPE["uint"]] },

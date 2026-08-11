@@ -45,13 +45,13 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; coord = nil; dimensions = nil; globalCoord = nil; gx = nil; gy = nil; idx = nil; kx = nil; ky = nil; magnitude = nil; metric = nil; normalized = nil; offset = nil; sampleX = nil; sampleY = nil; samples = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     dimensions = rt.texture_size(_u_valueTexture)
     if rt.bool((rt.bool(rt.binary('==', rt.swizzle(dimensions, 'x'), rt.i(0))) || rt.bool(rt.binary('==', rt.swizzle(dimensions, 'y'), rt.i(0))) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     metric = rt.construct(1, _u_sobelMetric, 'int')
     offset = rt.component_wise('max', rt.i(1), rt.construct(1, rt.binary('*', _u_thickness, _u_renderScale, 1, 'float'), 'int'))
     samples = rt.new_array(rt.i(9), 1)

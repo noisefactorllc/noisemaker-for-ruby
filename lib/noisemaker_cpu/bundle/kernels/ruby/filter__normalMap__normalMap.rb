@@ -84,18 +84,18 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', channelCount, rt.i(3)))
       return oklab_l_component__vec3.call(rt.swizzle(texel, 'xyz'))
     end
-    clamped_rgb = rt.component_wise('clamp', rt.swizzle(texel, 'xyz'), rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1)))
+    clamped_rgb = rt.construct(3, rt.component_wise('clamp', rt.swizzle(texel, 'xyz'), rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))))
     return oklab_l_component__vec3.call(clamped_rgb)
   end
   compute_reference_value__ivec2_uint = lambda do |coords, channelCount|
     coords = rt.copy(coords, 'int')
     texel = nil
-    texel = rt.texel_fetch(_u_inputTex, coords, rt.i(0))
+    texel = rt.construct(4, rt.texel_fetch(_u_inputTex, coords, rt.i(0)))
     return value_map_component__vec4_uint.call(texel, channelCount)
   end
   main__void = lambda do
     _for0_first = nil; channelCount = nil; dims = nil; dx = nil; dy = nil; globalCoord = nil; global_id = nil; height = nil; height_i = nil; i = nil; offset = nil; sample_coord = nil; texel = nil; value = nil; width = nil; width_i = nil; x_value = nil; y_value = nil; z_value = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     global_id = rt.construct(3, rt.construct(1, rt.swizzle(ctx.frag_coord, 'x'), 'uint'), rt.construct(1, rt.swizzle(ctx.frag_coord, 'y'), 'uint'), rt.i(0), 'uint')
     width = as_u32__float.call(rt.swizzle(_u_size, 'x'))
     height = as_u32__float.call(rt.swizzle(_u_size, 'y'))
@@ -133,7 +133,7 @@ run_pixel = lambda do |ctx, out|
     x_value = rt.component_wise('clamp', rt.binary('+', rt.binary('*', dx, rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1))
     y_value = rt.component_wise('clamp', rt.binary('+', rt.binary('*', dy, rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1))
     z_value = rt.component_wise('clamp', rt.binary('-', rt.f(1), rt.binary('*', rt.binary('+', rt.component_wise('abs', dx), rt.component_wise('abs', dy), 1, 'float'), rt.f(0.5), 1, 'float'), 1, 'float'), rt.f(0), rt.f(1))
-    texel = rt.texel_fetch(_u_inputTex, rt.construct(2, rt.swizzle(global_id, 'xy'), 'int'), rt.i(0))
+    texel = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, rt.swizzle(global_id, 'xy'), 'int'), rt.i(0)))
     g['fragColor'].replace((rt.construct(4, x_value, y_value, z_value, rt.swizzle(texel, 'w'))).map { |c| rt.f32(c) })
   end
   main__void.call

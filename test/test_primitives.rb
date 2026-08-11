@@ -45,6 +45,11 @@ class TestPrimitives < Minitest::Test
                  s.to_rgba8.unpack("C*"), "to_rgba8 edge cases match python"
   end
 
+  def test_surface_rejects_oversized_allocations
+    err = assert_raises(RuntimeError) { Surface.new(4097, 4096) }
+    assert_match(/16,777,216 pixel limit/, err.message)
+  end
+
   def test_from_rgba8_f32_scaling
     s8 = Surface.from_rgba8(1, 1, [0, 127, 128, 255].pack("C4"))
     [

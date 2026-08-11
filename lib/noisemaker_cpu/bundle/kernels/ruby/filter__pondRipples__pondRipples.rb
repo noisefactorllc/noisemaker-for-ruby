@@ -20,8 +20,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     amountGain = nil; aspectRatio = nil; co = nil; col = nil; damping = nil; dir = nil; dx = nil; dy = nil; globalCoord = nil; phase = nil; r = nil; rDelta = nil; rot = nil; rotDelta = nil; rotatedDir = nil; s = nil; sampleUV = nil; uv = nil; w = nil; x = nil
     aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
     uv.replace((rt.binary('-', uv, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
     uv = rt.assign_swizzle(uv, 'x', rt.binary('*', rt.swizzle(uv, 'x'), aspectRatio, 1, 'float'))
     r = rt.length(uv)
@@ -49,11 +49,11 @@ run_pixel = lambda do |ctx, out|
         rDelta = rt.binary('*', w, rt.f(0.5), 1, 'float')
       end
     end
-    dir = (rt.bool(rt.binary('>', r, rt.f(0))) ? (rt.binary('/', uv, r, 2, 'float')) : (rt.construct(2, rt.f(0))))
+    dir = rt.construct(2, (rt.bool(rt.binary('>', r, rt.f(0))) ? (rt.binary('/', uv, r, 2, 'float')) : (rt.construct(2, rt.f(0)))))
     rot = rt.binary('*', rt.binary('*', rt.binary('*', rotDelta, rt.f(2), 1, 'float'), rt.f(3.1415926535900001), 1, 'float'), rt.f(0.25), 1, 'float')
     s = rt.component_wise('sin', rot)
     co = rt.component_wise('cos', rot)
-    rotatedDir = rt.matrix_mult(rt.construct(4, co, rt.unary('-', s), s, co), dir, 2)
+    rotatedDir = rt.construct(2, rt.matrix_mult(rt.construct(4, co, rt.unary('-', s), s, co), dir, 2))
     uv.replace((rt.binary('*', rotatedDir, rt.binary('+', r, rDelta, 1, 'float'), 2, 'float')).map { |c| rt.f32(c) })
     uv = rt.assign_swizzle(uv, 'x', rt.binary('/', rt.swizzle(uv, 'x'), aspectRatio, 1, 'float'))
     uv.replace((rt.binary('+', uv, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
@@ -66,14 +66,14 @@ run_pixel = lambda do |ctx, out|
         uv.replace((rt.component_wise('clamp', uv, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
       end
     end
-    sampleUV = rt.component_wise('clamp', rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), _u_resolution, 2, 'float'), rt.f(0), rt.f(1))
+    sampleUV = rt.construct(2, rt.component_wise('clamp', rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), _u_resolution, 2, 'float'), rt.f(0), rt.f(1)))
     col = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)
     if rt.bool(_u_antialias)
-      dx = rt.dFdx(sampleUV)
-      dy = rt.dFdy(sampleUV)
-      col = rt.construct(4, rt.f(0))
+      dx = rt.construct(2, rt.dFdx(sampleUV))
+      dy = rt.construct(2, rt.dFdy(sampleUV))
+      col = rt.construct(4, rt.construct(4, rt.f(0)))
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
       col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })

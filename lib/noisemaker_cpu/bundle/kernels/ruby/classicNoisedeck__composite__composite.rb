@@ -83,7 +83,7 @@ run_pixel = lambda do |ctx, out|
   desaturate__vec3 = lambda do |color|
     color = rt.copy(color, 'float')
     c = nil
-    c = rgb2hsv__vec3.call(color)
+    c = rt.construct(3, rgb2hsv__vec3.call(color))
     c = rt.assign_swizzle(c, 'g', rt.f(0))
     return hsv2rgb__vec3.call(c)
   end
@@ -91,7 +91,7 @@ run_pixel = lambda do |ctx, out|
     color1 = rt.copy(color1, 'float')
     color2 = rt.copy(color2, 'float')
     c = nil; c1 = nil; c2 = nil; color = nil; cut = nil
-    color = rt.construct(3, rt.f(0))
+    color = rt.construct(3, rt.construct(3, rt.f(0)))
     cut = rt.binary('*', _u_range, rt.f(0.01), 1, 'float')
     c = rt.construct(3, 0.0)
     c1 = rt.construct(3, 0.0)
@@ -125,7 +125,7 @@ run_pixel = lambda do |ctx, out|
             color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
           else
             if rt.bool(rt.binary('==', _u_blendMode, rt.i(4)))
-              c = rt.binary('-', rt.f(1), rt.component_wise('step', cut, color2), 3, 'float')
+              c = rt.construct(3, rt.binary('-', rt.f(1), rt.component_wise('step', cut, color2), 3, 'float'))
               color2.replace((rt.component_wise('mix', color1, rt.construct(3, rt.f(0)), c)).map { |c| rt.f32(c) })
               color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
             else
@@ -150,7 +150,7 @@ run_pixel = lambda do |ctx, out|
                       color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
                     else
                       if rt.bool(rt.binary('==', _u_blendMode, rt.i(9)))
-                        c = rt.binary('-', rt.f(1), rt.component_wise('step', cut, color1), 3, 'float')
+                        c = rt.construct(3, rt.binary('-', rt.f(1), rt.component_wise('step', cut, color1), 3, 'float'))
                         color1.replace((rt.component_wise('mix', color2, rt.construct(3, rt.f(0)), c)).map { |c| rt.f32(c) })
                         color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
                       else
@@ -174,13 +174,13 @@ run_pixel = lambda do |ctx, out|
                                 color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
                               else
                                 if rt.bool(rt.binary('==', _u_blendMode, rt.i(14)))
-                                  c = rt.component_wise('step', cut, rt.component_wise('mix', color1, color2, rt.f(0.5)))
+                                  c = rt.construct(3, rt.component_wise('step', cut, rt.component_wise('mix', color1, color2, rt.f(0.5))))
                                   color2.replace((rt.component_wise('mix', color1, color2, c)).map { |c| rt.f32(c) })
                                   color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
                                 else
                                   if rt.bool(rt.binary('==', _u_blendMode, rt.i(15)))
-                                    c1 = rt.component_wise('smoothstep', color1, rt.construct(3, cut), color2)
-                                    c2 = rt.component_wise('smoothstep', color2, rt.construct(3, cut), color1)
+                                    c1 = rt.construct(3, rt.component_wise('smoothstep', color1, rt.construct(3, cut), color2))
+                                    c2 = rt.construct(3, rt.component_wise('smoothstep', color2, rt.construct(3, cut), color1))
                                     color.replace((rt.component_wise('mix', rt.swizzle(c1, 'brg'), rt.swizzle(c2, 'gbr'), rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
                                   end
                                 end
@@ -202,11 +202,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; color1 = nil; color2 = nil; globalCoord = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    color = rt.construct(4, rt.f(0), rt.f(0), rt.f(1), rt.f(1))
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    color1 = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    color2 = rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    color = rt.construct(4, rt.construct(4, rt.f(0), rt.f(0), rt.f(1), rt.f(1)))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    color1 = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    color2 = rt.construct(4, rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
     color = rt.assign_swizzle(color, 'rgb', blend__vec3_vec3.call(rt.swizzle(color1, 'rgb'), rt.swizzle(color2, 'rgb')))
     color = rt.assign_swizzle(color, 'a', rt.component_wise('mix', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a'), rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })

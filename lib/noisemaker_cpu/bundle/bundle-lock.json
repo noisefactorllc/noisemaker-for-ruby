@@ -269,6 +269,26 @@
     "synth/navierStokes:nsSmooth": "c1abd2c369e8fa09236fc25c209f676ec15f3d586588608c772c2f522ea78f8b",
     "synth/navierStokes:ns": "344be324156d3b00b0447db07578899b3a99fe35bd2725cdcd2ad8c6c2f40ee3",
     "synth/reactionDiffusion:rdFb": "8e7de4a31b702f86d537b1b617e8ae84adf6e87c3dbe672b64f9b0d2eb8ad211",
-    "synth/reactionDiffusion:rd": "c78fab0071794bbf4dd7fe4d098819da411364d235e547bf16ca1714cdf02bd4"
+    "synth/reactionDiffusion:rd": "c78fab0071794bbf4dd7fe4d098819da411364d235e547bf16ca1714cdf02bd4",
+    "classicNoisedeck/noise3d:noise3d": "2a8861aeb595637924f3072f500fcccf45e9dbe9f3e6cd68c6cc1118ef9fd856",
+    "classicNoisedeck/shapes3d:shapes3d": "7604c36139f69851887f74437553638fd6c3cd552dd056b461571fd03e10f63b",
+    "filter3d/flow3d:agent": "47ce0d7414618d1c6827e3b8b2c78b638ea85b70b7bb93288e020b9036b7d402",
+    "filter3d/flow3d:diffuse": "fc99067442422d16be06007bb6f96b38aaf90b6528aaf42a0f020f20a1fc0251",
+    "filter3d/flow3d:copy": "cf6e856f6e48ce2f93629b6ce917aacd78ff333e88376f74ed5b6d9ae6c32d89",
+    "filter3d/flow3d:blend": "1007a9350b480132170183d9f91cb55670eb448a9320b737be9d00c81310908a",
+    "filter3d/palette3d:palette3d": "865d62119818f48b39044e7bddf5ff3af5c633b5f2b8801dcf825ae6a06ec978",
+    "render/loopBegin:loopBegin": "5e09943e3f5562691973428682239abb4f24bf11561d48cc6a6ee119bcb181cc",
+    "render/loopEnd:copy": "9ea4809b4d6dd93a51dcdc82d206980d0404e9751d7c5af4fe69d2aed1d51718",
+    "render/render3d:render3d": "22c323561fe6421b2f0afd942314f6298e0d66dd53c85477b5e14cee73c39075",
+    "render/renderCubemap3d:renderCubemap3d": "93162b85b7415b2e5886f3fb9d25bdfbd98733a2f28fe917527646bc3a5d4959",
+    "render/renderCubemapSurface:renderCubemapSurface": "68d9e00cf7695461e610e831d4be9ff2ec115ade67909200a8f068cf7f7c040c",
+    "render/renderLit3d:renderLit3d": "28608e1ac25231586e7105fa6fedc0cda3c3f94801c9668b0df9deae722aa5d5",
+    "synth3d/cell3d:precompute": "9a78c0011a65b7b6b94505455ae1924311780bbe8296235595a099a8a1c36c80",
+    "synth3d/cellularAutomata3d:simulate": "d5533f317f8ffe545386591fa317750bdca679402d027740b2d2488978575482",
+    "synth3d/flythrough3d:precompute": "2694825664eef632449b197e1bce585f7878c6358a4d5260c72729b015d02a62",
+    "synth3d/fractal3d:precompute": "8ab3dfe63e16d4406deee719c1f822d405c712bae21bd1348ae5b75b79a14d41",
+    "synth3d/noise3d:precompute": "a34609b241a33e51d1d0fd60ea94b6ef681b37a196efa101c2af4a4f1239b208",
+    "synth3d/reactionDiffusion3d:simulate": "8bd1504a960862595eeeb96c92a42192b5d87ef2df7c45db63f0effa051a8c67",
+    "synth3d/shape3d:precompute": "53b240191c2f0d2e61b5dacecb532ecd3b8aad3973bbf8e38d8712073d50d14f"
   }
 }

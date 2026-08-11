@@ -23,8 +23,8 @@ run_pixel = lambda do |ctx, out|
   convolve__vec2_float_bool = lambda do |uv, _kernel, divide|
     uv = rt.copy(uv, 'float')
     _for0_first = nil; color = nil; conv = nil; i = nil; kernelWeight = nil; localUV = nil; offset = nil; steps = nil
-    localUV = rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')
-    steps = rt.binary('/', rt.f(1), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')
+    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    steps = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
     offset = rt.new_array(rt.i(9), 2)
     offset[(rt.i(0)).to_i] = rt.construct(2, rt.unary('-', rt.swizzle(steps, 'x')), rt.unary('-', rt.swizzle(steps, 'y')))
     offset[(rt.i(1)).to_i] = rt.construct(2, rt.f(0), rt.unary('-', rt.swizzle(steps, 'y')))
@@ -36,7 +36,7 @@ run_pixel = lambda do |ctx, out|
     offset[(rt.i(7)).to_i] = rt.construct(2, rt.f(0), rt.swizzle(steps, 'y'))
     offset[(rt.i(8)).to_i] = rt.construct(2, rt.swizzle(steps, 'x'), rt.swizzle(steps, 'y'))
     kernelWeight = rt.f(0)
-    conv = rt.construct(3, rt.f(0))
+    conv = rt.construct(3, rt.construct(3, rt.f(0)))
     i = rt.i(0)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -47,7 +47,7 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      color = rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', localUV, rt.binary('*', offset[(i).to_i], rt.component_wise('floor', map__float_float_float_float_float.call(_u_amount, rt.f(0), rt.f(100), rt.f(0), rt.f(20))), 2, 'float'), 2, 'float')), 'rgb')
+      color = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', localUV, rt.binary('*', offset[(i).to_i], rt.component_wise('floor', map__float_float_float_float_float.call(_u_amount, rt.f(0), rt.f(100), rt.f(0), rt.f(20))), 2, 'float'), 2, 'float')), 'rgb'))
       conv.replace((rt.binary('+', conv, rt.binary('*', color, _kernel[(i).to_i], 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
       kernelWeight = rt.binary('+', kernelWeight, _kernel[(i).to_i], 1, 'float')
     end
@@ -64,7 +64,7 @@ run_pixel = lambda do |ctx, out|
     color = rt.copy(color, 'float')
     uv = rt.copy(uv, 'float')
     dcolor = nil; deriv_x = nil; s1 = nil
-    dcolor = rt.construct(3, desaturate__vec3.call(color))
+    dcolor = rt.construct(3, rt.construct(3, desaturate__vec3.call(color)))
     deriv_x = rt.new_array(rt.i(9), 1)
     deriv_x[(rt.i(0)).to_i] = rt.f(0)
     deriv_x[(rt.i(1)).to_i] = rt.f(0)
@@ -75,14 +75,14 @@ run_pixel = lambda do |ctx, out|
     deriv_x[(rt.i(6)).to_i] = rt.f(0)
     deriv_x[(rt.i(7)).to_i] = rt.f(0)
     deriv_x[(rt.i(8)).to_i] = rt.f(0)
-    s1 = convolve__vec2_float_bool.call(uv, deriv_x, divide)
+    s1 = rt.construct(3, convolve__vec2_float_bool.call(uv, deriv_x, divide))
     return s1
   end
   derivY__vec3_vec2_bool = lambda do |color, uv, divide|
     color = rt.copy(color, 'float')
     uv = rt.copy(uv, 'float')
     dcolor = nil; deriv_y = nil; s2 = nil
-    dcolor = rt.construct(3, desaturate__vec3.call(color))
+    dcolor = rt.construct(3, rt.construct(3, desaturate__vec3.call(color)))
     deriv_y = rt.new_array(rt.i(9), 1)
     deriv_y[(rt.i(0)).to_i] = rt.f(0)
     deriv_y[(rt.i(1)).to_i] = rt.f(0)
@@ -93,7 +93,7 @@ run_pixel = lambda do |ctx, out|
     deriv_y[(rt.i(6)).to_i] = rt.f(0)
     deriv_y[(rt.i(7)).to_i] = rt.unary('-', rt.f(1))
     deriv_y[(rt.i(8)).to_i] = rt.f(0)
-    s2 = convolve__vec2_float_bool.call(uv, deriv_y, divide)
+    s2 = rt.construct(3, convolve__vec2_float_bool.call(uv, deriv_y, divide))
     return s2
   end
   periodicFunction__float = lambda do |p|
@@ -200,11 +200,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     brightness = nil; color = nil; displacement = nil; globalCoord = nil; inputColor = nil; localUV = nil; maxDisplacement = nil; uv = nil; warpedLocalUV = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    color = rt.construct(4, rt.f(0))
-    localUV = rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')
-    inputColor = rt.texture(_u_inputTex, localUV)
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    color = rt.construct(4, rt.construct(4, rt.f(0)))
+    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    inputColor = rt.construct(4, rt.texture(_u_inputTex, localUV))
     brightness = rt.binary('+', desaturate__vec3.call(rt.swizzle(inputColor, 'rgb')), rt.binary('/', _u_direction, rt.f(360), 1, 'float'), 1, 'float')
     displacement = rt.binary('*', _u_amount, rt.f(0.01), 1, 'float')
     maxDisplacement = rt.f(0.0)
@@ -232,7 +232,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    warpedLocalUV = rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')
+    warpedLocalUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
     color.replace((rt.texture(_u_inputTex, warpedLocalUV)).map { |c| rt.f32(c) })
     color = rt.assign_swizzle(color, 'rgb', blend__vec4_vec4.call(inputColor, color))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })

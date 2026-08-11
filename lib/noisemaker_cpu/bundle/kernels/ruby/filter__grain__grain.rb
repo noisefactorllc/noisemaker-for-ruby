@@ -92,11 +92,11 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     freq = rt.copy(freq, 'float')
     angle = nil; bl = nil; bottom = nil; br = nil; cell = nil; cell_f = nil; frac = nil; scaled_freq = nil; scaled_uv = nil; slice0 = nil; slice1 = nil; slice2 = nil; slice3 = nil; time_cell = nil; time_coord = nil; time_floor = nil; time_frac = nil; tl = nil; top = nil; tr = nil; weight_x = nil; weight_y = nil
-    scaled_freq = rt.component_wise('max', freq, rt.construct(2, rt.f(1), rt.f(1)))
-    scaled_uv = rt.binary('*', uv, scaled_freq, 2, 'float')
-    cell_f = rt.component_wise('floor', scaled_uv)
+    scaled_freq = rt.construct(2, rt.component_wise('max', freq, rt.construct(2, rt.f(1), rt.f(1))))
+    scaled_uv = rt.construct(2, rt.binary('*', uv, scaled_freq, 2, 'float'))
+    cell_f = rt.construct(2, rt.component_wise('floor', scaled_uv))
     cell = rt.construct(2, rt.construct(1, rt.swizzle(cell_f, 'x'), 'int'), rt.construct(1, rt.swizzle(cell_f, 'y'), 'int'), 'int')
-    frac = rt.component_wise('fract', scaled_uv)
+    frac = rt.construct(2, rt.component_wise('fract', scaled_uv))
     angle = rt.binary('*', time_value, g['TAU'], 1, 'float')
     time_coord = rt.binary('*', rt.component_wise('cos', angle), speed_value, 1, 'float')
     time_floor = rt.component_wise('floor', time_coord)
@@ -161,15 +161,15 @@ run_pixel = lambda do |ctx, out|
     freq = nil; height = nil; uv = nil; width = nil
     width = rt.component_wise('max', rt.swizzle(dims, 'x'), rt.f(1))
     height = rt.component_wise('max', rt.swizzle(dims, 'y'), rt.f(1))
-    uv = rt.construct(2, rt.binary('/', rt.construct(1, rt.swizzle(pixel_coords, 'x')), width, 1, 'float'), rt.binary('/', rt.construct(1, rt.swizzle(pixel_coords, 'y')), height, 1, 'float'))
-    freq = rt.construct(2, width, height)
+    uv = rt.construct(2, rt.construct(2, rt.binary('/', rt.construct(1, rt.swizzle(pixel_coords, 'x')), width, 1, 'float'), rt.binary('/', rt.construct(1, rt.swizzle(pixel_coords, 'y')), height, 1, 'float')))
+    freq = rt.construct(2, rt.construct(2, width, height))
     return sample_value_noise__vec2_vec2_uint_float_float_uint.call(uv, freq, g['BASE_SEED'], time_value, speed_value, g['INTERPOLATION_BICUBIC'])
   end
   main__void = lambda do
     blend_alpha = nil; coords = nil; effective_time = nil; globalCoord = nil; global_id = nil; global_pixel = nil; mixed_rgb = nil; noise_rgb = nil; noise_value = nil; res = nil; rs = nil; texel = nil; u_height = nil; u_width = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     global_id = rt.construct(3, rt.construct(1, rt.swizzle(ctx.frag_coord, 'x'), 'uint'), rt.construct(1, rt.swizzle(ctx.frag_coord, 'y'), 'uint'), rt.i(0), 'uint')
-    res = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution))
+    res = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
     u_width = rt.component_wise('max', as_u32__float.call(rt.swizzle(res, 'x')), rt.i(1))
     u_height = rt.component_wise('max', as_u32__float.call(rt.swizzle(res, 'y')), rt.i(1))
     global_pixel = rt.construct(2, rt.construct(1, rt.binary('+', rt.swizzle(ctx.frag_coord, 'x'), rt.swizzle(_u_tileOffset, 'x'), 1, 'float'), 'uint'), rt.construct(1, rt.binary('+', rt.swizzle(ctx.frag_coord, 'y'), rt.swizzle(_u_tileOffset, 'y'), 1, 'float'), 'uint'), 'uint')
@@ -177,7 +177,7 @@ run_pixel = lambda do |ctx, out|
       return
     end
     coords = rt.construct(2, rt.construct(1, rt.swizzle(global_id, 'x'), 'int'), rt.construct(1, rt.swizzle(global_id, 'y'), 'int'), 'int')
-    texel = rt.texel_fetch(_u_inputTex, coords, rt.i(0))
+    texel = rt.construct(4, rt.texel_fetch(_u_inputTex, coords, rt.i(0)))
     blend_alpha = rt.component_wise('clamp', _u_alpha, rt.f(0), rt.f(1))
     if rt.bool(rt.binary('<=', blend_alpha, rt.f(0)))
       g['fragColor'].replace((texel).map { |c| rt.f32(c) })
@@ -186,8 +186,8 @@ run_pixel = lambda do |ctx, out|
     effective_time = (rt.bool(rt.binary('>', _u_pause, rt.f(0.5))) ? (rt.f(0)) : (_u_time))
     rs = rt.component_wise('max', _u_renderScale, rt.f(1))
     noise_value = sample_grain_noise__uvec2_vec2_float_float.call(global_pixel, rt.construct(2, rt.binary('/', rt.construct(1, u_width), rs, 1, 'float'), rt.binary('/', rt.construct(1, u_height), rs, 1, 'float')), effective_time, rt.f(100))
-    noise_rgb = rt.construct(3, noise_value)
-    mixed_rgb = rt.component_wise('mix', rt.swizzle(texel, 'rgb'), noise_rgb, blend_alpha)
+    noise_rgb = rt.construct(3, rt.construct(3, noise_value))
+    mixed_rgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(texel, 'rgb'), noise_rgb, blend_alpha))
     g['fragColor'].replace((rt.construct(4, clamp01__float.call(rt.swizzle(mixed_rgb, 'x')), clamp01__float.call(rt.swizzle(mixed_rgb, 'y')), clamp01__float.call(rt.swizzle(mixed_rgb, 'z')), rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

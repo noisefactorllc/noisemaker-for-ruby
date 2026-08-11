@@ -84,16 +84,16 @@ run_pixel = lambda do |ctx, out|
   end
   luminance_at__int_int_int_int = lambda do |x, y, width, height|
     texel = nil
-    texel = fetch_texel__int_int_int_int.call(x, y, width, height)
+    texel = rt.construct(4, fetch_texel__int_int_int_int.call(x, y, width, height))
     return oklab_l__vec3.call(rt.swizzle(texel, 'xyz'))
   end
   main__void = lambda do
     _u = nil; agent_id = nil; alive = nil; blendFactor = nil; c00 = nil; c01 = nil; c10 = nil; c11 = nil; coord = nil; glen = nil; gx = nil; gy = nil; height = nil; inertia = nil; newPx = nil; newPy = nil; normVx = nil; normVy = nil; px = nil; py = nil; rgba = nil; scale = nil; seed_f = nil; stateSize = nil; targetVx = nil; targetVy = nil; v = nil; vel = nil; vx = nil; vy = nil; vz = nil; weightBlend = nil; width = nil; x = nil; x1i = nil; xi = nil; xyz = nil; y = nil; y1i = nil; yi = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
-    xyz = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
-    vel = rt.texel_fetch(_u_velTex, coord, rt.i(0))
-    rgba = rt.texel_fetch(_u_rgbaTex, coord, rt.i(0))
+    xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
+    vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
+    rgba = rt.construct(4, rt.texel_fetch(_u_rgbaTex, coord, rt.i(0)))
     px = rt.swizzle(xyz, 'x')
     py = rt.swizzle(xyz, 'y')
     alive = rt.swizzle(xyz, 'w')

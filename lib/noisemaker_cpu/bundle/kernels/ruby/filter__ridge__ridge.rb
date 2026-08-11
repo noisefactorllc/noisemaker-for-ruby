@@ -14,17 +14,17 @@ run_pixel = lambda do |ctx, out|
     value = rt.copy(value, 'float')
     denom = nil; result = nil
     denom = rt.component_wise('max', lvl, rt.binary('-', rt.f(1), lvl, 1, 'float'))
-    result = rt.binary('-', rt.construct(4, rt.f(1)), rt.binary('/', rt.component_wise('abs', rt.binary('-', value, rt.construct(4, lvl), 4, 'float')), denom, 4, 'float'), 4, 'float')
+    result = rt.construct(4, rt.binary('-', rt.construct(4, rt.f(1)), rt.binary('/', rt.component_wise('abs', rt.binary('-', value, rt.construct(4, lvl), 4, 'float')), denom, 4, 'float'), 4, 'float'))
     return rt.component_wise('clamp', result, rt.construct(4, rt.f(0)), rt.construct(4, rt.f(1)))
   end
   main__void = lambda do
     dims = nil; globalCoord = nil; out_color = nil; ridged = nil; texel = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     dims = rt.texture_size(_u_inputTex)
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, dims), 2, 'float')
-    texel = rt.texture(_u_inputTex, uv)
-    ridged = ridge_transform__vec4_float.call(texel, _u_level)
-    out_color = rt.construct(4, rt.swizzle(ridged, 'xyz'), rt.f(1))
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, dims), 2, 'float'))
+    texel = rt.construct(4, rt.texture(_u_inputTex, uv))
+    ridged = rt.construct(4, ridge_transform__vec4_float.call(texel, _u_level))
+    out_color = rt.construct(4, rt.construct(4, rt.swizzle(ridged, 'xyz'), rt.f(1)))
     g['fragColor'].replace((out_color).map { |c| rt.f32(c) })
   end
   main__void.call

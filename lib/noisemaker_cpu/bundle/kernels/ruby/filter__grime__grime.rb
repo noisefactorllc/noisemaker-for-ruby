@@ -57,13 +57,13 @@ run_pixel = lambda do |ctx, out|
   value_noise__vec2_float = lambda do |coord, s|
     coord = rt.copy(coord, 'float')
     bl = nil; br = nil; cell = nil; f = nil; st = nil; tl = nil; tr = nil
-    cell = rt.component_wise('floor', coord)
-    f = rt.component_wise('fract', coord)
+    cell = rt.construct(2, rt.component_wise('floor', coord))
+    f = rt.construct(2, rt.component_wise('fract', coord))
     tl = hash31__vec3.call(rt.construct(3, cell, s))
     tr = hash31__vec3.call(rt.construct(3, rt.binary('+', cell, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float'), s))
     bl = hash31__vec3.call(rt.construct(3, rt.binary('+', cell, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float'), s))
     br = hash31__vec3.call(rt.construct(3, rt.binary('+', cell, rt.construct(2, rt.f(1), rt.f(1)), 2, 'float'), s))
-    st = rt.construct(2, fade__float.call(rt.swizzle(f, 'x')), fade__float.call(rt.swizzle(f, 'y')))
+    st = rt.construct(2, rt.construct(2, fade__float.call(rt.swizzle(f, 'x')), fade__float.call(rt.swizzle(f, 'y'))))
     return rt.component_wise('mix', rt.component_wise('mix', tl, tr, rt.swizzle(st, 'x')), rt.component_wise('mix', bl, br, rt.swizzle(st, 'x')), rt.swizzle(st, 'y'))
   end
   seed_offset__float = lambda do |s|
@@ -91,7 +91,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       os = rt.binary('+', s, rt.binary('*', rt.construct(1, i), rt.f(37.109999999999999), 1, 'float'), 1, 'float')
-      off = rt.binary('/', seed_offset__float.call(os), freq, 2, 'float')
+      off = rt.construct(2, rt.binary('/', seed_offset__float.call(os), freq, 2, 'float'))
       accum = rt.binary('+', accum, rt.binary('*', value_noise__vec2_float.call(rt.binary('+', rt.binary('*', uv, freq, 2, 'float'), off, 2, 'float'), os), amp, 1, 'float'), 1, 'float')
       total = rt.binary('+', total, amp, 1, 'float')
       freq.replace((rt.binary('*', freq, rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
@@ -106,7 +106,7 @@ run_pixel = lambda do |ctx, out|
     base_mask = nil; off_mask = nil; off_vec = nil
     base_mask = simple_multires__vec2_vec2_float.call(uv, base_freq, s)
     off_mask = simple_multires__vec2_vec2_float.call(rt.component_wise('fract', rt.binary('+', uv, rt.f(0.5), 2, 'float')), base_freq, rt.binary('+', s, rt.f(19), 1, 'float'))
-    off_vec = rt.construct(2, rt.binary('*', rt.binary('*', rt.binary('-', rt.binary('*', base_mask, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), disp, 1, 'float'), rt.swizzle(px, 'x'), 1, 'float'), rt.binary('*', rt.binary('*', rt.binary('-', rt.binary('*', off_mask, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), disp, 1, 'float'), rt.swizzle(px, 'y'), 1, 'float'))
+    off_vec = rt.construct(2, rt.construct(2, rt.binary('*', rt.binary('*', rt.binary('-', rt.binary('*', base_mask, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), disp, 1, 'float'), rt.swizzle(px, 'x'), 1, 'float'), rt.binary('*', rt.binary('*', rt.binary('-', rt.binary('*', off_mask, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), disp, 1, 'float'), rt.swizzle(px, 'y'), 1, 'float')))
     return simple_multires__vec2_vec2_float.call(rt.component_wise('fract', rt.binary('+', uv, off_vec, 2, 'float')), base_freq, rt.binary('+', s, rt.f(41), 1, 'float'))
   end
   chebyshev_gradient__vec2_vec2_vec2_float_float = lambda do |uv, base_freq, px, disp, s|
@@ -114,8 +114,8 @@ run_pixel = lambda do |ctx, out|
     base_freq = rt.copy(base_freq, 'float')
     px = rt.copy(px, 'float')
     _u = nil; d = nil; dx = nil; dy = nil; l = nil; ox = nil; oy = nil; r = nil
-    ox = rt.construct(2, rt.swizzle(px, 'x'), rt.f(0))
-    oy = rt.construct(2, rt.f(0), rt.swizzle(px, 'y'))
+    ox = rt.construct(2, rt.construct(2, rt.swizzle(px, 'x'), rt.f(0)))
+    oy = rt.construct(2, rt.construct(2, rt.f(0), rt.swizzle(px, 'y')))
     r = refracted_field__vec2_vec2_vec2_float_float.call(rt.component_wise('fract', rt.binary('+', uv, ox, 2, 'float')), base_freq, px, disp, s)
     l = refracted_field__vec2_vec2_vec2_float_float.call(rt.component_wise('fract', rt.binary('-', uv, ox, 2, 'float')), base_freq, px, disp, s)
     _u = refracted_field__vec2_vec2_vec2_float_float.call(rt.component_wise('fract', rt.binary('+', uv, oy, 2, 'float')), base_freq, px, disp, s)
@@ -128,7 +128,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     freq = rt.copy(freq, 'float')
     off = nil
-    off = seed_offset__float.call(rt.binary('+', s, rt.f(7), 1, 'float'))
+    off = rt.construct(2, seed_offset__float.call(rt.binary('+', s, rt.f(7), 1, 'float')))
     return rt.component_wise('pow', clamp01__float.call(value_noise__vec2_float.call(rt.binary('+', rt.binary('*', uv, freq, 2, 'float'), off, 2, 'float'), rt.binary('+', s, rt.f(13), 1, 'float'))), rt.f(4))
   end
   refracted_exponential__vec2_vec2_vec2_float_float = lambda do |uv, freq, px, disp, s|
@@ -139,26 +139,26 @@ run_pixel = lambda do |ctx, out|
     base = exponential_noise__vec2_vec2_float.call(uv, freq, s)
     ox = exponential_noise__vec2_vec2_float.call(uv, freq, rt.binary('+', s, rt.f(23), 1, 'float'))
     oy = exponential_noise__vec2_vec2_float.call(rt.component_wise('fract', rt.binary('+', uv, rt.f(0.5), 2, 'float')), freq, rt.binary('+', s, rt.f(47), 1, 'float'))
-    off_vec = rt.construct(2, rt.binary('*', rt.binary('*', rt.binary('-', rt.binary('*', ox, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), disp, 1, 'float'), rt.swizzle(px, 'x'), 1, 'float'), rt.binary('*', rt.binary('*', rt.binary('-', rt.binary('*', oy, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), disp, 1, 'float'), rt.swizzle(px, 'y'), 1, 'float'))
+    off_vec = rt.construct(2, rt.construct(2, rt.binary('*', rt.binary('*', rt.binary('-', rt.binary('*', ox, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), disp, 1, 'float'), rt.swizzle(px, 'x'), 1, 'float'), rt.binary('*', rt.binary('*', rt.binary('-', rt.binary('*', oy, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), disp, 1, 'float'), rt.swizzle(px, 'y'), 1, 'float')))
     warped = exponential_noise__vec2_vec2_float.call(rt.component_wise('fract', rt.binary('+', uv, off_vec, 2, 'float')), freq, rt.binary('+', s, rt.f(59), 1, 'float'))
     return clamp01__float.call(rt.binary('*', rt.binary('+', base, warped, 1, 'float'), rt.f(0.5), 1, 'float'))
   end
   main__void = lambda do
     base_color = nil; blend_mask = nil; dropout = nil; dusty = nil; final_rgb = nil; freq_mask = nil; freq_specks = nil; globalCoord = nil; globalUV = nil; mask_gradient = nil; mask_power = nil; mask_refracted = nil; mask_value = nil; px = nil; s = nil; sparse_mask = nil; sparse_noise = nil; specks = nil; specks_field = nil; str = nil; tileSize = nil; trimmed = nil
-    tileSize = rt.construct(2, rt.texture_size(_u_inputTex))
-    globalCoord = rt.binary('+', rt.binary('*', ctx.uv, tileSize, 2, 'float'), _u_tileOffset, 2, 'float')
-    globalUV = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    px = rt.binary('/', rt.f(1), _u_fullResolution, 2, 'float')
-    base_color = rt.texture(_u_inputTex, ctx.uv)
+    tileSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
+    globalCoord = rt.construct(2, rt.binary('+', rt.binary('*', ctx.uv, tileSize, 2, 'float'), _u_tileOffset, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    px = rt.construct(2, rt.binary('/', rt.f(1), _u_fullResolution, 2, 'float'))
+    base_color = rt.construct(4, rt.texture(_u_inputTex, ctx.uv))
     str = rt.component_wise('max', _u_strength, rt.f(0))
     s = _u_seed
-    freq_mask = freq_for_shape__float_float_float.call(rt.f(5), rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
+    freq_mask = rt.construct(2, freq_for_shape__float_float_float.call(rt.f(5), rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))
     mask_refracted = refracted_field__vec2_vec2_vec2_float_float.call(globalUV, freq_mask, px, rt.f(1), rt.binary('+', s, rt.f(11), 1, 'float'))
     mask_gradient = chebyshev_gradient__vec2_vec2_vec2_float_float.call(globalUV, freq_mask, px, rt.f(1), rt.binary('+', s, rt.f(11), 1, 'float'))
     mask_value = clamp01__float.call(rt.component_wise('mix', mask_refracted, mask_gradient, rt.f(0.125)))
     mask_power = clamp01__float.call(rt.binary('*', rt.binary('*', mask_value, mask_value, 1, 'float'), rt.f(0.40000000000000002), 1, 'float'))
-    dusty = rt.component_wise('mix', rt.swizzle(base_color, 'rgb'), rt.construct(3, rt.f(0.14999999999999999)), mask_power)
-    freq_specks = rt.binary('*', _u_fullResolution, rt.f(0.10000000000000001), 2, 'float')
+    dusty = rt.construct(3, rt.component_wise('mix', rt.swizzle(base_color, 'rgb'), rt.construct(3, rt.f(0.14999999999999999)), mask_power))
+    freq_specks = rt.construct(2, rt.binary('*', _u_fullResolution, rt.f(0.10000000000000001), 2, 'float'))
     dropout = (rt.bool(rt.binary('<', hash21__vec2.call(rt.binary('+', rt.binary('*', globalUV, _u_fullResolution, 2, 'float'), rt.construct(2, rt.binary('+', s, rt.f(37), 1, 'float'), rt.binary('*', s, rt.f(1.3700000000000001), 1, 'float')), 2, 'float')), rt.f(0.40000000000000002))) ? (rt.f(1)) : (rt.f(0)))
     specks_field = rt.binary('*', refracted_exponential__vec2_vec2_vec2_float_float.call(globalUV, freq_specks, px, rt.f(0.25), rt.binary('+', s, rt.f(71), 1, 'float')), dropout, 1, 'float')
     trimmed = clamp01__float.call(rt.binary('/', rt.binary('-', specks_field, rt.f(0.29999999999999999), 1, 'float'), rt.f(0.69999999999999996), 1, 'float'))
@@ -168,7 +168,7 @@ run_pixel = lambda do |ctx, out|
     dusty.replace((rt.component_wise('mix', dusty, rt.construct(3, sparse_noise), rt.f(0.14999999999999999))).map { |c| rt.f32(c) })
     dusty.replace((rt.binary('*', dusty, specks, 3, 'float')).map { |c| rt.f32(c) })
     blend_mask = clamp01__float.call(rt.binary('*', mask_value, str, 1, 'float'))
-    final_rgb = rt.component_wise('mix', rt.swizzle(base_color, 'rgb'), dusty, blend_mask)
+    final_rgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(base_color, 'rgb'), dusty, blend_mask))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', final_rgb, rt.f(0), rt.f(1)), rt.swizzle(base_color, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

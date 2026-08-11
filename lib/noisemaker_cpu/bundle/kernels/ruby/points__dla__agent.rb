@@ -54,14 +54,14 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     coord = nil; dims = nil
     dims = rt.texture_size(_u_gridTex)
-    coord = rt.construct(2, rt.binary('*', wrap01__vec2.call(uv), rt.construct(2, dims), 2, 'float'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.binary('*', wrap01__vec2.call(uv), rt.construct(2, dims), 2, 'float')), 'int')
     return rt.swizzle(rt.texel_fetch(_u_gridTex, coord, rt.i(0)), 'a')
   end
   neighborhood__vec2_float = lambda do |uv, radius|
     uv = rt.copy(uv, 'float')
     accum = nil; gridDims = nil; texel = nil
-    gridDims = rt.construct(2, rt.texture_size(_u_gridTex))
-    texel = rt.binary('/', radius, gridDims, 2, 'float')
+    gridDims = rt.construct(2, rt.construct(2, rt.texture_size(_u_gridTex)))
+    texel = rt.construct(2, rt.binary('/', radius, gridDims, 2, 'float'))
     accum = rt.f(0)
     accum = rt.binary('+', accum, sampleGrid__vec2.call(uv), 1, 'float')
     accum = rt.binary('+', accum, sampleGrid__vec2.call(rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 1, 'float')
@@ -72,12 +72,12 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     agentId = nil; agentRand = nil; alive = nil; attritionRate = nil; candidate = nil; coord = nil; frameSeed = nil; gridDims = nil; here = nil; inputCoord = nil; inputDims = nil; inputDir = nil; inputVal = nil; inputW = nil; local = nil; nearby = nil; needsRespawn = nil; pos = nil; proximity = nil; randomDir = nil; rgba = nil; seed = nil; stateDims = nil; stepDir = nil; stepSize = nil; stuck = nil; texel = nil; vel = nil; xyz = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateDims = rt.texture_size(_u_xyzTex)
-    xyz = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
-    vel = rt.texel_fetch(_u_velTex, coord, rt.i(0))
-    rgba = rt.texel_fetch(_u_rgbaTex, coord, rt.i(0))
-    pos = rt.swizzle(xyz, 'xy')
+    xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
+    vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
+    rgba = rt.construct(4, rt.texel_fetch(_u_rgbaTex, coord, rt.i(0)))
+    pos = rt.construct(2, rt.swizzle(xyz, 'xy'))
     alive = rt.swizzle(xyz, 'w')
     seed = rt.swizzle(vel, 'x')
     agentRand = rt.swizzle(vel, 'w')
@@ -93,11 +93,11 @@ run_pixel = lambda do |ctx, out|
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
       return
     end
-    gridDims = rt.construct(2, rt.texture_size(_u_gridTex))
+    gridDims = rt.construct(2, rt.construct(2, rt.texture_size(_u_gridTex)))
     texel = rt.binary('/', rt.f(1), rt.component_wise('max', rt.swizzle(gridDims, 'x'), rt.swizzle(gridDims, 'y')), 1, 'float')
     local = neighborhood__vec2_float.call(pos, rt.f(2))
     proximity = rt.component_wise('smoothstep', rt.f(0.014999999999999999), rt.f(0.12), local)
-    randomDir = (begin _retc, seed = randomDirection__float.call(seed); _retc end)
+    randomDir = rt.construct(2, (begin _retc, seed = randomDirection__float.call(seed); _retc end))
     inputW = rt.binary('/', _u_inputWeight, rt.f(100), 1, 'float')
     stepDir = randomDir
     inputCoord = rt.construct(2, 0.0, 'int')
@@ -106,9 +106,9 @@ run_pixel = lambda do |ctx, out|
     inputVal = rt.construct(4, 0.0)
     if rt.bool(rt.binary('>', inputW, rt.f(0)))
       inputDims = rt.texture_size(_u_inputTex)
-      inputCoord = rt.construct(2, rt.binary('*', wrap01__vec2.call(pos), rt.construct(2, inputDims), 2, 'float'), 'int')
-      inputVal = rt.texel_fetch(_u_inputTex, inputCoord, rt.i(0))
-      inputDir = rt.binary('-', rt.binary('*', rt.swizzle(inputVal, 'xy'), rt.f(2), 2, 'float'), rt.f(1), 2, 'float')
+      inputCoord = rt.construct(2, rt.construct(2, rt.binary('*', wrap01__vec2.call(pos), rt.construct(2, inputDims), 2, 'float')), 'int')
+      inputVal = rt.construct(4, rt.texel_fetch(_u_inputTex, inputCoord, rt.i(0)))
+      inputDir = rt.construct(2, rt.binary('-', rt.binary('*', rt.swizzle(inputVal, 'xy'), rt.f(2), 2, 'float'), rt.f(1), 2, 'float'))
       if rt.bool(rt.binary('>', rt.length(inputDir), rt.f(0.01)))
         inputDir.replace((rt.normalize(inputDir)).map { |c| rt.f32(c) })
         stepDir.replace((rt.normalize(rt.component_wise('mix', randomDir, inputDir, inputW))).map { |c| rt.f32(c) })
@@ -117,7 +117,7 @@ run_pixel = lambda do |ctx, out|
     stepSize = rt.binary('*', rt.binary('*', rt.binary('/', _u_stride, rt.f(10), 1, 'float'), texel, 1, 'float'), rt.component_wise('mix', rt.f(3), rt.f(0.5), proximity), 1, 'float')
     stepDir.replace((rt.binary('+', stepDir, rt.binary('*', (begin _retc, seed = randomDirection__float.call(seed); _retc end), rt.f(0.29999999999999999), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
     stepDir.replace((rt.normalize(stepDir)).map { |c| rt.f32(c) })
-    candidate = wrap01__vec2.call(rt.binary('+', pos, rt.binary('*', stepDir, stepSize, 2, 'float'), 2, 'float'))
+    candidate = rt.construct(2, wrap01__vec2.call(rt.binary('+', pos, rt.binary('*', stepDir, stepSize, 2, 'float'), 2, 'float')))
     here = sampleGrid__vec2.call(candidate)
     nearby = neighborhood__vec2_float.call(candidate, rt.f(1))
     stuck = (rt.bool(rt.binary('>', nearby, rt.f(0.29999999999999999))) && rt.bool(rt.binary('<', here, rt.f(0.5))) ? 1 : 0)

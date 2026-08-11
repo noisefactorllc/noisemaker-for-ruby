@@ -27,7 +27,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     size = rt.copy(size, 'float')
     val = nil
-    val = rt.construct(3, rt.f(0))
+    val = rt.construct(3, rt.construct(3, rt.f(0)))
     val.replace((rt.binary('+', val, rt.binary('*', rt.swizzle(rt.texture(tex, rt.binary('/', rt.binary('+', uv, rt.construct(2, rt.unary('-', rt.i(1)), rt.unary('-', rt.i(1))), 2, 'float'), size, 2, 'float')), 'rgb'), rt.f(0.050000000000000003), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     val.replace((rt.binary('+', val, rt.binary('*', rt.swizzle(rt.texture(tex, rt.binary('/', rt.binary('+', uv, rt.construct(2, rt.i(0), rt.unary('-', rt.i(1))), 2, 'float'), size, 2, 'float')), 'rgb'), rt.f(0.20000000000000001), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     val.replace((rt.binary('+', val, rt.binary('*', rt.swizzle(rt.texture(tex, rt.binary('/', rt.binary('+', uv, rt.construct(2, rt.i(1), rt.unary('-', rt.i(1))), 2, 'float'), size, 2, 'float')), 'rgb'), rt.f(0.050000000000000003), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
@@ -49,14 +49,14 @@ run_pixel = lambda do |ctx, out|
   hash__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     p2 = nil
-    p2 = rt.component_wise('fract', rt.binary('*', p, rt.construct(2, rt.f(0.1031), rt.f(0.10299999999999999)), 2, 'float'))
+    p2 = rt.construct(2, rt.component_wise('fract', rt.binary('*', p, rt.construct(2, rt.f(0.1031), rt.f(0.10299999999999999)), 2, 'float')))
     p2.replace((rt.binary('+', p2, rt.dot(p2, rt.binary('+', rt.swizzle(p2, 'yx'), rt.f(33.329999999999998), 2, 'float')), 2, 'float')).map { |c| rt.f32(c) })
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p2, 'x'), rt.swizzle(p2, 'y'), 1, 'float'), rt.swizzle(p2, 'x'), 1, 'float'))
   end
   main__void = lambda do
     a = nil; a2 = nil; b = nil; b2 = nil; bufferIsEmpty = nil; color = nil; f = nil; k = nil; prevFrame = nil; prevFrameCoord = nil; prevLum = nil; r1 = nil; r2 = nil; s = nil; tex = nil; texSize = nil; val = nil
     texSize = rt.texture_size(_u_bufTex)
-    tex = rt.texture(_u_bufTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
+    tex = rt.construct(4, rt.texture(_u_bufTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float')))
     a = rt.swizzle(tex, 'r')
     b = rt.swizzle(tex, 'g')
     bufferIsEmpty = (rt.bool((rt.bool((rt.bool(rt.binary('==', rt.swizzle(tex, 'r'), rt.f(0))) && rt.bool(rt.binary('==', rt.swizzle(tex, 'g'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(tex, 'b'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(tex, 'a'), rt.f(0))) ? 1 : 0)
@@ -69,9 +69,9 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'].replace((rt.construct(4, a, b, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
       return
     end
-    color = lp__sampler2D_vec2_vec2.call(_u_bufTex, rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize))
-    prevFrameCoord = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float')
-    prevFrame = rt.swizzle(rt.texture(_u_inputTex, prevFrameCoord), 'rgb')
+    color = rt.construct(3, lp__sampler2D_vec2_vec2.call(_u_bufTex, rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize)))
+    prevFrameCoord = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
+    prevFrame = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, prevFrameCoord), 'rgb'))
     prevLum = lum__vec3.call(prevFrame)
     f = rt.binary('*', _u_feed, rt.f(0.001), 1, 'float')
     k = rt.binary('*', _u_kill, rt.f(0.001), 1, 'float')

@@ -18,16 +18,16 @@ run_pixel = lambda do |ctx, out|
   hash12__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     p3 = nil
-    p3 = rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.f(0.1031), 3, 'float'))
+    p3 = rt.construct(3, rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.f(0.1031), 3, 'float')))
     p3.replace((rt.binary('+', p3, rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.329999999999998), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float'), rt.swizzle(p3, 'z'), 1, 'float'))
   end
   vnoise__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     _u = nil; f = nil; i = nil
-    i = rt.component_wise('floor', p)
-    f = rt.component_wise('fract', p)
-    _u = rt.binary('*', rt.binary('*', f, f, 2, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 2, 'float'), 2, 'float'), 2, 'float')
+    i = rt.construct(2, rt.component_wise('floor', p))
+    f = rt.construct(2, rt.component_wise('fract', p))
+    _u = rt.construct(2, rt.binary('*', rt.binary('*', f, f, 2, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 2, 'float'), 2, 'float'), 2, 'float'))
     return rt.component_wise('mix', rt.component_wise('mix', hash12__vec2.call(i), hash12__vec2.call(rt.binary('+', i, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float')), rt.swizzle(_u, 'x')), rt.component_wise('mix', hash12__vec2.call(rt.binary('+', i, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float')), hash12__vec2.call(rt.binary('+', i, rt.construct(2, rt.f(1), rt.f(1)), 2, 'float')), rt.swizzle(_u, 'x')), rt.swizzle(_u, 'y'))
   end
   fbm__vec2 = lambda do |p|
@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
   lumGradientFlat__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     _t = nil; b = nil; bl = nil; br = nil; l = nil; px = nil; r = nil; tl = nil; tr = nil
-    px = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
+    px = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
     tl = lum__vec3.call(rt.swizzle(rt.texture(_u_flatTex, rt.binary('+', uv, rt.binary('*', px, rt.construct(2, rt.unary('-', rt.f(1)), rt.f(1)), 2, 'float'), 2, 'float')), 'rgb'))
     l = lum__vec3.call(rt.swizzle(rt.texture(_u_flatTex, rt.binary('+', uv, rt.binary('*', px, rt.construct(2, rt.unary('-', rt.f(1)), rt.f(0)), 2, 'float'), 2, 'float')), 'rgb'))
     bl = lum__vec3.call(rt.swizzle(rt.texture(_u_flatTex, rt.binary('+', uv, rt.binary('*', px, rt.construct(2, rt.unary('-', rt.f(1)), rt.unary('-', rt.f(1))), 2, 'float'), 2, 'float')), 'rgb'))
@@ -72,8 +72,8 @@ run_pixel = lambda do |ctx, out|
   tent3x3__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     _for1_first = nil; _for2_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
-    px = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
-    sum = rt.construct(3, rt.f(0))
+    px = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
+    sum = rt.construct(3, rt.construct(3, rt.f(0)))
     wsum = rt.f(0)
     dy = rt.unary('-', rt.i(1))
     _for1_first = true
@@ -124,23 +124,23 @@ run_pixel = lambda do |ctx, out|
       return c
     else
       if rt.bool(rt.binary('==', _u__MODE, rt.i(1)))
-        blurred = tent3x3__vec2.call(uv)
+        blurred = rt.construct(3, tent3x3__vec2.call(uv))
         return rt.binary('+', c, rt.binary('*', rt.binary('-', c, blurred, 3, 'float'), rt.binary('/', _u_detail, rt.f(25), 1, 'float'), 3, 'float'), 3, 'float')
       else
         if rt.bool(rt.binary('==', _u__MODE, rt.i(2)))
           levels = rt.component_wise('floor', rt.binary('+', rt.component_wise('mix', rt.f(8), rt.f(3), rt.binary('/', _u_detail, rt.f(100), 1, 'float')), rt.f(0.5), 1, 'float'))
-          poster = rt.binary('/', rt.component_wise('floor', rt.binary('*', c, levels, 3, 'float')), levels, 3, 'float')
+          poster = rt.construct(3, rt.binary('/', rt.component_wise('floor', rt.binary('*', c, levels, 3, 'float')), levels, 3, 'float'))
           gradMag = rt.length(lumGradientFlat__vec2.call(uv))
           edgeDarken = rt.binary('*', rt.component_wise('clamp', rt.binary('*', gradMag, rt.f(1.5), 1, 'float'), rt.f(0), rt.f(1)), rt.f(0.14999999999999999), 1, 'float')
           return rt.binary('*', poster, rt.binary('-', rt.f(1), edgeDarken, 1, 'float'), 3, 'float')
         else
           if rt.bool(rt.binary('==', _u__MODE, rt.i(3)))
             gradMag = rt.length(lumGradientFlat__vec2.call(uv))
-            darkened = rt.binary('*', c, rt.binary('-', rt.f(1), rt.binary('*', rt.binary('*', rt.f(0.59999999999999998), rt.binary('/', _u_detail, rt.f(100), 1, 'float'), 1, 'float'), gradMag, 1, 'float'), 1, 'float'), 3, 'float')
+            darkened = rt.construct(3, rt.binary('*', c, rt.binary('-', rt.f(1), rt.binary('*', rt.binary('*', rt.f(0.59999999999999998), rt.binary('/', _u_detail, rt.f(100), 1, 'float'), 1, 'float'), gradMag, 1, 'float'), 1, 'float'), 3, 'float'))
             return rt.construct(3, sCurve__float.call(rt.swizzle(darkened, 'r')), sCurve__float.call(rt.swizzle(darkened, 'g')), sCurve__float.call(rt.swizzle(darkened, 'b')))
           else
             if rt.bool(rt.binary('==', _u__MODE, rt.i(4)))
-              blurred = tent3x3__vec2.call(uv)
+              blurred = rt.construct(3, tent3x3__vec2.call(uv))
               return rt.component_wise('mix', c, blurred, rt.binary('/', _u_detail, rt.f(100), 1, 'float'))
             else
               band = fbm__vec2.call(rt.binary('/', rt.binary('+', globalCoord, rt.binary('*', rt.construct(1, _u_seed), rt.f(37), 1, 'float'), 2, 'float'), rt.binary('+', rt.f(4), _u_size, 1, 'float'), 2, 'float'))
@@ -154,12 +154,12 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     c = nil; globalCoord = nil; grained = nil; outc = nil; src = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    src = rt.texture(_u_inputTex, uv)
-    c = rt.swizzle(rt.texture(_u_flatTex, uv), 'rgb')
-    globalCoord = rt.binary('+', rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'xy')), _u_tileOffset, 2, 'float')
-    outc = modeColor__vec2_vec3_vec2.call(uv, c, globalCoord)
-    grained = rt.binary('*', outc, rt.binary('+', rt.f(0.84999999999999998), rt.binary('*', rt.f(0.29999999999999999), vnoise__vec2.call(rt.binary('/', globalCoord, rt.f(2), 2, 'float')), 1, 'float'), 1, 'float'), 3, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    src = rt.construct(4, rt.texture(_u_inputTex, uv))
+    c = rt.construct(3, rt.swizzle(rt.texture(_u_flatTex, uv), 'rgb'))
+    globalCoord = rt.construct(2, rt.binary('+', rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'xy')), _u_tileOffset, 2, 'float'))
+    outc = rt.construct(3, modeColor__vec2_vec3_vec2.call(uv, c, globalCoord))
+    grained = rt.construct(3, rt.binary('*', outc, rt.binary('+', rt.f(0.84999999999999998), rt.binary('*', rt.f(0.29999999999999999), vnoise__vec2.call(rt.binary('/', globalCoord, rt.f(2), 2, 'float')), 1, 'float'), 1, 'float'), 3, 'float'))
     outc.replace((rt.component_wise('mix', outc, grained, rt.binary('*', rt.binary('/', _u_textureAmount, rt.f(100), 1, 'float'), rt.f(0.5), 1, 'float'))).map { |c| rt.f32(c) })
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', outc, rt.f(0), rt.f(1)), rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end

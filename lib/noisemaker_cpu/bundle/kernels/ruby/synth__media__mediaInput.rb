@@ -184,7 +184,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    text = rt.texture(_u_imageTex, st)
+    text = rt.construct(4, rt.texture(_u_imageTex, st))
     if rt.bool((rt.bool((rt.bool((rt.bool(rt.binary('<', rt.swizzle(st, 'x'), rt.f(0))) || rt.bool(rt.binary('>', rt.swizzle(st, 'x'), rt.f(1))) ? 1 : 0)) || rt.bool(rt.binary('<', rt.swizzle(st, 'y'), rt.f(0))) ? 1 : 0)) || rt.bool(rt.binary('>', rt.swizzle(st, 'y'), rt.f(1))) ? 1 : 0))
       return rt.construct(4, _u_bgColor, _u_bgAlpha)
     end
@@ -195,7 +195,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     st = nil
-    st = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
+    st = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
     st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.f(1), rt.swizzle(st, 'y'), 1, 'float'))
     g['fragColor'].replace((getImage__vec2.call(st)).map { |c| rt.f32(c) })
   end

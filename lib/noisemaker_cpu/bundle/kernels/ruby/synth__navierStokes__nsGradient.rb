@@ -12,16 +12,16 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _u = nil; fragCoord = nil; grad = nil; here = nil; pB = nil; pL = nil; pR = nil; pT = nil; texSize = nil; texel = nil; uv = nil
     texSize = rt.texture_size(_u_velTex)
-    fragCoord = rt.swizzle(ctx.frag_coord, 'xy')
-    texel = rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float')
-    uv = rt.binary('/', fragCoord, rt.construct(2, texSize), 2, 'float')
+    fragCoord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'))
+    texel = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', fragCoord, rt.construct(2, texSize), 2, 'float'))
     pR = rt.swizzle(rt.texture(_u_pressureTex, rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
     pL = rt.swizzle(rt.texture(_u_pressureTex, rt.binary('-', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
     pT = rt.swizzle(rt.texture(_u_pressureTex, rt.binary('+', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')
     pB = rt.swizzle(rt.texture(_u_pressureTex, rt.binary('-', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')
-    grad = rt.binary('*', rt.f(0.5), rt.construct(2, rt.binary('-', pR, pL, 1, 'float'), rt.binary('-', pT, pB, 1, 'float')), 2, 'float')
-    here = rt.texture(_u_velTex, uv)
-    _u = rt.binary('-', rt.swizzle(here, 'rg'), grad, 2, 'float')
+    grad = rt.construct(2, rt.binary('*', rt.f(0.5), rt.construct(2, rt.binary('-', pR, pL, 1, 'float'), rt.binary('-', pT, pB, 1, 'float')), 2, 'float'))
+    here = rt.construct(4, rt.texture(_u_velTex, uv))
+    _u = rt.construct(2, rt.binary('-', rt.swizzle(here, 'rg'), grad, 2, 'float'))
     g['fragColor'].replace((rt.construct(4, _u, rt.swizzle(here, 'b'), rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

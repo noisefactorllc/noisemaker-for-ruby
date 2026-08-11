@@ -13,12 +13,12 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; acc = nil; hi = nil; i = nil; lo = nil; o = nil; r = nil; sD = nil; sU = nil; texel = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    acc = rt.texture(_u_inputTex, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    acc = rt.construct(4, rt.texture(_u_inputTex, uv))
     r = rt.f(0.0)
     texel = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u__SHAPE, rt.i(0)))
-      texel = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
+      texel = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
       r = rt.component_wise('min', _u_radius, rt.f(32))
       i = rt.i(1)
       _for0_first = true
@@ -33,11 +33,11 @@ run_pixel = lambda do |ctx, out|
         if rt.bool(rt.binary('>', rt.construct(1, i), r))
           break
         end
-        o = rt.binary('*', rt.construct(2, rt.f(0), rt.construct(1, i)), texel, 2, 'float')
-        sD = rt.texture(_u_inputTex, rt.binary('-', uv, o, 2, 'float'))
-        sU = rt.texture(_u_inputTex, rt.binary('+', uv, o, 2, 'float'))
-        hi = rt.component_wise('max', acc, rt.component_wise('max', sD, sU))
-        lo = rt.component_wise('min', acc, rt.component_wise('min', sD, sU))
+        o = rt.construct(2, rt.binary('*', rt.construct(2, rt.f(0), rt.construct(1, i)), texel, 2, 'float'))
+        sD = rt.construct(4, rt.texture(_u_inputTex, rt.binary('-', uv, o, 2, 'float')))
+        sU = rt.construct(4, rt.texture(_u_inputTex, rt.binary('+', uv, o, 2, 'float')))
+        hi = rt.construct(4, rt.component_wise('max', acc, rt.component_wise('max', sD, sU)))
+        lo = rt.construct(4, rt.component_wise('min', acc, rt.component_wise('min', sD, sU)))
         acc.replace((rt.component_wise('mix', hi, lo, rt.construct(1, _u_mode))).map { |c| rt.f32(c) })
       end
     end

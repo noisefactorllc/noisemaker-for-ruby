@@ -151,7 +151,7 @@ run_pixel = lambda do |ctx, out|
     reDF = rt.copy(reDF, 'float')
     imDF = rt.copy(imDF, 'float')
     angle = nil; cs = nil; scale = nil; sn = nil; uv = nil
-    uv = rt.binary('/', rt.binary('-', fragCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.binary('-', fragCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', _u_rotation), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
     cs = rt.component_wise('cos', angle)
     sn = rt.component_wise('sin', angle)
@@ -169,14 +169,14 @@ run_pixel = lambda do |ctx, out|
     r = [rt.f(0.0), rt.f(0.0), rt.f(0.0), rt.f(0.0), rt.f(0.0), rt.f(0.0), rt.f(0.0)]
     zRe = z0Re
     zIm = z0Im
-    dz = rt.construct(2, rt.f(1), rt.f(0))
+    dz = rt.construct(2, rt.construct(2, rt.f(1), rt.f(0)))
     i = rt.f(0)
     stripeSum = rt.f(0)
     stripeLast = rt.f(0)
     stripeCount = rt.f(0)
     trapMin = rt.f(10000000000)
     bail2 = rt.binary('*', g['BAILOUT'], g['BAILOUT'], 1, 'float')
-    zSlow = rt.construct(2, rt.swizzle(z0Re, 'x'), rt.swizzle(z0Im, 'x'))
+    zSlow = rt.construct(2, rt.construct(2, rt.swizzle(z0Re, 'x'), rt.swizzle(z0Im, 'x')))
     period = rt.i(0)
     n = rt.i(0)
     _for0_first = true
@@ -191,11 +191,11 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', n, maxIter))
         break
       end
-      zF = rt.construct(2, rt.swizzle(zRe, 'x'), rt.swizzle(zIm, 'x'))
+      zF = rt.construct(2, rt.construct(2, rt.swizzle(zRe, 'x'), rt.swizzle(zIm, 'x')))
       dz.replace((rt.binary('*', rt.f(2), cmul__vec2_vec2.call(zF, dz), 2, 'float')).map { |c| rt.f32(c) })
-      zRe2 = df64_mul__vec2_vec2.call(zRe, zRe)
-      zIm2 = df64_mul__vec2_vec2.call(zIm, zIm)
-      zReIm = df64_mul__vec2_vec2.call(zRe, zIm)
+      zRe2 = rt.construct(2, df64_mul__vec2_vec2.call(zRe, zRe))
+      zIm2 = rt.construct(2, df64_mul__vec2_vec2.call(zIm, zIm))
+      zReIm = rt.construct(2, df64_mul__vec2_vec2.call(zRe, zIm))
       zRe.replace((df64_add__vec2_vec2.call(df64_sub__vec2_vec2.call(zRe2, zIm2), df64_from__float.call(rt.swizzle(c, 'x')))).map { |c| rt.f32(c) })
       zIm.replace((df64_add__vec2_vec2.call(df64_mul_f__vec2_float.call(zReIm, rt.f(2)), df64_from__float.call(rt.swizzle(c, 'y')))).map { |c| rt.f32(c) })
       zMag2 = rt.binary('+', rt.binary('*', rt.swizzle(zRe, 'x'), rt.swizzle(zRe, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(zIm, 'x'), rt.swizzle(zIm, 'x'), 1, 'float'), 1, 'float')
@@ -203,7 +203,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       i = rt.binary('+', i, rt.f(1), 1, 'float')
-      zHi = rt.construct(2, rt.swizzle(zRe, 'x'), rt.swizzle(zIm, 'x'))
+      zHi = rt.construct(2, rt.construct(2, rt.swizzle(zRe, 'x'), rt.swizzle(zIm, 'x')))
       if rt.bool(rt.binary('>', freq, rt.f(0)))
         stripeLast = rt.binary('+', rt.binary('*', rt.f(0.5), rt.component_wise('sin', rt.binary('*', freq, rt.component_wise('atan', rt.swizzle(zHi, 'y'), rt.swizzle(zHi, 'x')), 1, 'float')), 1, 'float'), rt.f(0.5), 1, 'float')
         stripeSum = rt.binary('+', stripeSum, stripeLast, 1, 'float')
@@ -307,9 +307,9 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', n, maxIter))
         break
       end
-      zRe2 = df64_mul__vec2_vec2.call(zRe, zRe)
-      zIm2 = df64_mul__vec2_vec2.call(zIm, zIm)
-      zReIm = df64_mul__vec2_vec2.call(zRe, zIm)
+      zRe2 = rt.construct(2, df64_mul__vec2_vec2.call(zRe, zRe))
+      zIm2 = rt.construct(2, df64_mul__vec2_vec2.call(zIm, zIm))
+      zReIm = rt.construct(2, df64_mul__vec2_vec2.call(zRe, zIm))
       zRe.replace((df64_add__vec2_vec2.call(df64_sub__vec2_vec2.call(zRe2, zIm2), df64_from__float.call(rt.swizzle(c, 'x')))).map { |c| rt.f32(c) })
       zIm.replace((df64_add__vec2_vec2.call(df64_mul_f__vec2_float.call(zReIm, rt.f(2)), df64_from__float.call(rt.swizzle(c, 'y')))).map { |c| rt.f32(c) })
       zMag2 = rt.binary('+', rt.binary('*', rt.swizzle(zRe, 'x'), rt.swizzle(zRe, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(zIm, 'x'), rt.swizzle(zIm, 'x'), 1, 'float'), 1, 'float')
@@ -333,15 +333,15 @@ run_pixel = lambda do |ctx, out|
     d0 = iterateSmooth__vec2_vec2_int_float.call(fragCoord, c, maxIter, zm)
     d1 = iterateSmooth__vec2_vec2_int_float.call(rt.binary('+', fragCoord, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float'), c, maxIter, zm)
     d2 = iterateSmooth__vec2_vec2_int_float.call(rt.binary('+', fragCoord, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float'), c, maxIter, zm)
-    normal = rt.normalize(rt.construct(3, rt.binary('-', d1, d0, 1, 'float'), rt.binary('-', d2, d0, 1, 'float'), rt.f(0.050000000000000003)))
+    normal = rt.construct(3, rt.normalize(rt.construct(3, rt.binary('-', d1, d0, 1, 'float'), rt.binary('-', d2, d0, 1, 'float'), rt.f(0.050000000000000003))))
     rad = rt.binary('/', rt.binary('*', angle, g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
-    lightDir = rt.normalize(rt.construct(3, rt.component_wise('cos', rad), rt.component_wise('sin', rad), rt.f(0.69999999999999996)))
+    lightDir = rt.construct(3, rt.normalize(rt.construct(3, rt.component_wise('cos', rad), rt.component_wise('sin', rad), rt.f(0.69999999999999996))))
     return rt.component_wise('clamp', rt.component_wise('max', rt.dot(normal, lightDir), rt.f(0)), rt.f(0), rt.f(1))
   end
   main__void = lambda do
     c = nil; effectiveZoom = nil; globalCoord = nil; imDF = nil; phase = nil; r = nil; reDF = nil; value = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    c = resolveC__void.call()
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    c = rt.construct(2, resolveC__void.call())
     effectiveZoom = rt.f(0.0)
     phase = rt.f(0.0)
     if rt.bool(rt.binary('>', _u_zoomSpeed, rt.f(0)))

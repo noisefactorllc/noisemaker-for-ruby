@@ -13,13 +13,13 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _t = nil; alpha = nil; inputColor = nil; matteAlpha = nil; rgb = nil; trailColor = nil; trailPresence = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    inputColor = rt.texture(_u_inputTex, uv)
-    trailColor = rt.texture(_u_trailTex, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    inputColor = rt.construct(4, rt.texture(_u_inputTex, uv))
+    trailColor = rt.construct(4, rt.texture(_u_trailTex, uv))
     _t = rt.binary('/', _u_inputIntensity, rt.f(100), 1, 'float')
     matteAlpha = _u_matteOpacity
     trailPresence = rt.component_wise('max', rt.component_wise('max', rt.swizzle(trailColor, 'r'), rt.swizzle(trailColor, 'g')), rt.swizzle(trailColor, 'b'))
-    rgb = rt.binary('+', rt.swizzle(trailColor, 'rgb'), rt.binary('*', rt.binary('*', rt.swizzle(inputColor, 'rgb'), _t, 3, 'float'), matteAlpha, 3, 'float'), 3, 'float')
+    rgb = rt.construct(3, rt.binary('+', rt.swizzle(trailColor, 'rgb'), rt.binary('*', rt.binary('*', rt.swizzle(inputColor, 'rgb'), _t, 3, 'float'), matteAlpha, 3, 'float'), 3, 'float'))
     alpha = rt.component_wise('max', trailPresence, matteAlpha)
     g['fragColor'].replace((rt.component_wise('clamp', rt.construct(4, rgb, alpha), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
   end

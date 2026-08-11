@@ -15,23 +15,23 @@ run_pixel = lambda do |ctx, out|
   hash21__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     p3 = nil
-    p3 = rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.f(0.1031), 3, 'float'))
+    p3 = rt.construct(3, rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.f(0.1031), 3, 'float')))
     p3.replace((rt.binary('+', p3, rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'zyx'), rt.f(31.32), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float'), rt.swizzle(p3, 'z'), 1, 'float'))
   end
   main__void = lambda do
     color = nil; energy = nil; persistence = nil; prev = nil; prevColor = nil; prevGrid = nil; radial = nil; rng = nil; seedThreshold = nil; seedWeight = nil; strength = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
     if rt.bool(_u_resetState)
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    prevGrid = rt.texture(_u_gridTex, uv)
+    prevGrid = rt.construct(4, rt.texture(_u_gridTex, uv))
     prev = rt.swizzle(prevGrid, 'a')
-    prevColor = rt.swizzle(prevGrid, 'rgb')
+    prevColor = rt.construct(3, rt.swizzle(prevGrid, 'rgb'))
     persistence = rt.binary('-', rt.f(1), _u_decay, 1, 'float')
     energy = rt.binary('*', prev, persistence, 1, 'float')
-    color = rt.binary('*', prevColor, persistence, 3, 'float')
+    color = rt.construct(3, rt.binary('*', prevColor, persistence, 3, 'float'))
     energy = rt.component_wise('min', energy, rt.f(3))
     rng = hash21__vec2.call(rt.swizzle(ctx.frag_coord, 'xy'))
     radial = rt.component_wise('smoothstep', rt.f(0.25), rt.f(0), rt.length(rt.binary('-', uv, rt.f(0.5), 2, 'float')))

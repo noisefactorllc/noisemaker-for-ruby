@@ -89,7 +89,7 @@ run_pixel = lambda do |ctx, out|
     cellY = rt.binary('%', rt.construct(1, rt.binary('*', rt.swizzle(uv, 'y'), rt.construct(1, n), 1, 'float'), 'int'), n, 1, 'int')
     cellNum = rt.binary('+', rt.binary('*', rt.binary('-', rt.binary('-', n, rt.i(1), 1, 'int'), cellY, 1, 'int'), n, 1, 'int'), cellX, 1, 'int')
     isWhiteCell = rt.binary('==', rt.binary('%', rt.binary('+', cellX, cellY, 1, 'int'), rt.i(2), 1, 'int'), rt.i(0))
-    cellUV = rt.component_wise('fract', rt.binary('*', uv, rt.construct(1, n), 2, 'float'))
+    cellUV = rt.construct(2, rt.component_wise('fract', rt.binary('*', uv, rt.construct(1, n), 2, 'float')))
     isGlyph = renderNumber__int_vec2.call(cellNum, cellUV)
     cellColor = (rt.bool(isWhiteCell) ? (rt.f(1)) : (rt.f(0)))
     glyphColor = (rt.bool(isWhiteCell) ? (rt.f(0)) : (rt.f(1)))
@@ -101,7 +101,7 @@ run_pixel = lambda do |ctx, out|
     bar = nil; colors = nil
     bar = rt.construct(1, rt.binary('*', rt.swizzle(uv, 'x'), rt.f(8), 1, 'float'), 'int')
     bar = rt.component_wise('clamp', bar, rt.i(0), rt.i(7))
-    colors = rt.array([rt.construct(3, rt.f(1), rt.f(1), rt.f(1)), rt.construct(3, rt.f(1), rt.f(1), rt.f(0)), rt.construct(3, rt.f(0), rt.f(1), rt.f(1)), rt.construct(3, rt.f(0), rt.f(1), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), rt.construct(3, rt.f(1), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0), rt.f(1)), rt.construct(3, rt.f(0), rt.f(0), rt.f(0))])
+    colors = rt.construct(3, rt.array([rt.construct(3, rt.f(1), rt.f(1), rt.f(1)), rt.construct(3, rt.f(1), rt.f(1), rt.f(0)), rt.construct(3, rt.f(0), rt.f(1), rt.f(1)), rt.construct(3, rt.f(0), rt.f(1), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), rt.construct(3, rt.f(1), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0), rt.f(1)), rt.construct(3, rt.f(0), rt.f(0), rt.f(0))]))
     return rt.construct(4, colors[(bar).to_i], rt.f(1))
   end
   gradient__vec2 = lambda do |uv|
@@ -116,9 +116,9 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     cellUV = nil; edge = nil; fw = nil; line = nil; n = nil
     n = rt.component_wise('max', _u_gridSize, rt.i(1))
-    cellUV = rt.component_wise('fract', rt.binary('*', uv, rt.construct(1, n), 2, 'float'))
-    edge = rt.component_wise('min', cellUV, rt.binary('-', rt.f(1), cellUV, 2, 'float'))
-    fw = rt.binary('*', rt.binary('/', rt.construct(2, rt.f(1)), _u_fullResolution, 2, 'float'), rt.construct(1, n), 2, 'float')
+    cellUV = rt.construct(2, rt.component_wise('fract', rt.binary('*', uv, rt.construct(1, n), 2, 'float')))
+    edge = rt.construct(2, rt.component_wise('min', cellUV, rt.binary('-', rt.f(1), cellUV, 2, 'float')))
+    fw = rt.construct(2, rt.binary('*', rt.binary('/', rt.construct(2, rt.f(1)), _u_fullResolution, 2, 'float'), rt.construct(1, n), 2, 'float'))
     line = rt.binary('-', rt.f(1), rt.binary('*', rt.component_wise('smoothstep', rt.f(0), rt.binary('*', rt.f(2), rt.swizzle(fw, 'x'), 1, 'float'), rt.swizzle(edge, 'x')), rt.component_wise('smoothstep', rt.f(0), rt.binary('*', rt.f(2), rt.swizzle(fw, 'y'), 1, 'float'), rt.swizzle(edge, 'y')), 1, 'float'), 1, 'float')
     return rt.construct(4, rt.construct(3, line), rt.f(1))
   end
@@ -143,16 +143,16 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     dist = nil; dot = nil; n = nil; nearest = nil; scaled = nil
     n = rt.component_wise('max', _u_gridSize, rt.i(1))
-    scaled = rt.binary('*', uv, rt.construct(1, n), 2, 'float')
-    nearest = rt.component_wise('round', scaled)
+    scaled = rt.construct(2, rt.binary('*', uv, rt.construct(1, n), 2, 'float'))
+    nearest = rt.construct(2, rt.component_wise('round', scaled))
     dist = rt.length(rt.binary('-', scaled, nearest, 2, 'float'))
     dot = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.12), rt.f(0.14999999999999999), dist), 1, 'float')
     return rt.construct(4, rt.construct(3, dot), rt.f(1))
   end
   main__void = lambda do
     globalCoord = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
     if rt.bool(rt.binary('==', _u_pattern, rt.i(1)))
       g['fragColor'].replace((colorBars__vec2.call(uv)).map { |c| rt.f32(c) })
     else

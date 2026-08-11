@@ -15,7 +15,7 @@ run_pixel = lambda do |ctx, out|
   hash22__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     p3 = nil
-    p3 = rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.construct(3, rt.f(0.1031), rt.f(0.10299999999999999), rt.f(0.097299999999999998)), 3, 'float'))
+    p3 = rt.construct(3, rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.construct(3, rt.f(0.1031), rt.f(0.10299999999999999), rt.f(0.097299999999999998)), 3, 'float')))
     p3.replace((rt.binary('+', p3, rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.329999999999998), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p3, 'xx'), rt.swizzle(p3, 'yz'), 2, 'float'), rt.swizzle(p3, 'zy'), 2, 'float'))
   end
@@ -26,7 +26,7 @@ run_pixel = lambda do |ctx, out|
   lumGradient__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     _t = nil; b = nil; bl = nil; br = nil; l = nil; px = nil; r = nil; tl = nil; tr = nil
-    px = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
+    px = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
     tl = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', px, rt.construct(2, rt.unary('-', rt.f(1)), rt.f(1)), 2, 'float'), 2, 'float')), 'rgb'))
     l = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', px, rt.construct(2, rt.unary('-', rt.f(1)), rt.f(0)), 2, 'float'), 2, 'float')), 'rgb'))
     bl = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', px, rt.construct(2, rt.unary('-', rt.f(1)), rt.unary('-', rt.f(1))), 2, 'float'), 2, 'float')), 'rgb'))
@@ -39,28 +39,28 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     globalCoord = nil; grad = nil; gradLen = nil; hashCoord = nil; offset = nil; perp = nil; result = nil; rnd = nil; samp = nil; sampleUV = nil; src = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     hashCoord = globalCoord
     if rt.bool(rt.binary('==', _u__MODE, rt.i(4)))
       hashCoord.replace((rt.binary('*', rt.component_wise('floor', rt.binary('/', globalCoord, rt.f(3), 2, 'float')), rt.f(3), 2, 'float')).map { |c| rt.f32(c) })
     end
-    rnd = rt.binary('-', hash22__vec2.call(rt.binary('+', hashCoord, rt.binary('*', rt.construct(1, _u_seed), rt.f(101.7), 1, 'float'), 2, 'float')), rt.f(0.5), 2, 'float')
-    offset = rt.binary('*', rt.binary('*', rnd, rt.f(2), 2, 'float'), _u_radius, 2, 'float')
+    rnd = rt.construct(2, rt.binary('-', hash22__vec2.call(rt.binary('+', hashCoord, rt.binary('*', rt.construct(1, _u_seed), rt.f(101.7), 1, 'float'), 2, 'float')), rt.f(0.5), 2, 'float'))
+    offset = rt.construct(2, rt.binary('*', rt.binary('*', rnd, rt.f(2), 2, 'float'), _u_radius, 2, 'float'))
     grad = rt.construct(2, 0.0)
     gradLen = rt.f(0.0)
     if rt.bool(rt.binary('==', _u__MODE, rt.i(3)))
-      grad = lumGradient__vec2.call(uv)
+      grad = rt.construct(2, lumGradient__vec2.call(uv))
       gradLen = rt.length(grad)
       perp = rt.construct(2, 0.0)
       if rt.bool(rt.binary('>', gradLen, rt.f(1.0000000000000001e-05)))
-        perp = rt.binary('/', rt.construct(2, rt.unary('-', rt.swizzle(grad, 'y')), rt.swizzle(grad, 'x')), gradLen, 2, 'float')
+        perp = rt.construct(2, rt.binary('/', rt.construct(2, rt.unary('-', rt.swizzle(grad, 'y')), rt.swizzle(grad, 'x')), gradLen, 2, 'float'))
         offset.replace((rt.binary('*', rt.dot(offset, perp), perp, 2, 'float')).map { |c| rt.f32(c) })
       end
     end
-    sampleUV = rt.component_wise('clamp', rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), offset, 2, 'float'), _u_resolution, 2, 'float'), rt.f(0), rt.f(1))
-    src = rt.texture(_u_inputTex, uv)
-    samp = rt.texture(_u_inputTex, sampleUV)
+    sampleUV = rt.construct(2, rt.component_wise('clamp', rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), offset, 2, 'float'), _u_resolution, 2, 'float'), rt.f(0), rt.f(1)))
+    src = rt.construct(4, rt.texture(_u_inputTex, uv))
+    samp = rt.construct(4, rt.texture(_u_inputTex, sampleUV))
     result = samp
     if rt.bool(rt.binary('==', _u__MODE, rt.i(1)))
       result.replace((rt.component_wise('min', src, samp)).map { |c| rt.f32(c) })

@@ -82,7 +82,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('<', mm, rt.i(0)))
       mm = rt.binary('+', mm, rt.i(3), 1, 'int')
     end
-    ap = rt.component_wise('abs', p)
+    ap = rt.construct(2, rt.component_wise('abs', p))
     d = rt.f(0.0)
     maxD = rt.f(0.0)
     if rt.bool(rt.binary('==', mm, rt.i(0)))
@@ -101,13 +101,13 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     blended = nil; centerColor = nil; color = nil; corner = nil; dist01 = nil; edgeColor = nil; f_high = nil; f_low = nil; globalCoord = nil; h = nil; mask = nil; minRes = nil; p = nil; scaledPower = nil; st = nil; width = nil
-    st = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    edgeColor = rt.texture(_u_inputTex, st)
-    centerColor = rt.texture(_u_tex, st)
+    st = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    edgeColor = rt.construct(4, rt.texture(_u_inputTex, st))
+    centerColor = rt.construct(4, rt.texture(_u_tex, st))
     minRes = rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    p = rt.binary('/', rt.binary('-', globalCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.binary('*', rt.f(0.5), minRes, 1, 'float'), 2, 'float')
-    corner = rt.binary('/', _u_fullResolution, minRes, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    p = rt.construct(2, rt.binary('/', rt.binary('-', globalCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.binary('*', rt.f(0.5), minRes, 1, 'float'), 2, 'float'))
+    corner = rt.construct(2, rt.binary('/', _u_fullResolution, minRes, 2, 'float'))
     dist01 = clamp01__float.call(distanceMetric__vec2_vec2_int.call(p, corner, _u_shape))
     scaledPower = rt.component_wise('mix', rt.f(0.10000000000000001), rt.f(25.050000000000001), rt.binary('/', rt.binary('+', _u_power, rt.f(100), 1, 'float'), rt.f(200), 1, 'float'))
     mask = rt.component_wise('pow', dist01, scaledPower)
@@ -118,8 +118,8 @@ run_pixel = lambda do |ctx, out|
     f_high = rt.component_wise('clamp', rt.binary('/', rt.binary('-', rt.f(100), _u_power, 1, 'float'), rt.f(5), 1, 'float'), rt.f(0), rt.f(1))
     mask = rt.component_wise('mix', rt.f(1), mask, f_low)
     mask = rt.binary('*', mask, f_high, 1, 'float')
-    blended = applyBlendMode__vec4_vec4_int.call(centerColor, edgeColor, _u_blendMode)
-    color = rt.component_wise('mix', centerColor, blended, mask)
+    blended = rt.construct(4, applyBlendMode__vec4_vec4_int.call(centerColor, edgeColor, _u_blendMode))
+    color = rt.construct(4, rt.component_wise('mix', centerColor, blended, mask))
     color = rt.assign_swizzle(color, 'a', rt.component_wise('max', rt.swizzle(edgeColor, 'a'), rt.swizzle(centerColor, 'a')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end

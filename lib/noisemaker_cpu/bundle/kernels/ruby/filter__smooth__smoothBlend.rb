@@ -25,14 +25,14 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     texSize = rt.copy(texSize, 'int')
     base = nil; bl = nil; br = nil; f = nil; maxC = nil; texCoord = nil; tl = nil; tr = nil
-    texCoord = rt.binary('-', rt.binary('*', uv, rt.construct(2, texSize), 2, 'float'), rt.f(0.5), 2, 'float')
-    base = rt.construct(2, rt.component_wise('floor', texCoord), 'int')
-    f = rt.binary('-', texCoord, rt.construct(2, base), 2, 'float')
+    texCoord = rt.construct(2, rt.binary('-', rt.binary('*', uv, rt.construct(2, texSize), 2, 'float'), rt.f(0.5), 2, 'float'))
+    base = rt.construct(2, rt.construct(2, rt.component_wise('floor', texCoord)), 'int')
+    f = rt.construct(2, rt.binary('-', texCoord, rt.construct(2, base), 2, 'float'))
     maxC = rt.binary('-', texSize, rt.i(1), 2, 'int')
-    tl = rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', base, rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0))
-    tr = rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', base, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0))
-    bl = rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', base, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0))
-    br = rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', base, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0))
+    tl = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', base, rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)))
+    tr = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', base, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)))
+    bl = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', base, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)))
+    br = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', base, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)))
     return rt.component_wise('mix', rt.component_wise('mix', tl, tr, rt.swizzle(f, 'x')), rt.component_wise('mix', bl, br, rt.swizzle(f, 'x')), rt.swizzle(f, 'y'))
   end
   sampleOffset2x__int = lambda do |i|
@@ -91,9 +91,9 @@ run_pixel = lambda do |ctx, out|
     texelSize = rt.copy(texelSize, 'float')
     texSize = rt.copy(texSize, 'int')
     _L = nil; _Le = nil; _Ln = nil; _Ls = nil; _Lw = nil; _for0_first = nil; center = nil; coord = nil; count = nil; i = nil; maxC = nil; maxDiff = nil; offset = nil; sum = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     maxC = rt.binary('-', texSize, rt.i(1), 2, 'int')
-    center = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    center = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     _L = luminance__vec3.call(rt.swizzle(center, 'rgb'))
     _Ln = luminance__vec3.call(rt.swizzle(rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, rt.i(0), rt.unary('-', rt.i(1)), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)), 'rgb'))
     _Ls = luminance__vec3.call(rt.swizzle(rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)), 'rgb'))
@@ -103,7 +103,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('<', maxDiff, _u_threshold))
       return center
     end
-    sum = rt.construct(4, rt.f(0))
+    sum = rt.construct(4, rt.construct(4, rt.f(0)))
     count = _u_samples
     i = rt.i(0)
     _for0_first = true
@@ -118,7 +118,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', i, count))
         break
       end
-      offset = rt.binary('*', getSampleOffset__int_int.call(i, count), _u_radius, 2, 'float')
+      offset = rt.construct(2, rt.binary('*', getSampleOffset__int_int.call(i, count), _u_radius, 2, 'float'))
       sum.replace((rt.binary('+', sum, sampleBilinear__vec2_ivec2.call(rt.binary('+', uv, rt.binary('*', offset, texelSize, 2, 'float'), 2, 'float'), texSize), 4, 'float')).map { |c| rt.f32(c) })
     end
     return rt.binary('/', sum, rt.construct(1, count), 4, 'float')
@@ -152,12 +152,12 @@ run_pixel = lambda do |ctx, out|
   smaaBlend__ivec2 = lambda do |texSize|
     texSize = rt.copy(texSize, 'int')
     blended = nil; center = nil; coord = nil; distDown = nil; distLeft = nil; distRight = nil; distUp = nil; edgeH = nil; edgeLength = nil; edgeV = nil; edges = nil; maxC = nil; neighbor = nil; weight = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     maxC = rt.binary('-', texSize, rt.i(1), 2, 'int')
-    edges = rt.texel_fetch(_u_edgeTex, coord, rt.i(0))
+    edges = rt.construct(4, rt.texel_fetch(_u_edgeTex, coord, rt.i(0)))
     edgeH = rt.swizzle(edges, 'r')
     edgeV = rt.swizzle(edges, 'g')
-    center = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    center = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     if rt.bool((rt.bool(rt.binary('<', edgeH, rt.f(0.5))) && rt.bool(rt.binary('<', edgeV, rt.f(0.5))) ? 1 : 0))
       return center
     end
@@ -172,7 +172,7 @@ run_pixel = lambda do |ctx, out|
       distRight = searchEdge__ivec2_ivec2_ivec2_int.call(coord, rt.construct(2, rt.i(1), rt.i(0), 'int'), maxC, rt.i(0))
       edgeLength = rt.binary('+', rt.binary('+', distLeft, distRight, 1, 'float'), rt.f(1), 1, 'float')
       weight = rt.component_wise('clamp', rt.binary('/', rt.binary('*', _u_radius, rt.f(0.5), 1, 'float'), rt.component_wise('sqrt', edgeLength), 1, 'float'), rt.f(0), rt.f(0.5))
-      neighbor = rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0))
+      neighbor = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)))
       blended.replace((rt.component_wise('mix', blended, neighbor, weight)).map { |c| rt.f32(c) })
     end
     distDown = rt.f(0.0)
@@ -182,7 +182,7 @@ run_pixel = lambda do |ctx, out|
       distDown = searchEdge__ivec2_ivec2_ivec2_int.call(coord, rt.construct(2, rt.i(0), rt.i(1), 'int'), maxC, rt.i(1))
       edgeLength = rt.binary('+', rt.binary('+', distUp, distDown, 1, 'float'), rt.f(1), 1, 'float')
       weight = rt.component_wise('clamp', rt.binary('/', rt.binary('*', _u_radius, rt.f(0.5), 1, 'float'), rt.component_wise('sqrt', edgeLength), 1, 'float'), rt.f(0), rt.f(0.5))
-      neighbor = rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0))
+      neighbor = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)))
       blended.replace((rt.component_wise('mix', blended, neighbor, weight)).map { |c| rt.f32(c) })
     end
     return blended
@@ -190,10 +190,10 @@ run_pixel = lambda do |ctx, out|
   edgeBlur__ivec2 = lambda do |texSize|
     texSize = rt.copy(texSize, 'int')
     _for2_first = nil; _for3_first = nil; center = nil; coord = nil; d = nil; dx = nil; dy = nil; edges = nil; maxC = nil; r = nil; sigma = nil; sigma2 = nil; sum = nil; totalWeight = nil; w = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     maxC = rt.binary('-', texSize, rt.i(1), 2, 'int')
-    edges = rt.texel_fetch(_u_edgeTex, coord, rt.i(0))
-    center = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    edges = rt.construct(4, rt.texel_fetch(_u_edgeTex, coord, rt.i(0)))
+    center = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     if rt.bool((rt.bool(rt.binary('<', rt.swizzle(edges, 'r'), rt.f(0.5))) && rt.bool(rt.binary('<', rt.swizzle(edges, 'g'), rt.f(0.5))) ? 1 : 0))
       return center
     end
@@ -238,11 +238,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     globalCoord = nil; original = nil; result = nil; texSize = nil; texelSize = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float')
-    texelSize = rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float')
-    original = rt.texel_fetch(_u_inputTex, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int'), rt.i(0))
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
+    texelSize = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float'))
+    original = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int'), rt.i(0)))
     result = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', _u_smoothType, rt.i(0)))
       result.replace((msaaBlend__vec2_vec2_ivec2.call(uv, texelSize, texSize)).map { |c| rt.f32(c) })

@@ -25,7 +25,7 @@ run_pixel = lambda do |ctx, out|
   end
   getVert__int_int = lambda do |zoneIdx, vertIdx|
     packed = nil
-    packed = getZonePack__int_int.call(zoneIdx, rt.binary('/', vertIdx, rt.i(2), 1, 'int'))
+    packed = rt.construct(4, getZonePack__int_int.call(zoneIdx, rt.binary('/', vertIdx, rt.i(2), 1, 'int')))
     return (rt.bool(rt.binary('==', rt.binary('%', vertIdx, rt.i(2), 1, 'int'), rt.i(0))) ? (rt.swizzle(packed, 'xy')) : (rt.swizzle(packed, 'zw')))
   end
   getZoneCount__int = lambda do |z|
@@ -70,7 +70,7 @@ run_pixel = lambda do |ctx, out|
       return 0
     end
     inside = 0
-    prev = getVert__int_int.call(zoneIdx, rt.binary('-', n, rt.i(1), 1, 'int'))
+    prev = rt.construct(2, getVert__int_int.call(zoneIdx, rt.binary('-', n, rt.i(1), 1, 'int')))
     i = rt.i(0)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -84,7 +84,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', i, n))
         break
       end
-      cur = getVert__int_int.call(zoneIdx, i)
+      cur = rt.construct(2, getVert__int_int.call(zoneIdx, i))
       crosses = rt.binary('!=', rt.binary('>', rt.swizzle(cur, 'y'), rt.swizzle(p, 'y')), rt.binary('>', rt.swizzle(prev, 'y'), rt.swizzle(p, 'y')))
       xCross = rt.f(0.0)
       if rt.bool(crosses)
@@ -105,7 +105,7 @@ run_pixel = lambda do |ctx, out|
       return rt.f(1000000000)
     end
     d = rt.f(1000000000)
-    prev = getVert__int_int.call(zoneIdx, rt.binary('-', n, rt.i(1), 1, 'int'))
+    prev = rt.construct(2, getVert__int_int.call(zoneIdx, rt.binary('-', n, rt.i(1), 1, 'int')))
     i = rt.i(0)
     _for1_first = true
     (0..1048575).each do |_for1|
@@ -119,11 +119,11 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', i, n))
         break
       end
-      cur = getVert__int_int.call(zoneIdx, i)
-      ab = rt.binary('-', cur, prev, 2, 'float')
+      cur = rt.construct(2, getVert__int_int.call(zoneIdx, i))
+      ab = rt.construct(2, rt.binary('-', cur, prev, 2, 'float'))
       len2 = rt.component_wise('max', rt.dot(ab, ab), rt.f(1.0000000000000001e-09))
       _t = rt.component_wise('clamp', rt.binary('/', rt.dot(rt.binary('-', p, prev, 2, 'float'), ab), len2, 1, 'float'), rt.f(0), rt.f(1))
-      closest = rt.binary('+', prev, rt.binary('*', _t, ab, 2, 'float'), 2, 'float')
+      closest = rt.construct(2, rt.binary('+', prev, rt.binary('*', _t, ab, 2, 'float'), 2, 'float'))
       d = rt.component_wise('min', d, rt.length(rt.binary('-', p, closest, 2, 'float')))
       prev.replace((cur).map { |c| rt.f32(c) })
     end
@@ -131,17 +131,17 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for2_first = nil; a = nil; activeCount = nil; bgAlpha = nil; bgColor = nil; controls = nil; edge = nil; edgeWidth = nil; globalCoord = nil; globalScreen = nil; header = nil; p = nil; result = nil; sampleUv = nil; smoothEdge = nil; src = nil; z = nil; zAlpha = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    globalScreen = rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), _u_fullResolution, 2, 'float')
-    p = rt.construct(2, rt.swizzle(globalScreen, 'x'), rt.binary('-', rt.f(1), rt.swizzle(globalScreen, 'y'), 1, 'float'))
-    sampleUv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    header = _u_data[(rt.i(0)).to_i]
-    controls = _u_data[(rt.i(1)).to_i]
-    bgColor = rt.swizzle(header, 'xyz')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalScreen = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), _u_fullResolution, 2, 'float'))
+    p = rt.construct(2, rt.construct(2, rt.swizzle(globalScreen, 'x'), rt.binary('-', rt.f(1), rt.swizzle(globalScreen, 'y'), 1, 'float')))
+    sampleUv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    header = rt.construct(4, _u_data[(rt.i(0)).to_i])
+    controls = rt.construct(4, _u_data[(rt.i(1)).to_i])
+    bgColor = rt.construct(3, rt.swizzle(header, 'xyz'))
     bgAlpha = rt.swizzle(header, 'w')
     activeCount = rt.component_wise('min', rt.construct(1, rt.swizzle(controls, 'x'), 'int'), rt.i(8))
     smoothEdge = rt.swizzle(controls, 'y')
-    result = rt.construct(4, bgColor, bgAlpha)
+    result = rt.construct(4, rt.construct(4, bgColor, bgAlpha))
     z = rt.i(0)
     _for2_first = true
     (0..1048575).each do |_for2|
@@ -161,7 +161,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool((rt.bool(pointInZone__vec2_int.call(p, z)) ? 0 : 1))
         next
       end
-      src = sampleZone__int_vec2.call(z, sampleUv)
+      src = rt.construct(4, sampleZone__int_vec2.call(z, sampleUv))
       zAlpha = getZoneAlpha__int.call(z)
       edgeWidth = rt.binary('*', smoothEdge, rt.f(0.050000000000000003), 1, 'float')
       edge = (rt.bool(rt.binary('>', edgeWidth, rt.f(0))) ? (rt.component_wise('smoothstep', rt.f(0), edgeWidth, distToZoneEdge__vec2_int.call(p, z))) : (rt.f(1)))

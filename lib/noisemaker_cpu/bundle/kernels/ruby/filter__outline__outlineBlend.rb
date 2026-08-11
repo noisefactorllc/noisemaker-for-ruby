@@ -13,18 +13,18 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     base = nil; dimensions = nil; edges = nil; globalCoord = nil; out_rgb = nil; outlineColor = nil; strength = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     dimensions = rt.texture_size(_u_inputTex)
     if rt.bool((rt.bool(rt.binary('==', rt.swizzle(dimensions, 'x'), rt.i(0))) || rt.bool(rt.binary('==', rt.swizzle(dimensions, 'y'), rt.i(0))) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, dimensions), 2, 'float')
-    base = rt.texture(_u_inputTex, uv)
-    edges = rt.texture(_u_edgesTexture, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, dimensions), 2, 'float'))
+    base = rt.construct(4, rt.texture(_u_inputTex, uv))
+    edges = rt.construct(4, rt.texture(_u_edgesTexture, uv))
     strength = rt.component_wise('clamp', rt.swizzle(edges, 'r'), rt.f(0), rt.f(1))
-    outlineColor = (rt.bool(rt.binary('>', _u_invert, rt.f(0.5))) ? (rt.construct(3, rt.f(1))) : (rt.construct(3, rt.f(0))))
-    out_rgb = rt.component_wise('mix', rt.swizzle(base, 'rgb'), outlineColor, strength)
+    outlineColor = rt.construct(3, (rt.bool(rt.binary('>', _u_invert, rt.f(0.5))) ? (rt.construct(3, rt.f(1))) : (rt.construct(3, rt.f(0)))))
+    out_rgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(base, 'rgb'), outlineColor, strength))
     g['fragColor'].replace((rt.construct(4, out_rgb, rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

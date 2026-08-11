@@ -44,7 +44,7 @@ run_pixel = lambda do |ctx, out|
     m = nil; t2 = nil; t3 = nil
     t2 = rt.binary('*', _t, _t, 1, 'float')
     t3 = rt.binary('*', t2, _t, 1, 'float')
-    m = rt.binary('*', rt.f(0.5), rt.binary('-', p2, p0, 4, 'float'), 4, 'float')
+    m = rt.construct(4, rt.binary('*', rt.f(0.5), rt.binary('-', p2, p0, 4, 'float'), 4, 'float'))
     return rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('*', rt.binary('+', rt.binary('-', rt.binary('*', rt.f(2), t3, 1, 'float'), rt.binary('*', rt.f(3), t2, 1, 'float'), 1, 'float'), rt.f(1), 1, 'float'), p1, 4, 'float'), rt.binary('*', rt.binary('+', rt.binary('-', t3, rt.binary('*', rt.f(2), t2, 1, 'float'), 1, 'float'), _t, 1, 'float'), m, 4, 'float'), 4, 'float'), rt.binary('*', rt.binary('+', rt.binary('*', rt.unary('-', rt.f(2)), t3, 1, 'float'), rt.binary('*', rt.f(3), t2, 1, 'float'), 1, 'float'), p2, 4, 'float'), 4, 'float'), rt.binary('*', rt.binary('-', t3, t2, 1, 'float'), m, 4, 'float'), 4, 'float')
   end
   catmull4v__vec4_vec4_vec4_vec4_float = lambda do |p0, p1, p2, p3, _t|
@@ -59,10 +59,10 @@ run_pixel = lambda do |ctx, out|
     texSize = rt.texture_size(_u_canvasTex)
     minIdx = rt.construct(2, rt.i(0), 'int')
     maxIdx = rt.binary('-', texSize, rt.construct(2, rt.i(1), 'int'), 2, 'int')
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    texelPos = rt.binary('-', rt.binary('*', uv, rt.construct(2, texSize), 2, 'float'), rt.construct(2, rt.f(0.5)), 2, 'float')
-    baseI = rt.construct(2, rt.component_wise('floor', texelPos), 'int')
-    f = rt.component_wise('fract', texelPos)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    texelPos = rt.construct(2, rt.binary('-', rt.binary('*', uv, rt.construct(2, texSize), 2, 'float'), rt.construct(2, rt.f(0.5)), 2, 'float'))
+    baseI = rt.construct(2, rt.construct(2, rt.component_wise('floor', texelPos)), 'int')
+    f = rt.construct(2, rt.component_wise('fract', texelPos))
     sampled = rt.construct(4, 0.0)
     idx = rt.construct(2, 0.0, 'int')
     p = rt.construct(4, 0.0)
@@ -78,17 +78,17 @@ run_pixel = lambda do |ctx, out|
     v11 = rt.construct(4, 0.0)
     w = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u_smoothing, rt.i(0)))
-      idx = rt.component_wise('clamp', rt.construct(2, rt.component_wise('floor', rt.binary('+', texelPos, rt.f(0.5), 2, 'float')), 'int'), minIdx, maxIdx)
+      idx = rt.component_wise('clamp', rt.construct(2, rt.construct(2, rt.component_wise('floor', rt.binary('+', texelPos, rt.f(0.5), 2, 'float'))), 'int'), minIdx, maxIdx)
       sampled.replace((rt.texel_fetch(_u_canvasTex, idx, rt.i(0))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_smoothing, rt.i(2)))
-        v00 = fetchTex__ivec2_ivec2_ivec2.call(baseI, minIdx, maxIdx)
-        v10 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), minIdx, maxIdx)
-        v01 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx)
-        v11 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx)
-        w = rt.component_wise('smoothstep', rt.construct(2, rt.f(0)), rt.construct(2, rt.f(1)), f)
-        v0 = rt.component_wise('mix', v00, v10, rt.swizzle(w, 'x'))
-        v1 = rt.component_wise('mix', v01, v11, rt.swizzle(w, 'x'))
+        v00 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(baseI, minIdx, maxIdx))
+        v10 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), minIdx, maxIdx))
+        v01 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx))
+        v11 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx))
+        w = rt.construct(2, rt.component_wise('smoothstep', rt.construct(2, rt.f(0)), rt.construct(2, rt.f(1)), f))
+        v0 = rt.construct(4, rt.component_wise('mix', v00, v10, rt.swizzle(w, 'x')))
+        v1 = rt.construct(4, rt.component_wise('mix', v01, v11, rt.swizzle(w, 'x')))
         sampled.replace((rt.component_wise('mix', v0, v1, rt.swizzle(w, 'y'))).map { |c| rt.f32(c) })
       else
         if rt.bool(rt.binary('==', _u_smoothing, rt.i(3)))
@@ -116,9 +116,9 @@ run_pixel = lambda do |ctx, out|
               p[(rt.binary('+', rt.binary('*', j, rt.i(3), 1, 'int'), i, 1, 'int')).to_i] = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)
             end
           end
-          r0 = catmull3v__vec4_vec4_vec4_float.call(p[(rt.i(0)).to_i], p[(rt.i(1)).to_i], p[(rt.i(2)).to_i], rt.swizzle(f, 'x'))
-          r1 = catmull3v__vec4_vec4_vec4_float.call(p[(rt.i(3)).to_i], p[(rt.i(4)).to_i], p[(rt.i(5)).to_i], rt.swizzle(f, 'x'))
-          r2 = catmull3v__vec4_vec4_vec4_float.call(p[(rt.i(6)).to_i], p[(rt.i(7)).to_i], p[(rt.i(8)).to_i], rt.swizzle(f, 'x'))
+          r0 = rt.construct(4, catmull3v__vec4_vec4_vec4_float.call(p[(rt.i(0)).to_i], p[(rt.i(1)).to_i], p[(rt.i(2)).to_i], rt.swizzle(f, 'x')))
+          r1 = rt.construct(4, catmull3v__vec4_vec4_vec4_float.call(p[(rt.i(3)).to_i], p[(rt.i(4)).to_i], p[(rt.i(5)).to_i], rt.swizzle(f, 'x')))
+          r2 = rt.construct(4, catmull3v__vec4_vec4_vec4_float.call(p[(rt.i(6)).to_i], p[(rt.i(7)).to_i], p[(rt.i(8)).to_i], rt.swizzle(f, 'x')))
           sampled.replace((catmull3v__vec4_vec4_vec4_float.call(r0, r1, r2, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
         else
           if rt.bool(rt.binary('==', _u_smoothing, rt.i(4)))
@@ -146,10 +146,10 @@ run_pixel = lambda do |ctx, out|
                 p[(rt.binary('+', rt.binary('*', j, rt.i(4), 1, 'int'), i, 1, 'int')).to_i] = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)
               end
             end
-            r0 = catmull4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(0)).to_i], p[(rt.i(1)).to_i], p[(rt.i(2)).to_i], p[(rt.i(3)).to_i], rt.swizzle(f, 'x'))
-            r1 = catmull4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(4)).to_i], p[(rt.i(5)).to_i], p[(rt.i(6)).to_i], p[(rt.i(7)).to_i], rt.swizzle(f, 'x'))
-            r2 = catmull4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(8)).to_i], p[(rt.i(9)).to_i], p[(rt.i(10)).to_i], p[(rt.i(11)).to_i], rt.swizzle(f, 'x'))
-            r3 = catmull4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(12)).to_i], p[(rt.i(13)).to_i], p[(rt.i(14)).to_i], p[(rt.i(15)).to_i], rt.swizzle(f, 'x'))
+            r0 = rt.construct(4, catmull4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(0)).to_i], p[(rt.i(1)).to_i], p[(rt.i(2)).to_i], p[(rt.i(3)).to_i], rt.swizzle(f, 'x')))
+            r1 = rt.construct(4, catmull4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(4)).to_i], p[(rt.i(5)).to_i], p[(rt.i(6)).to_i], p[(rt.i(7)).to_i], rt.swizzle(f, 'x')))
+            r2 = rt.construct(4, catmull4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(8)).to_i], p[(rt.i(9)).to_i], p[(rt.i(10)).to_i], p[(rt.i(11)).to_i], rt.swizzle(f, 'x')))
+            r3 = rt.construct(4, catmull4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(12)).to_i], p[(rt.i(13)).to_i], p[(rt.i(14)).to_i], p[(rt.i(15)).to_i], rt.swizzle(f, 'x')))
             sampled.replace((catmull4v__vec4_vec4_vec4_vec4_float.call(r0, r1, r2, r3, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
           else
             if rt.bool(rt.binary('==', _u_smoothing, rt.i(5)))
@@ -177,9 +177,9 @@ run_pixel = lambda do |ctx, out|
                   p[(rt.binary('+', rt.binary('*', j, rt.i(3), 1, 'int'), i, 1, 'int')).to_i] = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)
                 end
               end
-              r0 = quad3v__vec4_vec4_vec4_float.call(p[(rt.i(0)).to_i], p[(rt.i(1)).to_i], p[(rt.i(2)).to_i], rt.swizzle(f, 'x'))
-              r1 = quad3v__vec4_vec4_vec4_float.call(p[(rt.i(3)).to_i], p[(rt.i(4)).to_i], p[(rt.i(5)).to_i], rt.swizzle(f, 'x'))
-              r2 = quad3v__vec4_vec4_vec4_float.call(p[(rt.i(6)).to_i], p[(rt.i(7)).to_i], p[(rt.i(8)).to_i], rt.swizzle(f, 'x'))
+              r0 = rt.construct(4, quad3v__vec4_vec4_vec4_float.call(p[(rt.i(0)).to_i], p[(rt.i(1)).to_i], p[(rt.i(2)).to_i], rt.swizzle(f, 'x')))
+              r1 = rt.construct(4, quad3v__vec4_vec4_vec4_float.call(p[(rt.i(3)).to_i], p[(rt.i(4)).to_i], p[(rt.i(5)).to_i], rt.swizzle(f, 'x')))
+              r2 = rt.construct(4, quad3v__vec4_vec4_vec4_float.call(p[(rt.i(6)).to_i], p[(rt.i(7)).to_i], p[(rt.i(8)).to_i], rt.swizzle(f, 'x')))
               sampled.replace((quad3v__vec4_vec4_vec4_float.call(r0, r1, r2, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
             else
               if rt.bool(rt.binary('==', _u_smoothing, rt.i(6)))
@@ -207,18 +207,18 @@ run_pixel = lambda do |ctx, out|
                     p[(rt.binary('+', rt.binary('*', j, rt.i(4), 1, 'int'), i, 1, 'int')).to_i] = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)
                   end
                 end
-                r0 = bicubic4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(0)).to_i], p[(rt.i(1)).to_i], p[(rt.i(2)).to_i], p[(rt.i(3)).to_i], rt.swizzle(f, 'x'))
-                r1 = bicubic4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(4)).to_i], p[(rt.i(5)).to_i], p[(rt.i(6)).to_i], p[(rt.i(7)).to_i], rt.swizzle(f, 'x'))
-                r2 = bicubic4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(8)).to_i], p[(rt.i(9)).to_i], p[(rt.i(10)).to_i], p[(rt.i(11)).to_i], rt.swizzle(f, 'x'))
-                r3 = bicubic4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(12)).to_i], p[(rt.i(13)).to_i], p[(rt.i(14)).to_i], p[(rt.i(15)).to_i], rt.swizzle(f, 'x'))
+                r0 = rt.construct(4, bicubic4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(0)).to_i], p[(rt.i(1)).to_i], p[(rt.i(2)).to_i], p[(rt.i(3)).to_i], rt.swizzle(f, 'x')))
+                r1 = rt.construct(4, bicubic4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(4)).to_i], p[(rt.i(5)).to_i], p[(rt.i(6)).to_i], p[(rt.i(7)).to_i], rt.swizzle(f, 'x')))
+                r2 = rt.construct(4, bicubic4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(8)).to_i], p[(rt.i(9)).to_i], p[(rt.i(10)).to_i], p[(rt.i(11)).to_i], rt.swizzle(f, 'x')))
+                r3 = rt.construct(4, bicubic4v__vec4_vec4_vec4_vec4_float.call(p[(rt.i(12)).to_i], p[(rt.i(13)).to_i], p[(rt.i(14)).to_i], p[(rt.i(15)).to_i], rt.swizzle(f, 'x')))
                 sampled.replace((bicubic4v__vec4_vec4_vec4_vec4_float.call(r0, r1, r2, r3, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
               else
-                v00 = fetchTex__ivec2_ivec2_ivec2.call(baseI, minIdx, maxIdx)
-                v10 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), minIdx, maxIdx)
-                v01 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx)
-                v11 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx)
-                v0 = rt.component_wise('mix', v00, v10, rt.swizzle(f, 'x'))
-                v1 = rt.component_wise('mix', v01, v11, rt.swizzle(f, 'x'))
+                v00 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(baseI, minIdx, maxIdx))
+                v10 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), minIdx, maxIdx))
+                v01 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx))
+                v11 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx))
+                v0 = rt.construct(4, rt.component_wise('mix', v00, v10, rt.swizzle(f, 'x')))
+                v1 = rt.construct(4, rt.component_wise('mix', v01, v11, rt.swizzle(f, 'x')))
                 sampled.replace((rt.component_wise('mix', v0, v1, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
               end
             end

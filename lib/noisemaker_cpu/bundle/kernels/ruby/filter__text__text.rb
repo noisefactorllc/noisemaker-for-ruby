@@ -15,13 +15,13 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     alpha = nil; globalCoord = nil; inputColor = nil; matteAlpha = nil; rgb = nil; st = nil; text = nil; textPresence = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    inputColor = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    text = rt.texture(_u_textTex, st)
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    inputColor = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    text = rt.construct(4, rt.texture(_u_textTex, st))
     textPresence = rt.swizzle(text, 'a')
     matteAlpha = _u_matteOpacity
-    rgb = rt.binary('+', rt.binary('+', rt.binary('*', rt.swizzle(text, 'rgb'), textPresence, 3, 'float'), rt.binary('*', rt.binary('*', rt.swizzle(inputColor, 'rgb'), rt.binary('-', rt.f(1), textPresence, 1, 'float'), 3, 'float'), rt.binary('-', rt.f(1), matteAlpha, 1, 'float'), 3, 'float'), 3, 'float'), rt.binary('*', rt.binary('*', _u_matteColor, matteAlpha, 3, 'float'), rt.binary('-', rt.f(1), textPresence, 1, 'float'), 3, 'float'), 3, 'float')
+    rgb = rt.construct(3, rt.binary('+', rt.binary('+', rt.binary('*', rt.swizzle(text, 'rgb'), textPresence, 3, 'float'), rt.binary('*', rt.binary('*', rt.swizzle(inputColor, 'rgb'), rt.binary('-', rt.f(1), textPresence, 1, 'float'), 3, 'float'), rt.binary('-', rt.f(1), matteAlpha, 1, 'float'), 3, 'float'), 3, 'float'), rt.binary('*', rt.binary('*', _u_matteColor, matteAlpha, 3, 'float'), rt.binary('-', rt.f(1), textPresence, 1, 'float'), 3, 'float'), 3, 'float'))
     alpha = rt.component_wise('max', textPresence, rt.component_wise('mix', rt.swizzle(inputColor, 'a'), rt.f(1), matteAlpha))
     g['fragColor'].replace((rt.construct(4, rgb, alpha)).map { |c| rt.f32(c) })
   end

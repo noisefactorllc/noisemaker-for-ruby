@@ -35,8 +35,8 @@ run_pixel = lambda do |ctx, out|
     a = rt.copy(a, 'float')
     b = rt.copy(b, 'float')
     ba = nil; h = nil; pa = nil
-    pa = rt.binary('-', p, a, 2, 'float')
-    ba = rt.binary('-', b, a, 2, 'float')
+    pa = rt.construct(2, rt.binary('-', p, a, 2, 'float'))
+    ba = rt.construct(2, rt.binary('-', b, a, 2, 'float'))
     h = rt.component_wise('clamp', rt.binary('/', rt.dot(pa, ba), rt.dot(ba, ba), 1, 'float'), rt.f(0), rt.f(1))
     return rt.length(rt.binary('-', pa, rt.binary('*', ba, h, 2, 'float'), 2, 'float'))
   end
@@ -85,7 +85,7 @@ run_pixel = lambda do |ctx, out|
         if rt.bool((rt.bool(rt.binary('<', rt.binary('+', q, r, 1, 'int'), rt.unary('-', ringsN))) || rt.bool(rt.binary('>', rt.binary('+', q, r, 1, 'int'), ringsN)) ? 1 : 0))
           next
         end
-        center = rt.construct(2, rt.binary('+', rt.construct(1, q), rt.binary('*', rt.construct(1, r), rt.f(0.5), 1, 'float'), 1, 'float'), rt.binary('*', rt.binary('*', rt.construct(1, r), rt.f(1.7320508075688772), 1, 'float'), rt.f(0.5), 1, 'float'))
+        center = rt.construct(2, rt.construct(2, rt.binary('+', rt.construct(1, q), rt.binary('*', rt.construct(1, r), rt.f(0.5), 1, 'float'), 1, 'float'), rt.binary('*', rt.binary('*', rt.construct(1, r), rt.f(1.7320508075688772), 1, 'float'), rt.f(0.5), 1, 'float')))
         hexDist = rt.component_wise('max', rt.component_wise('max', rt.component_wise('abs', rt.construct(1, q)), rt.component_wise('abs', rt.construct(1, r))), rt.component_wise('abs', rt.construct(1, rt.binary('+', q, r, 1, 'int'))))
         circleR = circleRadius
         if rt.bool(rt.binary('==', _u_animation, rt.i(4)))
@@ -232,9 +232,9 @@ run_pixel = lambda do |ctx, out|
     p.replace((rt.binary('*', p, rt.f(0.29999999999999999), 2, 'float')).map { |c| rt.f32(c) })
     r = rt.f(2.25)
     dist = rt.binary('/', r, rt.f(1.7320508075688772), 1, 'float')
-    _C0 = rt.binary('*', dist, rt.construct(2, rt.component_wise('cos', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float')), rt.component_wise('sin', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'))), 2, 'float')
-    _C1 = rt.binary('*', dist, rt.construct(2, rt.component_wise('cos', rt.binary('+', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), rt.binary('/', rt.f(6.2831853071800001), rt.f(3), 1, 'float'), 1, 'float')), rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), rt.binary('/', rt.f(6.2831853071800001), rt.f(3), 1, 'float'), 1, 'float'))), 2, 'float')
-    _C2 = rt.binary('*', dist, rt.construct(2, rt.component_wise('cos', rt.binary('+', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), rt.binary('/', rt.binary('*', rt.f(2), rt.f(6.2831853071800001), 1, 'float'), rt.f(3), 1, 'float'), 1, 'float')), rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), rt.binary('/', rt.binary('*', rt.f(2), rt.f(6.2831853071800001), 1, 'float'), rt.f(3), 1, 'float'), 1, 'float'))), 2, 'float')
+    _C0 = rt.construct(2, rt.binary('*', dist, rt.construct(2, rt.component_wise('cos', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float')), rt.component_wise('sin', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'))), 2, 'float'))
+    _C1 = rt.construct(2, rt.binary('*', dist, rt.construct(2, rt.component_wise('cos', rt.binary('+', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), rt.binary('/', rt.f(6.2831853071800001), rt.f(3), 1, 'float'), 1, 'float')), rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), rt.binary('/', rt.f(6.2831853071800001), rt.f(3), 1, 'float'), 1, 'float'))), 2, 'float'))
+    _C2 = rt.construct(2, rt.binary('*', dist, rt.construct(2, rt.component_wise('cos', rt.binary('+', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), rt.binary('/', rt.binary('*', rt.f(2), rt.f(6.2831853071800001), 1, 'float'), rt.f(3), 1, 'float'), 1, 'float')), rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), rt.binary('/', rt.binary('*', rt.f(2), rt.f(6.2831853071800001), 1, 'float'), rt.f(3), 1, 'float'), 1, 'float'))), 2, 'float'))
     r0 = r
     r1 = r
     r2 = r
@@ -279,7 +279,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       angle = rt.binary('+', rt.binary('/', rt.binary('*', rt.construct(1, i), rt.f(6.2831853071800001), 1, 'float'), rt.f(3), 1, 'float'), rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), 1, 'float')
-      c = rt.binary('*', dist, rt.construct(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle)), 2, 'float')
+      c = rt.construct(2, rt.binary('*', dist, rt.construct(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle)), 2, 'float'))
       circleR = r
       if rt.bool(rt.binary('==', _u_animation, rt.i(4)))
         circleR = rt.binary('*', circleR, ripplePulse__float.call(rt.binary('/', rt.binary('*', rt.construct(1, i), rt.f(6.2831853071800001), 1, 'float'), rt.f(3), 1, 'float')), 1, 'float')
@@ -319,8 +319,8 @@ run_pixel = lambda do |ctx, out|
       j = rt.binary('-', rt.binary('+', i, rt.i(2), 1, 'int'), rt.binary('*', rt.binary('/', rt.binary('+', i, rt.i(2), 1, 'int'), n, 1, 'int'), n, 1, 'int'), 1, 'int')
       angle1 = rt.binary('+', rt.binary('/', rt.binary('*', rt.construct(1, i), rt.f(6.2831853071800001), 1, 'float'), rt.construct(1, n), 1, 'float'), rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), 1, 'float')
       angle2 = rt.binary('+', rt.binary('/', rt.binary('*', rt.construct(1, j), rt.f(6.2831853071800001), 1, 'float'), rt.construct(1, n), 1, 'float'), rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), 1, 'float')
-      a = rt.binary('*', radius, rt.construct(2, rt.component_wise('cos', angle1), rt.component_wise('sin', angle1)), 2, 'float')
-      b = rt.binary('*', radius, rt.construct(2, rt.component_wise('cos', angle2), rt.component_wise('sin', angle2)), 2, 'float')
+      a = rt.construct(2, rt.binary('*', radius, rt.construct(2, rt.component_wise('cos', angle1), rt.component_wise('sin', angle1)), 2, 'float'))
+      b = rt.construct(2, rt.binary('*', radius, rt.construct(2, rt.component_wise('cos', angle2), rt.component_wise('sin', angle2)), 2, 'float'))
       dL = lineSegmentSDF__vec2_vec2_vec2.call(p, a, b)
       vis = rt.f(1)
       if rt.bool(rt.binary('==', _u_animation, rt.i(5)))
@@ -332,8 +332,8 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; globalCoord = nil; m = nil; p = nil; rad = nil; scaleFactor = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
     st.replace((rt.binary('*', rt.binary('-', st, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float')
@@ -345,7 +345,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', _u_animation, rt.i(2)))
       scaleFactor = rt.binary('*', scaleFactor, rt.binary('+', rt.f(1), rt.binary('*', _u_pulseDepth, rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float')), 1, 'float'), 1, 'float'), 1, 'float')
     end
-    p = rt.binary('*', st, scaleFactor, 2, 'float')
+    p = rt.construct(2, rt.binary('*', st, scaleFactor, 2, 'float'))
     m = rt.f(0)
     if rt.bool(rt.binary('==', _u_geometry, rt.i(0)))
       m = flowerMask__vec2_int_float.call(p, _u_rings, rt.f(0.45000000000000001))
@@ -379,7 +379,7 @@ run_pixel = lambda do |ctx, out|
       end
     end
     m = rt.component_wise('clamp', m, rt.f(0), rt.f(1))
-    color = rt.component_wise('mix', _u_bgColor, _u_fgColor, m)
+    color = rt.construct(3, rt.component_wise('mix', _u_bgColor, _u_fgColor, m))
     g['fragColor'].replace((rt.construct(4, color, rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

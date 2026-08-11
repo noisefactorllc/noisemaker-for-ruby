@@ -15,6 +15,7 @@
 
 require "optparse"
 require "fileutils"
+require "json"
 require "open3"
 require "tmpdir"
 
@@ -200,8 +201,8 @@ module NoisemakerCpu
       seed = seed_s.nil? ? nil : _to_int(seed_s)
 
       effect, seed = _prologue(effect, seed, "generator")
-      surface = Renderer.render_effect(
-        effect, _parse_params(params), nil,
+      surface = _render_cli_effect(
+        effect, _parse_params(params),
         width: width, height: height, seed: seed, time: time_value
       )
       _write_png(surface, filename)
@@ -249,6 +250,10 @@ module NoisemakerCpu
       seed = seed_s.nil? ? nil : _to_int(seed_s)
 
       effect, seed = _prologue(effect, seed, "filter")
+      domain = Renderer.meta["effects"][effect]["domain"] || "image"
+      if domain != "image"
+        raise "apply only supports image-domain effects; use run with a typed DSL chain for #{domain} effects\n"
+      end
       source = _load_png(input_filename)
       surface = Renderer.render_effect(
         effect, _parse_params(params), _bind_input(effect, source),
@@ -325,8 +330,8 @@ module NoisemakerCpu
 
         (0...frame_count).each do |i|
           time_value = i.fdiv(frame_count) * speed # sweep [0,1) phase, `speed` loops
-          surface = Renderer.render_effect(
-            effect, parsed, nil,
+          surface = _render_cli_effect(
+            effect, parsed,
             width: width, height: height, seed: seed, time: time_value
           )
           _write_png(surface, File.join(frames_dir, format("frame_%04d.png", i)))
@@ -453,13 +458,19 @@ module NoisemakerCpu
     # ---------------------------------------------------------------------
 
     # Resolve an EFFECT argument to a catalog id. `random` picks from
-    # effects of the given `kind` ("generator"/"filter"); an explicit id is
-    # used as-is.
+    # image-domain effects of the given `kind` ("generator"/"filter"); an
+    # explicit id is used as-is.
     def self._resolve_effect(effect, kind)
       effects = Renderer.meta["effects"]
       if effect == "random"
-        pool = effects.keys.select { |k| kind.nil? || (effects[k]["kind"] || "") == kind }.sort
-        pool = effects.keys.sort if pool.empty?
+        pool = effects.keys.select do |key|
+          candidate = effects[key]
+          (kind.nil? || (candidate["kind"] || "") == kind) &&
+            (candidate["domain"] || "image") == "image" &&
+            !candidate["iterated"] && candidate["externalTexture"].nil?
+        end.sort
+        raise UsageError, "usage: No #{kind} effects available.\n" if pool.empty?
+
         return pool[rand(pool.length)]
       end
       unless effects.key?(effect)
@@ -486,6 +497,52 @@ module NoisemakerCpu
         params[kv[0, idx]] = kv[(idx + 1)..]
       end
       params
+    end
+
+    def self._dsl_value(value)
+      text = value.to_s
+      return text if text.match?(/\A(?:
+        -?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?
+        |true|false|\#[0-9A-Fa-f]{3,8}
+        |[A-Za-z_][A-Za-z0-9_.]*
+        |\[.*\]
+      )\z/x)
+
+      JSON.generate(text)
+    end
+
+    def self._typed_effect_program(effect_id, params)
+      effect = Renderer.meta["effects"][effect_id]
+      args = params.keys.sort.map { |name| "#{name}: #{_dsl_value(params[name])}" }.join(", ")
+      call = "#{effect['func']}(#{args})"
+      domain = effect["domain"] || "image"
+      if domain == "loop-begin" || domain == "loop-end"
+        loop_begin = domain == "loop-begin" ? call : "loopBegin(iterationCount: 1)"
+        loop_end = domain == "loop-end" ? call : "loopEnd()"
+        return "search render, synth\nsolid().#{loop_begin}.#{loop_end}.write(o0)\nrender(o0)"
+      end
+
+      supplied_size = params["volumeSize"]
+      size_spec = (effect["params"] || {})["volumeSize"] || {}
+      volume_size = supplied_size.nil? ? (size_spec["default"] || 16) : supplied_size
+      unless volume_size.to_s.match?(/\A\d+(?:\.\d+)?\z/)
+        choice = volume_size.to_s.split(".").last
+        volume_size = (size_spec["choices"] || {})[choice] || size_spec["default"] || 16
+      end
+      search = "search synth3d, filter3d, render"
+      return "#{search}\n#{call}.render3d().write(o0)\nrender(o0)" if domain == "volume-generator"
+      if domain == "volume-filter"
+        return "#{search}\nnoise3d(volumeSize: #{volume_size}).#{call}.render3d().write(o0)\nrender(o0)"
+      end
+
+      "#{search}\nnoise3d(volumeSize: #{volume_size}).#{call}.write(o0)\nrender(o0)"
+    end
+
+    def self._render_cli_effect(effect_id, params, **options)
+      domain = Renderer.meta["effects"][effect_id]["domain"] || "image"
+      return Renderer.render_effect(effect_id, params, nil, **options) if domain == "image"
+
+      Renderer.render_dsl(_typed_effect_program(effect_id, params), **options)
     end
 
     # An effect that reads a host texture (filter/text, synth/media) binds

@@ -57,12 +57,12 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     anim = nil; color = nil; globalCoord = nil; n1 = nil; n2 = nil; n3 = nil; osc1 = nil; osc2 = nil; osc3 = nil; p = nil; phase1 = nil; phase2 = nil; phase3 = nil; s1 = nil; s2 = nil; s3 = nil; shift = nil; spd = nil; uv = nil; val = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', rt.binary('-', globalCoord, rt.binary('*', _u_fullResolution, rt.f(0.5), 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', rt.binary('-', globalCoord, rt.binary('*', _u_fullResolution, rt.f(0.5), 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
     spd = rt.component_wise('floor', _u_speed)
     anim = rt.binary('*', _u_time, spd, 1, 'float')
     s1 = rt.binary('-', rt.f(20.100000000000001), _u_scale1, 1, 'float')
-    p = rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('*', uv, s1, 2, 'float'), rt.f(2)), rt.f(1), 2, 'float'))
+    p = rt.construct(2, rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('*', uv, s1, 2, 'float'), rt.f(2)), rt.f(1), 2, 'float')))
     osc1 = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_animMode, rt.i(1)))
       osc1 = rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), spd, 1, 'float')), rt.f(0.029999999999999999), 1, 'float')

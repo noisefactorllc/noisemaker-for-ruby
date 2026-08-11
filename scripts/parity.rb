@@ -4,7 +4,7 @@
 # Cross-language parity harness: render every bundled effect in Ruby vs the
 # JS oracle (noisemaker-cpu `effect` CLI) at parity settings, and categorize.
 #
-# Usage: ruby scripts/parity.rb [--only id,id] [--size N]
+# Usage: ruby scripts/parity.rb [--only id,id] [--size N] [--volume-size N]
 #
 # NOTE (integration dependency): this requires lib/noisemaker_cpu/{png,
 # renderer,surface}.rb (Workers D/C/A) and a generated bundle
@@ -25,9 +25,11 @@ size = 8
 seed = 1
 render_time = 0.25
 only = nil
+volume_size = 16
 ARGV.each_index do |i|
   only = ARGV[i + 1].split(",").each_with_object({}) { |x, h| h[x] = true } if ARGV[i] == "--only"
   size = ARGV[i + 1].to_i if ARGV[i] == "--size"
+  volume_size = ARGV[i + 1].to_i if ARGV[i] == "--volume-size"
 end
 
 tmp = Dir.mktmpdir
@@ -78,6 +80,33 @@ solid = lambda do |color = nil|
 end
 
 ruby_render = lambda do |effect_id, kind, ext, render_params|
+  eff = NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id)
+  domain = eff["domain"] || "image"
+  unless domain == "image"
+    args = render_params.map { |name, value| "#{name}: #{value}" }.join(", ")
+    call = "#{eff['func']}(#{args})"
+    source =
+      if domain == "loop-begin" || domain == "loop-end"
+        loop_begin = domain == "loop-begin" ? call : "loopBegin(iterationCount: 1)"
+        loop_end = domain == "loop-end" ? call : "loopEnd()"
+        "search render, synth\nsolid().#{loop_begin}.#{loop_end}.write(o0)\nrender(o0)"
+      else
+        supplied_size = render_params["volumeSize"]
+        volume_size = supplied_size || eff.dig("params", "volumeSize", "default") || 16
+        search = "search synth3d, filter3d, render"
+        case domain
+        when "volume-generator"
+          "#{search}\n#{call}.render3d().write(o0)\nrender(o0)"
+        when "volume-filter"
+          "#{search}\nnoise3d(volumeSize: #{volume_size}).#{call}.render3d().write(o0)\nrender(o0)"
+        else
+          "#{search}\nnoise3d(volumeSize: #{volume_size}).#{call}.write(o0)\nrender(o0)"
+        end
+      end
+    return NoisemakerCpu::Renderer.render_dsl(
+      source, width: size, height: size, seed: seed, time: render_time
+    )
+  end
   if kind == "generator"
     inputs = ext ? { ext => ext_texture.call } : {}
     return NoisemakerCpu::Renderer.render_effect(effect_id, render_params, inputs,
@@ -87,7 +116,6 @@ ruby_render = lambda do |effect_id, kind, ext, render_params|
   # surface param (mixers) gets solid(#f30 / #0cf), alternating by index.
   inputs = { "inputTex" => solid.call }
   inputs[ext] = ext_texture.call if ext
-  eff = NoisemakerCpu::Renderer.meta["effects"][effect_id]
   params = eff["params"]
   order = (eff["paramOrder"] && !eff["paramOrder"].empty?) ? eff["paramOrder"] : params.keys.sort
   surf = order.select { |pn| params[pn].is_a?(Hash) && (params[pn]["type"] || "") == "surface" }
@@ -118,6 +146,7 @@ ids.each do |eid|
     render_params["iterationCount"] = 1
     render_params["stateSize"] = 64 if effects[eid]["params"].key?("stateSize")
   end
+  render_params["volumeSize"] = volume_size if effects[eid]["params"].key?("volumeSize")
   input_png = ext ? (ext_texture.call && ext_png) : nil
   js =
     begin

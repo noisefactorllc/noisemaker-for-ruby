@@ -13,10 +13,10 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     color = nil; globalCoord = nil; texSize = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float')
-    color = rt.texture(_u_inputTex, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
+    color = rt.construct(4, rt.texture(_u_inputTex, uv))
     color = rt.assign_swizzle(color, 'rgb', rt.component_wise('smoothstep', _u_edge0, _u_edge1, rt.swizzle(color, 'rgb')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end

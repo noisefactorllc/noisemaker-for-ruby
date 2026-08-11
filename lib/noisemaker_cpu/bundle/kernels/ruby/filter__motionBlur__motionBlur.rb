@@ -13,13 +13,13 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     current = nil; mixFactor = nil; previous = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
     if rt.bool(_u_resetState)
       g['fragColor'].replace((rt.texture(_u_inputTex, uv)).map { |c| rt.f32(c) })
       return
     end
-    current = rt.texture(_u_inputTex, uv)
-    previous = rt.texture(_u_selfTex, uv)
+    current = rt.construct(4, rt.texture(_u_inputTex, uv))
+    previous = rt.construct(4, rt.texture(_u_selfTex, uv))
     mixFactor = rt.component_wise('clamp', rt.binary('*', _u_amount, rt.f(0.0080000000000000002), 1, 'float'), rt.f(0), rt.f(0.97999999999999998))
     g['fragColor'].replace((rt.component_wise('mix', current, previous, mixFactor)).map { |c| rt.f32(c) })
   end

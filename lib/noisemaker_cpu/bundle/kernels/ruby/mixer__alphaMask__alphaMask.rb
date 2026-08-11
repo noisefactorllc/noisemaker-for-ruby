@@ -18,10 +18,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _AoverB = nil; _BoverA = nil; color = nil; color1 = nil; color2 = nil; globalCoord = nil; maskVal = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    color1 = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    color2 = rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    color1 = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    color2 = rt.construct(4, rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
     maskVal = rt.f(0.0)
     if rt.bool(_u_maskMode)
       maskVal = rt.dot(rt.swizzle(color2, 'rgb'), rt.construct(3, rt.f(0.29899999999999999), rt.f(0.58699999999999997), rt.f(0.114)))
@@ -32,10 +32,10 @@ run_pixel = lambda do |ctx, out|
     _AoverB = rt.construct(4, 0.0)
     _BoverA = rt.construct(4, 0.0)
     if rt.bool(rt.binary('<', _u_mixAmt, rt.f(0)))
-      _AoverB = rt.binary('+', rt.binary('*', color2, rt.binary('-', rt.f(1), rt.swizzle(color1, 'a'), 1, 'float'), 4, 'float'), rt.binary('*', color1, rt.swizzle(color1, 'a'), 4, 'float'), 4, 'float')
+      _AoverB = rt.construct(4, rt.binary('+', rt.binary('*', color2, rt.binary('-', rt.f(1), rt.swizzle(color1, 'a'), 1, 'float'), 4, 'float'), rt.binary('*', color1, rt.swizzle(color1, 'a'), 4, 'float'), 4, 'float'))
       color.replace((rt.component_wise('mix', color1, _AoverB, map__float_float_float_float_float.call(_u_mixAmt, rt.unary('-', rt.f(100)), rt.f(0), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
     else
-      _BoverA = rt.binary('+', rt.binary('*', color1, rt.binary('-', rt.f(1), rt.swizzle(color2, 'a'), 1, 'float'), 4, 'float'), rt.binary('*', color2, rt.swizzle(color2, 'a'), 4, 'float'), 4, 'float')
+      _BoverA = rt.construct(4, rt.binary('+', rt.binary('*', color1, rt.binary('-', rt.f(1), rt.swizzle(color2, 'a'), 1, 'float'), 4, 'float'), rt.binary('*', color2, rt.swizzle(color2, 'a'), 4, 'float'), 4, 'float'))
       color.replace((rt.component_wise('mix', _BoverA, color2, map__float_float_float_float_float.call(_u_mixAmt, rt.f(0), rt.f(100), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
     end
     color = rt.assign_swizzle(color, 'a', rt.component_wise('max', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a')))

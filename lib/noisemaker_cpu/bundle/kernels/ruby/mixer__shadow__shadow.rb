@@ -36,10 +36,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; baseColor = nil; blurPixels = nil; dist2 = nil; fgMask = nil; fgSample = nil; globalCoord = nil; localUV = nil; maskSample = nil; maskUV = nil; offset = nil; result = nil; sampleUV = nil; shadowMask = nil; sigma = nil; sigma2 = nil; thresholded = nil; totalWeight = nil; uv = nil; weight = nil; withShadow = nil; wrappedUV = nil; x = nil; y = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    baseColor = (rt.bool(rt.binary('==', _u_maskSource, rt.i(0))) ? (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))) : (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))))
-    maskUV = rt.binary('-', uv, rt.binary('*', rt.binary('*', rt.construct(2, _u_offsetX, _u_offsetY), rt.f(0.10000000000000001), 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    baseColor = rt.construct(4, (rt.bool(rt.binary('==', _u_maskSource, rt.i(0))) ? (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))) : (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))))
+    maskUV = rt.construct(2, rt.binary('-', uv, rt.binary('*', rt.binary('*', rt.construct(2, _u_offsetX, _u_offsetY), rt.f(0.10000000000000001), 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'))
     shadowMask = rt.f(0)
     totalWeight = rt.f(0)
     blurPixels = rt.component_wise('min', rt.binary('*', _u_blur, _u_renderScale, 1, 'float'), rt.f(256))
@@ -65,15 +65,15 @@ run_pixel = lambda do |ctx, out|
         unless rt.bool(rt.binary('<=', y, rt.i(5)))
           break
         end
-        offset = rt.binary('/', rt.binary('*', rt.construct(2, rt.construct(1, x), rt.construct(1, y)), blurPixels, 2, 'float'), _u_resolution, 2, 'float')
-        sampleUV = rt.binary('+', maskUV, offset, 2, 'float')
-        localUV = rt.binary('/', rt.binary('-', rt.binary('*', sampleUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')
+        offset = rt.construct(2, rt.binary('/', rt.binary('*', rt.construct(2, rt.construct(1, x), rt.construct(1, y)), blurPixels, 2, 'float'), _u_resolution, 2, 'float'))
+        sampleUV = rt.construct(2, rt.binary('+', maskUV, offset, 2, 'float'))
+        localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', sampleUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
         thresholded = rt.f(0)
         maskSample = rt.construct(4, 0.0)
         wrappedUV = rt.construct(2, 0.0)
         if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
           if rt.bool((rt.bool((rt.bool((rt.bool(rt.binary('>=', rt.swizzle(localUV, 'x'), rt.f(0))) && rt.bool(rt.binary('<=', rt.swizzle(localUV, 'x'), rt.f(1))) ? 1 : 0)) && rt.bool(rt.binary('>=', rt.swizzle(localUV, 'y'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('<=', rt.swizzle(localUV, 'y'), rt.f(1))) ? 1 : 0))
-            maskSample = (rt.bool(rt.binary('==', _u_maskSource, rt.i(0))) ? (rt.texture(_u_inputTex, localUV)) : (rt.texture(_u_tex, localUV)))
+            maskSample = rt.construct(4, (rt.bool(rt.binary('==', _u_maskSource, rt.i(0))) ? (rt.texture(_u_inputTex, localUV)) : (rt.texture(_u_tex, localUV))))
             thresholded = rt.component_wise('step', _u_threshold, getChannel__vec4_int.call(maskSample, _u_sourceChannel))
           end
         else
@@ -87,7 +87,7 @@ run_pixel = lambda do |ctx, out|
               wrappedUV.replace((rt.component_wise('clamp', localUV, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
             end
           end
-          maskSample = (rt.bool(rt.binary('==', _u_maskSource, rt.i(0))) ? (rt.texture(_u_inputTex, wrappedUV)) : (rt.texture(_u_tex, wrappedUV)))
+          maskSample = rt.construct(4, (rt.bool(rt.binary('==', _u_maskSource, rt.i(0))) ? (rt.texture(_u_inputTex, wrappedUV)) : (rt.texture(_u_tex, wrappedUV))))
           thresholded = rt.component_wise('step', _u_threshold, getChannel__vec4_int.call(maskSample, _u_sourceChannel))
         end
         dist2 = rt.construct(1, rt.binary('+', rt.binary('*', x, x, 1, 'int'), rt.binary('*', y, y, 1, 'int'), 1, 'int'))
@@ -98,10 +98,10 @@ run_pixel = lambda do |ctx, out|
     end
     shadowMask = rt.binary('/', shadowMask, totalWeight, 1, 'float')
     shadowMask = rt.component_wise('clamp', rt.binary('*', shadowMask, rt.binary('+', rt.f(1), _u_spread, 1, 'float'), 1, 'float'), rt.f(0), rt.f(1))
-    withShadow = rt.component_wise('mix', rt.swizzle(baseColor, 'rgb'), _u_color, shadowMask)
-    fgSample = (rt.bool(rt.binary('==', _u_maskSource, rt.i(0))) ? (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))) : (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))))
+    withShadow = rt.construct(3, rt.component_wise('mix', rt.swizzle(baseColor, 'rgb'), _u_color, shadowMask))
+    fgSample = rt.construct(4, (rt.bool(rt.binary('==', _u_maskSource, rt.i(0))) ? (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))) : (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))))
     fgMask = rt.component_wise('step', _u_threshold, getChannel__vec4_int.call(fgSample, _u_sourceChannel))
-    result = rt.component_wise('mix', withShadow, rt.swizzle(fgSample, 'rgb'), fgMask)
+    result = rt.construct(3, rt.component_wise('mix', withShadow, rt.swizzle(fgSample, 'rgb'), fgMask))
     g['fragColor'].replace((rt.construct(4, result, rt.swizzle(baseColor, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

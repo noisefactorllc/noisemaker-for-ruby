@@ -151,18 +151,18 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; coord = nil; correctedHsl = nil; correctedRgb = nil; globalCoord = nil; hsl = nil; matte = nil; rgb = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
-    color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     if rt.bool(rt.binary('==', _u_hslEnable, rt.i(0)))
       g['fragColor'].replace((color).map { |c| rt.f32(c) })
       return
     end
-    rgb = srgbToLinear__vec3.call(rt.swizzle(color, 'rgb'))
-    hsl = rgbToHsl__vec3.call(rgb)
+    rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))
+    hsl = rt.construct(3, rgbToHsl__vec3.call(rgb))
     matte = computeHslKey__vec3_float_float_float_float_float_float_float.call(hsl, _u_hslHueCenter, _u_hslHueRange, _u_hslSatMin, _u_hslSatMax, _u_hslLumMin, _u_hslLumMax, _u_hslFeather)
-    correctedHsl = applyHslCorrection__vec3_float_float_float.call(hsl, _u_hslHueShift, _u_hslSatAdjust, _u_hslLumAdjust)
-    correctedRgb = hslToRgb__vec3.call(correctedHsl)
+    correctedHsl = rt.construct(3, applyHslCorrection__vec3_float_float_float.call(hsl, _u_hslHueShift, _u_hslSatAdjust, _u_hslLumAdjust))
+    correctedRgb = rt.construct(3, hslToRgb__vec3.call(correctedHsl))
     rgb.replace((rt.component_wise('mix', rgb, correctedRgb, matte)).map { |c| rt.f32(c) })
     rgb.replace((linearToSrgb__vec3.call(rt.component_wise('max', rgb, rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })
     g['fragColor'].replace((rt.construct(4, rgb, rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })

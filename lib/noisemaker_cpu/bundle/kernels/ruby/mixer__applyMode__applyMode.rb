@@ -19,9 +19,9 @@ run_pixel = lambda do |ctx, out|
   rgb2hsv__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     _K = nil; d = nil; e = nil; p = nil; q = nil
-    _K = rt.construct(4, rt.f(0), rt.binary('/', rt.unary('-', rt.f(1)), rt.f(3), 1, 'float'), rt.binary('/', rt.f(2), rt.f(3), 1, 'float'), rt.unary('-', rt.f(1)))
-    p = rt.component_wise('mix', rt.construct(4, rt.swizzle(c, 'bg'), rt.swizzle(_K, 'wz')), rt.construct(4, rt.swizzle(c, 'gb'), rt.swizzle(_K, 'xy')), rt.component_wise('step', rt.swizzle(c, 'b'), rt.swizzle(c, 'g')))
-    q = rt.component_wise('mix', rt.construct(4, rt.swizzle(p, 'xyw'), rt.swizzle(c, 'r')), rt.construct(4, rt.swizzle(c, 'r'), rt.swizzle(p, 'yzx')), rt.component_wise('step', rt.swizzle(p, 'x'), rt.swizzle(c, 'r')))
+    _K = rt.construct(4, rt.construct(4, rt.f(0), rt.binary('/', rt.unary('-', rt.f(1)), rt.f(3), 1, 'float'), rt.binary('/', rt.f(2), rt.f(3), 1, 'float'), rt.unary('-', rt.f(1))))
+    p = rt.construct(4, rt.component_wise('mix', rt.construct(4, rt.swizzle(c, 'bg'), rt.swizzle(_K, 'wz')), rt.construct(4, rt.swizzle(c, 'gb'), rt.swizzle(_K, 'xy')), rt.component_wise('step', rt.swizzle(c, 'b'), rt.swizzle(c, 'g'))))
+    q = rt.construct(4, rt.component_wise('mix', rt.construct(4, rt.swizzle(p, 'xyw'), rt.swizzle(c, 'r')), rt.construct(4, rt.swizzle(c, 'r'), rt.swizzle(p, 'yzx')), rt.component_wise('step', rt.swizzle(p, 'x'), rt.swizzle(c, 'r'))))
     d = rt.binary('-', rt.swizzle(q, 'x'), rt.component_wise('min', rt.swizzle(q, 'w'), rt.swizzle(q, 'y')), 1, 'float')
     e = rt.f(1e-10)
     return rt.construct(3, rt.component_wise('abs', rt.binary('+', rt.swizzle(q, 'z'), rt.binary('/', rt.binary('-', rt.swizzle(q, 'w'), rt.swizzle(q, 'y'), 1, 'float'), rt.binary('+', rt.binary('*', rt.f(6), d, 1, 'float'), e, 1, 'float'), 1, 'float'), 1, 'float')), rt.binary('/', d, rt.binary('+', rt.swizzle(q, 'x'), e, 1, 'float'), 1, 'float'), rt.swizzle(q, 'x'))
@@ -29,18 +29,18 @@ run_pixel = lambda do |ctx, out|
   hsv2rgb__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     _K = nil; p = nil
-    _K = rt.construct(4, rt.f(1), rt.binary('/', rt.f(2), rt.f(3), 1, 'float'), rt.binary('/', rt.f(1), rt.f(3), 1, 'float'), rt.f(3))
-    p = rt.component_wise('abs', rt.binary('-', rt.binary('*', rt.component_wise('fract', rt.binary('+', rt.swizzle(c, 'xxx'), rt.swizzle(_K, 'xyz'), 3, 'float')), rt.f(6), 3, 'float'), rt.swizzle(_K, 'www'), 3, 'float'))
+    _K = rt.construct(4, rt.construct(4, rt.f(1), rt.binary('/', rt.f(2), rt.f(3), 1, 'float'), rt.binary('/', rt.f(1), rt.f(3), 1, 'float'), rt.f(3)))
+    p = rt.construct(3, rt.component_wise('abs', rt.binary('-', rt.binary('*', rt.component_wise('fract', rt.binary('+', rt.swizzle(c, 'xxx'), rt.swizzle(_K, 'xyz'), 3, 'float')), rt.f(6), 3, 'float'), rt.swizzle(_K, 'www'), 3, 'float')))
     return rt.binary('*', rt.swizzle(c, 'z'), rt.component_wise('mix', rt.swizzle(_K, 'xxx'), rt.component_wise('clamp', rt.binary('-', p, rt.swizzle(_K, 'xxx'), 3, 'float'), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')), 3, 'float')
   end
   main__void = lambda do
     a = nil; amt = nil; b = nil; color = nil; color1 = nil; color2 = nil; factor = nil; globalCoord = nil; middle = nil; resultHSV = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    color1 = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    color2 = rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))
-    a = rgb2hsv__vec3.call(rt.swizzle(color1, 'rgb'))
-    b = rgb2hsv__vec3.call(rt.swizzle(color2, 'rgb'))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    color1 = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    color2 = rt.construct(4, rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    a = rt.construct(3, rgb2hsv__vec3.call(rt.swizzle(color1, 'rgb')))
+    b = rt.construct(3, rgb2hsv__vec3.call(rt.swizzle(color2, 'rgb')))
     resultHSV = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', _u_mode, rt.i(0)))
       resultHSV.replace((rt.construct(3, rt.swizzle(a, 'x'), rt.swizzle(a, 'y'), rt.swizzle(b, 'z'))).map { |c| rt.f32(c) })
@@ -51,7 +51,7 @@ run_pixel = lambda do |ctx, out|
         resultHSV.replace((rt.construct(3, rt.swizzle(a, 'x'), rt.swizzle(b, 'y'), rt.swizzle(a, 'z'))).map { |c| rt.f32(c) })
       end
     end
-    middle = rt.construct(4, hsv2rgb__vec3.call(resultHSV), rt.f(1))
+    middle = rt.construct(4, rt.construct(4, hsv2rgb__vec3.call(resultHSV), rt.f(1)))
     amt = map__float_float_float_float_float.call(_u_mixAmt, rt.unary('-', rt.f(100)), rt.f(100), rt.f(0), rt.f(1))
     color = rt.construct(4, 0.0)
     factor = rt.f(0.0)

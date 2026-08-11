@@ -14,12 +14,12 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     bloom = nil; coord = nil; finalRgb = nil; globalCoord = nil; sceneColor = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
-    sceneColor = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
-    bloom = rt.swizzle(rt.texel_fetch(_u_bloomTex, coord, rt.i(0)), 'rgb')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    sceneColor = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
+    bloom = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_bloomTex, coord, rt.i(0)), 'rgb'))
     bloom.replace((rt.binary('*', bloom, _u_tint, 3, 'float')).map { |c| rt.f32(c) })
-    finalRgb = rt.binary('+', rt.swizzle(sceneColor, 'rgb'), rt.binary('*', _u_intensity, bloom, 3, 'float'), 3, 'float')
+    finalRgb = rt.construct(3, rt.binary('+', rt.swizzle(sceneColor, 'rgb'), rt.binary('*', _u_intensity, bloom, 3, 'float'), 3, 'float'))
     g['fragColor'].replace((rt.construct(4, finalRgb, rt.swizzle(sceneColor, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

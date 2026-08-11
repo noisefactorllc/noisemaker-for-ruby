@@ -9,6 +9,7 @@
       "namespace": "classicNoisedeck",
       "func": "bitEffects",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -322,6 +323,7 @@
       "namespace": "classicNoisedeck",
       "func": "caustic",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "interp": {
           "type": "int",
@@ -458,6 +460,7 @@
       "namespace": "classicNoisedeck",
       "func": "cellNoise",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "shape": {
           "type": "int",
@@ -779,6 +782,7 @@
       "namespace": "classicNoisedeck",
       "func": "cellRefract",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "amount": {
           "type": "float",
@@ -981,6 +985,7 @@
       "namespace": "classicNoisedeck",
       "func": "coalesce",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -1118,6 +1123,7 @@
       "namespace": "classicNoisedeck",
       "func": "colorLab",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "colorMode": {
           "type": "int",
@@ -1406,6 +1412,7 @@
       "namespace": "classicNoisedeck",
       "func": "composite",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -1508,6 +1515,7 @@
       "namespace": "classicNoisedeck",
       "func": "effects",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "effect": {
           "type": "int",
@@ -1680,6 +1688,7 @@
       "namespace": "classicNoisedeck",
       "func": "fractal",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "type": {
           "type": "int",
@@ -2073,6 +2082,7 @@
       "namespace": "classicNoisedeck",
       "func": "glitch",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "glitchiness": {
           "type": "float",
@@ -2220,6 +2230,7 @@
       "namespace": "classicNoisedeck",
       "func": "kaleido",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "sides": {
           "type": "int",
@@ -2453,6 +2464,7 @@
       "namespace": "classicNoisedeck",
       "func": "lensDistortion",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "shape": {
           "type": "int",
@@ -2691,6 +2703,7 @@
       "namespace": "classicNoisedeck",
       "func": "moodscape",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "interp": {
           "type": "int",
@@ -2871,6 +2884,7 @@
       "namespace": "classicNoisedeck",
       "func": "noise",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "type": {
           "type": "int",
@@ -3306,10 +3320,188 @@
         }
       ]
     },
+    "classicNoisedeck/noise3d": {
+      "namespace": "classicNoisedeck",
+      "func": "noise3d",
+      "kind": "generator",
+      "domain": "image",
+      "params": {
+        "type": {
+          "type": "int",
+          "default": 12,
+          "define": "NOISE_TYPE",
+          "choices": {
+            "cubes": 50,
+            "simplex": 12,
+            "sine": 30,
+            "spheres": 40,
+            "wavyPlanes": 60,
+            "wavyPlaneLower": 61,
+            "wavyPlaneUpper": 62
+          },
+          "ui": {
+            "label": "noise type",
+            "control": "dropdown"
+          }
+        },
+        "ridges": {
+          "type": "boolean",
+          "default": false,
+          "uniform": "ridges",
+          "ui": {
+            "label": "ridges",
+            "control": "checkbox",
+            "enabledBy": {
+              "param": "type",
+              "eq": 12
+            }
+          }
+        },
+        "seed": {
+          "type": "int",
+          "default": 1,
+          "uniform": "seed",
+          "min": 1,
+          "max": 100,
+          "ui": {
+            "label": "seed",
+            "control": "slider",
+            "enabledBy": {
+              "param": "type",
+              "neq": 50
+            }
+          }
+        },
+        "speed": {
+          "type": "int",
+          "default": 1,
+          "uniform": "speed",
+          "min": -10,
+          "max": 10,
+          "zero": 0,
+          "randMin": -2,
+          "randMax": 2,
+          "ui": {
+            "label": "speed",
+            "control": "slider"
+          }
+        },
+        "scale": {
+          "type": "float",
+          "default": 25,
+          "uniform": "scale",
+          "min": 1,
+          "max": 100,
+          "ui": {
+            "label": "scale",
+            "control": "slider",
+            "category": "transform"
+          }
+        },
+        "offsetX": {
+          "type": "float",
+          "default": 0,
+          "uniform": "offsetX",
+          "min": -100,
+          "max": 100,
+          "ui": {
+            "label": "offset x",
+            "control": "slider",
+            "category": "transform"
+          }
+        },
+        "offsetY": {
+          "type": "float",
+          "default": 0,
+          "uniform": "offsetY",
+          "min": -100,
+          "max": 100,
+          "ui": {
+            "label": "offset y",
+            "control": "slider",
+            "category": "transform"
+          }
+        },
+        "colorMode": {
+          "type": "int",
+          "default": 6,
+          "uniform": "colorMode",
+          "choices": {
+            "depthMap": 8,
+            "hsv": 6,
+            "mono": 0,
+            "surfaceNormal": 7
+          },
+          "ui": {
+            "label": "color mode",
+            "control": "dropdown",
+            "category": "color"
+          }
+        },
+        "hueRotation": {
+          "type": "float",
+          "default": 0,
+          "uniform": "hueRotation",
+          "min": 0,
+          "max": 360,
+          "ui": {
+            "label": "hue rotate",
+            "control": "slider",
+            "category": "color",
+            "enabledBy": {
+              "param": "colorMode",
+              "eq": 6
+            }
+          }
+        },
+        "hueRange": {
+          "type": "float",
+          "default": 10,
+          "uniform": "hueRange",
+          "min": 0,
+          "max": 100,
+          "ui": {
+            "label": "hue range",
+            "control": "slider",
+            "category": "color",
+            "enabledBy": {
+              "param": "colorMode",
+              "eq": 6
+            }
+          }
+        }
+      },
+      "paramOrder": [
+        "type",
+        "ridges",
+        "seed",
+        "speed",
+        "scale",
+        "offsetX",
+        "offsetY",
+        "colorMode",
+        "hueRotation",
+        "hueRange"
+      ],
+      "textures": {},
+      "passes": [
+        {
+          "name": "render",
+          "program": "noise3d",
+          "key": "classicNoisedeck/noise3d:noise3d",
+          "inputs": {},
+          "outputs": {
+            "fragColor": "outputTex"
+          },
+          "uniforms": {}
+        }
+      ]
+    },
     "classicNoisedeck/refract": {
       "namespace": "classicNoisedeck",
       "func": "refract",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "blendMode": {
           "type": "int",
@@ -3431,6 +3623,7 @@
       "namespace": "classicNoisedeck",
       "func": "shapeMixer",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -3727,6 +3920,7 @@
       "namespace": "classicNoisedeck",
       "func": "shapes",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "loopAOffset": {
           "type": "int",
@@ -4083,10 +4277,514 @@
         }
       ]
     },
+    "classicNoisedeck/shapes3d": {
+      "namespace": "classicNoisedeck",
+      "func": "shapes3d",
+      "kind": "filter",
+      "domain": "image",
+      "params": {
+        "shapeA": {
+          "type": "int",
+          "default": 30,
+          "define": "SHAPE_A",
+          "choices": {
+            "capsuleHoriz": 70,
+            "capsuleVert": 60,
+            "cube": 10,
+            "cylinderHoriz": 50,
+            "cylinderVert": 40,
+            "octahedron": 80,
+            "sphere": 20,
+            "torusHoriz": 31,
+            "torusVert": 30
+          },
+          "ui": {
+            "label": "shape a",
+            "control": "dropdown"
+          }
+        },
+        "shapeB": {
+          "type": "int",
+          "default": 10,
+          "define": "SHAPE_B",
+          "choices": {
+            "capsuleHoriz": 70,
+            "capsuleVert": 60,
+            "cube": 10,
+            "cylinderHoriz": 50,
+            "cylinderVert": 40,
+            "octahedron": 80,
+            "sphere": 20,
+            "torusHoriz": 31,
+            "torusVert": 30
+          },
+          "ui": {
+            "label": "shape b",
+            "control": "dropdown"
+          }
+        },
+        "shapeAScale": {
+          "type": "float",
+          "default": 64,
+          "uniform": "shapeAScale",
+          "min": 1,
+          "max": 100,
+          "ui": {
+            "label": "scale a",
+            "control": "slider"
+          }
+        },
+        "shapeBScale": {
+          "type": "float",
+          "default": 27,
+          "uniform": "shapeBScale",
+          "min": 1,
+          "max": 100,
+          "ui": {
+            "label": "scale b",
+            "control": "slider"
+          }
+        },
+        "shapeAThickness": {
+          "type": "float",
+          "default": 5,
+          "uniform": "shapeAThickness",
+          "min": 1,
+          "max": 50,
+          "ui": {
+            "label": "thickness a",
+            "control": "slider"
+          }
+        },
+        "shapeBThickness": {
+          "type": "float",
+          "default": 5,
+          "uniform": "shapeBThickness",
+          "min": 1,
+          "max": 50,
+          "ui": {
+            "label": "thickness b",
+            "control": "slider"
+          }
+        },
+        "blendMode": {
+          "type": "int",
+          "default": 10,
+          "define": "BLEND_MODE",
+          "choices": {
+            "intersect": 40,
+            "union": 30,
+            "smoothIntersect": 20,
+            "smoothUnion": 10,
+            "aMinusB": 51,
+            "bMinusA": 50,
+            "smoothAMinusB": 26,
+            "smoothBMinusA": 25
+          },
+          "ui": {
+            "label": "blend mode",
+            "control": "dropdown"
+          }
+        },
+        "smoothness": {
+          "type": "float",
+          "default": 1,
+          "uniform": "smoothness",
+          "min": 1,
+          "max": 100,
+          "ui": {
+            "label": "smoothness",
+            "control": "slider",
+            "enabledBy": {
+              "or": [
+                {
+                  "param": "blendMode",
+                  "in": [
+                    10,
+                    20,
+                    25,
+                    26
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "repetition": {
+          "type": "boolean",
+          "default": false,
+          "uniform": "repetition",
+          "ui": {
+            "label": "repeat",
+            "control": "checkbox",
+            "category": "repetition"
+          }
+        },
+        "animation": {
+          "type": "int",
+          "default": 1,
+          "uniform": "animation",
+          "choices": {
+            "rotateScene": 0,
+            "rotateShape": 1
+          },
+          "ui": {
+            "label": "rotation",
+            "control": "dropdown",
+            "category": "repetition",
+            "enabledBy": {
+              "param": "repetition",
+              "eq": true
+            }
+          }
+        },
+        "spacing": {
+          "type": "int",
+          "default": 10,
+          "uniform": "spacing",
+          "min": 5,
+          "max": 20,
+          "ui": {
+            "label": "spacing",
+            "control": "slider",
+            "category": "repetition",
+            "enabledBy": {
+              "param": "repetition",
+              "eq": true
+            }
+          }
+        },
+        "flythroughSpeed": {
+          "type": "float",
+          "default": 0,
+          "uniform": "flythroughSpeed",
+          "min": -10,
+          "max": 10,
+          "ui": {
+            "label": "flythrough",
+            "control": "slider",
+            "category": "repetition",
+            "enabledBy": {
+              "and": [
+                {
+                  "param": "repetition",
+                  "eq": true
+                },
+                {
+                  "param": "animation",
+                  "eq": 1
+                }
+              ]
+            }
+          }
+        },
+        "spin": {
+          "type": "float",
+          "default": 0,
+          "uniform": "spin",
+          "min": -180,
+          "max": 180,
+          "ui": {
+            "label": "spin",
+            "control": "slider",
+            "category": "rotation"
+          }
+        },
+        "spinSpeed": {
+          "type": "float",
+          "default": 2,
+          "uniform": "spinSpeed",
+          "min": -10,
+          "max": 10,
+          "ui": {
+            "label": "spin speed",
+            "control": "slider",
+            "category": "rotation"
+          }
+        },
+        "flip": {
+          "type": "int",
+          "default": 0,
+          "uniform": "flip",
+          "min": -180,
+          "max": 180,
+          "ui": {
+            "label": "flip",
+            "control": "slider",
+            "category": "rotation"
+          }
+        },
+        "flipSpeed": {
+          "type": "float",
+          "default": 2,
+          "uniform": "flipSpeed",
+          "min": -10,
+          "max": 10,
+          "ui": {
+            "label": "flip speed",
+            "control": "slider",
+            "category": "rotation"
+          }
+        },
+        "cameraDist": {
+          "type": "float",
+          "default": 8,
+          "uniform": "cameraDist",
+          "min": 5,
+          "max": 20,
+          "ui": {
+            "label": "cam distance",
+            "control": "slider"
+          }
+        },
+        "bgColor": {
+          "type": "color",
+          "default": [
+            1,
+            1,
+            1
+          ],
+          "uniform": "bgColor",
+          "ui": {
+            "label": "bg color",
+            "control": "color",
+            "category": "color"
+          }
+        },
+        "bgAlpha": {
+          "type": "float",
+          "default": 0,
+          "uniform": "bgAlpha",
+          "min": 0,
+          "max": 100,
+          "ui": {
+            "label": "bg opacity",
+            "control": "slider",
+            "category": "color"
+          }
+        },
+        "tex": {
+          "type": "surface",
+          "default": "none",
+          "ui": {
+            "label": "texture",
+            "category": "color"
+          }
+        },
+        "weight": {
+          "type": "float",
+          "default": 0,
+          "uniform": "weight",
+          "min": 0,
+          "max": 100,
+          "randChance": 0,
+          "ui": {
+            "label": "input weight",
+            "control": "slider",
+            "category": "color"
+          }
+        },
+        "colorMode": {
+          "type": "int",
+          "default": 10,
+          "uniform": "colorMode",
+          "choices": {
+            "depth": 0,
+            "diffuse": 1,
+            "palette": 10
+          },
+          "ui": {
+            "label": "color mode",
+            "control": "dropdown",
+            "category": "color"
+          }
+        },
+        "palette": {
+          "type": "palette",
+          "default": 40,
+          "uniform": "palette",
+          "choices": 0,
+          "ui": {
+            "label": "palette",
+            "control": "dropdown",
+            "category": "palette",
+            "enabledBy": {
+              "param": "colorMode",
+              "eq": 10
+            }
+          }
+        },
+        "cyclePalette": {
+          "type": "int",
+          "default": 1,
+          "uniform": "cyclePalette",
+          "choices": {
+            "off": 0,
+            "forward": 1,
+            "backward": -1
+          },
+          "ui": {
+            "label": "rotation",
+            "control": "dropdown",
+            "category": "palette",
+            "enabledBy": {
+              "param": "colorMode",
+              "eq": 10
+            }
+          }
+        },
+        "rotatePalette": {
+          "type": "float",
+          "default": 0,
+          "uniform": "rotatePalette",
+          "min": 0,
+          "max": 100,
+          "ui": {
+            "label": "offset",
+            "control": "slider",
+            "category": "palette",
+            "enabledBy": {
+              "param": "colorMode",
+              "eq": 10
+            }
+          }
+        },
+        "repeatPalette": {
+          "type": "int",
+          "default": 1,
+          "uniform": "repeatPalette",
+          "min": 1,
+          "max": 10,
+          "randMax": 5,
+          "ui": {
+            "label": "repeat",
+            "control": "slider",
+            "category": "palette",
+            "enabledBy": {
+              "param": "colorMode",
+              "eq": 10
+            }
+          }
+        },
+        "paletteMode": {
+          "type": "int",
+          "default": 0,
+          "uniform": "paletteMode",
+          "ui": {
+            "control": false
+          }
+        },
+        "paletteOffset": {
+          "type": "vec3",
+          "default": [
+            0.83,
+            0.6,
+            0.63
+          ],
+          "uniform": "paletteOffset",
+          "ui": {
+            "label": "palette offset",
+            "control": "slider",
+            "hidden": true
+          }
+        },
+        "paletteAmp": {
+          "type": "vec3",
+          "default": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "uniform": "paletteAmp",
+          "ui": {
+            "label": "palette amplitude",
+            "control": "slider",
+            "hidden": true
+          }
+        },
+        "paletteFreq": {
+          "type": "vec3",
+          "default": [
+            1,
+            1,
+            1
+          ],
+          "uniform": "paletteFreq",
+          "ui": {
+            "label": "palette frequency",
+            "control": "slider",
+            "hidden": true
+          }
+        },
+        "palettePhase": {
+          "type": "vec3",
+          "default": [
+            0.3,
+            0.1,
+            0
+          ],
+          "uniform": "palettePhase",
+          "ui": {
+            "label": "palette phase",
+            "control": "slider",
+            "hidden": true
+          }
+        }
+      },
+      "paramOrder": [
+        "shapeA",
+        "shapeB",
+        "shapeAScale",
+        "shapeBScale",
+        "shapeAThickness",
+        "shapeBThickness",
+        "blendMode",
+        "smoothness",
+        "repetition",
+        "animation",
+        "spacing",
+        "flythroughSpeed",
+        "spin",
+        "spinSpeed",
+        "flip",
+        "flipSpeed",
+        "cameraDist",
+        "bgColor",
+        "bgAlpha",
+        "tex",
+        "weight",
+        "colorMode",
+        "palette",
+        "cyclePalette",
+        "rotatePalette",
+        "repeatPalette",
+        "paletteMode",
+        "paletteOffset",
+        "paletteAmp",
+        "paletteFreq",
+        "palettePhase"
+      ],
+      "textures": {},
+      "passes": [
+        {
+          "name": "render",
+          "program": "shapes3d",
+          "key": "classicNoisedeck/shapes3d:shapes3d",
+          "inputs": {
+            "inputTex": "tex"
+          },
+          "outputs": {
+            "fragColor": "outputTex"
+          },
+          "uniforms": {}
+        }
+      ]
+    },
     "classicNoisedeck/splat": {
       "namespace": "classicNoisedeck",
       "func": "splat",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "enabled": {
           "type": "boolean",
@@ -4360,6 +5058,7 @@
       "namespace": "filter",
       "func": "adjust",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -4468,6 +5167,7 @@
       "namespace": "filter",
       "func": "bc",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "brightness": {
           "type": "float",
@@ -4516,6 +5216,7 @@
       "namespace": "filter",
       "func": "bloom",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "threshold": {
           "type": "float",
@@ -4656,6 +5357,7 @@
       "namespace": "filter",
       "func": "blur",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "radiusX": {
           "type": "float",
@@ -4726,6 +5428,7 @@
       "namespace": "filter",
       "func": "bulge",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "strength": {
           "type": "float",
@@ -4810,6 +5513,7 @@
       "namespace": "filter",
       "func": "celShading",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mix": {
           "type": "float",
@@ -4998,6 +5702,7 @@
       "namespace": "filter",
       "func": "channel",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "channel": {
           "type": "member",
@@ -5054,6 +5759,7 @@
       "namespace": "filter",
       "func": "chroma",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "targetHue": {
           "type": "float",
@@ -5117,6 +5823,7 @@
       "namespace": "filter",
       "func": "chromaticAberration",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "aberration": {
           "type": "float",
@@ -5165,6 +5872,7 @@
       "namespace": "filter",
       "func": "chrome",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "detail": {
           "type": "float",
@@ -5261,6 +5969,7 @@
       "namespace": "filter",
       "func": "clouds",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "seed": {
           "type": "int",
@@ -5329,6 +6038,7 @@
       "namespace": "filter",
       "func": "colorReplace",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "targetColor": {
           "type": "color",
@@ -5446,6 +6156,7 @@
       "namespace": "filter",
       "func": "colorspace",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -5485,6 +6196,7 @@
       "namespace": "filter",
       "func": "convolutionFeedback",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "sharpenRadius": {
           "type": "int",
@@ -5640,6 +6352,7 @@
       "namespace": "filter",
       "func": "corrupt",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "intensity": {
           "type": "float",
@@ -5785,6 +6498,7 @@
       "namespace": "filter",
       "func": "craquelure",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "spacing": {
           "type": "float",
@@ -5857,6 +6571,7 @@
       "namespace": "filter",
       "func": "crt",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "alpha": {
           "type": "float",
@@ -5925,6 +6640,7 @@
       "namespace": "filter",
       "func": "degauss",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "displacement": {
           "type": "float",
@@ -6005,6 +6721,7 @@
       "namespace": "filter",
       "func": "deriv",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "amount": {
           "type": "float",
@@ -6042,6 +6759,7 @@
       "namespace": "filter",
       "func": "directionalBlur",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "angle": {
           "type": "float",
@@ -6090,6 +6808,7 @@
       "namespace": "filter",
       "func": "dither",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "type": {
           "type": "int",
@@ -6212,6 +6931,7 @@
       "namespace": "filter",
       "func": "edge",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "kernel": {
           "type": "int",
@@ -6391,6 +7111,7 @@
       "namespace": "filter",
       "func": "emboss",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "style": {
           "type": "int",
@@ -6485,6 +7206,7 @@
       "namespace": "filter",
       "func": "extrude",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "type": {
           "type": "int",
@@ -6572,6 +7294,7 @@
       "namespace": "filter",
       "func": "feedback",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "blendMode": {
           "type": "int",
@@ -6809,6 +7532,7 @@
       "namespace": "filter",
       "func": "fibers",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "density": {
           "type": "float",
@@ -6881,6 +7605,7 @@
       "namespace": "filter",
       "func": "flipMirror",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -6929,6 +7654,7 @@
       "namespace": "filter",
       "func": "fxaa",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "strength": {
           "type": "float",
@@ -6990,6 +7716,7 @@
       "namespace": "filter",
       "func": "glowingEdge",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "shape": {
           "type": "int",
@@ -7062,6 +7789,7 @@
       "namespace": "filter",
       "func": "glyphMap",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "cellSize": {
           "type": "int",
@@ -7124,6 +7852,7 @@
       "namespace": "filter",
       "func": "grade",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "preset": {
           "type": "int",
@@ -7822,6 +8551,7 @@
       "namespace": "filter",
       "func": "grain",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "alpha": {
           "type": "float",
@@ -7872,6 +8602,7 @@
       "namespace": "filter",
       "func": "grime",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "strength": {
           "type": "float",
@@ -7926,6 +8657,7 @@
       "namespace": "filter",
       "func": "halftone",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -8134,6 +8866,7 @@
       "namespace": "filter",
       "func": "hatch",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -8276,6 +9009,7 @@
       "namespace": "filter",
       "func": "highPass",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "radius": {
           "type": "float",
@@ -8359,6 +9093,7 @@
       "namespace": "filter",
       "func": "historicPalette",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "index": {
           "type": "int",
@@ -8483,6 +9218,7 @@
       "namespace": "filter",
       "func": "hs",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "rotation": {
           "type": "float",
@@ -8543,6 +9279,7 @@
       "namespace": "filter",
       "func": "invert",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -8581,6 +9318,7 @@
       "namespace": "filter",
       "func": "lens",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "displacement": {
           "type": "float",
@@ -8638,6 +9376,7 @@
       "namespace": "filter",
       "func": "lensFlare",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "brightness": {
           "type": "float",
@@ -8728,6 +9467,7 @@
       "namespace": "filter",
       "func": "lensWarp",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "displacement": {
           "type": "float",
@@ -8778,6 +9518,7 @@
       "namespace": "filter",
       "func": "lightLeak",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "alpha": {
           "type": "float",
@@ -8860,6 +9601,7 @@
       "namespace": "filter",
       "func": "lighting",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "normalStrength": {
           "type": "float",
@@ -9058,6 +9800,7 @@
       "namespace": "filter",
       "func": "lowPoly",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "scale": {
           "type": "int",
@@ -9218,6 +9961,7 @@
       "namespace": "filter",
       "func": "median",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "radius": {
           "type": "int",
@@ -9267,6 +10011,7 @@
       "namespace": "filter",
       "func": "morphology",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -9349,6 +10094,7 @@
       "namespace": "filter",
       "func": "mosaicTiles",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -9504,6 +10250,7 @@
       "namespace": "filter",
       "func": "motionBlur",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "amount": {
           "type": "float",
@@ -9579,6 +10326,7 @@
       "namespace": "filter",
       "func": "normalMap",
       "kind": "filter",
+      "domain": "image",
       "params": {},
       "paramOrder": [],
       "textures": {},
@@ -9601,6 +10349,7 @@
       "namespace": "filter",
       "func": "normalize",
       "kind": "filter",
+      "domain": "image",
       "params": {},
       "paramOrder": [],
       "textures": {
@@ -9676,6 +10425,7 @@
       "namespace": "filter",
       "func": "octaveWarp",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "freq": {
           "type": "float",
@@ -9798,6 +10548,7 @@
       "namespace": "filter",
       "func": "oilPaint",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -9923,6 +10674,7 @@
       "namespace": "filter",
       "func": "osd",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "alpha": {
           "type": "float",
@@ -10008,6 +10760,7 @@
       "namespace": "filter",
       "func": "outline",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "shape": {
           "type": "int",
@@ -10107,6 +10860,7 @@
       "namespace": "filter",
       "func": "palette",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "index": {
           "type": "member",
@@ -10255,6 +11009,7 @@
       "namespace": "filter",
       "func": "parallax",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "heightMap": {
           "type": "surface",
@@ -10318,6 +11073,7 @@
       "namespace": "filter",
       "func": "patchwork",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "squareSize": {
           "type": "float",
@@ -10378,6 +11134,7 @@
       "namespace": "filter",
       "func": "photocopy",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "detail": {
           "type": "float",
@@ -10490,6 +11247,7 @@
       "namespace": "filter",
       "func": "pinch",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "strength": {
           "type": "float",
@@ -10574,6 +11332,7 @@
       "namespace": "filter",
       "func": "pixelSort",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "angled": {
           "type": "float",
@@ -10749,6 +11508,7 @@
       "namespace": "filter",
       "func": "pixels",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "size": {
           "type": "int",
@@ -10787,6 +11547,7 @@
       "namespace": "filter",
       "func": "plasticWrap",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "highlight": {
           "type": "float",
@@ -10898,6 +11659,7 @@
       "namespace": "filter",
       "func": "polar",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -10993,6 +11755,7 @@
       "namespace": "filter",
       "func": "pondRipples",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "amount": {
           "type": "float",
@@ -11095,6 +11858,7 @@
       "namespace": "filter",
       "func": "posterize",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "levels": {
           "type": "int",
@@ -11155,6 +11919,7 @@
       "namespace": "filter",
       "func": "prismaticAberration",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "aberration": {
           "type": "float",
@@ -11249,6 +12014,7 @@
       "namespace": "filter",
       "func": "reindex",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "displacement": {
           "type": "float",
@@ -11322,6 +12088,7 @@
       "namespace": "filter",
       "func": "relief",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -11493,6 +12260,7 @@
       "namespace": "filter",
       "func": "repeat",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "x": {
           "type": "float",
@@ -11582,6 +12350,7 @@
       "namespace": "filter",
       "func": "reverb",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "iterations": {
           "type": "int",
@@ -11666,6 +12435,7 @@
       "namespace": "filter",
       "func": "ridge",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "level": {
           "type": "float",
@@ -11705,6 +12475,7 @@
       "namespace": "filter",
       "func": "rotate",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "rotation": {
           "type": "float",
@@ -11773,6 +12544,7 @@
       "namespace": "filter",
       "func": "scale",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "x": {
           "type": "float",
@@ -11862,6 +12634,7 @@
       "namespace": "filter",
       "func": "scanlineError",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -11959,6 +12732,7 @@
       "namespace": "filter",
       "func": "scatter",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "radius": {
           "type": "float",
@@ -12054,6 +12828,7 @@
       "namespace": "filter",
       "func": "scratches",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "density": {
           "type": "float",
@@ -12126,6 +12901,7 @@
       "namespace": "filter",
       "func": "scroll",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "x": {
           "type": "float",
@@ -12215,6 +12991,7 @@
       "namespace": "filter",
       "func": "seamless",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "blend": {
           "type": "float",
@@ -12283,6 +13060,7 @@
       "namespace": "filter",
       "func": "sharpen",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "amount": {
           "type": "float",
@@ -12320,6 +13098,7 @@
       "namespace": "filter",
       "func": "simpleAberration",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "displacement": {
           "type": "float",
@@ -12359,6 +13138,7 @@
       "namespace": "filter",
       "func": "sine",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "amount": {
           "type": "float",
@@ -12414,6 +13194,7 @@
       "namespace": "filter",
       "func": "skew",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "skew": {
           "type": "float",
@@ -12478,6 +13259,7 @@
       "namespace": "filter",
       "func": "smooth",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "type": {
           "type": "int",
@@ -12610,6 +13392,7 @@
       "namespace": "filter",
       "func": "smoothstep",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "edge0": {
           "type": "float",
@@ -12662,6 +13445,7 @@
       "namespace": "filter",
       "func": "snow",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "alpha": {
           "type": "float",
@@ -12726,6 +13510,7 @@
       "namespace": "filter",
       "func": "sobel",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "amount": {
           "type": "float",
@@ -12777,6 +13562,7 @@
       "namespace": "filter",
       "func": "spatter",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "color": {
           "type": "color",
@@ -12859,6 +13645,7 @@
       "namespace": "filter",
       "func": "spinBlur",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "amount": {
           "type": "float",
@@ -12919,6 +13706,7 @@
       "namespace": "filter",
       "func": "spiral",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "strength": {
           "type": "float",
@@ -13017,6 +13805,7 @@
       "namespace": "filter",
       "func": "spookyTicker",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "rows": {
           "type": "int",
@@ -13098,6 +13887,7 @@
       "namespace": "filter",
       "func": "stamp",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "smoothness": {
           "type": "float",
@@ -13222,6 +14012,7 @@
       "namespace": "filter",
       "func": "step",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "threshold": {
           "type": "float",
@@ -13271,6 +14062,7 @@
       "namespace": "filter",
       "func": "stipple",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -13390,6 +14182,7 @@
       "namespace": "filter",
       "func": "strayHair",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "density": {
           "type": "float",
@@ -13462,6 +14255,7 @@
       "namespace": "filter",
       "func": "strokes",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -13591,6 +14385,7 @@
       "namespace": "filter",
       "func": "temporalAberration",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "redDelay": {
           "type": "float",
@@ -13808,6 +14603,7 @@
       "namespace": "filter",
       "func": "tetraColorArray",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "colorMode": {
           "type": "int",
@@ -14296,6 +15092,7 @@
       "namespace": "filter",
       "func": "tetraCosine",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "colorMode": {
           "type": "int",
@@ -14565,6 +15362,7 @@
       "namespace": "filter",
       "func": "text",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "text": {
           "type": "string",
@@ -14734,6 +15532,7 @@
       "namespace": "filter",
       "func": "texture",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "mode": {
           "type": "int",
@@ -14864,6 +15663,7 @@
       "namespace": "filter",
       "func": "threshold",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "level": {
           "type": "float",
@@ -14912,6 +15712,7 @@
       "namespace": "filter",
       "func": "tile",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "symmetry": {
           "type": "int",
@@ -15033,6 +15834,7 @@
       "namespace": "filter",
       "func": "tint",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "color": {
           "type": "color",
@@ -15099,6 +15901,7 @@
       "namespace": "filter",
       "func": "translate",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "x": {
           "type": "float",
@@ -15168,6 +15971,7 @@
       "namespace": "filter",
       "func": "tunnel",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "shape": {
           "type": "int",
@@ -15281,6 +16085,7 @@
       "namespace": "filter",
       "func": "unsharpMask",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "amount": {
           "type": "float",
@@ -15379,6 +16184,7 @@
       "namespace": "filter",
       "func": "vaseline",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "alpha": {
           "type": "float",
@@ -15418,6 +16224,7 @@
       "namespace": "filter",
       "func": "vignette",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "brightness": {
           "type": "float",
@@ -15468,6 +16275,7 @@
       "namespace": "filter",
       "func": "warp",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "strength": {
           "type": "float",
@@ -15566,6 +16374,7 @@
       "namespace": "filter",
       "func": "watercolor",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "detail": {
           "type": "float",
@@ -15658,6 +16467,7 @@
       "namespace": "filter",
       "func": "waves",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "strength": {
           "type": "float",
@@ -15756,6 +16566,7 @@
       "namespace": "filter",
       "func": "wind",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "method": {
           "type": "int",
@@ -15833,6 +16644,7 @@
       "namespace": "filter",
       "func": "wobble",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "speed": {
           "type": "float",
@@ -15908,6 +16720,7 @@
       "namespace": "filter",
       "func": "wormhole",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "kink": {
           "type": "float",
@@ -16042,6 +16855,7 @@
       "namespace": "filter",
       "func": "zoomBlur",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "strength": {
           "type": "float",
@@ -16075,10 +16889,556 @@
         }
       ]
     },
+    "filter3d/flow3d": {
+      "namespace": "filter3d",
+      "func": "flow3d",
+      "kind": "filter",
+      "domain": "volume-filter",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 32,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "behavior": {
+          "type": "int",
+          "default": 1,
+          "define": "BEHAVIOR",
+          "choices": {
+            "none": 0,
+            "obedient": 1,
+            "crosshatch": 2,
+            "unruly": 3,
+            "chaotic": 4,
+            "randomMix": 5,
+            "meandering": 10
+          },
+          "ui": {
+            "label": "behavior",
+            "control": "dropdown"
+          }
+        },
+        "density": {
+          "type": "float",
+          "default": 20,
+          "uniform": "density",
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "ui": {
+            "label": "density",
+            "control": "slider"
+          }
+        },
+        "stride": {
+          "type": "float",
+          "default": 1,
+          "uniform": "stride",
+          "min": 0.1,
+          "max": 10,
+          "step": 0.1,
+          "ui": {
+            "label": "stride",
+            "control": "slider"
+          }
+        },
+        "strideDeviation": {
+          "type": "float",
+          "default": 0.05,
+          "uniform": "strideDeviation",
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01,
+          "ui": {
+            "label": "deviation",
+            "control": "slider"
+          }
+        },
+        "kink": {
+          "type": "float",
+          "default": 1,
+          "uniform": "kink",
+          "min": 0,
+          "max": 10,
+          "step": 0.1,
+          "ui": {
+            "label": "kink",
+            "control": "slider"
+          }
+        },
+        "intensity": {
+          "type": "float",
+          "default": 90,
+          "uniform": "intensity",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "ui": {
+            "label": "persistence",
+            "control": "slider"
+          }
+        },
+        "inputIntensity": {
+          "type": "float",
+          "default": 50,
+          "uniform": "inputIntensity",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "ui": {
+            "label": "input mix",
+            "control": "slider"
+          }
+        },
+        "lifetime": {
+          "type": "float",
+          "default": 30,
+          "uniform": "lifetime",
+          "min": 0,
+          "max": 60,
+          "step": 1,
+          "ui": {
+            "label": "lifetime",
+            "control": "slider"
+          }
+        },
+        "iterationCount": {
+          "type": "int",
+          "default": 60,
+          "min": 0,
+          "max": 10000,
+          "cpuOnly": true
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "behavior",
+        "density",
+        "stride",
+        "strideDeviation",
+        "kink",
+        "intensity",
+        "inputIntensity",
+        "lifetime",
+        "iterationCount"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        },
+        "geoBuffer": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        },
+        "global_flow3d_state1": {
+          "width": 512,
+          "height": 512,
+          "format": "rgba16f"
+        },
+        "global_flow3d_state2": {
+          "width": 512,
+          "height": 512,
+          "format": "rgba16f"
+        },
+        "global_flow3d_state3": {
+          "width": 512,
+          "height": 512,
+          "format": "rgba16f"
+        },
+        "global_flow3d_trail": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        },
+        "global_flow3d_blended": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "agent",
+          "program": "agent",
+          "key": "filter3d/flow3d:agent",
+          "inputs": {
+            "stateTex1": "global_flow3d_state1",
+            "stateTex2": "global_flow3d_state2",
+            "stateTex3": "global_flow3d_state3",
+            "mixerTex": "inputTex3d",
+            "inputGeoTex": "inputGeo"
+          },
+          "outputs": {
+            "outState1": "global_flow3d_state1",
+            "outState2": "global_flow3d_state2",
+            "outState3": "global_flow3d_state3"
+          },
+          "uniforms": {
+            "density": "density",
+            "stride": "stride",
+            "strideDeviation": "strideDeviation",
+            "kink": "kink",
+            "lifetime": "lifetime",
+            "volumeSize": "volumeSize"
+          },
+          "drawBuffers": 3
+        },
+        {
+          "name": "diffuse",
+          "program": "diffuse",
+          "key": "filter3d/flow3d:diffuse",
+          "inputs": {
+            "sourceTex": "global_flow3d_trail"
+          },
+          "outputs": {
+            "fragColor": "global_flow3d_trail"
+          },
+          "uniforms": {
+            "intensity": "intensity"
+          },
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 32,
+              "inputOverride": "inputTex3d"
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 1024,
+              "inputOverride": "inputTex3d"
+            }
+          }
+        },
+        {
+          "name": "copy",
+          "program": "copy",
+          "key": "filter3d/flow3d:copy",
+          "inputs": {
+            "sourceTex": "global_flow3d_trail"
+          },
+          "outputs": {
+            "fragColor": "global_flow3d_trail"
+          },
+          "uniforms": {},
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 32,
+              "inputOverride": "inputTex3d"
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 1024,
+              "inputOverride": "inputTex3d"
+            }
+          }
+        },
+        {
+          "name": "deposit",
+          "program": "deposit",
+          "key": null,
+          "inputs": {
+            "stateTex1": "global_flow3d_state1",
+            "stateTex2": "global_flow3d_state2"
+          },
+          "outputs": {
+            "fragColor": "global_flow3d_trail"
+          },
+          "uniforms": {
+            "density": "density",
+            "volumeSize": "volumeSize"
+          },
+          "blend": true,
+          "drawMode": "points",
+          "count": 262144,
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 32,
+              "inputOverride": "inputTex3d"
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 1024,
+              "inputOverride": "inputTex3d"
+            }
+          }
+        },
+        {
+          "name": "blend",
+          "program": "blend",
+          "key": "filter3d/flow3d:blend",
+          "inputs": {
+            "mixerTex": "inputTex3d",
+            "trailTex": "global_flow3d_trail"
+          },
+          "outputs": {
+            "fragColor": "global_flow3d_blended"
+          },
+          "uniforms": {
+            "inputIntensity": "inputIntensity"
+          },
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 32,
+              "inputOverride": "inputTex3d"
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 1024,
+              "inputOverride": "inputTex3d"
+            }
+          }
+        }
+      ],
+      "iterated": true,
+      "outputTex3d": "global_flow3d_blended",
+      "outputGeo": "geoBuffer"
+    },
+    "filter3d/palette3d": {
+      "namespace": "filter3d",
+      "func": "palette3d",
+      "kind": "filter",
+      "domain": "volume-filter",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "index": {
+          "type": "member",
+          "default": "palette.brushedMetal",
+          "enum": "palette",
+          "uniform": "paletteIndex",
+          "ui": {
+            "label": "palette",
+            "control": "dropdown"
+          },
+          "choices": {
+            "none": 0,
+            "seventiesShirt": 1,
+            "fiveG": 2,
+            "afterimage": 3,
+            "barstow": 4,
+            "bloob": 5,
+            "blueSkies": 6,
+            "brushedMetal": 7,
+            "burningSky": 8,
+            "california": 9,
+            "columbia": 10,
+            "cottonCandy": 11,
+            "darkSatin": 12,
+            "dealerHat": 13,
+            "dreamy": 14,
+            "eventHorizon": 15,
+            "ghostly": 16,
+            "grayscale": 17,
+            "hazySunset": 18,
+            "heatmap": 19,
+            "hypercolor": 20,
+            "jester": 21,
+            "justBlue": 22,
+            "justCyan": 23,
+            "justGreen": 24,
+            "justPurple": 25,
+            "justRed": 26,
+            "justYellow": 27,
+            "mars": 28,
+            "modesto": 29,
+            "moss": 30,
+            "neptune": 31,
+            "netOfGems": 32,
+            "organic": 33,
+            "papaya": 34,
+            "radioactive": 35,
+            "royal": 36,
+            "santaCruz": 37,
+            "sherbet": 38,
+            "sherbetDouble": 39,
+            "silvermane": 40,
+            "skykissed": 41,
+            "solaris": 42,
+            "spooky": 43,
+            "springtime": 44,
+            "sproingtime": 45,
+            "sulphur": 46,
+            "summoning": 47,
+            "superhero": 48,
+            "toxic": 49,
+            "tropicalia": 50,
+            "tungsten": 51,
+            "vaporwave": 52,
+            "vibrant": 53,
+            "vintage": 54,
+            "vintagePhoto": 55
+          }
+        },
+        "rotation": {
+          "type": "float",
+          "default": 0,
+          "uniform": "rotation",
+          "choices": {
+            "none": 0,
+            "fwd": 1,
+            "back": -1
+          },
+          "ui": {
+            "label": "rotation",
+            "control": "dropdown"
+          }
+        },
+        "offset": {
+          "type": "float",
+          "default": 0,
+          "uniform": "offset",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "ui": {
+            "label": "offset",
+            "control": "slider"
+          }
+        },
+        "repeat": {
+          "type": "int",
+          "default": 1,
+          "uniform": "repeat",
+          "min": 1,
+          "max": 10,
+          "randMax": 5,
+          "ui": {
+            "label": "repeat",
+            "control": "slider"
+          }
+        },
+        "alpha": {
+          "type": "float",
+          "default": 1,
+          "uniform": "alpha",
+          "min": 0,
+          "max": 1,
+          "randMin": 0.5,
+          "step": 0.01,
+          "ui": {
+            "label": "alpha",
+            "control": "slider"
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "index",
+        "rotation",
+        "offset",
+        "repeat",
+        "alpha"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "render",
+          "program": "palette3d",
+          "key": "filter3d/palette3d:palette3d",
+          "inputs": {
+            "inputTex3d": "inputTex3d"
+          },
+          "outputs": {
+            "fragColor": "volumeCache"
+          },
+          "uniforms": {},
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 64,
+              "inputOverride": "inputTex3d"
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 4096,
+              "inputOverride": "inputTex3d"
+            }
+          }
+        }
+      ],
+      "outputTex3d": "volumeCache",
+      "outputGeo": "inputGeo"
+    },
     "mixer/alphaMask": {
       "namespace": "mixer",
       "func": "alphaMask",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -16141,6 +17501,7 @@
       "namespace": "mixer",
       "func": "applyMode",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -16203,6 +17564,7 @@
       "namespace": "mixer",
       "func": "blendMode",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -16278,6 +17640,7 @@
       "namespace": "mixer",
       "func": "cellSplit",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -16388,6 +17751,7 @@
       "namespace": "mixer",
       "func": "centerMask",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -16492,6 +17856,7 @@
       "namespace": "mixer",
       "func": "channelCombine",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "rTex": {
           "type": "surface",
@@ -16578,6 +17943,7 @@
       "namespace": "mixer",
       "func": "distortion",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -16713,6 +18079,7 @@
       "namespace": "mixer",
       "func": "focusBlur",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -16799,6 +18166,7 @@
       "namespace": "mixer",
       "func": "mashup",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "source": {
           "type": "surface",
@@ -16896,6 +18264,7 @@
       "namespace": "mixer",
       "func": "patternMix",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -17013,6 +18382,7 @@
       "namespace": "mixer",
       "func": "shadow",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -17182,6 +18552,7 @@
       "namespace": "mixer",
       "func": "shapeMask",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -17330,6 +18701,7 @@
       "namespace": "mixer",
       "func": "split",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -17432,6 +18804,7 @@
       "namespace": "mixer",
       "func": "thresholdMix",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -17639,6 +19012,7 @@
       "namespace": "mixer",
       "func": "uvRemap",
       "kind": "mixer",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -17742,6 +19116,7 @@
       "namespace": "points",
       "func": "attractor",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "stateSize": {
           "type": "int",
@@ -17848,6 +19223,7 @@
       "namespace": "points",
       "func": "buddhabrot",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "stateSize": {
           "type": "int",
@@ -18031,6 +19407,7 @@
       "namespace": "points",
       "func": "dla",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "stateSize": {
           "type": "int",
@@ -18255,6 +19632,7 @@
       "namespace": "points",
       "func": "flock",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "separation": {
           "type": "float",
@@ -18460,6 +19838,7 @@
       "namespace": "points",
       "func": "flow",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "stateSize": {
           "type": "int",
@@ -18617,6 +19996,7 @@
       "namespace": "points",
       "func": "hydraulic",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "stride": {
           "type": "float",
@@ -18726,6 +20106,7 @@
       "namespace": "points",
       "func": "lenia",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "muK": {
           "type": "float",
@@ -18951,6 +20332,7 @@
       "namespace": "points",
       "func": "life",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "stateSize": {
           "type": "int",
@@ -19209,6 +20591,7 @@
       "namespace": "points",
       "func": "physarum",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "moveSpeed": {
           "type": "float",
@@ -19430,6 +20813,7 @@
       "namespace": "points",
       "func": "physical",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "stateSize": {
           "type": "int",
@@ -19579,10 +20963,107 @@
       "outputVel": "global_vel",
       "outputRgba": "global_rgba"
     },
+    "render/loopBegin": {
+      "namespace": "render",
+      "func": "loopBegin",
+      "kind": "filter",
+      "domain": "loop-begin",
+      "params": {
+        "alpha": {
+          "type": "float",
+          "default": 50,
+          "min": 0,
+          "max": 100,
+          "uniform": "alpha",
+          "ui": {
+            "label": "alpha",
+            "control": "slider"
+          }
+        },
+        "intensity": {
+          "type": "float",
+          "default": 100,
+          "min": 0,
+          "max": 100,
+          "uniform": "intensity",
+          "ui": {
+            "label": "intensity",
+            "control": "slider"
+          }
+        },
+        "iterationCount": {
+          "type": "int",
+          "default": 60,
+          "min": 0,
+          "max": 10000,
+          "cpuOnly": true
+        }
+      },
+      "paramOrder": [
+        "alpha",
+        "intensity",
+        "iterationCount"
+      ],
+      "textures": {},
+      "passes": [
+        {
+          "name": "accumBlend",
+          "program": "loopBegin",
+          "key": "render/loopBegin:loopBegin",
+          "inputs": {
+            "inputTex": "inputTex",
+            "accumTex": "global_accum"
+          },
+          "outputs": {
+            "fragColor": "outputTex"
+          },
+          "uniforms": {}
+        }
+      ],
+      "iterated": true,
+      "loopRole": "begin"
+    },
+    "render/loopEnd": {
+      "namespace": "render",
+      "func": "loopEnd",
+      "kind": "filter",
+      "domain": "loop-end",
+      "params": {},
+      "paramOrder": [],
+      "textures": {},
+      "passes": [
+        {
+          "name": "feedback",
+          "program": "copy",
+          "key": "render/loopEnd:copy",
+          "inputs": {
+            "inputTex": "inputTex"
+          },
+          "outputs": {
+            "fragColor": "global_accum"
+          },
+          "uniforms": {}
+        },
+        {
+          "name": "output",
+          "program": "copy",
+          "key": "render/loopEnd:copy",
+          "inputs": {
+            "inputTex": "inputTex"
+          },
+          "outputs": {
+            "fragColor": "outputTex"
+          },
+          "uniforms": {}
+        }
+      ],
+      "loopRole": "end"
+    },
     "render/pointsBillboardRender": {
       "namespace": "render",
       "func": "pointsBillboardRender",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "shapeMode": {
           "type": "int",
@@ -19995,6 +21476,7 @@
       "namespace": "render",
       "func": "pointsEmit",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "stateSize": {
           "type": "int",
@@ -20166,6 +21648,7 @@
       "namespace": "render",
       "func": "pointsRender",
       "kind": "filter",
+      "domain": "image",
       "params": {
         "density": {
           "type": "float",
@@ -20414,10 +21897,680 @@
       ],
       "iterated": true
     },
+    "render/render3d": {
+      "namespace": "render",
+      "func": "render3d",
+      "kind": "filter",
+      "domain": "volume-renderer",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "v16": 16,
+            "v32": 32,
+            "v64": 64,
+            "v128": 128
+          },
+          "ui": {
+            "control": false
+          }
+        },
+        "filtering": {
+          "type": "int",
+          "default": 0,
+          "define": "FILTERING",
+          "choices": {
+            "isosurface": 0,
+            "voxel": 1
+          },
+          "ui": {
+            "label": "filtering",
+            "control": "dropdown"
+          }
+        },
+        "threshold": {
+          "type": "float",
+          "default": 0.5,
+          "min": 0,
+          "max": 1,
+          "randMax": 0.3,
+          "uniform": "threshold",
+          "ui": {
+            "label": "threshold"
+          }
+        },
+        "invert": {
+          "type": "boolean",
+          "default": false,
+          "randChance": 0,
+          "define": "INVERT",
+          "ui": {
+            "label": "invert thresh"
+          }
+        },
+        "orbitSpeed": {
+          "type": "int",
+          "default": 1,
+          "min": -5,
+          "max": 5,
+          "randMin": -1,
+          "randMax": 1,
+          "uniform": "orbitSpeed",
+          "ui": {
+            "label": "orbit speed"
+          }
+        },
+        "bgColor": {
+          "type": "color",
+          "default": [
+            0.02,
+            0.02,
+            0.02
+          ],
+          "uniform": "bgColor",
+          "ui": {
+            "label": "bg color",
+            "control": "color"
+          }
+        },
+        "bgAlpha": {
+          "type": "float",
+          "default": 1,
+          "min": 0,
+          "max": 1,
+          "uniform": "bgAlpha",
+          "ui": {
+            "label": "bg opacity"
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "filtering",
+        "threshold",
+        "invert",
+        "orbitSpeed",
+        "bgColor",
+        "bgAlpha"
+      ],
+      "textures": {
+        "screenGeoBuffer": {
+          "width": "resolution",
+          "height": "resolution",
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "render",
+          "program": "render3d",
+          "key": "render/render3d:render3d",
+          "inputs": {
+            "volumeCache": "inputTex3d",
+            "analyticalGeo": "inputGeo"
+          },
+          "outputs": {
+            "fragColor": "outputTex",
+            "geoOut": "screenGeoBuffer"
+          },
+          "uniforms": {},
+          "drawBuffers": 2
+        }
+      ],
+      "outputTex3d": "inputTex3d",
+      "outputGeo": "screenGeoBuffer"
+    },
+    "render/renderCubemap3d": {
+      "namespace": "render",
+      "func": "renderCubemap3d",
+      "kind": "filter",
+      "domain": "volume-renderer",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "v16": 16,
+            "v32": 32,
+            "v64": 64,
+            "v128": 128
+          },
+          "ui": {
+            "control": false
+          }
+        },
+        "filtering": {
+          "type": "int",
+          "default": 0,
+          "define": "FILTERING",
+          "choices": {
+            "isosurface": 0,
+            "voxel": 1
+          },
+          "ui": {
+            "label": "filtering",
+            "control": "dropdown"
+          }
+        },
+        "threshold": {
+          "type": "float",
+          "default": 0.5,
+          "min": 0,
+          "max": 1,
+          "randMax": 0.3,
+          "uniform": "threshold",
+          "ui": {
+            "label": "threshold"
+          }
+        },
+        "invert": {
+          "type": "boolean",
+          "default": false,
+          "randChance": 0,
+          "define": "INVERT",
+          "ui": {
+            "label": "invert thresh"
+          }
+        },
+        "cubeBasis": {
+          "type": "mat3",
+          "default": [
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "uniform": "cubeBasis",
+          "ui": {
+            "control": false
+          }
+        },
+        "bgColor": {
+          "type": "color",
+          "default": [
+            0.02,
+            0.02,
+            0.02
+          ],
+          "uniform": "bgColor",
+          "ui": {
+            "label": "bg color",
+            "control": "color"
+          }
+        },
+        "bgAlpha": {
+          "type": "float",
+          "default": 1,
+          "min": 0,
+          "max": 1,
+          "uniform": "bgAlpha",
+          "ui": {
+            "label": "bg opacity"
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "filtering",
+        "threshold",
+        "invert",
+        "cubeBasis",
+        "bgColor",
+        "bgAlpha"
+      ],
+      "textures": {
+        "screenGeoBuffer": {
+          "width": "resolution",
+          "height": "resolution",
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "render",
+          "program": "renderCubemap3d",
+          "key": "render/renderCubemap3d:renderCubemap3d",
+          "inputs": {
+            "volumeCache": "inputTex3d",
+            "analyticalGeo": "inputGeo"
+          },
+          "outputs": {
+            "fragColor": "outputTex",
+            "geoOut": "screenGeoBuffer"
+          },
+          "uniforms": {},
+          "drawBuffers": 2
+        }
+      ],
+      "outputTex3d": "inputTex3d",
+      "outputGeo": "screenGeoBuffer"
+    },
+    "render/renderCubemapSurface": {
+      "namespace": "render",
+      "func": "renderCubemapSurface",
+      "kind": "filter",
+      "domain": "volume-renderer",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "v16": 16,
+            "v32": 32,
+            "v64": 64,
+            "v128": 128
+          },
+          "ui": {
+            "control": false
+          }
+        },
+        "density": {
+          "type": "float",
+          "default": 4,
+          "min": 0,
+          "max": 20,
+          "uniform": "density",
+          "ui": {
+            "label": "density"
+          }
+        },
+        "absorption": {
+          "type": "float",
+          "default": 1,
+          "min": 0,
+          "max": 4,
+          "uniform": "absorption",
+          "ui": {
+            "label": "absorption"
+          }
+        },
+        "emission": {
+          "type": "float",
+          "default": 1,
+          "min": 0,
+          "max": 4,
+          "uniform": "emission",
+          "ui": {
+            "label": "emission"
+          }
+        },
+        "cubeBasis": {
+          "type": "mat3",
+          "default": [
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "uniform": "cubeBasis",
+          "ui": {
+            "control": false
+          }
+        },
+        "bgColor": {
+          "type": "color",
+          "default": [
+            0.02,
+            0.02,
+            0.02
+          ],
+          "uniform": "bgColor",
+          "ui": {
+            "label": "bg color",
+            "control": "color"
+          }
+        },
+        "bgAlpha": {
+          "type": "float",
+          "default": 1,
+          "min": 0,
+          "max": 1,
+          "uniform": "bgAlpha",
+          "ui": {
+            "label": "bg opacity"
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "density",
+        "absorption",
+        "emission",
+        "cubeBasis",
+        "bgColor",
+        "bgAlpha"
+      ],
+      "textures": {
+        "screenGeoBuffer": {
+          "width": "resolution",
+          "height": "resolution",
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "render",
+          "program": "renderCubemapSurface",
+          "key": "render/renderCubemapSurface:renderCubemapSurface",
+          "inputs": {
+            "volumeCache": "inputTex3d",
+            "analyticalGeo": "inputGeo"
+          },
+          "outputs": {
+            "fragColor": "outputTex",
+            "geoOut": "screenGeoBuffer"
+          },
+          "uniforms": {},
+          "drawBuffers": 2
+        }
+      ],
+      "outputTex3d": "inputTex3d",
+      "outputGeo": "screenGeoBuffer"
+    },
+    "render/renderLit3d": {
+      "namespace": "render",
+      "func": "renderLit3d",
+      "kind": "filter",
+      "domain": "volume-renderer",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "v16": 16,
+            "v32": 32,
+            "v64": 64,
+            "v128": 128
+          },
+          "ui": {
+            "control": false
+          }
+        },
+        "shape": {
+          "type": "int",
+          "default": 0,
+          "uniform": "shape",
+          "choices": {
+            "cube": 0,
+            "sphere": 1
+          },
+          "ui": {
+            "label": "shape bounds",
+            "control": "dropdown"
+          }
+        },
+        "threshold": {
+          "type": "float",
+          "default": 0.5,
+          "min": 0,
+          "max": 1,
+          "randMax": 0.5,
+          "uniform": "threshold",
+          "ui": {
+            "label": "threshold"
+          }
+        },
+        "invert": {
+          "type": "boolean",
+          "default": false,
+          "randChance": 0,
+          "uniform": "invert",
+          "ui": {
+            "label": "invert thresh"
+          }
+        },
+        "orbitSpeed": {
+          "type": "int",
+          "default": 1,
+          "min": -5,
+          "max": 5,
+          "randMin": -1,
+          "randMax": 1,
+          "zero": 0,
+          "uniform": "orbitSpeed",
+          "ui": {
+            "label": "orbit speed"
+          }
+        },
+        "cameraPosition": {
+          "type": "vec3",
+          "default": [
+            0,
+            0.1425,
+            1
+          ],
+          "min": [
+            -1,
+            -1,
+            -1
+          ],
+          "max": [
+            1,
+            1,
+            1
+          ],
+          "step": 0.01,
+          "randChance": 0,
+          "uniform": "cameraPosition",
+          "ui": {
+            "label": "camera pos",
+            "control": "vec3"
+          }
+        },
+        "bgColor": {
+          "type": "color",
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "uniform": "bgColor",
+          "ui": {
+            "label": "bg color",
+            "control": "color",
+            "category": "background"
+          }
+        },
+        "bgAlpha": {
+          "type": "float",
+          "default": 1,
+          "min": 0,
+          "max": 1,
+          "randChance": 0,
+          "uniform": "bgAlpha",
+          "ui": {
+            "label": "bg opacity",
+            "category": "background"
+          }
+        },
+        "lightDirection": {
+          "type": "vec3",
+          "default": [
+            0.5,
+            0.5,
+            1
+          ],
+          "uniform": "lightDirection",
+          "ui": {
+            "label": "light dir",
+            "control": "vector3",
+            "category": "lighting"
+          }
+        },
+        "diffuseColor": {
+          "type": "color",
+          "default": [
+            1,
+            1,
+            1
+          ],
+          "uniform": "diffuseColor",
+          "ui": {
+            "label": "color",
+            "control": "color",
+            "category": "diffuse"
+          }
+        },
+        "diffuseIntensity": {
+          "type": "float",
+          "default": 0.7,
+          "min": 0,
+          "max": 2,
+          "step": 0.01,
+          "uniform": "diffuseIntensity",
+          "ui": {
+            "label": "intensity",
+            "control": "slider",
+            "category": "diffuse"
+          }
+        },
+        "specularColor": {
+          "type": "color",
+          "default": [
+            1,
+            1,
+            1
+          ],
+          "uniform": "specularColor",
+          "ui": {
+            "label": "color",
+            "control": "color",
+            "category": "specular"
+          }
+        },
+        "specularIntensity": {
+          "type": "float",
+          "default": 0.3,
+          "min": 0,
+          "max": 2,
+          "step": 0.01,
+          "uniform": "specularIntensity",
+          "ui": {
+            "label": "intensity",
+            "control": "slider",
+            "category": "specular"
+          }
+        },
+        "shininess": {
+          "type": "float",
+          "default": 32,
+          "min": 1,
+          "max": 256,
+          "step": 1,
+          "uniform": "shininess",
+          "ui": {
+            "label": "shininess",
+            "control": "slider",
+            "category": "specular"
+          }
+        },
+        "rimIntensity": {
+          "type": "float",
+          "default": 0.15,
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "uniform": "rimIntensity",
+          "ui": {
+            "label": "intensity",
+            "control": "slider",
+            "category": "rim"
+          }
+        },
+        "rimPower": {
+          "type": "float",
+          "default": 3,
+          "min": 0.5,
+          "max": 8,
+          "step": 0.1,
+          "uniform": "rimPower",
+          "ui": {
+            "label": "power",
+            "control": "slider",
+            "category": "rim"
+          }
+        },
+        "ambientColor": {
+          "type": "color",
+          "default": [
+            0.1,
+            0.1,
+            0.1
+          ],
+          "uniform": "ambientColor",
+          "ui": {
+            "label": "ambient color",
+            "control": "color",
+            "category": "lighting"
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "shape",
+        "threshold",
+        "invert",
+        "orbitSpeed",
+        "cameraPosition",
+        "bgColor",
+        "bgAlpha",
+        "lightDirection",
+        "diffuseColor",
+        "diffuseIntensity",
+        "specularColor",
+        "specularIntensity",
+        "shininess",
+        "rimIntensity",
+        "rimPower",
+        "ambientColor"
+      ],
+      "textures": {
+        "screenGeoBuffer": {
+          "width": "resolution",
+          "height": "resolution",
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "render",
+          "program": "renderLit3d",
+          "key": "render/renderLit3d:renderLit3d",
+          "inputs": {
+            "volumeCache": "inputTex3d",
+            "analyticalGeo": "inputGeo"
+          },
+          "outputs": {
+            "fragColor": "outputTex",
+            "geoOut": "screenGeoBuffer"
+          },
+          "uniforms": {},
+          "drawBuffers": 2
+        }
+      ],
+      "outputTex3d": "inputTex3d",
+      "outputGeo": "screenGeoBuffer"
+    },
     "synth/bitwise": {
       "namespace": "synth",
       "func": "bitwise",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "operation": {
           "type": "int",
@@ -20601,6 +22754,7 @@
       "namespace": "synth",
       "func": "cell",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "shape": {
           "type": "int",
@@ -20717,6 +22871,7 @@
       "namespace": "synth",
       "func": "cellularAutomata",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -20924,6 +23079,7 @@
       "namespace": "synth",
       "func": "curl",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "scale": {
           "type": "float",
@@ -21034,6 +23190,7 @@
       "namespace": "synth",
       "func": "gabor",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "scale": {
           "type": "float",
@@ -21154,6 +23311,7 @@
       "namespace": "synth",
       "func": "gradient",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "type": {
           "type": "int",
@@ -21349,6 +23507,7 @@
       "namespace": "synth",
       "func": "julia",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "poi": {
           "type": "int",
@@ -21692,6 +23851,7 @@
       "namespace": "synth",
       "func": "mandala",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "scale": {
           "type": "float",
@@ -21940,6 +24100,7 @@
       "namespace": "synth",
       "func": "mandelbrot",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "poi": {
           "type": "int",
@@ -22166,6 +24327,7 @@
       "namespace": "synth",
       "func": "media",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "position": {
           "type": "int",
@@ -22347,6 +24509,7 @@
       "namespace": "synth",
       "func": "mnca",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -22687,6 +24850,7 @@
       "namespace": "synth",
       "func": "modPattern",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "shape1": {
           "type": "int",
@@ -22898,6 +25062,7 @@
       "namespace": "synth",
       "func": "navierStokes",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -23214,6 +25379,7 @@
       "namespace": "synth",
       "func": "newton",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "poi": {
           "type": "int",
@@ -23474,6 +25640,7 @@
       "namespace": "synth",
       "func": "noise",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "type": {
           "type": "int",
@@ -23668,6 +25835,7 @@
       "namespace": "synth",
       "func": "osc2d",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "oscType": {
           "type": "member",
@@ -23756,6 +25924,7 @@
       "namespace": "synth",
       "func": "pattern",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "type": {
           "type": "int",
@@ -23958,6 +26127,7 @@
       "namespace": "synth",
       "func": "perlin",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "scale": {
           "type": "float",
@@ -24106,6 +26276,7 @@
       "namespace": "synth",
       "func": "polygon",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "sides": {
           "type": "int",
@@ -24236,6 +26407,7 @@
       "namespace": "synth",
       "func": "reactionDiffusion",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -24576,6 +26748,7 @@
       "namespace": "synth",
       "func": "remap",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "zoneCount": {
           "type": "int",
@@ -24683,6 +26856,7 @@
       "namespace": "synth",
       "func": "sacredGeometry",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "geometry": {
           "type": "int",
@@ -24891,6 +27065,7 @@
       "namespace": "synth",
       "func": "shape",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "loopAOffset": {
           "type": "int",
@@ -25097,6 +27272,7 @@
       "namespace": "synth",
       "func": "solid",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "color": {
           "type": "color",
@@ -25146,6 +27322,7 @@
       "namespace": "synth",
       "func": "subdivide",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "tex": {
           "type": "surface",
@@ -25319,6 +27496,7 @@
       "namespace": "synth",
       "func": "testPattern",
       "kind": "generator",
+      "domain": "image",
       "params": {
         "pattern": {
           "type": "int",
@@ -25376,6 +27554,1375 @@
           "uniforms": {}
         }
       ]
+    },
+    "synth3d/cell3d": {
+      "namespace": "synth3d",
+      "func": "cell3d",
+      "kind": "generator",
+      "domain": "volume-generator",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "randChoices": [
+            16,
+            32,
+            64
+          ],
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "metric": {
+          "type": "int",
+          "default": 0,
+          "uniform": "metric",
+          "choices": {
+            "sphere": 0,
+            "octahedron": 1,
+            "cube": 2
+          },
+          "ui": {
+            "label": "cell shape",
+            "control": "dropdown"
+          }
+        },
+        "scale": {
+          "type": "float",
+          "default": 10,
+          "min": 1,
+          "max": 15,
+          "uniform": "scale",
+          "ui": {
+            "label": "cell scale"
+          }
+        },
+        "variation": {
+          "type": "float",
+          "default": 100,
+          "min": 0,
+          "max": 100,
+          "uniform": "cellVariation",
+          "ui": {
+            "label": "cell variation"
+          }
+        },
+        "seed": {
+          "type": "int",
+          "default": 1,
+          "min": 0,
+          "max": 100,
+          "uniform": "seed",
+          "ui": {
+            "label": "seed"
+          }
+        },
+        "colorMode": {
+          "type": "int",
+          "default": 1,
+          "uniform": "colorMode",
+          "choices": {
+            "mono": 0,
+            "rgb": 1
+          },
+          "ui": {
+            "label": "color mode",
+            "control": "dropdown"
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "metric",
+        "scale",
+        "variation",
+        "seed",
+        "colorMode"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        },
+        "geoBuffer": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "precompute",
+          "program": "precompute",
+          "key": "synth3d/cell3d:precompute",
+          "inputs": {},
+          "outputs": {
+            "fragColor": "volumeCache",
+            "geoOut": "geoBuffer"
+          },
+          "uniforms": {},
+          "drawBuffers": 2,
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 64
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 4096
+            }
+          }
+        }
+      ],
+      "outputTex3d": "volumeCache",
+      "outputGeo": "geoBuffer"
+    },
+    "synth3d/cellularAutomata3d": {
+      "namespace": "synth3d",
+      "func": "cellularAutomata3d",
+      "kind": "generator",
+      "domain": "volume-generator",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 32,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "randChoices": [
+            16,
+            32,
+            64
+          ],
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "seed": {
+          "type": "int",
+          "default": 1,
+          "min": 1,
+          "max": 100,
+          "uniform": "seed",
+          "ui": {
+            "control": false
+          }
+        },
+        "ruleIndex": {
+          "type": "int",
+          "default": 0,
+          "uniform": "ruleIndex",
+          "choices": {
+            "rule445M": 0,
+            "rule678": 1,
+            "amoeba": 2,
+            "builder1": 3,
+            "builder2": 4,
+            "clouds": 5,
+            "crystalGrowth": 6,
+            "diamoeba": 7,
+            "pyroclastic": 8,
+            "slowDecay": 9,
+            "spikeyGrowth": 10
+          },
+          "ui": {
+            "label": "rules",
+            "control": "dropdown",
+            "category": "rules"
+          }
+        },
+        "neighborMode": {
+          "type": "int",
+          "default": 0,
+          "uniform": "neighborMode",
+          "choices": {
+            "moore": 0,
+            "vonNeumann": 1
+          },
+          "ui": {
+            "label": "neighborhood",
+            "control": "dropdown",
+            "category": "rules"
+          }
+        },
+        "speed": {
+          "type": "int",
+          "default": 1,
+          "min": 0,
+          "max": 10,
+          "zero": 0,
+          "randMin": 1,
+          "uniform": "speed",
+          "ui": {
+            "label": "sim speed",
+            "control": "slider"
+          }
+        },
+        "density": {
+          "type": "float",
+          "default": 50,
+          "min": 1,
+          "max": 100,
+          "uniform": "density",
+          "ui": {
+            "label": "density",
+            "control": "slider"
+          }
+        },
+        "colorMode": {
+          "type": "int",
+          "default": 0,
+          "uniform": "colorMode",
+          "choices": {
+            "mono": 0,
+            "age": 1
+          },
+          "ui": {
+            "label": "color mode",
+            "control": "dropdown"
+          }
+        },
+        "resetState": {
+          "type": "boolean",
+          "default": false,
+          "uniform": "resetState",
+          "ui": {
+            "label": "reset",
+            "control": "button",
+            "buttonLabel": "reset"
+          }
+        },
+        "source": {
+          "type": "volume",
+          "default": "vol0",
+          "ui": {
+            "label": "source vol",
+            "category": "input"
+          }
+        },
+        "geoSource": {
+          "type": "geometry",
+          "default": "geo0",
+          "ui": {
+            "label": "source geo",
+            "category": "input"
+          }
+        },
+        "weight": {
+          "type": "float",
+          "default": 0,
+          "min": 0,
+          "max": 100,
+          "uniform": "weight",
+          "ui": {
+            "label": "input weight",
+            "control": "slider",
+            "category": "input"
+          }
+        },
+        "iterationCount": {
+          "type": "int",
+          "default": 60,
+          "min": 0,
+          "max": 10000,
+          "cpuOnly": true
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "seed",
+        "ruleIndex",
+        "neighborMode",
+        "speed",
+        "density",
+        "colorMode",
+        "resetState",
+        "source",
+        "geoSource",
+        "weight",
+        "iterationCount"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        },
+        "geoBuffer": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        },
+        "global_ca_state": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "simulate",
+          "program": "simulate",
+          "key": "synth3d/cellularAutomata3d:simulate",
+          "inputs": {
+            "stateTex": "global_ca_state",
+            "seedTex": "source"
+          },
+          "outputs": {
+            "color": "global_ca_state"
+          },
+          "uniforms": {},
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 32
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 1024
+            }
+          }
+        }
+      ],
+      "iterated": true,
+      "outputTex3d": "global_ca_state",
+      "outputGeo": "geoBuffer"
+    },
+    "synth3d/flythrough3d": {
+      "namespace": "synth3d",
+      "func": "flythrough3d",
+      "kind": "generator",
+      "domain": "volume-generator",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "randChoices": [
+            16,
+            32,
+            64
+          ],
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "type": {
+          "type": "int",
+          "default": 0,
+          "uniform": "noiseType",
+          "choices": {
+            "mandelbulb": 0,
+            "mandelbox": 1
+          },
+          "ui": {
+            "label": "fractal type",
+            "control": "dropdown"
+          }
+        },
+        "power": {
+          "type": "float",
+          "default": 8,
+          "min": -3,
+          "max": 16,
+          "uniform": "power",
+          "ui": {
+            "label": "power/scale",
+            "control": "slider",
+            "category": "fractal"
+          }
+        },
+        "iterations": {
+          "type": "int",
+          "default": 12,
+          "min": 4,
+          "max": 24,
+          "uniform": "iterations",
+          "ui": {
+            "label": "iterations",
+            "control": "slider",
+            "category": "fractal"
+          }
+        },
+        "bailout": {
+          "type": "float",
+          "default": 4,
+          "min": 1,
+          "max": 16,
+          "uniform": "bailout",
+          "ui": {
+            "label": "bailout",
+            "control": "slider",
+            "category": "fractal"
+          }
+        },
+        "speed": {
+          "type": "float",
+          "default": 0.2,
+          "min": 0,
+          "max": 1,
+          "zero": 0,
+          "uniform": "speed",
+          "ui": {
+            "label": "speed",
+            "control": "slider",
+            "category": "camera"
+          }
+        },
+        "voiSize": {
+          "type": "float",
+          "default": 0.5,
+          "min": 0.1,
+          "max": 2,
+          "uniform": "voiSize",
+          "ui": {
+            "label": "view size",
+            "control": "slider",
+            "category": "camera"
+          }
+        },
+        "seed": {
+          "type": "int",
+          "default": 0,
+          "min": 0,
+          "max": 100,
+          "uniform": "seed",
+          "ui": {
+            "control": false
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "type",
+        "power",
+        "iterations",
+        "bailout",
+        "speed",
+        "voiSize",
+        "seed"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        },
+        "geoBuffer": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "precompute",
+          "program": "precompute",
+          "key": "synth3d/flythrough3d:precompute",
+          "inputs": {},
+          "outputs": {
+            "fragColor": "volumeCache",
+            "geoOut": "geoBuffer"
+          },
+          "uniforms": {},
+          "drawBuffers": 2,
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 64
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 4096
+            }
+          }
+        }
+      ],
+      "outputTex3d": "volumeCache",
+      "outputGeo": "geoBuffer"
+    },
+    "synth3d/fractal3d": {
+      "namespace": "synth3d",
+      "func": "fractal3d",
+      "kind": "generator",
+      "domain": "volume-generator",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "randChoices": [
+            16,
+            32,
+            64
+          ],
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "type": {
+          "type": "int",
+          "default": 0,
+          "uniform": "noiseType",
+          "choices": {
+            "mandelbulb": 0,
+            "mandelcube": 1,
+            "juliaBulb": 2,
+            "juliaCube": 3
+          },
+          "ui": {
+            "label": "type",
+            "control": "dropdown"
+          }
+        },
+        "power": {
+          "type": "float",
+          "default": 8,
+          "min": 2,
+          "max": 16,
+          "randMax": 8,
+          "uniform": "power",
+          "ui": {
+            "label": "power",
+            "control": "slider"
+          }
+        },
+        "iterations": {
+          "type": "int",
+          "default": 10,
+          "min": 1,
+          "max": 20,
+          "uniform": "iterations",
+          "ui": {
+            "label": "iterations",
+            "control": "slider"
+          }
+        },
+        "bailout": {
+          "type": "float",
+          "default": 2,
+          "min": 1,
+          "max": 8,
+          "uniform": "bailout",
+          "ui": {
+            "label": "bailout",
+            "control": "slider"
+          }
+        },
+        "juliaX": {
+          "type": "float",
+          "default": 0,
+          "min": -100,
+          "max": 100,
+          "uniform": "juliaX",
+          "ui": {
+            "label": "julia x",
+            "control": "slider",
+            "category": "julia",
+            "enabledBy": {
+              "param": "type",
+              "in": [
+                2,
+                3
+              ]
+            }
+          }
+        },
+        "juliaY": {
+          "type": "float",
+          "default": 0,
+          "min": -100,
+          "max": 100,
+          "uniform": "juliaY",
+          "ui": {
+            "label": "julia y",
+            "control": "slider",
+            "category": "julia",
+            "enabledBy": {
+              "param": "type",
+              "in": [
+                2,
+                3
+              ]
+            }
+          }
+        },
+        "juliaZ": {
+          "type": "float",
+          "default": 0,
+          "min": -100,
+          "max": 100,
+          "uniform": "juliaZ",
+          "ui": {
+            "label": "julia z",
+            "control": "slider",
+            "category": "julia",
+            "enabledBy": {
+              "param": "type",
+              "in": [
+                2,
+                3
+              ]
+            }
+          }
+        },
+        "colorMode": {
+          "type": "int",
+          "default": 0,
+          "uniform": "colorMode",
+          "choices": {
+            "mono": 0,
+            "orbitTrap": 1,
+            "iteration": 2
+          },
+          "ui": {
+            "label": "color mode",
+            "control": "dropdown"
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "type",
+        "power",
+        "iterations",
+        "bailout",
+        "juliaX",
+        "juliaY",
+        "juliaZ",
+        "colorMode"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        },
+        "geoBuffer": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "precompute",
+          "program": "precompute",
+          "key": "synth3d/fractal3d:precompute",
+          "inputs": {},
+          "outputs": {
+            "fragColor": "volumeCache",
+            "geoOut": "geoBuffer"
+          },
+          "uniforms": {},
+          "drawBuffers": 2,
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 64
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 4096
+            }
+          }
+        }
+      ],
+      "outputTex3d": "volumeCache",
+      "outputGeo": "geoBuffer"
+    },
+    "synth3d/noise3d": {
+      "namespace": "synth3d",
+      "func": "noise3d",
+      "kind": "generator",
+      "domain": "volume-generator",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "randChoices": [
+            16,
+            32,
+            64
+          ],
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "scale": {
+          "type": "float",
+          "default": 3,
+          "min": 0,
+          "max": 100,
+          "uniform": "scale",
+          "ui": {
+            "label": "scale"
+          }
+        },
+        "octaves": {
+          "type": "int",
+          "default": 1,
+          "min": 1,
+          "max": 6,
+          "define": "OCTAVES",
+          "ui": {
+            "label": "octaves"
+          }
+        },
+        "colorMode": {
+          "type": "int",
+          "default": 0,
+          "define": "COLOR_MODE",
+          "choices": {
+            "mono": 0,
+            "rgb": 1
+          },
+          "ui": {
+            "label": "color mode",
+            "control": "dropdown"
+          }
+        },
+        "ridges": {
+          "type": "boolean",
+          "default": false,
+          "define": "RIDGES",
+          "ui": {
+            "label": "ridges"
+          }
+        },
+        "seed": {
+          "type": "int",
+          "default": 0,
+          "min": 0,
+          "max": 100,
+          "uniform": "seed",
+          "ui": {
+            "label": "seed"
+          }
+        },
+        "speed": {
+          "type": "int",
+          "default": 1,
+          "min": 0,
+          "max": 5,
+          "zero": 0,
+          "uniform": "speed",
+          "ui": {
+            "label": "speed"
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "scale",
+        "octaves",
+        "colorMode",
+        "ridges",
+        "seed",
+        "speed"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        },
+        "geoBuffer": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "precompute",
+          "program": "precompute",
+          "key": "synth3d/noise3d:precompute",
+          "inputs": {},
+          "outputs": {
+            "fragColor": "volumeCache",
+            "geoOut": "geoBuffer"
+          },
+          "uniforms": {},
+          "drawBuffers": 2,
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 64
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 4096
+            }
+          }
+        }
+      ],
+      "outputTex3d": "volumeCache",
+      "outputGeo": "geoBuffer"
+    },
+    "synth3d/reactionDiffusion3d": {
+      "namespace": "synth3d",
+      "func": "reactionDiffusion3d",
+      "kind": "generator",
+      "domain": "volume-generator",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 32,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "randChoices": [
+            16,
+            32,
+            64
+          ],
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "seed": {
+          "type": "int",
+          "default": 1,
+          "min": 0,
+          "max": 100,
+          "uniform": "seed",
+          "ui": {
+            "control": false
+          }
+        },
+        "iterations": {
+          "type": "int",
+          "default": 8,
+          "uniform": "iterations",
+          "min": 1,
+          "max": 32,
+          "ui": {
+            "label": "iterations",
+            "control": "slider"
+          }
+        },
+        "feed": {
+          "type": "float",
+          "default": 110,
+          "uniform": "feed",
+          "min": 10,
+          "max": 110,
+          "ui": {
+            "label": "feed rate",
+            "control": "slider",
+            "category": "rules"
+          }
+        },
+        "kill": {
+          "type": "float",
+          "default": 62,
+          "uniform": "kill",
+          "min": 45,
+          "max": 70,
+          "ui": {
+            "label": "kill rate",
+            "control": "slider",
+            "category": "rules"
+          }
+        },
+        "rate1": {
+          "type": "float",
+          "default": 120,
+          "uniform": "rate1",
+          "min": 50,
+          "max": 120,
+          "ui": {
+            "label": "diffuse rate a",
+            "control": "slider",
+            "category": "rules"
+          }
+        },
+        "rate2": {
+          "type": "float",
+          "default": 30,
+          "uniform": "rate2",
+          "min": 20,
+          "max": 80,
+          "ui": {
+            "label": "diffuse rate b",
+            "control": "slider",
+            "category": "rules"
+          }
+        },
+        "speed": {
+          "type": "int",
+          "default": 100,
+          "uniform": "speed",
+          "min": 10,
+          "max": 200,
+          "ui": {
+            "label": "sim speed",
+            "control": "slider"
+          }
+        },
+        "colorMode": {
+          "type": "int",
+          "default": 0,
+          "uniform": "colorMode",
+          "choices": {
+            "mono": 0,
+            "gradient": 1
+          },
+          "ui": {
+            "label": "color mode",
+            "control": "dropdown"
+          }
+        },
+        "resetState": {
+          "type": "boolean",
+          "default": false,
+          "uniform": "resetState",
+          "ui": {
+            "label": "reset",
+            "control": "button",
+            "buttonLabel": "reset"
+          }
+        },
+        "source": {
+          "type": "volume",
+          "default": "vol0",
+          "ui": {
+            "label": "source vol",
+            "category": "input"
+          }
+        },
+        "geoSource": {
+          "type": "geometry",
+          "default": "geo0",
+          "ui": {
+            "label": "source geo",
+            "category": "input"
+          }
+        },
+        "weight": {
+          "type": "float",
+          "default": 0,
+          "min": 0,
+          "max": 100,
+          "uniform": "weight",
+          "ui": {
+            "label": "input weight",
+            "control": "slider",
+            "category": "input"
+          }
+        },
+        "iterationCount": {
+          "type": "int",
+          "default": 60,
+          "min": 0,
+          "max": 10000,
+          "cpuOnly": true
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "seed",
+        "iterations",
+        "feed",
+        "kill",
+        "rate1",
+        "rate2",
+        "speed",
+        "colorMode",
+        "resetState",
+        "source",
+        "geoSource",
+        "weight",
+        "iterationCount"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        },
+        "geoBuffer": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        },
+        "global_rd_state": {
+          "width": {
+            "param": "volumeSize",
+            "default": 32
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 1024
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "simulate",
+          "program": "simulate",
+          "key": "synth3d/reactionDiffusion3d:simulate",
+          "inputs": {
+            "stateTex": "global_rd_state",
+            "seedTex": "source"
+          },
+          "outputs": {
+            "color": "global_rd_state"
+          },
+          "uniforms": {},
+          "repeat": "iterations",
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 32
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 1024
+            }
+          }
+        }
+      ],
+      "iterated": true,
+      "outputTex3d": "global_rd_state",
+      "outputGeo": "geoBuffer"
+    },
+    "synth3d/shape3d": {
+      "namespace": "synth3d",
+      "func": "shape3d",
+      "kind": "generator",
+      "domain": "volume-generator",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "randChoices": [
+            16,
+            32,
+            64
+          ],
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "colorMode": {
+          "type": "int",
+          "default": 0,
+          "uniform": "colorMode",
+          "choices": {
+            "mono": 0,
+            "rgb": 1
+          },
+          "ui": {
+            "label": "color mode",
+            "control": "dropdown"
+          }
+        },
+        "loopAOffset": {
+          "type": "int",
+          "default": 40,
+          "uniform": "loopAOffset",
+          "choices": {
+            "Platonic Solids:": null,
+            "tetrahedron": 10,
+            "cube": 20,
+            "octahedron": 30,
+            "dodecahedron": 40,
+            "icosahedron": 50,
+            "Other Primitives:": null,
+            "sphere": 100,
+            "torus": 110,
+            "cylinder": 120,
+            "cone": 130,
+            "capsule": 140
+          },
+          "ui": {
+            "label": "loop a",
+            "control": "dropdown"
+          }
+        },
+        "loopBOffset": {
+          "type": "int",
+          "default": 30,
+          "uniform": "loopBOffset",
+          "choices": {
+            "Platonic Solids:": null,
+            "tetrahedron": 10,
+            "cube": 20,
+            "octahedron": 30,
+            "dodecahedron": 40,
+            "icosahedron": 50,
+            "Other Primitives:": null,
+            "sphere": 100,
+            "torus": 110,
+            "cylinder": 120,
+            "cone": 130,
+            "capsule": 140
+          },
+          "ui": {
+            "label": "loop b",
+            "control": "dropdown"
+          }
+        },
+        "loopAScale": {
+          "type": "float",
+          "default": 1,
+          "uniform": "loopAScale",
+          "min": 1,
+          "max": 100,
+          "ui": {
+            "label": "a scale",
+            "control": "slider"
+          }
+        },
+        "loopBScale": {
+          "type": "float",
+          "default": 1,
+          "uniform": "loopBScale",
+          "min": 1,
+          "max": 100,
+          "ui": {
+            "label": "b scale",
+            "control": "slider"
+          }
+        },
+        "speedA": {
+          "type": "int",
+          "default": 1,
+          "uniform": "speedA",
+          "min": -5,
+          "max": 5,
+          "zero": 0,
+          "ui": {
+            "label": "speed a",
+            "control": "slider"
+          }
+        },
+        "speedB": {
+          "type": "int",
+          "default": 1,
+          "uniform": "speedB",
+          "min": -5,
+          "max": 5,
+          "zero": 0,
+          "ui": {
+            "label": "speed b",
+            "control": "slider"
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "colorMode",
+        "loopAOffset",
+        "loopBOffset",
+        "loopAScale",
+        "loopBScale",
+        "speedA",
+        "speedB"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        },
+        "geoBuffer": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "precompute",
+          "program": "precompute",
+          "key": "synth3d/shape3d:precompute",
+          "inputs": {},
+          "outputs": {
+            "fragColor": "volumeCache",
+            "geoOut": "geoBuffer"
+          },
+          "uniforms": {},
+          "drawBuffers": 2,
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 64
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 4096
+            }
+          }
+        }
+      ],
+      "outputTex3d": "volumeCache",
+      "outputGeo": "geoBuffer"
     }
   }
 }

@@ -74,11 +74,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; globalCoord = nil; hsv = nil; texSize = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float')
-    color = rt.texture(_u_inputTex, uv)
-    hsv = rgb2hsv__vec3.call(rt.swizzle(color, 'rgb'))
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
+    color = rt.construct(4, rt.texture(_u_inputTex, uv))
+    hsv = rt.construct(3, rgb2hsv__vec3.call(rt.swizzle(color, 'rgb')))
     hsv = rt.assign_swizzle(hsv, 'x', rt.component_wise('fract', rt.binary('+', rt.binary('*', rt.swizzle(hsv, 'x'), map__float_float_float_float_float.call(_u_hueRange, rt.f(0), rt.f(200), rt.f(0), rt.f(2)), 1, 'float'), rt.binary('/', _u_rotation, rt.f(360), 1, 'float'), 1, 'float')))
     hsv = rt.assign_swizzle(hsv, 'y', rt.binary('*', rt.swizzle(hsv, 'y'), _u_saturation, 1, 'float'))
     color = rt.assign_swizzle(color, 'rgb', hsv2rgb__vec3.call(hsv))

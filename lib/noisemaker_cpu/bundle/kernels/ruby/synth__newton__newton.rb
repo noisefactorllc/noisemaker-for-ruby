@@ -60,7 +60,7 @@ run_pixel = lambda do |ctx, out|
     a = rt.copy(a, 'float')
     b = rt.copy(b, 'float')
     s = nil
-    s = df64_two_sum__float_float.call(rt.swizzle(a, 'x'), rt.swizzle(b, 'x'))
+    s = rt.construct(2, df64_two_sum__float_float.call(rt.swizzle(a, 'x'), rt.swizzle(b, 'x')))
     s = rt.assign_swizzle(s, 'y', rt.binary('+', rt.swizzle(s, 'y'), rt.binary('+', rt.swizzle(a, 'y'), rt.swizzle(b, 'y'), 1, 'float'), 1, 'float'))
     return df64_quick_two_sum__float_float.call(rt.swizzle(s, 'x'), rt.swizzle(s, 'y'))
   end
@@ -73,14 +73,14 @@ run_pixel = lambda do |ctx, out|
     a = rt.copy(a, 'float')
     b = rt.copy(b, 'float')
     p = nil
-    p = df64_two_prod__float_float.call(rt.swizzle(a, 'x'), rt.swizzle(b, 'x'))
+    p = rt.construct(2, df64_two_prod__float_float.call(rt.swizzle(a, 'x'), rt.swizzle(b, 'x')))
     p = rt.assign_swizzle(p, 'y', rt.binary('+', rt.swizzle(p, 'y'), rt.binary('+', rt.binary('*', rt.swizzle(a, 'x'), rt.swizzle(b, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(a, 'y'), rt.swizzle(b, 'x'), 1, 'float'), 1, 'float'), 1, 'float'))
     return df64_quick_two_sum__float_float.call(rt.swizzle(p, 'x'), rt.swizzle(p, 'y'))
   end
   df64_mul_f__vec2_float = lambda do |a, b|
     a = rt.copy(a, 'float')
     p = nil
-    p = df64_two_prod__float_float.call(rt.swizzle(a, 'x'), b)
+    p = rt.construct(2, df64_two_prod__float_float.call(rt.swizzle(a, 'x'), b))
     p = rt.assign_swizzle(p, 'y', rt.binary('+', rt.swizzle(p, 'y'), rt.binary('*', rt.swizzle(a, 'y'), b, 1, 'float'), 1, 'float'))
     return df64_quick_two_sum__float_float.call(rt.swizzle(p, 'x'), rt.swizzle(p, 'y'))
   end
@@ -109,14 +109,14 @@ run_pixel = lambda do |ctx, out|
     re_df = rt.copy(re_df, 'float')
     im_df = rt.copy(im_df, 'float')
     angle = nil; c = nil; s = nil; scale = nil; uv = nil; uv_im_df = nil; uv_re_df = nil
-    uv = rt.binary('/', rt.binary('-', fragCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.binary('-', fragCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', rot), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
     uv.replace((rt.matrix_mult(rt.construct(4, c, rt.unary('-', s), s, c), uv, 2)).map { |c| rt.f32(c) })
     scale = rt.binary('/', rt.f(2.5), z_zoom, 1, 'float')
-    uv_re_df = df64_mul_f__vec2_float.call(df64_from__float.call(rt.swizzle(uv, 'x')), scale)
-    uv_im_df = df64_mul_f__vec2_float.call(df64_from__float.call(rt.swizzle(uv, 'y')), scale)
+    uv_re_df = rt.construct(2, df64_mul_f__vec2_float.call(df64_from__float.call(rt.swizzle(uv, 'x')), scale))
+    uv_im_df = rt.construct(2, df64_mul_f__vec2_float.call(df64_from__float.call(rt.swizzle(uv, 'y')), scale))
     re_df.replace((df64_add__vec2_vec2.call(uv_re_df, cX_df)).map { |c| rt.f32(c) })
     im_df.replace((df64_add__vec2_vec2.call(uv_im_df, cY_df)).map { |c| rt.f32(c) })
     return [nil, re_df, im_df]
@@ -144,7 +144,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; _for2_first = nil; _for3_first = nil; angle = nil; bailout = nil; cHi = nil; cLo = nil; convergeDist = nil; convergedRoot = nil; d = nil; denom = nil; di = nil; doInvert = nil; dr = nil; dx = nil; dy = nil; effDegree = nil; effRelax = nil; effZoomDepth = nil; fpzi = nil; fpzi_f = nil; fpzr = nil; fpzr_f = nil; fzi = nil; fzr = nil; globalCoord = nil; im_df = nil; intDeg = nil; inv_denom = nil; iter = nil; j = nil; k = nil; maxIter = nil; maxIterF = nil; n = nil; ni = nil; nr = nil; numRoots = nil; numRootsF = nil; outMode = nil; p = nil; poiIdx = nil; pwi = nil; pwr = nil; re_df = nil; roots = nil; smoothIter = nil; ti = nil; tr = nil; value = nil; zi_df = nil; zni = nil; znr = nil; zoom = nil; zoomPhase = nil; zr_df = nil; zx = nil; zy = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     maxIter = rt.construct(1, _u_iterations, 'int')
     poiIdx = rt.construct(1, _u_poi, 'int')
     outMode = rt.construct(1, _u_outputMode, 'int')
@@ -222,8 +222,8 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', n, maxIter))
         break
       end
-      pwr = df64_from__float.call(rt.f(1))
-      pwi = df64_from__float.call(rt.f(0))
+      pwr = rt.construct(2, df64_from__float.call(rt.f(1)))
+      pwi = rt.construct(2, df64_from__float.call(rt.f(0)))
       j = rt.i(0)
       _for2_first = true
       (0..1048575).each do |_for2|
@@ -246,10 +246,10 @@ run_pixel = lambda do |ctx, out|
       znr = rt.construct(2, 0.0)
       zni = rt.construct(2, 0.0)
       (begin _retc, znr, zni = df64_cmul__vec2_vec2_vec2_vec2_vec2_vec2.call(pwr, pwi, zr_df, zi_df, znr, zni); _retc end)
-      fzr = df64_sub__vec2_vec2.call(znr, df64_from__float.call(rt.f(1)))
+      fzr = rt.construct(2, df64_sub__vec2_vec2.call(znr, df64_from__float.call(rt.f(1))))
       fzi = zni
-      fpzr = df64_mul_f__vec2_float.call(pwr, rt.construct(1, intDeg))
-      fpzi = df64_mul_f__vec2_float.call(pwi, rt.construct(1, intDeg))
+      fpzr = rt.construct(2, df64_mul_f__vec2_float.call(pwr, rt.construct(1, intDeg)))
+      fpzi = rt.construct(2, df64_mul_f__vec2_float.call(pwi, rt.construct(1, intDeg)))
       fpzr_f = df64_to_float__vec2.call(fpzr)
       fpzi_f = df64_to_float__vec2.call(fpzi)
       if rt.bool(rt.binary('<', rt.binary('+', rt.binary('*', fpzr_f, fpzr_f, 1, 'float'), rt.binary('*', fpzi_f, fpzi_f, 1, 'float'), 1, 'float'), rt.f(9.9999999999999995e-21)))
@@ -257,10 +257,10 @@ run_pixel = lambda do |ctx, out|
       end
       denom = rt.binary('+', rt.binary('*', fpzr_f, fpzr_f, 1, 'float'), rt.binary('*', fpzi_f, fpzi_f, 1, 'float'), 1, 'float')
       inv_denom = rt.binary('/', rt.f(1), denom, 1, 'float')
-      nr = df64_add__vec2_vec2.call(df64_mul__vec2_vec2.call(fzr, fpzr), df64_mul__vec2_vec2.call(fzi, fpzi))
-      ni = df64_sub__vec2_vec2.call(df64_mul__vec2_vec2.call(fzi, fpzr), df64_mul__vec2_vec2.call(fzr, fpzi))
-      dr = df64_mul_f__vec2_float.call(nr, inv_denom)
-      di = df64_mul_f__vec2_float.call(ni, inv_denom)
+      nr = rt.construct(2, df64_add__vec2_vec2.call(df64_mul__vec2_vec2.call(fzr, fpzr), df64_mul__vec2_vec2.call(fzi, fpzi)))
+      ni = rt.construct(2, df64_sub__vec2_vec2.call(df64_mul__vec2_vec2.call(fzi, fpzr), df64_mul__vec2_vec2.call(fzr, fpzi)))
+      dr = rt.construct(2, df64_mul_f__vec2_float.call(nr, inv_denom))
+      di = rt.construct(2, df64_mul_f__vec2_float.call(ni, inv_denom))
       zr_df.replace((df64_sub__vec2_vec2.call(zr_df, df64_mul_f__vec2_float.call(dr, effRelax))).map { |c| rt.f32(c) })
       zi_df.replace((df64_sub__vec2_vec2.call(zi_df, df64_mul_f__vec2_float.call(di, effRelax))).map { |c| rt.f32(c) })
       zx = df64_to_float__vec2.call(zr_df)

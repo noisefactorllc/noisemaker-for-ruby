@@ -22,7 +22,7 @@ run_pixel = lambda do |ctx, out|
   oklabLComponent__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
     l = nil; lC = nil; linear = nil; m = nil; mC = nil; s = nil; sC = nil
-    linear = srgbToLinear__vec3.call(rt.component_wise('clamp', rgb, rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))))
+    linear = rt.construct(3, srgbToLinear__vec3.call(rt.component_wise('clamp', rgb, rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1)))))
     l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561200000001), rt.swizzle(linear, 'r'), 1, 'float'), rt.binary('*', rt.f(0.53627520799999995), rt.swizzle(linear, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565300000001), rt.swizzle(linear, 'b'), 1, 'float'), 1, 'float')
     m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910699999999), rt.swizzle(linear, 'r'), 1, 'float'), rt.binary('*', rt.f(0.68071895839999996), rt.swizzle(linear, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.107406579), rt.swizzle(linear, 'b'), 1, 'float'), 1, 'float')
     s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794699999999), rt.swizzle(linear, 'r'), 1, 'float'), rt.binary('*', rt.f(0.28184741740000002), rt.swizzle(linear, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136160000001), rt.swizzle(linear, 'b'), 1, 'float'), 1, 'float')
@@ -42,10 +42,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     dimensions = nil; globalCoord = nil; texel = nil; uv = nil; value = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     dimensions = rt.texture_size(_u_inputTex)
-    uv = rt.binary('/', rt.binary('-', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.f(0.5)), 2, 'float'), rt.construct(2, rt.component_wise('max', rt.swizzle(dimensions, 'x'), rt.i(1)), rt.component_wise('max', rt.swizzle(dimensions, 'y'), rt.i(1))), 2, 'float')
-    texel = rt.texture(_u_inputTex, uv)
+    uv = rt.construct(2, rt.binary('/', rt.binary('-', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.f(0.5)), 2, 'float'), rt.construct(2, rt.component_wise('max', rt.swizzle(dimensions, 'x'), rt.i(1)), rt.component_wise('max', rt.swizzle(dimensions, 'y'), rt.i(1))), 2, 'float'))
+    texel = rt.construct(4, rt.texture(_u_inputTex, uv))
     value = valueMapComponent__vec4.call(texel)
     g['fragColor'].replace((rt.construct(4, value, value, value, rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
   end

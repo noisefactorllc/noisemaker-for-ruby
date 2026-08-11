@@ -13,9 +13,9 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _t = nil; bloomFactor = nil; brightColor = nil; color = nil; coord = nil; globalCoord = nil; knee = nil; luma = nil; threshHigh = nil; threshLow = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
-    color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     luma = rt.dot(rt.swizzle(color, 'rgb'), rt.construct(3, rt.f(0.21260000000000001), rt.f(0.71519999999999995), rt.f(0.0722)))
     knee = _u_softKnee
     threshLow = rt.binary('-', _u_threshold, knee, 1, 'float')
@@ -32,7 +32,7 @@ run_pixel = lambda do |ctx, out|
         bloomFactor = rt.binary('*', rt.binary('*', _t, _t, 1, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), _t, 1, 'float'), 1, 'float'), 1, 'float')
       end
     end
-    brightColor = rt.binary('*', rt.swizzle(color, 'rgb'), bloomFactor, 3, 'float')
+    brightColor = rt.construct(3, rt.binary('*', rt.swizzle(color, 'rgb'), bloomFactor, 3, 'float'))
     g['fragColor'].replace((rt.construct(4, brightColor, rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

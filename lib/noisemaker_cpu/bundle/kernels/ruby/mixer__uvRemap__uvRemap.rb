@@ -35,10 +35,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     colorA = nil; colorB = nil; localUV = nil; mapColor = nil; rawUV = nil; remappedUV = nil; result = nil; s = nil; sampleFromB = nil; sampleUV = nil
-    localUV = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    colorA = rt.texture(_u_inputTex, localUV)
-    colorB = rt.texture(_u_tex, localUV)
-    mapColor = (rt.bool(rt.binary('==', _u_mapSource, rt.i(0))) ? (colorA) : (colorB))
+    localUV = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    colorA = rt.construct(4, rt.texture(_u_inputTex, localUV))
+    colorB = rt.construct(4, rt.texture(_u_tex, localUV))
+    mapColor = rt.construct(4, (rt.bool(rt.binary('==', _u_mapSource, rt.i(0))) ? (colorA) : (colorB)))
     sampleFromB = (rt.bool(rt.binary('==', _u_mapSource, rt.i(0))) ? (rt.i(1)) : (rt.i(0)))
     rawUV = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u_channel, rt.i(0)))
@@ -51,9 +51,9 @@ run_pixel = lambda do |ctx, out|
       end
     end
     s = rt.binary('/', _u_scale, rt.f(100), 1, 'float')
-    remappedUV = rt.binary('+', rt.binary('*', rawUV, s, 2, 'float'), _u_offset, 2, 'float')
+    remappedUV = rt.construct(2, rt.binary('+', rt.binary('*', rawUV, s, 2, 'float'), _u_offset, 2, 'float'))
     remappedUV.replace((applyWrap__vec2_int.call(remappedUV, _u_wrap)).map { |c| rt.f32(c) })
-    sampleUV = rt.binary('/', rt.binary('-', rt.binary('*', remappedUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), _u_resolution, 2, 'float')
+    sampleUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', remappedUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), _u_resolution, 2, 'float'))
     sampleUV.replace((rt.component_wise('fract', sampleUV)).map { |c| rt.f32(c) })
     result = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', sampleFromB, rt.i(1)))

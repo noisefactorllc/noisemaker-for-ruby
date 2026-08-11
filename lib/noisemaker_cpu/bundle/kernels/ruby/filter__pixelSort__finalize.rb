@@ -18,7 +18,7 @@ run_pixel = lambda do |ctx, out|
     coord = rt.copy(coord, 'float')
     size = rt.copy(size, 'float')
     mode = nil; uv = nil
-    uv = rt.binary('/', coord, size, 2, 'float')
+    uv = rt.construct(2, rt.binary('/', coord, size, 2, 'float'))
     mode = rt.construct(1, _u_wrap, 'int')
     if rt.bool(rt.binary('==', mode, rt.i(0)))
       uv.replace((rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('+', uv, rt.f(1), 2, 'float'), rt.f(2)), rt.f(1), 2, 'float'))).map { |c| rt.f32(c) })
@@ -33,9 +33,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     angle = nil; blended = nil; c = nil; center = nil; originalColor = nil; pixelCoord = nil; rad = nil; s = nil; sortedColor = nil; srcCoord = nil; texSize = nil; working_sorted = nil; working_source = nil; wrappedUV = nil
-    texSize = rt.construct(2, rt.texture_size(_u_inputTex))
-    center = rt.binary('*', texSize, rt.f(0.5), 2, 'float')
-    pixelCoord = rt.binary('-', rt.swizzle(ctx.frag_coord, 'xy'), center, 2, 'float')
+    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
+    center = rt.construct(2, rt.binary('*', texSize, rt.f(0.5), 2, 'float'))
+    pixelCoord = rt.construct(2, rt.binary('-', rt.swizzle(ctx.frag_coord, 'xy'), center, 2, 'float'))
     angle = _u_angled
     rad = rt.binary('/', rt.binary('*', angle, g['PI'], 1, 'float'), rt.f(180), 1, 'float')
     c = rt.component_wise('cos', rad)
@@ -44,16 +44,16 @@ run_pixel = lambda do |ctx, out|
     srcCoord = rt.assign_swizzle(srcCoord, 'x', rt.binary('-', rt.binary('*', c, rt.swizzle(pixelCoord, 'x'), 1, 'float'), rt.binary('*', s, rt.swizzle(pixelCoord, 'y'), 1, 'float'), 1, 'float'))
     srcCoord = rt.assign_swizzle(srcCoord, 'y', rt.binary('+', rt.binary('*', s, rt.swizzle(pixelCoord, 'x'), 1, 'float'), rt.binary('*', c, rt.swizzle(pixelCoord, 'y'), 1, 'float'), 1, 'float'))
     srcCoord.replace((rt.binary('+', srcCoord, center, 2, 'float')).map { |c| rt.f32(c) })
-    originalColor = rt.texture(_u_originalTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    wrappedUV = applyWrap__vec2_vec2.call(srcCoord, texSize)
-    sortedColor = rt.texture(_u_inputTex, wrappedUV)
+    originalColor = rt.construct(4, rt.texture(_u_originalTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')))
+    wrappedUV = rt.construct(2, applyWrap__vec2_vec2.call(srcCoord, texSize))
+    sortedColor = rt.construct(4, rt.texture(_u_inputTex, wrappedUV))
     working_source = originalColor
     working_sorted = sortedColor
     if rt.bool(_u_darkest)
       working_source.replace((rt.construct(4, rt.binary('-', rt.construct(3, rt.f(1)), rt.swizzle(working_source, 'rgb'), 3, 'float'), rt.swizzle(working_source, 'a'))).map { |c| rt.f32(c) })
       working_sorted.replace((rt.construct(4, rt.binary('-', rt.construct(3, rt.f(1)), rt.swizzle(working_sorted, 'rgb'), 3, 'float'), rt.swizzle(working_sorted, 'a'))).map { |c| rt.f32(c) })
     end
-    blended = rt.component_wise('max', rt.binary('*', working_source, _u_alpha, 4, 'float'), working_sorted)
+    blended = rt.construct(4, rt.component_wise('max', rt.binary('*', working_source, _u_alpha, 4, 'float'), working_sorted))
     blended.replace((rt.component_wise('clamp', blended, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     blended = rt.assign_swizzle(blended, 'a', rt.swizzle(working_source, 'a'))
     if rt.bool(_u_darkest)

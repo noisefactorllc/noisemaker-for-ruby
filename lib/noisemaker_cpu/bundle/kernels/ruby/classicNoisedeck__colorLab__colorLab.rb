@@ -47,7 +47,7 @@ run_pixel = lambda do |ctx, out|
   end
   prng__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, p, 'uint'))), rt.construct(1, rt.construct(1, rt.i(4294967295), 'uint')), 3, 'float')
+    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, rt.construct(3, p), 'uint'))), rt.construct(1, rt.construct(1, rt.i(4294967295), 'uint')), 3, 'float')
   end
   random__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
@@ -215,13 +215,13 @@ run_pixel = lambda do |ctx, out|
   oklab_from_linear_srgb__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     lms = nil
-    lms = rt.matrix_mult(g['invB'], c, 3)
+    lms = rt.construct(3, rt.matrix_mult(g['invB'], c, 3))
     return rt.matrix_mult(g['invA'], rt.binary('*', rt.component_wise('sign', lms), rt.component_wise('pow', rt.component_wise('abs', lms), rt.construct(3, rt.f(0.33333333333330001))), 3, 'float'), 3)
   end
   linear_srgb_from_oklab__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     lms = nil
-    lms = rt.matrix_mult(g['fwdA'], c, 3)
+    lms = rt.construct(3, rt.matrix_mult(g['fwdA'], c, 3))
     return rt.matrix_mult(g['fwdB'], rt.binary('*', rt.binary('*', lms, lms, 3, 'float'), lms, 3, 'float'), 3)
   end
   pal__float = lambda do |_t|
@@ -231,7 +231,7 @@ run_pixel = lambda do |ctx, out|
     c = _u_paletteFreq
     d = _u_palettePhase
     _t = rt.binary('+', rt.binary('*', _t, _u_repeatPalette, 1, 'float'), rt.binary('*', _u_rotatePalette, rt.f(0.01), 1, 'float'), 1, 'float')
-    color = rt.binary('+', a, rt.binary('*', b, rt.component_wise('cos', rt.binary('*', rt.f(6.2831799999999998), rt.binary('+', rt.binary('*', c, _t, 3, 'float'), d, 3, 'float'), 3, 'float')), 3, 'float'), 3, 'float')
+    color = rt.construct(3, rt.binary('+', a, rt.binary('*', b, rt.component_wise('cos', rt.binary('*', rt.f(6.2831799999999998), rt.binary('+', rt.binary('*', c, _t, 3, 'float'), d, 3, 'float'), 3, 'float')), 3, 'float'), 3, 'float'))
     if rt.bool(rt.binary('==', _u_paletteMode, rt.i(1)))
       color.replace((hsv2rgb__vec3.call(color)).map { |c| rt.f32(c) })
     else
@@ -246,9 +246,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     blendy = nil; bright = nil; color = nil; coord = nil; d = nil; globalCoord = nil; hsv = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    color = rt.construct(4, rt.f(0))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    color = rt.construct(4, rt.construct(4, rt.f(0)))
     blendy = periodicFunction__float.call(rt.binary('-', _u_time, offsets__vec2.call(uv), 1, 'float'))
     color.replace((rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('!=', _u_levels, rt.f(0)))
@@ -266,7 +266,7 @@ run_pixel = lambda do |ctx, out|
           color = rt.assign_swizzle(color, 'rgb', rt.binary('*', rt.swizzle(color, 'rgb'), rt.construct(3, rt.component_wise('step', periodicFunction__float.call(rt.binary('+', random__vec2.call(globalCoord), _u_time, 1, 'float')), bright)), 3, 'float'))
         else
           if rt.bool(rt.binary('==', _u_dither, rt.i(4)))
-            coord = rt.binary('-', rt.swizzle(rt.component_wise('mod', rt.binary('/', globalCoord, _u_renderScale, 2, 'float'), rt.f(4)), 'xy'), rt.f(0.5), 2, 'float')
+            coord = rt.construct(2, rt.binary('-', rt.swizzle(rt.component_wise('mod', rt.binary('/', globalCoord, _u_renderScale, 2, 'float'), rt.f(4)), 'xy'), rt.f(0.5), 2, 'float'))
             if rt.bool(rt.binary('<', bright, rt.f(0.12)))
               color = rt.assign_swizzle(color, 'rgb', rt.construct(3, rt.f(0)))
             else
@@ -325,7 +325,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    hsv = rgb2hsv__vec3.call(rt.swizzle(color, 'rgb'))
+    hsv = rt.construct(3, rgb2hsv__vec3.call(rt.swizzle(color, 'rgb')))
     hsv[(rt.i(0)).to_i] = rt.component_wise('mod', rt.binary('+', rt.binary('*', hsv[(rt.i(0)).to_i], map__float_float_float_float_float.call(_u_hueRange, rt.f(0), rt.f(200), rt.f(0), rt.f(2)), 1, 'float'), rt.binary('/', _u_hueRotation, rt.f(360), 1, 'float'), 1, 'float'), rt.f(1))
     color = rt.assign_swizzle(color, 'rgb', hsv2rgb__vec3.call(hsv))
     if rt.bool(_u_invert)

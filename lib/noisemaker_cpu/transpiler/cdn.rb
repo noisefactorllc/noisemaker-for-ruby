@@ -32,19 +32,23 @@ module NoisemakerCpu
       # The "1.0" minor channel is the current release (rolling tag).
       CDN_VERSION = ENV["NM_SHADER_VERSION"] || "1.0"
 
-      NAMESPACE_EXCLUSIONS = %w[filter3d synth3d].each_with_object({}) { |k, h| h[k] = true }.freeze
-      RENDER_ALLOWLIST = %w[pointsEmit pointsRender pointsBillboardRender]
+      RENDER_ALLOWLIST = %w[
+        loopBegin loopEnd pointsEmit pointsRender pointsBillboardRender
+        render3d renderCubemap3d renderCubemapSurface renderLit3d
+      ]
                          .each_with_object({}) { |k, h| h[k] = true }.freeze
       ID_EXCLUSIONS = %w[
         synth/roll synth/scope synth/spectrum
-        classicNoisedeck/noise3d classicNoisedeck/shapes3d
+        render/meshLoader render/meshRender
       ].each_with_object({}) { |k, h| h[k] = true }.freeze
       ITERATED_IDS = %w[
         filter/convolutionFeedback filter/feedback filter/motionBlur filter/temporalAberration
+        filter3d/flow3d
         points/attractor points/buddhabrot points/dla points/flock points/flow points/hydraulic
         points/lenia points/life points/physarum points/physical
-        render/pointsBillboardRender render/pointsEmit render/pointsRender
+        render/loopBegin render/pointsBillboardRender render/pointsEmit render/pointsRender
         synth/cellularAutomata synth/mnca synth/navierStokes synth/reactionDiffusion
+        synth3d/cellularAutomata3d synth3d/reactionDiffusion3d
       ].each_with_object({}) { |k, h| h[k] = true }.freeze
 
       # <dist>/.cdn-cache, next to lib/ (three levels up from
@@ -577,6 +581,9 @@ module NoisemakerCpu
               "outputXyz" => _parse_field(region, effect_id, "outputXyz", nil),
               "outputVel" => _parse_field(region, effect_id, "outputVel", nil),
               "outputRgba" => _parse_field(region, effect_id, "outputRgba", nil),
+              "outputTex" => _parse_field(region, effect_id, "outputTex", nil),
+              "outputTex3d" => _parse_field(region, effect_id, "outputTex3d", nil),
+              "outputGeo" => _parse_field(region, effect_id, "outputGeo", nil),
               "programs" => _extract_programs(bundle),
             }
           end
@@ -614,9 +621,7 @@ module NoisemakerCpu
         result = []
         manifest.keys.sort.each do |effect_id|
           namespace = effect_id.split("/", 2).first
-          next if NAMESPACE_EXCLUSIONS.key?(namespace)
           next if namespace == "render" && !RENDER_ALLOWLIST.key?(effect_id.split("/", 2)[1])
-          next if effect_id.include?("3d") || effect_id.include?("cubemap") || effect_id.include?("mesh")
           next if ID_EXCLUSIONS.key?(effect_id)
 
           result << effect_id

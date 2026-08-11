@@ -48,7 +48,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; fragCoord = nil; localX = nil; localY = nil; maxValue = nil; minValue = nil; ox = nil; oy = nil; px = nil; py = nil; texSize = nil; texel = nil; tileOrigin = nil; value = nil
-    fragCoord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    fragCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     localX = rt.binary('%', rt.swizzle(fragCoord, 'x'), g['TILE_SIZE'], 1, 'int')
     localY = rt.binary('%', rt.swizzle(fragCoord, 'y'), g['TILE_SIZE'], 1, 'int')
     if rt.bool((rt.bool(rt.binary('!=', localX, rt.i(0))) || rt.bool(rt.binary('!=', localY, rt.i(0))) ? 1 : 0))
@@ -87,7 +87,7 @@ run_pixel = lambda do |ctx, out|
         if rt.bool(rt.binary('>=', px, rt.swizzle(texSize, 'x')))
           break
         end
-        texel = rt.texel_fetch(_u_inputTex, rt.construct(2, px, py, 'int'), rt.i(0))
+        texel = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, px, py, 'int'), rt.i(0)))
         value = value_map_component__vec4.call(texel)
         minValue = rt.component_wise('min', minValue, value)
         maxValue = rt.component_wise('max', maxValue, value)

@@ -11,6 +11,8 @@
 
 module NoisemakerCpu
   class Surface
+    MAX_SURFACE_PIXELS = 16_777_216
+
     def self._f32(x)
       [x].pack("e").unpack1("e")
     end
@@ -26,13 +28,19 @@ module NoisemakerCpu
       raise "#{name} must be a positive integer" unless whole && value > 0
     end
 
+    def self._surface_length(width, height)
+      _assert_dim(width, "width")
+      _assert_dim(height, "height")
+      raise "Surface exceeds the 16,777,216 pixel limit" if height > MAX_SURFACE_PIXELS / width
+
+      width * height * 4
+    end
+
     attr_reader :width, :height, :data
     attr_accessor :format
 
     def initialize(width, height, data = nil)
-      self.class._assert_dim(width, "width")
-      self.class._assert_dim(height, "height")
-      length = width * height * 4
+      length = self.class._surface_length(width, height)
       if data
         raise "data must be an array of length #{length}" unless data.is_a?(Array) && data.length == length
       else
@@ -54,9 +62,7 @@ module NoisemakerCpu
     end
 
     def self.from_rgba8(width, height, bytes)
-      _assert_dim(width, "width")
-      _assert_dim(height, "height")
-      length = width * height * 4
+      length = _surface_length(width, height)
       b = bytes.unpack("C*")
       raise "bytes must have length #{length}" unless b.length == length
 

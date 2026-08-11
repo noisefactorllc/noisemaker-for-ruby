@@ -109,11 +109,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     actualStride = nil; agentIndex = nil; alive = nil; baseHeading = nil; behaviorMode = nil; coord = nil; devFactor = nil; finalAngle = nil; indexValue = nil; inputLuma = nil; newX = nil; newY = nil; px = nil; py = nil; pz = nil; rgba = nil; rotRand = nil; rotationBias = nil; scale = nil; stateSize = nil; strideRand = nil; texCoord = nil; texSize = nil; texel = nil; totalAgents = nil; vel = nil; weightBlend = nil; xyz = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
-    xyz = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
-    vel = rt.texel_fetch(_u_velTex, coord, rt.i(0))
-    rgba = rt.texel_fetch(_u_rgbaTex, coord, rt.i(0))
+    xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
+    vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
+    rgba = rt.construct(4, rt.texel_fetch(_u_rgbaTex, coord, rt.i(0)))
     px = rt.swizzle(xyz, 'x')
     py = rt.swizzle(xyz, 'y')
     pz = rt.swizzle(xyz, 'z')
@@ -129,7 +129,7 @@ run_pixel = lambda do |ctx, out|
     texSize = rt.texture_size(_u_inputTex)
     texCoord = rt.construct(2, rt.binary('*', px, rt.construct(1, rt.swizzle(texSize, 'x')), 1, 'float'), rt.binary('*', py, rt.construct(1, rt.swizzle(texSize, 'y')), 1, 'float'), 'int')
     texCoord.replace(rt.component_wise('clamp', texCoord, rt.construct(2, rt.i(0), 'int'), rt.binary('-', texSize, rt.i(1), 2, 'int')))
-    texel = rt.texel_fetch(_u_inputTex, texCoord, rt.i(0))
+    texel = rt.construct(4, rt.texel_fetch(_u_inputTex, texCoord, rt.i(0)))
     inputLuma = oklab_l__vec3.call(rt.swizzle(texel, 'rgb'))
     weightBlend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.01), 1, 'float'), rt.f(0), rt.f(1))
     indexValue = rt.component_wise('mix', rt.f(0.5), inputLuma, weightBlend)

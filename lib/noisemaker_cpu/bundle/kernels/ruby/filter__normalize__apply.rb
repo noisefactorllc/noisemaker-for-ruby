@@ -12,17 +12,17 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     color = nil; coord = nil; globalCoord = nil; maxVal = nil; minVal = nil; normalized = nil; stats = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
-    color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
-    stats = rt.texel_fetch(_u_statsTex, rt.construct(2, rt.i(0), rt.i(0), 'int'), rt.i(0))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
+    stats = rt.construct(4, rt.texel_fetch(_u_statsTex, rt.construct(2, rt.i(0), rt.i(0), 'int'), rt.i(0)))
     minVal = rt.swizzle(stats, 'r')
     maxVal = rt.swizzle(stats, 'g')
     if rt.bool(rt.binary('<', rt.binary('-', maxVal, minVal, 1, 'float'), rt.f(1.0000000000000001e-05)))
       g['fragColor'].replace((color).map { |c| rt.f32(c) })
       return
     end
-    normalized = rt.binary('/', rt.binary('-', rt.swizzle(color, 'rgb'), minVal, 3, 'float'), rt.binary('-', maxVal, minVal, 1, 'float'), 3, 'float')
+    normalized = rt.construct(3, rt.binary('/', rt.binary('-', rt.swizzle(color, 'rgb'), minVal, 3, 'float'), rt.binary('-', maxVal, minVal, 1, 'float'), 3, 'float'))
     g['fragColor'].replace((rt.construct(4, normalized, rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

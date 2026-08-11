@@ -633,6 +633,42 @@ module NoisemakerCpu
       IVec.new(x.map { |c| NoisemakerCpu::UintMath.u32(c) })
     end
 
+    # The canonical JS compiler lowers synth3d/noise3d's uvec4 hash into a
+    # plain Array. Its compound assignments therefore use Number arithmetic
+    # until each later bitwise operator applies ToInt32. Reproduce that one
+    # generated-kernel behavior without weakening normal GLSL uint wrapping.
+    def cpu_noise3d_hash4(p, seed)
+      seed_offset = seed.to_f * f32(0.1)
+      ps = p.map { |value| f32(value.to_f + seed_offset) }
+      q = ps.map do |value|
+        NoisemakerCpu::UintMath.u32(f32(value * 1000.0).to_i + 65_536)
+      end
+      q.map! { |value| (value * 1_664_525.0) + 1_013_904_223.0 }
+      q[0] += q[1] * q[2]
+      q[1] += q[2] * q[3]
+      q[2] += q[3] * q[0]
+      q[3] += q[0] * q[1]
+      q.map! do |value|
+        int = _s32(NoisemakerCpu::UintMath.u32(value))
+        _s32(int ^ (int >> 16))
+      end
+      q[0] += q[1] * q[2]
+      q[1] += q[2] * q[3]
+      q[2] += q[3] * q[0]
+      q[3] += q[0] * q[1]
+      xor = q.map { |value| _s32(NoisemakerCpu::UintMath.u32(value)) }
+             .reduce { |left, right| _s32(left ^ right) }
+      f32(xor).fdiv(f32(4_294_967_295.0))
+    end
+
+    # canonicalFactory278 divides the uint components while they are still
+    # JS Numbers, then stores the quotients in a Float32Array. A normal GLSL
+    # vec3(uint) cast would round the integers first and changes the hash.
+    def cpu_cell3d_hash_result(q)
+      denominator = f32(4_294_967_295.0)
+      q.map { |value| f32(value.to_f.fdiv(denominator)) }
+    end
+
     # ---- vector geometry (snap args to f32, accumulate float64, round once) ----
 
     def dot(a, b)

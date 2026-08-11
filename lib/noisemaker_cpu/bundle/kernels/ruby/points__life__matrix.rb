@@ -21,7 +21,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     coord = nil; curveShape = nil; prefDist = nil; seed = nil; strength = nil; typeA = nil; typeB = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     typeA = rt.swizzle(coord, 'x')
     typeB = rt.swizzle(coord, 'y')
     if rt.bool((rt.bool(rt.binary('>=', typeA, _u_typeCount)) || rt.bool(rt.binary('>=', typeB, _u_typeCount)) ? 1 : 0))

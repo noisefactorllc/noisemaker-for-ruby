@@ -55,7 +55,7 @@ class TestTranspilerPipeline < Minitest::Test
       base = rest.last.is_a?(String) ? rest.pop : nil
       flat = rest.flat_map { |r| r.is_a?(Array) ? r : [r] }
       vals = (flat.length == 1 && width > 1) ? Array.new(width, flat[0]) : flat.first(width)
-      vals = vals.map { |v| (base == "int" || base == "uint") ? v.to_i : v.to_f }
+      vals = vals.map { |v| (base == "int" || base == "uint") ? v.to_i : f32(v) }
       width == 1 ? vals[0] : vals
     end
 
@@ -490,8 +490,8 @@ class TestTranspilerPipeline < Minitest::Test
     src = transpile(STRUCT_GLSL)
     # default-valued struct: 2 vec3 fields, each its own rt.construct default
     assert_includes src, "r = [rt.construct(3, 0.0), rt.construct(3, 0.0)]"
-    assert_includes src, "r[0] = rt.construct(3, rt.f(0))"
-    assert_includes src, "r[1] = rt.construct(3, rt.f(1), rt.f(0), rt.f(0))"
+    assert_includes src, "r[0].replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })"
+    assert_includes src, "r[1].replace((rt.construct(3, rt.f(1), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })"
     assert_includes src, "r[0]"
     assert_includes src, "r[1]"
   end
@@ -851,6 +851,87 @@ class TestTranspilerPipeline < Minitest::Test
     GLSL
     out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
     assert_equal [12.0, 2.0, 0.0, 1.0], out
+  end
+
+  def test_float_vector_declaration_snaps_before_integer_conversion
+    src = transpile(<<~GLSL)
+      out vec4 fragColor;
+      void main() {
+        vec4 p = vec4(0.0, -3.0, 0.0, 1.0);
+        vec4 stored = p + 0.1;
+        ivec4 converted = ivec4(stored * 1000.0);
+        fragColor = vec4(float(converted.y), 0.0, 0.0, 1.0);
+      }
+    GLSL
+
+    assert_includes src, "stored = rt.construct(4, rt.binary"
+    out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
+    assert_equal(-2900.0, out[0])
+  end
+
+  def test_float_vector_declaration_preserves_identifier_alias
+    src = transpile(<<~GLSL)
+      out vec4 fragColor;
+      void main() {
+        vec3 original = vec3(1.0, 2.0, 3.0);
+        vec3 alias = original;
+        fragColor = vec4(alias, 1.0);
+      }
+    GLSL
+
+    assert_includes src, "_alias = original"
+    refute_includes src, "_alias = rt.construct(3, original)"
+  end
+
+  def test_integer_vector_constructor_snaps_float_vector_expression
+    src = transpile(<<~GLSL)
+      out vec4 fragColor;
+      void main() {
+        vec3 p = vec3(6.1, 0.0, 0.0);
+        ivec3 converted = ivec3(p * 1000.0);
+        fragColor = vec4(float(converted.x), 0.0, 0.0, 1.0);
+      }
+    GLSL
+
+    assert_includes src, "rt.construct(3, rt.construct(3, rt.binary('*', p, rt.f(1000), 3, 'float')), 'int')"
+    out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
+    assert_equal 6100.0, out[0]
+  end
+
+  def test_cpu_noise3d_hash4_is_routed_to_runtime
+    src = transpile(<<~GLSL)
+      out vec4 fragColor;
+      void main() {
+        fragColor = vec4(cpu_noise3d_hash4(vec4(1.0), 2));
+      }
+    GLSL
+
+    assert_includes src, "rt.cpu_noise3d_hash4(rt.construct(4, rt.f(1)), rt.i(2))"
+  end
+
+  def test_cpu_cell3d_hash_result_is_routed_to_runtime
+    src = transpile(<<~GLSL)
+      out vec4 fragColor;
+      void main() {
+        fragColor = vec4(cpu_cell3d_hash_result(uvec3(1u)));
+      }
+    GLSL
+
+    assert_includes src, "rt.cpu_cell3d_hash_result(rt.construct(3, rt.i(1), 'uint'))"
+  end
+
+  def test_struct_vector_member_assignment_uses_float32_storage
+    src = transpile(<<~GLSL)
+      struct Hit { float dist; vec3 pos; };
+      out vec4 fragColor;
+      void main() {
+        Hit hit;
+        hit.pos = vec3(1.0 / 3.0);
+        fragColor = vec4(hit.pos, 1.0);
+      }
+    GLSL
+
+    assert_match(/hit\[1\]\.replace\(\(.+\)\.map \{ \|c\| rt\.f32\(c\) \}\)/, src)
   end
 
   private

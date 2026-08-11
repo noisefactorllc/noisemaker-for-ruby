@@ -195,13 +195,15 @@ class TestKernelSmoke < Minitest::Test
 
     iterated = %w[
       filter/convolutionFeedback filter/feedback filter/motionBlur filter/temporalAberration
+      filter3d/flow3d
       points/attractor points/buddhabrot points/dla points/flock points/flow points/hydraulic
       points/lenia points/life points/physarum points/physical
-      render/pointsBillboardRender render/pointsEmit render/pointsRender
+      render/loopBegin render/pointsBillboardRender render/pointsEmit render/pointsRender
       synth/cellularAutomata synth/mnca synth/navierStokes synth/reactionDiffusion
+      synth3d/cellularAutomata3d synth3d/reactionDiffusion3d
     ].sort
     effects = NoisemakerCpu::Renderer.meta.fetch("effects")
-    assert_equal 188, effects.length
+    assert_equal 205, effects.length
     assert_equal iterated, effects.select { |_id, effect| effect["iterated"] }.keys.sort
     iterated.each do |effect_id|
       assert_equal 60, effects.fetch(effect_id).dig("params", "iterationCount", "default"), effect_id
@@ -238,6 +240,38 @@ class TestKernelSmoke < Minitest::Test
     s1 = NoisemakerCpu::Renderer.render_effect("synth/noise", {}, nil, width: 8, height: 8, seed: 1, time: 0.25)
     s2 = NoisemakerCpu::Renderer.render_effect("synth/noise", {}, nil, width: 8, height: 8, seed: 2, time: 0.25)
     refute_equal s1.to_rgba8, s2.to_rgba8, "render seed threads into the seed param"
+  end
+
+  def test_explicit_loop_uses_registered_kernel_adapter
+    skip @skip_reason || "renderer/bundle dependencies not ready yet" unless renderer_available?
+
+    direct = NoisemakerCpu::Renderer.render_dsl(
+      "search synth, filter\nsolid(color: #58c).snow().write(o0)\nrender(o0)",
+      width: 4, height: 4, seed: 1, time: 0.25
+    )
+    looped = NoisemakerCpu::Renderer.render_dsl(
+      "search synth, filter, render\n" \
+      "solid(color: #58c).loopBegin(iterationCount: 1).snow().loopEnd().write(o0)\nrender(o0)",
+      width: 4, height: 4, seed: 1, time: 0.25
+    )
+
+    assert_equal direct.to_rgba8, looped.to_rgba8
+  end
+
+  def test_explicit_loop_uses_registered_draw_operation
+    skip @skip_reason || "renderer/bundle dependencies not ready yet" unless renderer_available?
+
+    direct = NoisemakerCpu::Renderer.render_dsl(
+      "search synth, filter\nsolid(color: #58c).wormhole().write(o0)\nrender(o0)",
+      width: 4, height: 4, seed: 1, time: 0.25
+    )
+    looped = NoisemakerCpu::Renderer.render_dsl(
+      "search synth, filter, render\n" \
+      "solid(color: #58c).loopBegin(iterationCount: 1).wormhole().loopEnd().write(o0)\nrender(o0)",
+      width: 4, height: 4, seed: 1, time: 0.25
+    )
+
+    assert_equal direct.to_rgba8, looped.to_rgba8
   end
 
   # Regression: kernel eval must not share the host program's local scope.

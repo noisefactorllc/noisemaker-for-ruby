@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
     a = rt.copy(a, 'float')
     b = rt.copy(b, 'float')
     s = nil
-    s = df64_two_sum__float_float.call(rt.swizzle(a, 'x'), rt.swizzle(b, 'x'))
+    s = rt.construct(2, df64_two_sum__float_float.call(rt.swizzle(a, 'x'), rt.swizzle(b, 'x')))
     s = rt.assign_swizzle(s, 'y', rt.binary('+', rt.swizzle(s, 'y'), rt.binary('+', rt.swizzle(a, 'y'), rt.swizzle(b, 'y'), 1, 'float'), 1, 'float'))
     return df64_quick_two_sum__float_float.call(rt.swizzle(s, 'x'), rt.swizzle(s, 'y'))
   end
@@ -71,14 +71,14 @@ run_pixel = lambda do |ctx, out|
     a = rt.copy(a, 'float')
     b = rt.copy(b, 'float')
     p = nil
-    p = df64_two_prod__float_float.call(rt.swizzle(a, 'x'), rt.swizzle(b, 'x'))
+    p = rt.construct(2, df64_two_prod__float_float.call(rt.swizzle(a, 'x'), rt.swizzle(b, 'x')))
     p = rt.assign_swizzle(p, 'y', rt.binary('+', rt.swizzle(p, 'y'), rt.binary('+', rt.binary('*', rt.swizzle(a, 'x'), rt.swizzle(b, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(a, 'y'), rt.swizzle(b, 'x'), 1, 'float'), 1, 'float'), 1, 'float'))
     return df64_quick_two_sum__float_float.call(rt.swizzle(p, 'x'), rt.swizzle(p, 'y'))
   end
   df64_mul_f__vec2_float = lambda do |a, b|
     a = rt.copy(a, 'float')
     p = nil
-    p = df64_two_prod__float_float.call(rt.swizzle(a, 'x'), b)
+    p = rt.construct(2, df64_two_prod__float_float.call(rt.swizzle(a, 'x'), b))
     p = rt.assign_swizzle(p, 'y', rt.binary('+', rt.swizzle(p, 'y'), rt.binary('*', rt.swizzle(a, 'y'), b, 1, 'float'), 1, 'float'))
     return df64_quick_two_sum__float_float.call(rt.swizzle(p, 'x'), rt.swizzle(p, 'y'))
   end
@@ -152,7 +152,7 @@ run_pixel = lambda do |ctx, out|
     re_df = rt.copy(re_df, 'float')
     im_df = rt.copy(im_df, 'float')
     angle = nil; c = nil; s = nil; scale = nil; uv = nil
-    uv = rt.binary('/', rt.binary('-', fragCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.binary('-', fragCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', rot), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
@@ -202,9 +202,9 @@ run_pixel = lambda do |ctx, out|
       trapMin = rt.f(1e+20)
       return [nil, smoothIter, rawIter, z_final, dz_final, stripeAcc, trapMin]
     end
-    zr = rt.construct(2, rt.f(0))
-    zi = rt.construct(2, rt.f(0))
-    dz = rt.construct(2, rt.f(1), rt.f(0))
+    zr = rt.construct(2, rt.construct(2, rt.f(0)))
+    zi = rt.construct(2, rt.construct(2, rt.f(0)))
+    dz = rt.construct(2, rt.construct(2, rt.f(1), rt.f(0)))
     stripe = rt.f(0)
     trap = rt.f(1e+20)
     i = rt.f(0)
@@ -224,11 +224,11 @@ run_pixel = lambda do |ctx, out|
       zx = df64_to_float__vec2.call(zr)
       zy = df64_to_float__vec2.call(zi)
       dz.replace((rt.construct(2, rt.binary('+', rt.binary('*', rt.f(2), rt.binary('-', rt.binary('*', zx, rt.swizzle(dz, 'x'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'y'), 1, 'float'), 1, 'float'), 1, 'float'), rt.f(1), 1, 'float'), rt.binary('*', rt.f(2), rt.binary('+', rt.binary('*', zx, rt.swizzle(dz, 'y'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'x'), 1, 'float'), 1, 'float'), 1, 'float'))).map { |c| rt.f32(c) })
-      zr2 = df64_mul__vec2_vec2.call(zr, zr)
-      zi2 = df64_mul__vec2_vec2.call(zi, zi)
-      zri = df64_mul__vec2_vec2.call(zr, zi)
-      new_zr = df64_add__vec2_vec2.call(df64_sub__vec2_vec2.call(zr2, zi2), c_re)
-      new_zi = df64_add__vec2_vec2.call(df64_mul_f__vec2_float.call(zri, rt.f(2)), c_im)
+      zr2 = rt.construct(2, df64_mul__vec2_vec2.call(zr, zr))
+      zi2 = rt.construct(2, df64_mul__vec2_vec2.call(zi, zi))
+      zri = rt.construct(2, df64_mul__vec2_vec2.call(zr, zi))
+      new_zr = rt.construct(2, df64_add__vec2_vec2.call(df64_sub__vec2_vec2.call(zr2, zi2), c_re))
+      new_zi = rt.construct(2, df64_add__vec2_vec2.call(df64_mul_f__vec2_float.call(zri, rt.f(2)), c_im))
       zr.replace((new_zr).map { |c| rt.f32(c) })
       zi.replace((new_zi).map { |c| rt.f32(c) })
       post_zx = df64_to_float__vec2.call(zr)
@@ -325,9 +325,9 @@ run_pixel = lambda do |ctx, out|
     h0 = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(fragCoord, cX_df, cY_df, z_zoom, rot, maxIter)
     hx = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(rt.binary('+', fragCoord, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float'), cX_df, cY_df, z_zoom, rot, maxIter)
     hy = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(rt.binary('+', fragCoord, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float'), cX_df, cY_df, z_zoom, rot, maxIter)
-    normal = rt.normalize(rt.construct(3, rt.binary('-', h0, hx, 1, 'float'), rt.binary('-', h0, hy, 1, 'float'), eps))
+    normal = rt.construct(3, rt.normalize(rt.construct(3, rt.binary('-', h0, hx, 1, 'float'), rt.binary('-', h0, hy, 1, 'float'), eps)))
     rad = rt.binary('/', rt.binary('*', angle, g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
-    lightDir = rt.normalize(rt.construct(3, rt.component_wise('cos', rad), rt.component_wise('sin', rad), rt.f(0.69999999999999996)))
+    lightDir = rt.construct(3, rt.normalize(rt.construct(3, rt.component_wise('cos', rad), rt.component_wise('sin', rad), rt.f(0.69999999999999996))))
     diffuse = rt.component_wise('max', rt.dot(normal, lightDir), rt.f(0))
     return rt.component_wise('clamp', diffuse, rt.f(0), rt.f(1))
   end
@@ -344,7 +344,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     cX_df = nil; cY_df = nil; dz_final = nil; effZoom = nil; globalCoord = nil; im_df = nil; maxIter = nil; rawI = nil; re_df = nil; rot = nil; smoothI = nil; stripeAcc = nil; trapMin = nil; value = nil; z_final = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     maxIter = rt.component_wise('min', _u_iterations, g['MAX_ITER'])
     effZoom = getEffectiveZoom__int.call(_u_poi)
     rot = (rt.bool(rt.binary('>', _u_poi, rt.i(0))) ? (rt.f(0)) : (_u_rotation))

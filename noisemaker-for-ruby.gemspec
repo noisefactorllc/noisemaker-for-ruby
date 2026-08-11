@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Noise Factor LLC"]
   spec.summary = "CPU Noisemaker shader engine — Ruby port of noisemaker-cpu (GLSL-transpiled)"
   spec.description = "Pure-Ruby CPU implementation of the Noisemaker shader engine: " \
-                     "the 167-effect catalog transpiled from the shaders.noisedeck.app CDN, " \
+                     "the 205-effect catalog transpiled from the shaders.noisedeck.app CDN, " \
                      "rendered at byte-parity with the reference JavaScript engine."
   spec.homepage = "https://github.com/noisefactorllc/noisemaker-for-ruby"
   spec.license = "MIT"

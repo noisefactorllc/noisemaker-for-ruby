@@ -33,10 +33,10 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _for0_first = nil; accum = nil; current = nil; dims = nil; globalCoord = nil; globalUV = nil; i = nil; iters = nil; localUV = nil; original = nil; result = nil; sampledLocalUV = nil; scale = nil; scaled = nil; totalWeight = nil; warpedGlobalUV = nil; weight = nil; wrappedGlobalUV = nil
     dims = rt.texture_size(_u_inputTex)
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    globalUV = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    localUV = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, dims), 2, 'float')
-    original = rt.texture(_u_inputTex, localUV)
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    localUV = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, dims), 2, 'float'))
+    original = rt.construct(4, rt.texture(_u_inputTex, localUV))
     current = original
     if rt.bool(_u_ridges)
       current.replace((ridge_transform__vec4.call(current)).map { |c| rt.f32(c) })
@@ -56,10 +56,10 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, iters))
         break
       end
-      warpedGlobalUV = rt.binary('*', globalUV, scale, 2, 'float')
-      wrappedGlobalUV = applyWrap__vec2.call(warpedGlobalUV)
-      sampledLocalUV = rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', wrappedGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, dims), 2, 'float'))
-      scaled = rt.texture(_u_inputTex, sampledLocalUV)
+      warpedGlobalUV = rt.construct(2, rt.binary('*', globalUV, scale, 2, 'float'))
+      wrappedGlobalUV = rt.construct(2, applyWrap__vec2.call(warpedGlobalUV))
+      sampledLocalUV = rt.construct(2, rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', wrappedGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, dims), 2, 'float')))
+      scaled = rt.construct(4, rt.texture(_u_inputTex, sampledLocalUV))
       if rt.bool(_u_ridges)
         scaled.replace((ridge_transform__vec4.call(scaled)).map { |c| rt.f32(c) })
       end
@@ -68,7 +68,7 @@ run_pixel = lambda do |ctx, out|
       scale = rt.binary('*', scale, rt.f(2), 1, 'float')
       weight = rt.binary('*', weight, rt.f(0.5), 1, 'float')
     end
-    result = rt.binary('/', accum, totalWeight, 4, 'float')
+    result = rt.construct(4, rt.binary('/', accum, totalWeight, 4, 'float'))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('mix', rt.swizzle(original, 'rgb'), rt.swizzle(result, 'rgb'), _u_alpha), rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

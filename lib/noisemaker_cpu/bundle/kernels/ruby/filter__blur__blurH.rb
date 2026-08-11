@@ -14,10 +14,10 @@ run_pixel = lambda do |ctx, out|
   g['PI'] = rt.f(3.1415926535900001)
   main__void = lambda do
     _for0_first = nil; globalCoord = nil; i = nil; offset = nil; radius = nil; sigma = nil; sigma2 = nil; sum = nil; texSize = nil; texelSize = nil; uv = nil; weight = nil; weightSum = nil; x = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float')
-    texelSize = rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
+    texelSize = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float'))
     radius = rt.construct(1, rt.binary('*', _u_radiusX, _u_renderScale, 1, 'float'), 'int')
     if rt.bool(rt.binary('<=', radius, rt.i(0)))
       g['fragColor'].replace((rt.texture(_u_inputTex, uv)).map { |c| rt.f32(c) })
@@ -25,7 +25,7 @@ run_pixel = lambda do |ctx, out|
     end
     sigma = rt.binary('/', rt.construct(1, radius), rt.f(3), 1, 'float')
     sigma2 = rt.binary('*', sigma, sigma, 1, 'float')
-    sum = rt.construct(4, rt.f(0))
+    sum = rt.construct(4, rt.construct(4, rt.f(0)))
     weightSum = rt.f(0)
     i = rt.unary('-', radius)
     _for0_first = true
@@ -39,7 +39,7 @@ run_pixel = lambda do |ctx, out|
       end
       x = rt.construct(1, i)
       weight = rt.component_wise('exp', rt.binary('/', rt.unary('-', rt.binary('*', x, x, 1, 'float')), rt.binary('*', rt.f(2), sigma2, 1, 'float'), 1, 'float'))
-      offset = rt.construct(2, rt.binary('*', rt.construct(1, i), rt.swizzle(texelSize, 'x'), 1, 'float'), rt.f(0))
+      offset = rt.construct(2, rt.construct(2, rt.binary('*', rt.construct(1, i), rt.swizzle(texelSize, 'x'), 1, 'float'), rt.f(0)))
       sum.replace((rt.binary('+', sum, rt.binary('*', rt.texture(_u_inputTex, rt.binary('+', uv, offset, 2, 'float')), weight, 4, 'float'), 4, 'float')).map { |c| rt.f32(c) })
       weightSum = rt.binary('+', weightSum, weight, 1, 'float')
     end

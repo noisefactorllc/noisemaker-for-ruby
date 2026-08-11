@@ -67,14 +67,14 @@ run_pixel = lambda do |ctx, out|
     p = rt.copy(p, 'float')
     ba = nil; h = nil; k1 = nil; k2 = nil; rf = nil
     rf = rt.f(0.40000000000000002)
-    k1 = rt.construct(2, rt.f(0.80901699437499996), rt.unary('-', rt.f(0.58778525229199996)))
-    k2 = rt.construct(2, rt.unary('-', rt.swizzle(k1, 'x')), rt.swizzle(k1, 'y'))
+    k1 = rt.construct(2, rt.construct(2, rt.f(0.80901699437499996), rt.unary('-', rt.f(0.58778525229199996))))
+    k2 = rt.construct(2, rt.construct(2, rt.unary('-', rt.swizzle(k1, 'x')), rt.swizzle(k1, 'y')))
     p = rt.assign_swizzle(p, 'x', rt.component_wise('abs', rt.swizzle(p, 'x')))
     p.replace((rt.binary('-', p, rt.binary('*', rt.binary('*', rt.f(2), rt.component_wise('max', rt.dot(k1, p), rt.f(0)), 1, 'float'), k1, 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
     p.replace((rt.binary('-', p, rt.binary('*', rt.binary('*', rt.f(2), rt.component_wise('max', rt.dot(k2, p), rt.f(0)), 1, 'float'), k2, 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
     p = rt.assign_swizzle(p, 'x', rt.component_wise('abs', rt.swizzle(p, 'x')))
     p = rt.assign_swizzle(p, 'y', rt.binary('-', rt.swizzle(p, 'y'), r, 1, 'float'))
-    ba = rt.binary('-', rt.binary('*', rf, rt.construct(2, rt.unary('-', rt.swizzle(k1, 'y')), rt.swizzle(k1, 'x')), 2, 'float'), rt.construct(2, rt.f(0), rt.f(1)), 2, 'float')
+    ba = rt.construct(2, rt.binary('-', rt.binary('*', rf, rt.construct(2, rt.unary('-', rt.swizzle(k1, 'y')), rt.swizzle(k1, 'x')), 2, 'float'), rt.construct(2, rt.f(0), rt.f(1)), 2, 'float'))
     h = rt.component_wise('clamp', rt.binary('/', rt.dot(p, ba), rt.dot(ba, ba), 1, 'float'), rt.f(0), r)
     return rt.binary('*', rt.length(rt.binary('-', p, rt.binary('*', ba, h, 2, 'float'), 2, 'float')), rt.component_wise('sign', rt.binary('-', rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(ba, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(ba, 'y'), 1, 'float'), 1, 'float')), 1, 'float')
   end
@@ -86,14 +86,14 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     aspect = nil; color = nil; colorA = nil; colorB = nil; d = nil; fullRes = nil; globalCoord = nil; globalUV = nil; mask = nil; p = nil; r = nil; rad = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    colorA = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    colorB = rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))
-    fullRes = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    colorA = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    colorB = rt.construct(4, rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
     aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-    globalUV = rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float')
-    p = rt.binary('*', rt.binary('-', globalUV, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')
+    globalUV = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    p = rt.construct(2, rt.binary('*', rt.binary('-', globalUV, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float'))
     p = rt.assign_swizzle(p, 'x', rt.binary('*', rt.swizzle(p, 'x'), aspect, 1, 'float'))
     p.replace((rt.binary('-', p, rt.construct(2, rt.binary('*', _u_posX, aspect, 1, 'float'), rt.unary('-', _u_posY)), 2, 'float')).map { |c| rt.f32(c) })
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float')
@@ -138,7 +138,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', _u_invert, rt.i(1)))
       mask = rt.binary('-', rt.f(1), mask, 1, 'float')
     end
-    color = rt.component_wise('mix', colorA, colorB, mask)
+    color = rt.construct(4, rt.component_wise('mix', colorA, colorB, mask))
     color = rt.assign_swizzle(color, 'a', rt.component_wise('max', rt.swizzle(colorA, 'a'), rt.swizzle(colorB, 'a')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end

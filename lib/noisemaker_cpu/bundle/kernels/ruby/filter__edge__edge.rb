@@ -73,10 +73,10 @@ run_pixel = lambda do |ctx, out|
     texelSize = rt.copy(texelSize, 'float')
     centerRGB = rt.copy(centerRGB, 'float')
     centerL = nil; centerOnSide = nil; crossing = nil; eastRGB = nil; northRGB = nil; southRGB = nil; westRGB = nil
-    northRGB = rt.swizzle(rt.texture(_u_inputTex, rt.binary('*', rt.binary('+', fragCoord, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float'), texelSize, 2, 'float')), 'rgb')
-    southRGB = rt.swizzle(rt.texture(_u_inputTex, rt.binary('*', rt.binary('+', fragCoord, rt.construct(2, rt.f(0), rt.unary('-', rt.f(1))), 2, 'float'), texelSize, 2, 'float')), 'rgb')
-    eastRGB = rt.swizzle(rt.texture(_u_inputTex, rt.binary('*', rt.binary('+', fragCoord, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float'), texelSize, 2, 'float')), 'rgb')
-    westRGB = rt.swizzle(rt.texture(_u_inputTex, rt.binary('*', rt.binary('+', fragCoord, rt.construct(2, rt.unary('-', rt.f(1)), rt.f(0)), 2, 'float'), texelSize, 2, 'float')), 'rgb')
+    northRGB = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('*', rt.binary('+', fragCoord, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float'), texelSize, 2, 'float')), 'rgb'))
+    southRGB = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('*', rt.binary('+', fragCoord, rt.construct(2, rt.f(0), rt.unary('-', rt.f(1))), 2, 'float'), texelSize, 2, 'float')), 'rgb'))
+    eastRGB = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('*', rt.binary('+', fragCoord, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float'), texelSize, 2, 'float')), 'rgb'))
+    westRGB = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('*', rt.binary('+', fragCoord, rt.construct(2, rt.unary('-', rt.f(1)), rt.f(0)), 2, 'float'), texelSize, 2, 'float')), 'rgb'))
     centerL = rt.f(0.0)
     centerOnSide = 0
     crossing = 0
@@ -93,15 +93,15 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; blendMode = nil; blended = nil; centerSample = nil; centerWeight = nil; conv = nil; doInvert = nil; dx = nil; dy = nil; edge = nil; edgeColor = nil; kernelType = nil; localUV = nil; m = nil; mask = nil; origColor = nil; radius = nil; resolution = nil; s = nil; sampleCoord = nil; texSize = nil; texelSize = nil; thresh = nil; useLuma = nil; w = nil
     texSize = rt.texture_size(_u_inputTex)
-    resolution = rt.construct(2, texSize)
-    texelSize = rt.binary('/', rt.f(1), resolution, 2, 'float')
-    origColor = rt.texture(_u_inputTex, rt.binary('*', rt.swizzle(ctx.frag_coord, 'xy'), texelSize, 2, 'float'))
+    resolution = rt.construct(2, rt.construct(2, texSize))
+    texelSize = rt.construct(2, rt.binary('/', rt.f(1), resolution, 2, 'float'))
+    origColor = rt.construct(4, rt.texture(_u_inputTex, rt.binary('*', rt.swizzle(ctx.frag_coord, 'xy'), texelSize, 2, 'float')))
     kernelType = rt.construct(1, _u__kernel, 'int')
     radius = rt.component_wise('min', rt.construct(1, rt.binary('*', rt.binary('+', _u_size, rt.f(1), 1, 'float'), _u_renderScale, 1, 'float'), 'int'), rt.i(256))
     blendMode = rt.construct(1, _u_blend, 'int')
     doInvert = rt.binary('>', _u_invert, rt.f(0.5))
     useLuma = rt.binary('>', _u_channel, rt.f(0.5))
-    conv = rt.construct(3, rt.f(0))
+    conv = rt.construct(3, rt.construct(3, rt.f(0)))
     centerWeight = rt.f(0)
     centerSample = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', kernelType, rt.i(2)))
@@ -137,9 +137,9 @@ run_pixel = lambda do |ctx, out|
           if rt.bool(rt.binary('==', w, rt.f(0)))
             next
           end
-          sampleCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.construct(1, dx), rt.construct(1, dy)), 2, 'float')
-          localUV = rt.binary('*', sampleCoord, texelSize, 2, 'float')
-          s = rt.swizzle(rt.texture(_u_inputTex, localUV), 'rgb')
+          sampleCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.construct(1, dx), rt.construct(1, dy)), 2, 'float'))
+          localUV = rt.construct(2, rt.binary('*', sampleCoord, texelSize, 2, 'float'))
+          s = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, localUV), 'rgb'))
           if rt.bool(useLuma)
             conv.replace((rt.binary('+', conv, rt.binary('*', rt.construct(3, rt.dot(s, g['LUMA'])), w, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
           else
@@ -148,7 +148,7 @@ run_pixel = lambda do |ctx, out|
           centerWeight = rt.binary('-', centerWeight, w, 1, 'float')
         end
       end
-      centerSample = rt.swizzle(origColor, 'rgb')
+      centerSample = rt.construct(3, rt.swizzle(origColor, 'rgb'))
       if rt.bool(useLuma)
         centerSample.replace((rt.construct(3, rt.dot(centerSample, g['LUMA']))).map { |c| rt.f32(c) })
       end
@@ -173,8 +173,8 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(doInvert)
       conv.replace((rt.binary('-', rt.f(1), conv, 3, 'float')).map { |c| rt.f32(c) })
     end
-    edgeColor = rt.construct(4, conv, rt.swizzle(origColor, 'a'))
-    blended = applyBlend__vec4_vec4_int.call(edgeColor, origColor, blendMode)
+    edgeColor = rt.construct(4, rt.construct(4, conv, rt.swizzle(origColor, 'a')))
+    blended = rt.construct(4, applyBlend__vec4_vec4_int.call(edgeColor, origColor, blendMode))
     m = rt.binary('/', _u_mixAmt, rt.f(100), 1, 'float')
     g['fragColor'].replace((rt.construct(4, rt.component_wise('mix', rt.swizzle(origColor, 'rgb'), rt.swizzle(blended, 'rgb'), m), rt.swizzle(origColor, 'a'))).map { |c| rt.f32(c) })
   end

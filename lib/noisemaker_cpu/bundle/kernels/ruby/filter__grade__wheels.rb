@@ -81,9 +81,9 @@ run_pixel = lambda do |ctx, out|
     midWheel = rt.copy(midWheel, 'float')
     highWheel = rt.copy(highWheel, 'float')
     colorShift = nil; hW = nil; highOffset = nil; luma = nil; lumaDiff = nil; mW = nil; midOffset = nil; newLuma = nil; result = nil; sW = nil; shadowOffset = nil; totalWeight = nil
-    shadowOffset = rt.binary('*', rt.binary('-', shadowWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float')
-    midOffset = rt.binary('*', rt.binary('-', midWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float')
-    highOffset = rt.binary('*', rt.binary('-', highWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float')
+    shadowOffset = rt.construct(3, rt.binary('*', rt.binary('-', shadowWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
+    midOffset = rt.construct(3, rt.binary('*', rt.binary('-', midWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
+    highOffset = rt.construct(3, rt.binary('*', rt.binary('-', highWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
     if rt.bool((rt.bool((rt.bool(rt.binary('<', rt.length(shadowOffset), rt.f(0.01))) && rt.bool(rt.binary('<', rt.length(midOffset), rt.f(0.01))) ? 1 : 0)) && rt.bool(rt.binary('<', rt.length(highOffset), rt.f(0.01))) ? 1 : 0))
       return rgb
     end
@@ -95,11 +95,11 @@ run_pixel = lambda do |ctx, out|
     sW = rt.binary('/', sW, totalWeight, 1, 'float')
     mW = rt.binary('/', mW, totalWeight, 1, 'float')
     hW = rt.binary('/', hW, totalWeight, 1, 'float')
-    colorShift = rt.construct(3, rt.f(0))
+    colorShift = rt.construct(3, rt.construct(3, rt.f(0)))
     colorShift.replace((rt.binary('+', colorShift, rt.binary('*', rt.binary('*', shadowOffset, sW, 3, 'float'), rt.f(0.5), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     colorShift.replace((rt.binary('+', colorShift, rt.binary('*', rt.binary('*', midOffset, mW, 3, 'float'), rt.f(0.5), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     colorShift.replace((rt.binary('+', colorShift, rt.binary('*', rt.binary('*', highOffset, hW, 3, 'float'), rt.f(0.5), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-    result = rt.binary('+', rgb, colorShift, 3, 'float')
+    result = rt.construct(3, rt.binary('+', rgb, colorShift, 3, 'float'))
     newLuma = rt.dot(result, g['LUMA_WEIGHTS'])
     lumaDiff = rt.binary('-', luma, newLuma, 1, 'float')
     result.replace((rt.binary('+', result, rt.binary('*', lumaDiff, rt.f(0.29999999999999999), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
@@ -107,10 +107,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; coord = nil; globalCoord = nil; rgb = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
-    color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
-    rgb = srgbToLinear__vec3.call(rt.swizzle(color, 'rgb'))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
+    rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))
     rgb.replace((applyWheels__vec3_vec3_vec3_vec3_float.call(rgb, _u_wheelShadows, _u_wheelMidtones, _u_wheelHighlights, _u_wheelBalance)).map { |c| rt.f32(c) })
     rgb.replace((linearToSrgb__vec3.call(rt.component_wise('max', rgb, rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })
     g['fragColor'].replace((rt.construct(4, rgb, rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })

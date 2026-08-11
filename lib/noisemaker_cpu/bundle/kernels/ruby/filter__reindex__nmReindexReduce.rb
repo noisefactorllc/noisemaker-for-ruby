@@ -48,7 +48,7 @@ run_pixel = lambda do |ctx, out|
           break
         end
         sampleCoord = rt.construct(2, rt.binary('*', tx, g['TILE_SIZE'], 1, 'int'), rt.binary('*', ty, g['TILE_SIZE'], 1, 'int'), 'int')
-        tileStats = rt.swizzle(rt.texel_fetch(_u_statsTex, sampleCoord, rt.i(0)), 'xy')
+        tileStats = rt.construct(2, rt.swizzle(rt.texel_fetch(_u_statsTex, sampleCoord, rt.i(0)), 'xy'))
         globalMin = rt.component_wise('min', globalMin, rt.swizzle(tileStats, 'x'))
         globalMax = rt.component_wise('max', globalMax, rt.swizzle(tileStats, 'y'))
       end

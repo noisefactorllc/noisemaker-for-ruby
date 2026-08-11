@@ -44,12 +44,12 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; _for2_first = nil; agentSeed = nil; brightness = nil; cIm = nil; cRe = nil; col = nil; coord = nil; currentStep = nil; escapeAt = nil; escapeStep = nil; escaped = nil; i = nil; iterCap = nil; needsInit = nil; pos = nil; s = nil; screen = nil; stateSize = nil; step = nil; texSize = nil; vel = nil; z = nil; zi = nil; zr = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     texSize = rt.texture_size(_u_xyzTex)
     stateSize = rt.swizzle(texSize, 'x')
-    pos = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
-    vel = rt.texel_fetch(_u_velTex, coord, rt.i(0))
-    col = rt.texel_fetch(_u_rgbaTex, coord, rt.i(0))
+    pos = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
+    vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
+    col = rt.construct(4, rt.texel_fetch(_u_rgbaTex, coord, rt.i(0)))
     if rt.bool(rt.binary('<', rt.swizzle(pos, 'w'), rt.f(0.5)))
       g['outXYZ'].replace((pos).map { |c| rt.f32(c) })
       g['outVel'].replace((vel).map { |c| rt.f32(c) })
@@ -76,7 +76,7 @@ run_pixel = lambda do |ctx, out|
         g['outRGBA'].replace((rt.construct(4, rt.f(0), rt.f(0), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
         return
       end
-      z = rt.construct(2, rt.f(0))
+      z = rt.construct(2, rt.construct(2, rt.f(0)))
       escapeAt = rt.i(0)
       iterCap = rt.component_wise('min', _u_maxIter, rt.i(2048))
       i = rt.i(0)
@@ -120,7 +120,7 @@ run_pixel = lambda do |ctx, out|
         g['outRGBA'].replace((rt.construct(4, rt.f(0), rt.f(0), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
         return
       end
-      screen = complexToScreen__vec2.call(rt.construct(2, cRe, cIm))
+      screen = rt.construct(2, complexToScreen__vec2.call(rt.construct(2, cRe, cIm)))
       g['outXYZ'].replace((rt.construct(4, screen, rt.f(0.5), rt.f(1))).map { |c| rt.f32(c) })
       g['outVel'].replace((rt.construct(4, cRe, cIm, rt.f(1), escapeStep)).map { |c| rt.f32(c) })
       g['outRGBA'].replace((rt.construct(4, brightness, brightness, brightness, rt.f(1))).map { |c| rt.f32(c) })
@@ -130,7 +130,7 @@ run_pixel = lambda do |ctx, out|
     cIm = rt.swizzle(vel, 'y')
     step = rt.swizzle(vel, 'z')
     escapeStep = rt.swizzle(vel, 'w')
-    z = rt.construct(2, rt.f(0))
+    z = rt.construct(2, rt.construct(2, rt.f(0)))
     currentStep = rt.construct(1, step, 'int')
     i = rt.i(0)
     _for1_first = true
@@ -170,7 +170,7 @@ run_pixel = lambda do |ctx, out|
       zi = rt.binary('+', rt.binary('*', rt.binary('*', rt.f(2), rt.swizzle(z, 'x'), 1, 'float'), rt.swizzle(z, 'y'), 1, 'float'), cIm, 1, 'float')
       z.replace((rt.construct(2, zr, zi)).map { |c| rt.f32(c) })
     end
-    screen = complexToScreen__vec2.call(z)
+    screen = rt.construct(2, complexToScreen__vec2.call(z))
     g['outXYZ'].replace((rt.construct(4, screen, rt.f(0.5), rt.f(1))).map { |c| rt.f32(c) })
     g['outVel'].replace((rt.construct(4, cRe, cIm, step, escapeStep)).map { |c| rt.f32(c) })
     g['outRGBA'].replace((col).map { |c| rt.f32(c) })

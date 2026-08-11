@@ -95,9 +95,25 @@ class TestScatterAdapters < Minitest::Test
     assert_equal [0.5, 0.375, 0.25, 0.625], pixel(destination, 4, 3)
   end
 
+  def test_flow3d_deposit_flattens_voxel_z_into_volume_atlas
+    state1 = agent_surface(1, 1)
+    state2 = agent_surface(1, 1)
+    poke(state1, 0, 0, [1.25, 2.25, 2.9, 1])
+    poke(state2, 0, 0, [0.25, 0.5, 0.75, 0.1])
+    destination = agent_surface(4, 16)
+
+    result = NoisemakerCpu::ScatterAdapters.run(
+      "filter3d/flow3d:deposit", {}, { "density" => 100, "volumeSize" => 4 },
+      { "stateTex1" => state1, "stateTex2" => state2 }, destination
+    )
+
+    assert_equal 1, result[:pixels]
+    assert_equal [0.25, 0.5, 0.75, 1], pixel(destination, 5, 1)
+  end
+
   def test_registry_contains_exact_catalog_keys
     assert_equal %w[
-      points/dla:depositGrid points/lenia:deposit points/physarum:deposit
+      filter3d/flow3d:deposit points/dla:depositGrid points/lenia:deposit points/physarum:deposit
       render/pointsBillboardRender:deposit render/pointsRender:deposit
     ], NoisemakerCpu::ScatterAdapters.keys.sort
   end

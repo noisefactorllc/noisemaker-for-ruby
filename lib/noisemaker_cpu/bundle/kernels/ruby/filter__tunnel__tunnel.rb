@@ -33,10 +33,10 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     a = nil; amt = nil; aspectRatio = nil; centerMask = nil; centered = nil; color = nil; dx = nil; dy = nil; fullRes = nil; p = nil; r = nil; texSize = nil; tileDims = nil; tunnelCoords = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    tileDims = rt.construct(2, texSize)
-    fullRes = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims))
-    uv = rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float')
-    centered = rt.binary('-', uv, rt.f(0.5), 2, 'float')
+    tileDims = rt.construct(2, rt.construct(2, texSize))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
+    uv = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    centered = rt.construct(2, rt.binary('-', uv, rt.f(0.5), 2, 'float'))
     aspectRatio = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
     if rt.bool(_u_aspectLens)
       centered = rt.assign_swizzle(centered, 'x', rt.binary('*', rt.swizzle(centered, 'x'), aspectRatio, 1, 'float'))
@@ -51,7 +51,7 @@ run_pixel = lambda do |ctx, out|
         r = polygonShape__vec2_int.call(rt.binary('*', centered, rt.f(2), 2, 'float'), rt.i(3))
       else
         if rt.bool(rt.binary('==', _u_shape, rt.i(2)))
-          p = rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', centered, centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float')
+          p = rt.construct(2, rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', centered, centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'))
           r = rt.component_wise('pow', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.binary('/', rt.f(1), rt.f(8), 1, 'float'))
         else
           if rt.bool(rt.binary('==', _u_shape, rt.i(3)))
@@ -67,13 +67,13 @@ run_pixel = lambda do |ctx, out|
       end
     end
     r = rt.binary('-', r, rt.binary('*', _u_scale, rt.f(0.14999999999999999), 1, 'float'), 1, 'float')
-    tunnelCoords = smod__vec2_float.call(rt.construct(2, rt.binary('+', rt.binary('/', rt.f(0.29999999999999999), r, 1, 'float'), rt.binary('*', _u_time, _u_speed, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('/', a, g['PI'], 1, 'float'), rt.binary('*', _u_time, _u_rotation, 1, 'float'), 1, 'float')), rt.f(1))
+    tunnelCoords = rt.construct(2, smod__vec2_float.call(rt.construct(2, rt.binary('+', rt.binary('/', rt.f(0.29999999999999999), r, 1, 'float'), rt.binary('*', _u_time, _u_speed, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('/', a, g['PI'], 1, 'float'), rt.binary('*', _u_time, _u_rotation, 1, 'float'), 1, 'float')), rt.f(1)))
     color = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)
     if rt.bool(_u_antialias)
-      dx = rt.dFdx(tunnelCoords)
-      dy = rt.dFdy(tunnelCoords)
+      dx = rt.construct(2, rt.dFdx(tunnelCoords))
+      dy = rt.construct(2, rt.dFdy(tunnelCoords))
       color.replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       color.replace((rt.binary('+', color, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
       color.replace((rt.binary('+', color, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })

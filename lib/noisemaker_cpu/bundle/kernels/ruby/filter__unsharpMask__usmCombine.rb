@@ -13,14 +13,14 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _t = nil; blur = nil; diff = nil; gate = nil; mag = nil; outc = nil; src = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    src = rt.texture(_u_inputTex, uv)
-    blur = rt.texture(_u_blurTex, uv)
-    diff = rt.binary('-', rt.swizzle(src, 'rgb'), rt.swizzle(blur, 'rgb'), 3, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    src = rt.construct(4, rt.texture(_u_inputTex, uv))
+    blur = rt.construct(4, rt.texture(_u_blurTex, uv))
+    diff = rt.construct(3, rt.binary('-', rt.swizzle(src, 'rgb'), rt.swizzle(blur, 'rgb'), 3, 'float'))
     _t = rt.binary('/', _u_threshold, rt.f(100), 1, 'float')
     mag = rt.component_wise('max', rt.component_wise('max', rt.component_wise('abs', rt.swizzle(diff, 'r')), rt.component_wise('abs', rt.swizzle(diff, 'g'))), rt.component_wise('abs', rt.swizzle(diff, 'b')))
     gate = rt.component_wise('smoothstep', _t, rt.binary('+', _t, rt.f(0.02), 1, 'float'), mag)
-    outc = rt.binary('+', rt.swizzle(src, 'rgb'), rt.binary('*', rt.binary('*', diff, rt.binary('/', _u_amount, rt.f(100), 1, 'float'), 3, 'float'), gate, 3, 'float'), 3, 'float')
+    outc = rt.construct(3, rt.binary('+', rt.swizzle(src, 'rgb'), rt.binary('*', rt.binary('*', diff, rt.binary('/', _u_amount, rt.f(100), 1, 'float'), 3, 'float'), gate, 3, 'float'), 3, 'float'))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', outc, rt.f(0), rt.f(1)), rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

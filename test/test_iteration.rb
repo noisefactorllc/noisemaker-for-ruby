@@ -70,4 +70,22 @@ class TestIteration < Minitest::Test
     assert_in_delta 0.9966666666666667, iteration.time_for(0.0, 3, 0), 1e-15
     assert_in_delta 0.0, iteration.time_for(0.0, 3, 2), 1e-15
   end
+
+  def test_balanced_loop_region_forms_one_iteration_group
+    solid = step("synth/solid")
+    loop_begin = step("render/loopBegin", iterated: true)
+    loop_begin["definition"]["loopRole"] = "begin"
+    blur = step("filter/blur")
+    loop_end = step("render/loopEnd")
+    loop_end["definition"]["loopRole"] = "end"
+    invert = step("filter/invert")
+
+    groups = iteration.compute_groups([solid, loop_begin, blur, loop_end, invert])
+
+    assert_equal [
+      [false, false, 1],
+      [true, true, 3],
+      [false, false, 1],
+    ], groups.map { |group| [group["iterated"], group["loop"] == true, group["steps"].length] }
+  end
 end

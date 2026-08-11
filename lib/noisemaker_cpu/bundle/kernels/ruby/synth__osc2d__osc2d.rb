@@ -63,12 +63,12 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _t = nil; freq = nil; globalCoord = nil; res = nil; rotRad = nil; scaledTime = nil; scrollOffset = nil; scrolledPos = nil; spatialPhase = nil; spatialPos = nil; st = nil; timeNoise = nil; timePhase = nil; val = nil; valueNoise = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     res = _u_fullResolution
     if rt.bool(rt.binary('<', rt.swizzle(res, 'x'), rt.f(1)))
       res.replace((rt.construct(2, rt.f(1024), rt.f(1024))).map { |c| rt.f32(c) })
     end
-    st = rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), res, 2, 'float')
+    st = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), res, 2, 'float'))
     st.replace((rt.binary('-', st, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     rotRad = rt.binary('/', rt.binary('*', _u_rotation, g['PI'], 1, 'float'), rt.f(180), 1, 'float')

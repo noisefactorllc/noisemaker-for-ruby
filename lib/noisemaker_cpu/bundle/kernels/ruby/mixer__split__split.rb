@@ -19,19 +19,19 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _t = nil; animPos = nil; aspect = nil; c = nil; centered = nil; color = nil; colorA = nil; colorB = nil; cycle = nil; d = nil; extent = nil; flipCycle = nil; fullRes = nil; globalCoord = nil; globalUV = nil; halfSoft = nil; mask = nil; rad = nil; rotated = nil; s = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    colorA = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    colorB = rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))
-    fullRes = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    colorA = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    colorB = rt.construct(4, rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
     aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-    globalUV = rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float')
-    centered = rt.binary('*', rt.binary('-', globalUV, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')
+    globalUV = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    centered = rt.construct(2, rt.binary('*', rt.binary('-', globalUV, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float'))
     centered = rt.assign_swizzle(centered, 'x', rt.binary('*', rt.swizzle(centered, 'x'), aspect, 1, 'float'))
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float')
     c = rt.component_wise('cos', rad)
     s = rt.component_wise('sin', rad)
-    rotated = rt.construct(2, rt.binary('-', rt.binary('*', rt.swizzle(centered, 'x'), c, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), s, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(centered, 'x'), s, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), c, 1, 'float'), 1, 'float'))
+    rotated = rt.construct(2, rt.construct(2, rt.binary('-', rt.binary('*', rt.swizzle(centered, 'x'), c, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), s, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(centered, 'x'), s, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), c, 1, 'float'), 1, 'float')))
     extent = rt.binary('+', rt.binary('+', rt.binary('*', aspect, rt.component_wise('abs', s), 1, 'float'), rt.component_wise('abs', c), 1, 'float'), _u_softness, 1, 'float')
     animPos = _u_position
     flipCycle = 0
@@ -49,7 +49,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('!=', rt.binary('==', _u_invert, rt.i(1)), flipCycle))
       mask = rt.binary('-', rt.f(1), mask, 1, 'float')
     end
-    color = rt.component_wise('mix', colorA, colorB, mask)
+    color = rt.construct(4, rt.component_wise('mix', colorA, colorB, mask))
     color = rt.assign_swizzle(color, 'a', rt.component_wise('max', rt.swizzle(colorA, 'a'), rt.swizzle(colorB, 'a')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end

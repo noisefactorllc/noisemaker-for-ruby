@@ -17,21 +17,21 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     cycles = nil; grad = nil; h2 = nil; hB = nil; hL = nil; hR = nil; hT = nil; outColor = nil; src = nil; texel = nil; uv = nil; uv2 = nil; v = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    texel = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    texel = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
     hL = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('-', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
     hR = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
     hB = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('-', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
     hT = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('+', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
-    grad = rt.construct(2, rt.binary('-', hR, hL, 1, 'float'), rt.binary('-', hT, hB, 1, 'float'))
-    uv2 = rt.binary('+', uv, rt.binary('*', rt.binary('*', grad, rt.binary('/', _u_distortion, rt.f(100), 1, 'float'), 2, 'float'), rt.f(0.5), 2, 'float'), 2, 'float')
+    grad = rt.construct(2, rt.construct(2, rt.binary('-', hR, hL, 1, 'float'), rt.binary('-', hT, hB, 1, 'float')))
+    uv2 = rt.construct(2, rt.binary('+', uv, rt.binary('*', rt.binary('*', grad, rt.binary('/', _u_distortion, rt.f(100), 1, 'float'), 2, 'float'), rt.f(0.5), 2, 'float'), 2, 'float'))
     h2 = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, uv2), 'rgb'))
     cycles = rt.component_wise('mix', rt.f(1), rt.f(7), rt.binary('/', _u_detail, rt.f(100), 1, 'float'))
     v = rt.binary('+', rt.f(0.5), rt.binary('*', rt.f(0.5), rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.binary('*', h2, cycles, 1, 'float'), rt.f(6.2831853071800001), 1, 'float'), rt.binary('*', h2, rt.f(3), 1, 'float'), 1, 'float')), 1, 'float'), 1, 'float')
     v = rt.binary('+', v, rt.binary('*', rt.component_wise('pow', v, rt.f(8)), rt.f(0.5), 1, 'float'), 1, 'float')
     v = rt.component_wise('clamp', v, rt.f(0), rt.f(1))
-    outColor = rt.component_wise('clamp', rt.binary('*', rt.construct(3, v), rt.construct(3, rt.f(0.95999999999999996), rt.f(0.97999999999999998), rt.f(1.02)), 3, 'float'), rt.f(0), rt.f(1))
-    src = rt.texture(_u_inputTex, uv)
+    outColor = rt.construct(3, rt.component_wise('clamp', rt.binary('*', rt.construct(3, v), rt.construct(3, rt.f(0.95999999999999996), rt.f(0.97999999999999998), rt.f(1.02)), 3, 'float'), rt.f(0), rt.f(1)))
+    src = rt.construct(4, rt.texture(_u_inputTex, uv))
     g['fragColor'].replace((rt.construct(4, outColor, rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

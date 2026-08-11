@@ -17,7 +17,7 @@ run_pixel = lambda do |ctx, out|
     coord = rt.copy(coord, 'float')
     size = rt.copy(size, 'float')
     mode = nil; uv = nil
-    uv = rt.binary('/', coord, size, 2, 'float')
+    uv = rt.construct(2, rt.binary('/', coord, size, 2, 'float'))
     mode = rt.construct(1, _u_wrap, 'int')
     if rt.bool(rt.binary('==', mode, rt.i(0)))
       uv.replace((rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('+', uv, rt.f(1), 2, 'float'), rt.f(2)), rt.f(1), 2, 'float'))).map { |c| rt.f32(c) })
@@ -32,9 +32,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     angle = nil; c = nil; center = nil; color = nil; pixelCoord = nil; rad = nil; s = nil; srcCoord = nil; texSize = nil; wrappedUV = nil
-    texSize = rt.construct(2, rt.texture_size(_u_inputTex))
-    center = rt.binary('*', texSize, rt.f(0.5), 2, 'float')
-    pixelCoord = rt.binary('-', rt.swizzle(ctx.frag_coord, 'xy'), center, 2, 'float')
+    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
+    center = rt.construct(2, rt.binary('*', texSize, rt.f(0.5), 2, 'float'))
+    pixelCoord = rt.construct(2, rt.binary('-', rt.swizzle(ctx.frag_coord, 'xy'), center, 2, 'float'))
     angle = _u_angled
     rad = rt.binary('/', rt.binary('*', angle, g['PI'], 1, 'float'), rt.f(180), 1, 'float')
     c = rt.component_wise('cos', rad)
@@ -43,8 +43,8 @@ run_pixel = lambda do |ctx, out|
     srcCoord = rt.assign_swizzle(srcCoord, 'x', rt.binary('+', rt.binary('*', c, rt.swizzle(pixelCoord, 'x'), 1, 'float'), rt.binary('*', s, rt.swizzle(pixelCoord, 'y'), 1, 'float'), 1, 'float'))
     srcCoord = rt.assign_swizzle(srcCoord, 'y', rt.binary('+', rt.binary('*', rt.unary('-', s), rt.swizzle(pixelCoord, 'x'), 1, 'float'), rt.binary('*', c, rt.swizzle(pixelCoord, 'y'), 1, 'float'), 1, 'float'))
     srcCoord.replace((rt.binary('+', srcCoord, center, 2, 'float')).map { |c| rt.f32(c) })
-    wrappedUV = applyWrap__vec2_vec2.call(srcCoord, texSize)
-    color = rt.texture(_u_inputTex, wrappedUV)
+    wrappedUV = rt.construct(2, applyWrap__vec2_vec2.call(srcCoord, texSize))
+    color = rt.construct(4, rt.texture(_u_inputTex, wrappedUV))
     if rt.bool(_u_darkest)
       color.replace((rt.construct(4, rt.binary('-', rt.construct(3, rt.f(1)), rt.swizzle(color, 'rgb'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
     end

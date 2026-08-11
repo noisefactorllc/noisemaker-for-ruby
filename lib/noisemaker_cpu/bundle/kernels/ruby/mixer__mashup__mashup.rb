@@ -87,11 +87,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; boundary = nil; controlColor = nil; k = nil; lum = nil; n = nil; result = nil; src = nil; uv = nil; w = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    controlColor = rt.texture(_u_source, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    controlColor = rt.construct(4, rt.texture(_u_source, uv))
     lum = getLuminosity__vec3.call(rt.swizzle(controlColor, 'rgb'))
     n = rt.component_wise('clamp', _u_layers, rt.i(2), rt.i(8))
-    result = (rt.bool(rt.binary('==', layerActive__int.call(rt.i(0)), rt.i(1))) ? (sampleLayer__int_vec2.call(rt.i(0), uv)) : (controlColor))
+    result = rt.construct(4, (rt.bool(rt.binary('==', layerActive__int.call(rt.i(0)), rt.i(1))) ? (sampleLayer__int_vec2.call(rt.i(0), uv)) : (controlColor)))
     k = rt.i(1)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -105,7 +105,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', k, n))
         break
       end
-      src = (rt.bool(rt.binary('==', layerActive__int.call(k), rt.i(1))) ? (sampleLayer__int_vec2.call(k, uv)) : (controlColor))
+      src = rt.construct(4, (rt.bool(rt.binary('==', layerActive__int.call(k), rt.i(1))) ? (sampleLayer__int_vec2.call(k, uv)) : (controlColor)))
       boundary = rt.binary('/', rt.construct(1, k), rt.construct(1, n), 1, 'float')
       w = bandWeight__float_float.call(lum, boundary)
       result.replace((rt.component_wise('mix', result, src, w)).map { |c| rt.f32(c) })

@@ -13,8 +13,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     globalCoord = nil; globalUV = nil; localUV = nil; texSize = nil; warpedUV = nil
     texSize = rt.texture_size(_u_inputTex)
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    globalUV = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
     warpedUV = globalUV
     if rt.bool(rt.binary('==', _u_flipMode, rt.i(1)))
       warpedUV = rt.assign_swizzle(warpedUV, 'x', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'x'), 1, 'float'))
@@ -88,7 +88,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    localUV = rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', warpedUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, texSize), 2, 'float'))
+    localUV = rt.construct(2, rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', warpedUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, texSize), 2, 'float')))
     g['fragColor'].replace((rt.texture(_u_inputTex, localUV)).map { |c| rt.f32(c) })
   end
   main__void.call

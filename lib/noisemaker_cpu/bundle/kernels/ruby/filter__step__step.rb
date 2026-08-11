@@ -13,13 +13,13 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     color = nil; fw = nil; globalCoord = nil; texSize = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float')
-    color = rt.texture(_u_inputTex, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
+    color = rt.construct(4, rt.texture(_u_inputTex, uv))
     fw = rt.construct(3, 0.0)
     if rt.bool(_u_antialias)
-      fw = rt.fwidth(rt.swizzle(color, 'rgb'))
+      fw = rt.construct(3, rt.fwidth(rt.swizzle(color, 'rgb')))
       color = rt.assign_swizzle(color, 'rgb', rt.component_wise('smoothstep', rt.binary('-', _u_threshold, rt.binary('*', fw, rt.f(0.5), 3, 'float'), 3, 'float'), rt.binary('+', _u_threshold, rt.binary('*', fw, rt.f(0.5), 3, 'float'), 3, 'float'), rt.swizzle(color, 'rgb')))
     else
       color = rt.assign_swizzle(color, 'rgb', rt.component_wise('step', _u_threshold, rt.swizzle(color, 'rgb')))

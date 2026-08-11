@@ -46,7 +46,7 @@ run_pixel = lambda do |ctx, out|
     p = rt.assign_swizzle(p, 'x', (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
     p = rt.assign_swizzle(p, 'y', (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
     p = rt.assign_swizzle(p, 'z', (rt.bool(rt.binary('>=', rt.swizzle(p, 'z'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'z'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'z')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
-    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, p, 'uint'))), rt.construct(1, rt.construct(1, rt.i(4294967295), 'uint')), 3, 'float')
+    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, rt.construct(3, p), 'uint'))), rt.construct(1, rt.construct(1, rt.i(4294967295), 'uint')), 3, 'float')
   end
   smootherstep__float = lambda do |x|
     return rt.binary('*', rt.binary('*', rt.binary('*', x, x, 1, 'float'), x, 1, 'float'), rt.binary('+', rt.binary('*', x, rt.binary('-', rt.binary('*', x, rt.f(6), 1, 'float'), rt.f(15), 1, 'float'), 1, 'float'), rt.f(10), 1, 'float'), 1, 'float')
@@ -60,8 +60,8 @@ run_pixel = lambda do |ctx, out|
     angle = nil; dist = nil; gradient = nil
     angle = rt.binary('*', rt.swizzle(prng__vec3.call(rt.construct(3, cell, rt.f(1))), 'r'), rt.f(6.2831853071800001), 1, 'float')
     angle = rt.binary('+', angle, rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), speed, 1, 'float'), 1, 'float')
-    gradient = rt.construct(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle))
-    dist = rt.binary('-', st, cell, 2, 'float')
+    gradient = rt.construct(2, rt.construct(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle)))
+    dist = rt.construct(2, rt.binary('-', st, cell, 2, 'float'))
     return rt.dot(gradient, dist)
   end
   perlin__vec2_vec2_float = lambda do |st, scale, speed|
@@ -71,7 +71,7 @@ run_pixel = lambda do |ctx, out|
     st.replace((rt.binary('-', st, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
     st.replace((rt.binary('*', st, scale, 2, 'float')).map { |c| rt.f32(c) })
     st.replace((rt.binary('+', st, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
-    cell = rt.component_wise('floor', st)
+    cell = rt.construct(2, rt.component_wise('floor', st))
     tl = grid__vec2_vec2_float.call(st, cell, speed)
     tr = grid__vec2_vec2_float.call(st, rt.construct(2, rt.binary('+', rt.swizzle(cell, 'x'), rt.f(1), 1, 'float'), rt.swizzle(cell, 'y')), speed)
     bl = grid__vec2_vec2_float.call(st, rt.construct(2, rt.swizzle(cell, 'x'), rt.binary('+', rt.swizzle(cell, 'y'), rt.f(1), 1, 'float')), speed)
@@ -108,10 +108,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; globalCoord = nil; noiseCoord = nil; speckMask = nil; splatMask = nil; texColor = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    color = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    noiseCoord = rt.binary('*', uv, rt.construct(2, rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(1)), 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    color = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    noiseCoord = rt.construct(2, rt.binary('*', uv, rt.construct(2, rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(1)), 2, 'float'))
     speckMask = rt.f(0.0)
     if rt.bool(_u_useSpecks)
       speckMask = speckle__vec2_vec2.call(rt.binary('+', noiseCoord, _u_speckSeed, 2, 'float'), rt.binary('*', rt.construct(2, rt.f(32)), map__float_float_float_float_float.call(_u_speckScale, rt.f(1), rt.f(5), rt.f(2), rt.f(0.5)), 2, 'float'))
@@ -139,7 +139,7 @@ run_pixel = lambda do |ctx, out|
         color = rt.assign_swizzle(color, 'rgb', rt.component_wise('mix', rt.swizzle(color, 'rgb'), _u_splatColor, splatMask))
       else
         if rt.bool(rt.binary('==', _u_mode, rt.i(1)))
-          texColor = rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', splatMask, rt.f(0.10000000000000001), 1, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+          texColor = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', splatMask, rt.f(0.10000000000000001), 1, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
           color.replace((rt.component_wise('mix', color, texColor, splatMask)).map { |c| rt.f32(c) })
         else
           if rt.bool(rt.binary('==', _u_mode, rt.i(2)))

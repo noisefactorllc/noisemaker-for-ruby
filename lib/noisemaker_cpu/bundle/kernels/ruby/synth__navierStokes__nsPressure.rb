@@ -11,9 +11,9 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     div = nil; fragCoord = nil; p = nil; pB = nil; pL = nil; pR = nil; pT = nil; texSize = nil; texel = nil; uv = nil
     texSize = rt.texture_size(_u_bufTex)
-    fragCoord = rt.swizzle(ctx.frag_coord, 'xy')
-    texel = rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float')
-    uv = rt.binary('/', fragCoord, rt.construct(2, texSize), 2, 'float')
+    fragCoord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'))
+    texel = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', fragCoord, rt.construct(2, texSize), 2, 'float'))
     pR = rt.swizzle(rt.texture(_u_bufTex, rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
     pL = rt.swizzle(rt.texture(_u_bufTex, rt.binary('-', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
     pT = rt.swizzle(rt.texture(_u_bufTex, rt.binary('+', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')

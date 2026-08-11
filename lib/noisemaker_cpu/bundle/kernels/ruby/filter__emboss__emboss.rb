@@ -19,7 +19,7 @@ run_pixel = lambda do |ctx, out|
   sampleGlobal__vec2 = lambda do |globalUV|
     globalUV = rt.copy(globalUV, 'float')
     localUV = nil
-    localUV = rt.binary('/', rt.binary('-', rt.binary('*', globalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')
+    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', globalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
     return rt.swizzle(rt.texture(_u_inputTex, localUV), 'rgb')
   end
   colorDefaultEmboss__vec2_vec2 = lambda do |uv, texelSize|
@@ -46,7 +46,7 @@ run_pixel = lambda do |ctx, out|
     offsets[(rt.i(6)).to_i] = rt.construct(2, rt.unary('-', rt.swizzle(texelSize, 'x')), rt.swizzle(texelSize, 'y'))
     offsets[(rt.i(7)).to_i] = rt.construct(2, rt.f(0), rt.swizzle(texelSize, 'y'))
     offsets[(rt.i(8)).to_i] = rt.construct(2, rt.swizzle(texelSize, 'x'), rt.swizzle(texelSize, 'y'))
-    conv = rt.construct(3, rt.f(0))
+    conv = rt.construct(3, rt.construct(3, rt.f(0)))
     i = rt.i(0)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -57,7 +57,7 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      texSample = rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', offsets[(i).to_i], _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'rgb')
+      texSample = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', offsets[(i).to_i], _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'rgb'))
       conv.replace((rt.binary('+', conv, rt.binary('*', texSample, _kernel[(i).to_i], 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     end
     return conv
@@ -89,7 +89,7 @@ run_pixel = lambda do |ctx, out|
     theta = rt.component_wise('radians', rt.binary('-', _u_angle, rt.f(135), 1, 'float'))
     ct = rt.component_wise('cos', theta)
     st = rt.component_wise('sin', theta)
-    conv = rt.construct(3, rt.f(0))
+    conv = rt.construct(3, rt.construct(3, rt.f(0)))
     i = rt.i(0)
     _for1_first = true
     (0..1048575).each do |_for1|
@@ -100,10 +100,10 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      basePx = baseOffsetsPx[(i).to_i]
-      rotatedPx = rt.binary('*', rt.construct(2, rt.binary('+', rt.binary('*', ct, rt.swizzle(basePx, 'x'), 1, 'float'), rt.binary('*', st, rt.swizzle(basePx, 'y'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.unary('-', st), rt.swizzle(basePx, 'x'), 1, 'float'), rt.binary('*', ct, rt.swizzle(basePx, 'y'), 1, 'float'), 1, 'float')), _u_height, 2, 'float')
-      offsetUV = rt.binary('*', rt.binary('*', rt.binary('*', rotatedPx, texelSize, 2, 'float'), _u_amount, 2, 'float'), _u_renderScale, 2, 'float')
-      texSample = rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, offsetUV, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'rgb')
+      basePx = rt.construct(2, baseOffsetsPx[(i).to_i])
+      rotatedPx = rt.construct(2, rt.binary('*', rt.construct(2, rt.binary('+', rt.binary('*', ct, rt.swizzle(basePx, 'x'), 1, 'float'), rt.binary('*', st, rt.swizzle(basePx, 'y'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.unary('-', st), rt.swizzle(basePx, 'x'), 1, 'float'), rt.binary('*', ct, rt.swizzle(basePx, 'y'), 1, 'float'), 1, 'float')), _u_height, 2, 'float'))
+      offsetUV = rt.construct(2, rt.binary('*', rt.binary('*', rt.binary('*', rotatedPx, texelSize, 2, 'float'), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'))
+      texSample = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, offsetUV, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'rgb'))
       conv.replace((rt.binary('+', conv, rt.binary('*', texSample, _kernel[(i).to_i], 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     end
     return conv
@@ -113,27 +113,27 @@ run_pixel = lambda do |ctx, out|
     centerRGB = rt.copy(centerRGB, 'float')
     centerLuma = nil; direction = nil; edgeMagnitude = nil; negativeLuma = nil; offsetUV = nil; positiveLuma = nil; relief = nil; signedEdge = nil; sourceChroma = nil; theta = nil; tracedColor = nil
     theta = rt.component_wise('radians', _u_angle)
-    direction = rt.construct(2, rt.component_wise('cos', theta), rt.component_wise('sin', theta))
-    offsetUV = rt.binary('/', rt.binary('*', direction, rt.binary('*', _u_height, _u_renderScale, 1, 'float'), 2, 'float'), _u_fullResolution, 2, 'float')
+    direction = rt.construct(2, rt.construct(2, rt.component_wise('cos', theta), rt.component_wise('sin', theta)))
+    offsetUV = rt.construct(2, rt.binary('/', rt.binary('*', direction, rt.binary('*', _u_height, _u_renderScale, 1, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'))
     positiveLuma = rt.dot(sampleGlobal__vec2.call(rt.binary('+', uv, offsetUV, 2, 'float')), g['LUMA'])
     negativeLuma = rt.dot(sampleGlobal__vec2.call(rt.binary('-', uv, offsetUV, 2, 'float')), g['LUMA'])
     signedEdge = rt.binary('-', positiveLuma, negativeLuma, 1, 'float')
     edgeMagnitude = rt.component_wise('abs', signedEdge)
     relief = rt.binary('+', rt.f(0.5), rt.binary('*', rt.f(0.5), signedEdge, 1, 'float'), 1, 'float')
     centerLuma = rt.dot(centerRGB, g['LUMA'])
-    sourceChroma = rt.binary('-', centerRGB, rt.construct(3, centerLuma), 3, 'float')
-    tracedColor = rt.binary('*', rt.binary('*', sourceChroma, edgeMagnitude, 3, 'float'), rt.component_wise('clamp', rt.binary('/', _u_colorAmount, rt.f(100), 1, 'float'), rt.f(0), rt.f(1)), 3, 'float')
+    sourceChroma = rt.construct(3, rt.binary('-', centerRGB, rt.construct(3, centerLuma), 3, 'float'))
+    tracedColor = rt.construct(3, rt.binary('*', rt.binary('*', sourceChroma, edgeMagnitude, 3, 'float'), rt.component_wise('clamp', rt.binary('/', _u_colorAmount, rt.f(100), 1, 'float'), rt.f(0), rt.f(1)), 3, 'float'))
     return rt.binary('+', rt.construct(3, relief), tracedColor, 3, 'float')
   end
   main__void = lambda do
     colorTexelSize = nil; fullFrame = nil; globalCoord = nil; origColor = nil; resolution = nil; result = nil; texelSize = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    resolution = rt.construct(2, rt.texture_size(_u_inputTex))
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    texelSize = rt.binary('/', rt.f(1), resolution, 2, 'float')
-    origColor = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), resolution, 2, 'float'))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    resolution = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    texelSize = rt.construct(2, rt.binary('/', rt.f(1), resolution, 2, 'float'))
+    origColor = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), resolution, 2, 'float')))
     fullFrame = (rt.bool(rt.component_wise('all', rt.component_wise('equal', _u_tileOffset, rt.construct(2, rt.f(0))))) && rt.bool(rt.component_wise('all', rt.component_wise('equal', _u_fullResolution, resolution))) ? 1 : 0)
-    colorTexelSize = (rt.bool(fullFrame) ? (texelSize) : (rt.binary('/', rt.f(1), _u_fullResolution, 2, 'float')))
+    colorTexelSize = rt.construct(2, (rt.bool(fullFrame) ? (texelSize) : (rt.binary('/', rt.f(1), _u_fullResolution, 2, 'float'))))
     result = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', _u__STYLE, rt.i(0)))
       if rt.bool((rt.bool(rt.binary('==', _u_angle, rt.f(135))) && rt.bool(rt.binary('==', _u_height, rt.f(1))) ? 1 : 0))

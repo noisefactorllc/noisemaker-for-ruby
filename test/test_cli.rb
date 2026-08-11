@@ -143,6 +143,21 @@ class TestCli < Minitest::Test
     end
   end
 
+  def test_generate_auto_wires_volume_generator
+    Dir.mktmpdir do |dir|
+      filename = File.join(dir, "volume.png")
+      rc, out, err = run_cli(
+        ["generate", "synth3d/noise3d", "--width", 2, "--height", 2,
+         "--param", "volumeSize=2", "--filename", filename]
+      )
+      assert_equal 0, rc, "stdout=[#{out}] stderr=[#{err}]"
+
+      require_relative "../lib/noisemaker_cpu/png"
+      surface = NoisemakerCpu::PNG.decode_png(File.binread(filename))
+      assert_equal [2, 2], [surface.width, surface.height]
+    end
+  end
+
   # --- apply -------------------------------------------------------------
 
   def test_apply_filter_invert
@@ -165,6 +180,20 @@ class TestCli < Minitest::Test
       px = surface.to_rgba8.unpack("C*")
       assert_equal [0, 204, 255], px[0, 3]
       assert_equal 255, px[3]
+    end
+  end
+
+  def test_apply_rejects_volume_domain_effect
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "input.png")
+      rc0, = run_cli(["generate", "synth/solid", "--width", 2, "--height", 2, "--filename", input])
+      assert_equal 0, rc0
+
+      output = File.join(dir, "typed-apply.png")
+      rc, _out, err = run_cli(["apply", "filter3d/palette3d", input, "--filename", output])
+      refute_equal 0, rc
+      assert_match(/apply only supports image-domain effects/, err)
+      refute File.exist?(output)
     end
   end
 
@@ -209,6 +238,9 @@ class TestCli < Minitest::Test
       meta = JSON.parse(File.read(File.join(DIST_ROOT, "lib", "noisemaker_cpu", "bundle", "metadata.json")))
       assert meta["effects"].key?(echoed_id), "echoed id '#{echoed_id}' should be a known catalog effect"
       assert_equal "generator", meta["effects"][echoed_id]["kind"]
+      assert_equal "image", meta["effects"][echoed_id]["domain"] || "image"
+      refute meta["effects"][echoed_id]["iterated"]
+      refute meta["effects"][echoed_id]["externalTexture"]
     end
   end
 

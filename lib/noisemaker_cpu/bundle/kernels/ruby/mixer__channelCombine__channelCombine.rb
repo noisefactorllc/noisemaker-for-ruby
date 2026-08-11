@@ -21,8 +21,8 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _g = nil; b = nil; globalCoord = nil; r = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
     r = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_rTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_rTex)), 2, 'float'))), _u_rLevel, 1, 'float'), rt.f(100), 1, 'float')
     _g = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_gTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_gTex)), 2, 'float'))), _u_gLevel, 1, 'float'), rt.f(100), 1, 'float')
     b = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_bTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_bTex)), 2, 'float'))), _u_bLevel, 1, 'float'), rt.f(100), 1, 'float')

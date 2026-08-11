@@ -21,23 +21,23 @@ run_pixel = lambda do |ctx, out|
   getHeight__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     localUV = nil; mapSize = nil
-    mapSize = rt.construct(2, rt.texture_size(_u_heightMap))
-    localUV = rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), mapSize, 2, 'float')
+    mapSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_heightMap)))
+    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), mapSize, 2, 'float'))
     return getLuminosity__vec3.call(rt.swizzle(rt.texture(_u_heightMap, localUV), 'rgb'))
   end
   getInput__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     localUV = nil; texSize = nil
-    texSize = rt.construct(2, rt.texture_size(_u_inputTex))
-    localUV = rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), texSize, 2, 'float')
+    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
+    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), texSize, 2, 'float'))
     return rt.texture(_u_inputTex, localUV)
   end
   main__void = lambda do
     _for0_first = nil; _t = nil; dispPixels = nil; f = nil; globalCoord = nil; i = nil; isTileRendering = nil; maxDispPixels = nil; prevF = nil; prevUV = nil; rayUV = nil; shift = nil; stepSize = nil; uv = nil; v = nil; w = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    v = (rt.bool(rt.binary('>', rt.length(_u_direction), rt.f(0))) ? (rt.normalize(_u_direction)) : (rt.construct(3, rt.f(0), rt.f(0), rt.f(1))))
-    shift = rt.binary('*', rt.swizzle(v, 'xy'), g['SHIFT_SCALE'], 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    v = rt.construct(3, (rt.bool(rt.binary('>', rt.length(_u_direction), rt.f(0))) ? (rt.normalize(_u_direction)) : (rt.construct(3, rt.f(0), rt.f(0), rt.f(1)))))
+    shift = rt.construct(2, rt.binary('*', rt.swizzle(v, 'xy'), g['SHIFT_SCALE'], 2, 'float'))
     isTileRendering = rt.binary('>', rt.length(_u_tileOffset), rt.f(0))
     dispPixels = rt.f(0.0)
     maxDispPixels = rt.f(0.0)
@@ -49,7 +49,7 @@ run_pixel = lambda do |ctx, out|
       end
     end
     _t = rt.f(1)
-    rayUV = rt.binary('+', uv, rt.binary('*', shift, rt.binary('-', rt.f(1), _u_pivot, 1, 'float'), 2, 'float'), 2, 'float')
+    rayUV = rt.construct(2, rt.binary('+', uv, rt.binary('*', shift, rt.binary('-', rt.f(1), _u_pivot, 1, 'float'), 2, 'float'), 2, 'float'))
     f = rt.binary('-', _t, getHeight__vec2.call(rayUV), 1, 'float')
     stepSize = rt.f(0.0)
     if rt.bool(rt.binary('>', f, rt.f(0)))

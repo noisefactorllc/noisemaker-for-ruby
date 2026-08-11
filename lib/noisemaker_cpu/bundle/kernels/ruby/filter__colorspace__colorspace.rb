@@ -49,7 +49,7 @@ run_pixel = lambda do |ctx, out|
   linear_srgb_from_oklab__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     lms = nil
-    lms = rt.matrix_mult(g['fwdA'], c, 3)
+    lms = rt.construct(3, rt.matrix_mult(g['fwdA'], c, 3))
     return rt.matrix_mult(g['fwdB'], rt.binary('*', rt.binary('*', lms, lms, 3, 'float'), lms, 3, 'float'), 3)
   end
   linearToSrgb__vec3 = lambda do |linear|
@@ -76,10 +76,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _C = nil; _H = nil; _L = nil; a = nil; b = nil; color = nil; globalCoord = nil; texSize = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float')
-    color = rt.texture(_u_inputTex, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
+    color = rt.construct(4, rt.texture(_u_inputTex, uv))
     _C = rt.f(0.0)
     _H = rt.f(0.0)
     _L = rt.f(0.0)

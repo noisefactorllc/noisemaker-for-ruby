@@ -38,10 +38,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     base = nil; bc = nil; bl = nil; br = nil; edge = nil; globalCoord = nil; glow = nil; gx = nil; gy = nil; metric = nil; mixed = nil; ml = nil; mr = nil; result = nil; tc = nil; texel = nil; tl = nil; tr = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    texel = rt.binary('/', _u_width, _u_resolution, 2, 'float')
-    base = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    texel = rt.construct(2, rt.binary('/', _u_width, _u_resolution, 2, 'float'))
+    base = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
     tl = luminance__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.construct(2, rt.unary('-', rt.swizzle(texel, 'x')), rt.unary('-', rt.swizzle(texel, 'y'))), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'rgb'))
     tc = luminance__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.construct(2, rt.f(0), rt.unary('-', rt.swizzle(texel, 'y'))), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'rgb'))
     tr = luminance__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.unary('-', rt.swizzle(texel, 'y'))), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'rgb'))
@@ -54,9 +54,9 @@ run_pixel = lambda do |ctx, out|
     gy = rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('-', rt.binary('-', rt.unary('-', tl), rt.binary('*', rt.f(2), tc, 1, 'float'), 1, 'float'), tr, 1, 'float'), bl, 1, 'float'), rt.binary('*', rt.f(2), bc, 1, 'float'), 1, 'float'), br, 1, 'float')
     metric = rt.construct(1, _u_sobelMetric, 'int')
     edge = rt.component_wise('clamp', rt.binary('*', distance_metric__float_float_int.call(gx, gy, metric), rt.f(3), 1, 'float'), rt.f(0), rt.f(1))
-    glow = rt.binary('*', rt.binary('*', edge, rt.swizzle(base, 'rgb'), 3, 'float'), rt.f(2), 3, 'float')
-    result = rt.binary('-', rt.construct(3, rt.f(1)), rt.binary('*', rt.binary('-', rt.construct(3, rt.f(1)), rt.swizzle(base, 'rgb'), 3, 'float'), rt.binary('-', rt.construct(3, rt.f(1)), glow, 3, 'float'), 3, 'float'), 3, 'float')
-    mixed = rt.component_wise('mix', rt.swizzle(base, 'rgb'), result, _u_alpha)
+    glow = rt.construct(3, rt.binary('*', rt.binary('*', edge, rt.swizzle(base, 'rgb'), 3, 'float'), rt.f(2), 3, 'float'))
+    result = rt.construct(3, rt.binary('-', rt.construct(3, rt.f(1)), rt.binary('*', rt.binary('-', rt.construct(3, rt.f(1)), rt.swizzle(base, 'rgb'), 3, 'float'), rt.binary('-', rt.construct(3, rt.f(1)), glow, 3, 'float'), 3, 'float'), 3, 'float'))
+    mixed = rt.construct(3, rt.component_wise('mix', rt.swizzle(base, 'rgb'), result, _u_alpha))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', mixed, rt.f(0), rt.f(1)), rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

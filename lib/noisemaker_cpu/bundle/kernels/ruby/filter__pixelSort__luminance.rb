@@ -26,9 +26,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     coord = nil; lum = nil; size = nil; texel = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     size = rt.texture_size(_u_inputTex)
-    texel = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    texel = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     lum = oklab_l__vec3.call(rt.swizzle(texel, 'rgb'))
     g['fragColor'].replace((rt.construct(4, lum, rt.binary('/', rt.construct(1, rt.swizzle(coord, 'x')), rt.construct(1, rt.binary('-', rt.swizzle(size, 'x'), rt.i(1), 1, 'int')), 1, 'float'), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
   end

@@ -11,11 +11,11 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; dirPx = nil; fTaps = nil; i = nil; o = nil; sigma = nil; sum = nil; uv = nil; w = nil; wsum = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    dirPx = rt.construct(2, rt.f(0), rt.f(1))
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    dirPx = rt.construct(2, rt.construct(2, rt.f(0), rt.f(1)))
     sigma = rt.component_wise('max', rt.binary('*', _u_radius, rt.f(0.5), 1, 'float'), rt.f(0.001))
     fTaps = rt.component_wise('min', _u_radius, rt.f(32))
-    sum = rt.texture(_u_inputTex, uv)
+    sum = rt.construct(4, rt.texture(_u_inputTex, uv))
     wsum = rt.f(1)
     i = rt.i(1)
     _for0_first = true
@@ -31,7 +31,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       w = rt.component_wise('exp', rt.binary('/', rt.unary('-', rt.construct(1, rt.binary('*', i, i, 1, 'int'))), rt.binary('*', rt.binary('*', rt.f(2), sigma, 1, 'float'), sigma, 1, 'float'), 1, 'float'))
-      o = rt.binary('/', rt.binary('*', dirPx, rt.construct(1, i), 2, 'float'), _u_resolution, 2, 'float')
+      o = rt.construct(2, rt.binary('/', rt.binary('*', dirPx, rt.construct(1, i), 2, 'float'), _u_resolution, 2, 'float'))
       sum.replace((rt.binary('+', sum, rt.binary('*', rt.binary('+', rt.texture(_u_inputTex, rt.binary('+', uv, o, 2, 'float')), rt.texture(_u_inputTex, rt.binary('-', uv, o, 2, 'float')), 4, 'float'), w, 4, 'float'), 4, 'float')).map { |c| rt.f32(c) })
       wsum = rt.binary('+', wsum, rt.binary('*', rt.f(2), w, 1, 'float'), 1, 'float')
     end

@@ -61,10 +61,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     base = nil; base_hsv = nil; base_rgb = nil; globalCoord = nil; m = nil; rgb = nil; st = nil; tintHue = nil; tinted = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.component_wise('max', rt.texture_size(_u_inputTex), rt.construct(2, rt.i(1), 'int'))), 2, 'float')
-    base = rt.texture(_u_inputTex, st)
-    base_rgb = rt.component_wise('clamp', rt.swizzle(base, 'rgb'), rt.f(0), rt.f(1))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.component_wise('max', rt.texture_size(_u_inputTex), rt.construct(2, rt.i(1), 'int'))), 2, 'float'))
+    base = rt.construct(4, rt.texture(_u_inputTex, st))
+    base_rgb = rt.construct(3, rt.component_wise('clamp', rt.swizzle(base, 'rgb'), rt.f(0), rt.f(1)))
     m = rt.construct(1, _u_mode, 'int')
     tinted = rt.construct(3, 0.0)
     base_hsv = rt.construct(3, 0.0)
@@ -74,13 +74,13 @@ run_pixel = lambda do |ctx, out|
     else
       if rt.bool(rt.binary('==', m, rt.i(2)))
         tintHue = rt.swizzle(rgb_to_hsv__vec3.call(_u_color), 'x')
-        base_hsv = rgb_to_hsv__vec3.call(base_rgb)
+        base_hsv = rt.construct(3, rgb_to_hsv__vec3.call(base_rgb))
         tinted.replace((rt.component_wise('clamp', hsv_to_rgb__vec3.call(rt.construct(3, tintHue, rt.component_wise('clamp', rt.swizzle(base_rgb, 'y'), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.swizzle(base_hsv, 'z'), rt.f(0), rt.f(1)))), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
       else
         tinted.replace((_u_color).map { |c| rt.f32(c) })
       end
     end
-    rgb = rt.component_wise('mix', base_rgb, tinted, _u_alpha)
+    rgb = rt.construct(3, rt.component_wise('mix', base_rgb, tinted, _u_alpha))
     g['fragColor'].replace((rt.construct(4, rgb, rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

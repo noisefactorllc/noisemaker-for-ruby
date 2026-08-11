@@ -27,8 +27,8 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     bgMask = nil; c = nil; d = nil; fgMask = nil; globalCoord = nil; m = nil; outColor = nil; s = nil; sidesF = nil; st = nil; totalAlpha = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
     st.replace((rt.binary('*', rt.binary('-', st, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     c = rt.component_wise('cos', rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float'))
@@ -43,7 +43,7 @@ run_pixel = lambda do |ctx, out|
     fgMask = rt.binary('*', m, _u_fgAlpha, 1, 'float')
     bgMask = rt.binary('*', rt.binary('-', rt.f(1), m, 1, 'float'), _u_bgAlpha, 1, 'float')
     totalAlpha = rt.binary('+', fgMask, bgMask, 1, 'float')
-    outColor = (rt.bool(rt.binary('>', totalAlpha, rt.f(0))) ? (rt.binary('/', rt.binary('+', rt.binary('*', _u_fgColor, fgMask, 3, 'float'), rt.binary('*', _u_bgColor, bgMask, 3, 'float'), 3, 'float'), totalAlpha, 3, 'float')) : (rt.construct(3, rt.f(0))))
+    outColor = rt.construct(3, (rt.bool(rt.binary('>', totalAlpha, rt.f(0))) ? (rt.binary('/', rt.binary('+', rt.binary('*', _u_fgColor, fgMask, 3, 'float'), rt.binary('*', _u_bgColor, bgMask, 3, 'float'), 3, 'float'), totalAlpha, 3, 'float')) : (rt.construct(3, rt.f(0)))))
     g['fragColor'].replace((rt.construct(4, rt.binary('*', outColor, totalAlpha, 3, 'float'), totalAlpha)).map { |c| rt.f32(c) })
   end
   main__void.call

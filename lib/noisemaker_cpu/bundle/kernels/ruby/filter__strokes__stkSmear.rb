@@ -17,22 +17,22 @@ run_pixel = lambda do |ctx, out|
   hash12__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     p3 = nil
-    p3 = rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.f(0.1031), 3, 'float'))
+    p3 = rt.construct(3, rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.f(0.1031), 3, 'float')))
     p3.replace((rt.binary('+', p3, rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.329999999999998), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float'), rt.swizzle(p3, 'z'), 1, 'float'))
   end
   valueNoise2__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     _u = nil; f = nil; i = nil
-    i = rt.component_wise('floor', p)
-    f = rt.component_wise('fract', p)
-    _u = rt.binary('*', rt.binary('*', f, f, 2, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 2, 'float'), 2, 'float'), 2, 'float')
+    i = rt.construct(2, rt.component_wise('floor', p))
+    f = rt.construct(2, rt.component_wise('fract', p))
+    _u = rt.construct(2, rt.binary('*', rt.binary('*', f, f, 2, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 2, 'float'), 2, 'float'), 2, 'float'))
     return rt.component_wise('mix', rt.component_wise('mix', hash12__vec2.call(i), hash12__vec2.call(rt.binary('+', i, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float')), rt.swizzle(_u, 'x')), rt.component_wise('mix', hash12__vec2.call(rt.binary('+', i, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float')), hash12__vec2.call(rt.binary('+', i, rt.construct(2, rt.f(1)), 2, 'float')), rt.swizzle(_u, 'x')), rt.swizzle(_u, 'y'))
   end
   hash22__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     p3 = nil
-    p3 = rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.construct(3, rt.f(0.1031), rt.f(0.10299999999999999), rt.f(0.097299999999999998)), 3, 'float'))
+    p3 = rt.construct(3, rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.construct(3, rt.f(0.1031), rt.f(0.10299999999999999), rt.f(0.097299999999999998)), 3, 'float')))
     p3.replace((rt.binary('+', p3, rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.329999999999998), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p3, 'xx'), rt.swizzle(p3, 'yz'), 2, 'float'), rt.swizzle(p3, 'zy'), 2, 'float'))
   end
@@ -43,7 +43,7 @@ run_pixel = lambda do |ctx, out|
   lumGradient__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     _t = nil; b = nil; bl = nil; br = nil; l = nil; px = nil; r = nil; tl = nil; tr = nil
-    px = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
+    px = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
     tl = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', px, rt.construct(2, rt.unary('-', rt.f(1)), rt.f(1)), 2, 'float'), 2, 'float')), 'rgb'))
     l = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', px, rt.construct(2, rt.unary('-', rt.f(1)), rt.f(0)), 2, 'float'), 2, 'float')), 'rgb'))
     bl = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', px, rt.construct(2, rt.unary('-', rt.f(1)), rt.unary('-', rt.f(1))), 2, 'float'), 2, 'float')), 'rgb'))
@@ -66,8 +66,8 @@ run_pixel = lambda do |ctx, out|
     gc = rt.copy(gc, 'float')
     dirUnit = rt.copy(dirUnit, 'float')
     across = nil; strokeSpace = nil
-    across = rt.construct(2, rt.unary('-', rt.swizzle(dirUnit, 'y')), rt.swizzle(dirUnit, 'x'))
-    strokeSpace = rt.construct(2, rt.binary('/', rt.dot(gc, dirUnit), rt.component_wise('max', runBase, rt.f(3)), 1, 'float'), rt.binary('/', rt.dot(gc, across), rt.f(3.5), 1, 'float'))
+    across = rt.construct(2, rt.construct(2, rt.unary('-', rt.swizzle(dirUnit, 'y')), rt.swizzle(dirUnit, 'x')))
+    strokeSpace = rt.construct(2, rt.construct(2, rt.binary('/', rt.dot(gc, dirUnit), rt.component_wise('max', runBase, rt.f(3)), 1, 'float'), rt.binary('/', rt.dot(gc, across), rt.f(3.5), 1, 'float')))
     return rt.binary('+', rt.f(0.71999999999999997), rt.binary('*', rt.f(0.56000000000000005), valueNoise2__vec2.call(rt.binary('*', strokeSpace, rt.f(0.65000000000000002), 2, 'float')), 1, 'float'), 1, 'float')
   end
   brushStrokeField__vec2_vec2_vec2_float = lambda do |uv, gc, dirUnit, runBase|
@@ -75,12 +75,12 @@ run_pixel = lambda do |ctx, out|
     gc = rt.copy(gc, 'float')
     dirUnit = rt.copy(dirUnit, 'float')
     _for0_first = nil; _for1_first = nil; aa = nil; across = nil; angle = nil; baseCell = nil; body = nil; bristle = nil; capsule = nil; cell = nil; center = nil; centerGlobal = nil; centerUV = nil; co = nil; cx = nil; cy = nil; delta = nil; field = nil; halfLength = nil; halfWidth = nil; jitter = nil; local = nil; mark = nil; oriented = nil; pigment = nil; pigmentSum = nil; pigmentWeight = nil; si = nil; spacing = nil
-    across = rt.construct(2, rt.unary('-', rt.swizzle(dirUnit, 'y')), rt.swizzle(dirUnit, 'x'))
-    oriented = rt.construct(2, rt.dot(gc, dirUnit), rt.dot(gc, across))
-    spacing = rt.construct(2, rt.component_wise('max', rt.binary('*', runBase, rt.f(0.69999999999999996), 1, 'float'), rt.f(4)), rt.f(4.5))
-    baseCell = rt.component_wise('floor', rt.binary('/', oriented, spacing, 2, 'float'))
+    across = rt.construct(2, rt.construct(2, rt.unary('-', rt.swizzle(dirUnit, 'y')), rt.swizzle(dirUnit, 'x')))
+    oriented = rt.construct(2, rt.construct(2, rt.dot(gc, dirUnit), rt.dot(gc, across)))
+    spacing = rt.construct(2, rt.construct(2, rt.component_wise('max', rt.binary('*', runBase, rt.f(0.69999999999999996), 1, 'float'), rt.f(4)), rt.f(4.5)))
+    baseCell = rt.construct(2, rt.component_wise('floor', rt.binary('/', oriented, spacing, 2, 'float')))
     field = rt.f(0)
-    pigmentSum = rt.construct(3, rt.f(0))
+    pigmentSum = rt.construct(3, rt.construct(3, rt.f(0)))
     pigmentWeight = rt.f(0)
     cy = rt.unary('-', rt.i(1))
     _for0_first = true
@@ -102,14 +102,14 @@ run_pixel = lambda do |ctx, out|
         unless rt.bool(rt.binary('<=', cx, rt.i(1)))
           break
         end
-        cell = rt.binary('+', baseCell, rt.construct(2, rt.construct(1, cx), rt.construct(1, cy)), 2, 'float')
-        jitter = rt.binary('-', hash22__vec2.call(rt.binary('+', cell, rt.f(17.300000000000001), 2, 'float')), rt.f(0.5), 2, 'float')
-        center = rt.binary('*', rt.binary('+', rt.binary('+', cell, rt.f(0.5), 2, 'float'), rt.binary('*', jitter, rt.construct(2, rt.f(0.56000000000000005), rt.f(0.40000000000000002)), 2, 'float'), 2, 'float'), spacing, 2, 'float')
-        delta = rt.binary('-', oriented, center, 2, 'float')
+        cell = rt.construct(2, rt.binary('+', baseCell, rt.construct(2, rt.construct(1, cx), rt.construct(1, cy)), 2, 'float'))
+        jitter = rt.construct(2, rt.binary('-', hash22__vec2.call(rt.binary('+', cell, rt.f(17.300000000000001), 2, 'float')), rt.f(0.5), 2, 'float'))
+        center = rt.construct(2, rt.binary('*', rt.binary('+', rt.binary('+', cell, rt.f(0.5), 2, 'float'), rt.binary('*', jitter, rt.construct(2, rt.f(0.56000000000000005), rt.f(0.40000000000000002)), 2, 'float'), 2, 'float'), spacing, 2, 'float'))
+        delta = rt.construct(2, rt.binary('-', oriented, center, 2, 'float'))
         angle = rt.binary('*', rt.binary('-', hash12__vec2.call(rt.binary('+', cell, rt.f(29.100000000000001), 2, 'float')), rt.f(0.5), 1, 'float'), rt.f(0.34000000000000002), 1, 'float')
         co = rt.component_wise('cos', angle)
         si = rt.component_wise('sin', angle)
-        local = rt.construct(2, rt.binary('+', rt.binary('*', co, rt.swizzle(delta, 'x'), 1, 'float'), rt.binary('*', si, rt.swizzle(delta, 'y'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.unary('-', si), rt.swizzle(delta, 'x'), 1, 'float'), rt.binary('*', co, rt.swizzle(delta, 'y'), 1, 'float'), 1, 'float'))
+        local = rt.construct(2, rt.construct(2, rt.binary('+', rt.binary('*', co, rt.swizzle(delta, 'x'), 1, 'float'), rt.binary('*', si, rt.swizzle(delta, 'y'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.unary('-', si), rt.swizzle(delta, 'x'), 1, 'float'), rt.binary('*', co, rt.swizzle(delta, 'y'), 1, 'float'), 1, 'float')))
         halfLength = rt.binary('*', runBase, rt.binary('+', rt.f(0.34999999999999998), rt.binary('*', rt.f(0.17999999999999999), hash12__vec2.call(rt.binary('+', cell, rt.f(43.700000000000003), 2, 'float')), 1, 'float'), 1, 'float'), 1, 'float')
         halfWidth = rt.binary('+', rt.f(1.3999999999999999), rt.binary('*', rt.f(1.2), hash12__vec2.call(rt.binary('+', cell, rt.f(71.900000000000006), 2, 'float')), 1, 'float'), 1, 'float')
         capsule = rt.binary('-', rt.length(rt.construct(2, rt.component_wise('max', rt.binary('-', rt.component_wise('abs', rt.swizzle(local, 'x')), halfLength, 1, 'float'), rt.f(0)), rt.swizzle(local, 'y'))), halfWidth, 1, 'float')
@@ -117,20 +117,20 @@ run_pixel = lambda do |ctx, out|
         body = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.unary('-', aa), aa, capsule), 1, 'float')
         bristle = rt.binary('+', rt.f(0.78000000000000003), rt.binary('*', rt.f(0.22), rt.binary('+', rt.f(0.5), rt.binary('*', rt.f(0.5), rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.swizzle(local, 'y'), rt.f(5.2000000000000002), 1, 'float'), rt.binary('*', hash12__vec2.call(rt.binary('+', cell, rt.f(97.299999999999997), 2, 'float')), rt.f(6.2831853000000004), 1, 'float'), 1, 'float')), 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float')
         mark = rt.binary('*', body, bristle, 1, 'float')
-        centerGlobal = rt.binary('+', rt.binary('*', dirUnit, rt.swizzle(center, 'x'), 2, 'float'), rt.binary('*', across, rt.swizzle(center, 'y'), 2, 'float'), 2, 'float')
-        centerUV = rt.binary('+', uv, rt.binary('/', rt.binary('-', centerGlobal, gc, 2, 'float'), _u_resolution, 2, 'float'), 2, 'float')
+        centerGlobal = rt.construct(2, rt.binary('+', rt.binary('*', dirUnit, rt.swizzle(center, 'x'), 2, 'float'), rt.binary('*', across, rt.swizzle(center, 'y'), 2, 'float'), 2, 'float'))
+        centerUV = rt.construct(2, rt.binary('+', uv, rt.binary('/', rt.binary('-', centerGlobal, gc, 2, 'float'), _u_resolution, 2, 'float'), 2, 'float'))
         pigmentSum.replace((rt.binary('+', pigmentSum, rt.binary('*', rt.swizzle(srcSample__vec2.call(centerUV), 'rgb'), mark, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
         pigmentWeight = rt.binary('+', pigmentWeight, mark, 1, 'float')
         field = rt.component_wise('max', field, mark)
       end
     end
-    pigment = (rt.bool(rt.binary('>', pigmentWeight, rt.f(0.0001))) ? (rt.binary('/', pigmentSum, pigmentWeight, 3, 'float')) : (rt.swizzle(srcSample__vec2.call(uv), 'rgb')))
+    pigment = rt.construct(3, (rt.bool(rt.binary('>', pigmentWeight, rt.f(0.0001))) ? (rt.binary('/', pigmentSum, pigmentWeight, 3, 'float')) : (rt.swizzle(srcSample__vec2.call(uv), 'rgb'))))
     return rt.construct(4, pigment, rt.component_wise('clamp', field, rt.f(0), rt.f(1)))
   end
   sprayJitter__vec2_float = lambda do |gc, tap|
     gc = rt.copy(gc, 'float')
     p = nil
-    p = rt.binary('/', gc, rt.f(7), 2, 'float')
+    p = rt.construct(2, rt.binary('/', gc, rt.f(7), 2, 'float'))
     return rt.binary('-', rt.construct(2, valueNoise2__vec2.call(rt.binary('+', p, rt.construct(2, rt.binary('*', tap, rt.f(0.72999999999999998), 1, 'float'), rt.f(7)), 2, 'float')), valueNoise2__vec2.call(rt.binary('+', rt.binary('+', p, rt.construct(2, rt.f(11), rt.binary('*', tap, rt.f(0.79000000000000004), 1, 'float')), 2, 'float'), rt.f(37.100000000000001), 2, 'float'))), rt.f(0.5), 2, 'float')
   end
   srcSample__vec2 = lambda do |sampleUV|
@@ -140,9 +140,9 @@ run_pixel = lambda do |ctx, out|
     px = rt.construct(2, 0.0)
     s = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', _u__MODE, rt.i(3)))
-      px = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
-      s = rt.texture(_u_inputTex, sampleUV)
-      e = rt.swizzle(s, 'rgb')
+      px = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
+      s = rt.construct(4, rt.texture(_u_inputTex, sampleUV))
+      e = rt.construct(3, rt.swizzle(s, 'rgb'))
       e.replace((rt.component_wise('min', e, rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', sampleUV, rt.construct(2, rt.swizzle(px, 'x'), rt.f(0)), 2, 'float')), 'rgb'))).map { |c| rt.f32(c) })
       e.replace((rt.component_wise('min', e, rt.swizzle(rt.texture(_u_inputTex, rt.binary('-', sampleUV, rt.construct(2, rt.swizzle(px, 'x'), rt.f(0)), 2, 'float')), 'rgb'))).map { |c| rt.f32(c) })
       e.replace((rt.component_wise('min', e, rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', sampleUV, rt.construct(2, rt.f(0), rt.swizzle(px, 'y')), 2, 'float')), 'rgb'))).map { |c| rt.f32(c) })
@@ -157,8 +157,8 @@ run_pixel = lambda do |ctx, out|
     gc = rt.copy(gc, 'float')
     dirUnit = rt.copy(dirUnit, 'float')
     _for2_first = nil; fi = nil; i = nil; jn = nil; jp = nil; px = nil; sampN = nil; sampP = nil; sum = nil; w = nil; wsum = nil
-    px = rt.binary('/', rt.f(1), _u_resolution, 2, 'float')
-    sum = srcSample__vec2.call(uv)
+    px = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
+    sum = rt.construct(4, srcSample__vec2.call(uv))
     wsum = rt.f(1)
     i = rt.i(1)
     _for2_first = true
@@ -175,14 +175,14 @@ run_pixel = lambda do |ctx, out|
         break
       end
       w = rt.component_wise('exp', rt.binary('/', rt.binary('*', rt.unary('-', rt.f(2)), fi, 1, 'float'), _L, 1, 'float'))
-      jp = rt.construct(2, rt.f(0))
-      jn = rt.construct(2, rt.f(0))
+      jp = rt.construct(2, rt.construct(2, rt.f(0)))
+      jn = rt.construct(2, rt.construct(2, rt.f(0)))
       if rt.bool(rt.binary('>', jitterPx, rt.f(0)))
         jp.replace((rt.binary('*', sprayJitter__vec2_float.call(gc, fi), jitterPx, 2, 'float')).map { |c| rt.f32(c) })
         jn.replace((rt.binary('*', sprayJitter__vec2_float.call(rt.binary('+', gc, rt.f(31.699999999999999), 2, 'float'), rt.unary('-', fi)), jitterPx, 2, 'float')).map { |c| rt.f32(c) })
       end
-      sampP = rt.binary('+', rt.binary('+', uv, rt.binary('*', rt.binary('*', dirUnit, fi, 2, 'float'), px, 2, 'float'), 2, 'float'), rt.binary('*', jp, px, 2, 'float'), 2, 'float')
-      sampN = rt.binary('+', rt.binary('-', uv, rt.binary('*', rt.binary('*', dirUnit, fi, 2, 'float'), px, 2, 'float'), 2, 'float'), rt.binary('*', jn, px, 2, 'float'), 2, 'float')
+      sampP = rt.construct(2, rt.binary('+', rt.binary('+', uv, rt.binary('*', rt.binary('*', dirUnit, fi, 2, 'float'), px, 2, 'float'), 2, 'float'), rt.binary('*', jp, px, 2, 'float'), 2, 'float'))
+      sampN = rt.construct(2, rt.binary('+', rt.binary('-', uv, rt.binary('*', rt.binary('*', dirUnit, fi, 2, 'float'), px, 2, 'float'), 2, 'float'), rt.binary('*', jn, px, 2, 'float'), 2, 'float'))
       sum.replace((rt.binary('+', sum, rt.binary('*', rt.binary('+', srcSample__vec2.call(sampP), srcSample__vec2.call(sampN), 4, 'float'), w, 4, 'float'), 4, 'float')).map { |c| rt.f32(c) })
       wsum = rt.binary('+', wsum, rt.binary('*', rt.f(2), w, 1, 'float'), 1, 'float')
     end
@@ -190,9 +190,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _L = nil; _t = nil; b = nil; bAmt = nil; c = nil; dir = nil; dir135 = nil; dir45 = nil; edgeAngle = nil; exponent = nil; field135 = nil; field45 = nil; gc = nil; grad = nil; gradMag = nil; jitterPx = nil; l135 = nil; l45 = nil; layer = nil; layer135 = nil; layer45 = nil; outc = nil; pigment = nil; pigment135 = nil; pigment45 = nil; runBase = nil; shadowMask = nil; side = nil; smeared = nil; src = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    src = rt.texture(_u_inputTex, uv)
-    gc = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    src = rt.construct(4, rt.texture(_u_inputTex, uv))
+    gc = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     runBase = rt.component_wise('mix', rt.f(3), rt.f(50), rt.binary('/', _u_strokeLength, rt.f(100), 1, 'float'))
     outc = rt.construct(4, 0.0)
     _L = rt.f(0.0)
@@ -222,34 +222,34 @@ run_pixel = lambda do |ctx, out|
     smeared = rt.construct(4, 0.0)
     _t = rt.f(0.0)
     if rt.bool(rt.binary('==', _u__MODE, rt.i(0)))
-      dir45 = rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(45))
-      dir135 = rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(135))
+      dir45 = rt.construct(2, rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(45)))
+      dir135 = rt.construct(2, rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(135)))
       l45 = rt.binary('*', runBase, strokeVariation__vec2_vec2_float.call(gc, dir45, runBase), 1, 'float')
       l135 = rt.binary('*', runBase, strokeVariation__vec2_vec2_float.call(gc, dir135, runBase), 1, 'float')
-      layer45 = brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir45, runBase)
-      layer135 = brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir135, runBase)
-      pigment45 = rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir45, l45, rt.f(0)), rt.construct(4, rt.swizzle(layer45, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.71999999999999997))
-      pigment135 = rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir135, l135, rt.f(0)), rt.construct(4, rt.swizzle(layer135, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.71999999999999997))
-      field45 = rt.component_wise('mix', src, pigment45, rt.swizzle(layer45, 'a'))
-      field135 = rt.component_wise('mix', src, pigment135, rt.swizzle(layer135, 'a'))
+      layer45 = rt.construct(4, brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir45, runBase))
+      layer135 = rt.construct(4, brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir135, runBase))
+      pigment45 = rt.construct(4, rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir45, l45, rt.f(0)), rt.construct(4, rt.swizzle(layer45, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.71999999999999997)))
+      pigment135 = rt.construct(4, rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir135, l135, rt.f(0)), rt.construct(4, rt.swizzle(layer135, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.71999999999999997)))
+      field45 = rt.construct(4, rt.component_wise('mix', src, pigment45, rt.swizzle(layer45, 'a')))
+      field135 = rt.construct(4, rt.component_wise('mix', src, pigment135, rt.swizzle(layer135, 'a')))
       b = rt.binary('/', _u_balance, rt.f(100), 1, 'float')
       side = rt.component_wise('smoothstep', rt.binary('-', b, rt.f(0.10000000000000001), 1, 'float'), rt.binary('+', b, rt.f(0.10000000000000001), 1, 'float'), lum__vec3.call(rt.swizzle(src, 'rgb')))
       outc.replace((rt.component_wise('mix', field135, field45, side)).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u__MODE, rt.i(1)))
-        dir45 = rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(45))
+        dir45 = rt.construct(2, rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(45)))
         _L = rt.binary('*', runBase, strokeVariation__vec2_vec2_float.call(gc, dir45, runBase), 1, 'float')
         jitterPx = rt.binary('*', rt.binary('/', _u_intensity, rt.f(100), 1, 'float'), rt.f(6), 1, 'float')
-        layer = brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir45, runBase)
-        pigment = rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir45, _L, jitterPx), rt.construct(4, rt.swizzle(layer, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.68000000000000005))
+        layer = rt.construct(4, brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir45, runBase))
+        pigment = rt.construct(4, rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir45, _L, jitterPx), rt.construct(4, rt.swizzle(layer, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.68000000000000005)))
         outc.replace((rt.component_wise('mix', src, pigment, rt.swizzle(layer, 'a'))).map { |c| rt.f32(c) })
       else
         if rt.bool(rt.binary('==', _u__MODE, rt.i(2)))
-          dir45 = rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(45))
+          dir45 = rt.construct(2, rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(45)))
           _L = rt.binary('*', runBase, strokeVariation__vec2_vec2_float.call(gc, dir45, runBase), 1, 'float')
-          layer = brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir45, runBase)
-          pigment = rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir45, _L, rt.f(0)), rt.construct(4, rt.swizzle(layer, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.71999999999999997))
-          c = rt.component_wise('mix', src, pigment, rt.swizzle(layer, 'a'))
+          layer = rt.construct(4, brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir45, runBase))
+          pigment = rt.construct(4, rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir45, _L, rt.f(0)), rt.construct(4, rt.swizzle(layer, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.71999999999999997)))
+          c = rt.construct(4, rt.component_wise('mix', src, pigment, rt.swizzle(layer, 'a')))
           _t = lum__vec3.call(rt.swizzle(c, 'rgb'))
           bAmt = rt.binary('/', _u_balance, rt.f(100), 1, 'float')
           exponent = (rt.bool(rt.binary('<', _t, bAmt)) ? (rt.binary('+', rt.f(1), rt.binary('/', _u_intensity, rt.f(50), 1, 'float'), 1, 'float')) : (rt.binary('/', rt.f(1), rt.binary('+', rt.f(1), rt.binary('/', _u_intensity, rt.f(100), 1, 'float'), 1, 'float'), 1, 'float')))
@@ -257,22 +257,22 @@ run_pixel = lambda do |ctx, out|
           outc.replace((c).map { |c| rt.f32(c) })
         else
           if rt.bool(rt.binary('==', _u__MODE, rt.i(3)))
-            dir135 = rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(135))
+            dir135 = rt.construct(2, rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), rt.f(135)))
             _L = rt.binary('*', runBase, strokeVariation__vec2_vec2_float.call(gc, dir135, runBase), 1, 'float')
-            layer = brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir135, runBase)
-            pigment = rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir135, _L, rt.f(0)), rt.construct(4, rt.swizzle(layer, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.73999999999999999))
-            c = rt.component_wise('mix', src, pigment, rt.swizzle(layer, 'a'))
+            layer = rt.construct(4, brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir135, runBase))
+            pigment = rt.construct(4, rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir135, _L, rt.f(0)), rt.construct(4, rt.swizzle(layer, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.73999999999999999)))
+            c = rt.construct(4, rt.component_wise('mix', src, pigment, rt.swizzle(layer, 'a')))
             c = rt.assign_swizzle(c, 'rgb', rt.component_wise('pow', rt.component_wise('max', rt.swizzle(c, 'rgb'), rt.construct(3, rt.f(0))), rt.construct(3, rt.binary('+', rt.f(1), rt.binary('/', _u_intensity, rt.f(50), 1, 'float'), 1, 'float'))))
             outc.replace((c).map { |c| rt.f32(c) })
           else
-            grad = lumGradient__vec2.call(uv)
+            grad = rt.construct(2, lumGradient__vec2.call(uv))
             gradMag = rt.length(grad)
             edgeAngle = (rt.bool(rt.binary('>', gradMag, rt.f(1.0000000000000001e-05))) ? (rt.binary('+', rt.component_wise('degrees', rt.component_wise('atan', rt.swizzle(grad, 'y'), rt.swizzle(grad, 'x'))), rt.f(90), 1, 'float')) : (rt.f(45)))
-            dir = rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), edgeAngle)
+            dir = rt.construct(2, rotate2D__vec2_float.call(rt.construct(2, rt.f(1), rt.f(0)), edgeAngle))
             _L = rt.binary('*', runBase, strokeVariation__vec2_vec2_float.call(gc, dir, runBase), 1, 'float')
-            layer = brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir, runBase)
-            pigment = rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir, _L, rt.f(0)), rt.construct(4, rt.swizzle(layer, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.64000000000000001))
-            smeared = rt.component_wise('mix', src, pigment, rt.swizzle(layer, 'a'))
+            layer = rt.construct(4, brushStrokeField__vec2_vec2_vec2_float.call(uv, gc, dir, runBase))
+            pigment = rt.construct(4, rt.component_wise('mix', smear__vec2_vec2_vec2_float_float.call(uv, gc, dir, _L, rt.f(0)), rt.construct(4, rt.swizzle(layer, 'rgb'), rt.swizzle(src, 'a')), rt.f(0.64000000000000001)))
+            smeared = rt.construct(4, rt.component_wise('mix', src, pigment, rt.swizzle(layer, 'a')))
             shadowMask = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.55000000000000004), rt.f(0.65000000000000002), lum__vec3.call(rt.swizzle(src, 'rgb'))), 1, 'float')
             outc.replace((rt.component_wise('mix', src, smeared, shadowMask)).map { |c| rt.f32(c) })
           end

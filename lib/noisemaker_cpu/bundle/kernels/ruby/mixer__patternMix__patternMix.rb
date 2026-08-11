@@ -35,9 +35,9 @@ run_pixel = lambda do |ctx, out|
   checkerboard__vec2_float = lambda do |p, sm|
     p = rt.copy(p, 'float')
     cell = nil; check = nil; d = nil; edge = nil; f = nil
-    f = rt.component_wise('fract', p)
+    f = rt.construct(2, rt.component_wise('fract', p))
     d = rt.component_wise('min', rt.component_wise('min', rt.swizzle(f, 'x'), rt.binary('-', rt.f(1), rt.swizzle(f, 'x'), 1, 'float')), rt.component_wise('min', rt.swizzle(f, 'y'), rt.binary('-', rt.f(1), rt.swizzle(f, 'y'), 1, 'float')))
-    cell = rt.component_wise('floor', p)
+    cell = rt.construct(2, rt.component_wise('floor', p))
     check = rt.component_wise('mod', rt.binary('+', rt.swizzle(cell, 'x'), rt.swizzle(cell, 'y'), 1, 'float'), rt.f(2))
     edge = rt.component_wise('smoothstep', rt.f(0), rt.binary('*', sm, rt.f(0.5), 1, 'float'), d)
     return rt.component_wise('mix', rt.binary('-', rt.f(1), check, 1, 'float'), check, edge)
@@ -45,7 +45,7 @@ run_pixel = lambda do |ctx, out|
   grid__vec2_float = lambda do |p, _t|
     p = rt.copy(p, 'float')
     f = nil; lineX = nil; lineY = nil
-    f = rt.component_wise('fract', p)
+    f = rt.construct(2, rt.component_wise('fract', p))
     lineX = rt.component_wise('smoothstep', rt.binary('-', rt.binary('*', _t, rt.f(0.5), 1, 'float'), _u_smoothness, 1, 'float'), rt.binary('+', rt.binary('*', _t, rt.f(0.5), 1, 'float'), _u_smoothness, 1, 'float'), rt.component_wise('abs', rt.binary('-', rt.swizzle(f, 'x'), rt.f(0.5), 1, 'float')))
     lineY = rt.component_wise('smoothstep', rt.binary('-', rt.binary('*', _t, rt.f(0.5), 1, 'float'), _u_smoothness, 1, 'float'), rt.binary('+', rt.binary('*', _t, rt.f(0.5), 1, 'float'), _u_smoothness, 1, 'float'), rt.component_wise('abs', rt.binary('-', rt.swizzle(f, 'y'), rt.f(0.5), 1, 'float')))
     return rt.binary('-', rt.f(1), rt.component_wise('min', lineX, lineY), 1, 'float')
@@ -53,7 +53,7 @@ run_pixel = lambda do |ctx, out|
   dots__vec2_float = lambda do |p, _t|
     p = rt.copy(p, 'float')
     d = nil; f = nil; radius = nil
-    f = rt.binary('-', rt.component_wise('fract', p), rt.f(0.5), 2, 'float')
+    f = rt.construct(2, rt.binary('-', rt.component_wise('fract', p), rt.f(0.5), 2, 'float'))
     d = rt.length(f)
     radius = rt.binary('*', _t, rt.f(0.5), 1, 'float')
     return rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.binary('-', radius, _u_smoothness, 1, 'float'), rt.binary('+', radius, _u_smoothness, 1, 'float'), d), 1, 'float')
@@ -66,11 +66,11 @@ run_pixel = lambda do |ctx, out|
   hexagons__vec2_float = lambda do |p, _t|
     p = rt.copy(p, 'float')
     _g = nil; a = nil; b = nil; d = nil; edge = nil; h = nil; s = nil
-    s = rt.construct(2, rt.f(1), rt.f(1.7320508075688772))
-    h = rt.binary('*', s, rt.f(0.5), 2, 'float')
-    a = rt.binary('-', rt.component_wise('mod', p, s), h, 2, 'float')
-    b = rt.binary('-', rt.component_wise('mod', rt.binary('+', p, h, 2, 'float'), s), h, 2, 'float')
-    _g = (rt.bool(rt.binary('<', rt.length(a), rt.length(b))) ? (a) : (b))
+    s = rt.construct(2, rt.construct(2, rt.f(1), rt.f(1.7320508075688772)))
+    h = rt.construct(2, rt.binary('*', s, rt.f(0.5), 2, 'float'))
+    a = rt.construct(2, rt.binary('-', rt.component_wise('mod', p, s), h, 2, 'float'))
+    b = rt.construct(2, rt.binary('-', rt.component_wise('mod', rt.binary('+', p, h, 2, 'float'), s), h, 2, 'float'))
+    _g = rt.construct(2, (rt.bool(rt.binary('<', rt.length(a), rt.length(b))) ? (a) : (b)))
     d = hexDist__vec2.call(_g)
     edge = rt.binary('*', rt.f(0.5), _t, 1, 'float')
     return rt.component_wise('smoothstep', rt.binary('+', edge, _u_smoothness, 1, 'float'), rt.binary('-', edge, _u_smoothness, 1, 'float'), d)
@@ -96,9 +96,9 @@ run_pixel = lambda do |ctx, out|
   triangularGrid__vec2_float = lambda do |p, _t|
     p = rt.copy(p, 'float')
     cell = nil; d = nil; edge = nil; f = nil; skewed = nil
-    skewed = rt.construct(2, rt.binary('-', rt.swizzle(p, 'x'), rt.binary('/', rt.swizzle(p, 'y'), rt.f(1.7320508075688772), 1, 'float'), 1, 'float'), rt.binary('/', rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float'), rt.f(1.7320508075688772), 1, 'float'))
-    cell = rt.component_wise('floor', skewed)
-    f = rt.component_wise('fract', skewed)
+    skewed = rt.construct(2, rt.construct(2, rt.binary('-', rt.swizzle(p, 'x'), rt.binary('/', rt.swizzle(p, 'y'), rt.f(1.7320508075688772), 1, 'float'), 1, 'float'), rt.binary('/', rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float'), rt.f(1.7320508075688772), 1, 'float')))
+    cell = rt.construct(2, rt.component_wise('floor', skewed))
+    f = rt.construct(2, rt.component_wise('fract', skewed))
     d = rt.f(0.0)
     if rt.bool(rt.binary('<', rt.binary('+', rt.swizzle(f, 'x'), rt.swizzle(f, 'y'), 1, 'float'), rt.f(1)))
       d = rt.component_wise('min', rt.component_wise('min', rt.swizzle(f, 'x'), rt.swizzle(f, 'y')), rt.binary('-', rt.binary('-', rt.f(1), rt.swizzle(f, 'x'), 1, 'float'), rt.swizzle(f, 'y'), 1, 'float'))
@@ -120,14 +120,14 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     aspect = nil; color = nil; colorA = nil; colorB = nil; fullRes = nil; globalCoord = nil; globalUV = nil; m = nil; p = nil; rad = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    colorA = rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    colorB = rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))
-    fullRes = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    colorA = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    colorB = rt.construct(4, rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
     aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-    globalUV = rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float')
-    p = rt.binary('*', rt.binary('-', globalUV, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')
+    globalUV = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    p = rt.construct(2, rt.binary('*', rt.binary('-', globalUV, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float'))
     p = rt.assign_swizzle(p, 'x', rt.binary('*', rt.swizzle(p, 'x'), aspect, 1, 'float'))
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float')
     p.replace((rotate2D__vec2_float.call(p, rad)).map { |c| rt.f32(c) })
@@ -171,7 +171,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', _u_invert, rt.i(1)))
       m = rt.binary('-', rt.f(1), m, 1, 'float')
     end
-    color = rt.component_wise('mix', colorA, colorB, m)
+    color = rt.construct(4, rt.component_wise('mix', colorA, colorB, m))
     color = rt.assign_swizzle(color, 'a', rt.component_wise('max', rt.swizzle(colorA, 'a'), rt.swizzle(colorB, 'a')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end

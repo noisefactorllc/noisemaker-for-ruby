@@ -24,19 +24,19 @@ run_pixel = lambda do |ctx, out|
   end
   prng__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, p, 'uint'))), rt.construct(1, rt.construct(1, rt.i(4294967295), 'uint')), 3, 'float')
+    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, rt.construct(3, p), 'uint'))), rt.construct(1, rt.construct(1, rt.i(4294967295), 'uint')), 3, 'float')
   end
   main__void = lambda do
     _for0_first = nil; _t = nil; color = nil; fullRes = nil; globalCoord = nil; globalUV = nil; offset = nil; percent = nil; tex = nil; texSize = nil; tileDims = nil; toCenter = nil; total = nil; uv = nil; weight = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    tileDims = rt.construct(2, texSize)
-    fullRes = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims))
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), tileDims, 2, 'float')
-    globalUV = rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float')
-    color = rt.construct(3, rt.f(0))
+    tileDims = rt.construct(2, rt.construct(2, texSize))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), tileDims, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    color = rt.construct(3, rt.construct(3, rt.f(0)))
     total = rt.f(0)
-    toCenter = rt.binary('-', globalUV, rt.f(0.5), 2, 'float')
+    toCenter = rt.construct(2, rt.binary('-', globalUV, rt.f(0.5), 2, 'float'))
     offset = rt.swizzle(prng__vec3.call(rt.construct(3, rt.f(12.989800000000001), rt.f(78.233000000000004), rt.f(151.7182))), 'x')
     _t = rt.f(0)
     _for0_first = true
@@ -50,7 +50,7 @@ run_pixel = lambda do |ctx, out|
       end
       percent = rt.binary('/', rt.binary('+', _t, offset, 1, 'float'), rt.f(40), 1, 'float')
       weight = rt.binary('*', rt.f(4), rt.binary('-', percent, rt.binary('*', percent, percent, 1, 'float'), 1, 'float'), 1, 'float')
-      tex = rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float'))
+      tex = rt.construct(4, rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))
       color.replace((rt.binary('+', color, rt.binary('*', rt.swizzle(tex, 'rgb'), weight, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
       total = rt.binary('+', total, weight, 1, 'float')
     end

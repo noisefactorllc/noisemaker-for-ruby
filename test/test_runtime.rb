@@ -81,6 +81,25 @@ class TestRuntime < Minitest::Test
     assert_equal 3221225472, @rt.binary("<<", @rt.i(3), @rt.i(30), 1, "uint"), "uint shift"
   end
 
+  def test_cpu_noise3d_hash4_matches_canonical_javascript_number_semantics
+    cases = {
+      [0.0, -3.0, 0.0, 1.0] => -0.12224575132131577,
+      [0.1, 0.2, 0.3, 0.4] => -0.09264284372329712,
+      [-3.0, -3.0, -3.0, 0.0] => -0.3358503580093384,
+      [3.0, 3.0, 3.0, 1.0] => -0.10188091546297073,
+    }
+
+    cases.each do |point, expected|
+      assert_equal expected, @rt.cpu_noise3d_hash4(point, 1), point.inspect
+    end
+  end
+
+  def test_cpu_cell3d_hash_result_divides_uint_before_float32_conversion
+    q = @rt.construct(3, 504_228_936, 2_080_811_276, 3_539_994_242, "uint")
+    assert_equal [0.11739994585514069, 0.48447662591934204, 0.8242191672325134],
+                 @rt.cpu_cell3d_hash_result(q)
+  end
+
   def test_ivec_swizzle
     iv = @rt.construct(3, @rt.i(5), @rt.i(6), @rt.i(7), "int")
     assert_equal 7, @rt.swizzle(iv, "z"), "ivec swizzle scalar stays int"

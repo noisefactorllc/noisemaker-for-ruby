@@ -11,8 +11,8 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; baseCoord = nil; color = nil; dx = nil; dy = nil; globalCoord = nil; inSize = nil; maxVal = nil; minVal = nil; outCoord = nil; sampleCoord = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    outCoord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    outCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     inSize = rt.texture_size(_u_inputTex)
     baseCoord = rt.binary('*', outCoord, rt.i(16), 2, 'int')
     minVal = rt.f(100000)
@@ -41,7 +41,7 @@ run_pixel = lambda do |ctx, out|
         if rt.bool((rt.bool(rt.binary('>=', rt.swizzle(sampleCoord, 'x'), rt.swizzle(inSize, 'x'))) || rt.bool(rt.binary('>=', rt.swizzle(sampleCoord, 'y'), rt.swizzle(inSize, 'y'))) ? 1 : 0))
           next
         end
-        color = rt.texel_fetch(_u_inputTex, sampleCoord, rt.i(0))
+        color = rt.construct(4, rt.texel_fetch(_u_inputTex, sampleCoord, rt.i(0)))
         minVal = rt.component_wise('min', minVal, rt.swizzle(color, 'r'))
         maxVal = rt.component_wise('max', maxVal, rt.swizzle(color, 'g'))
       end

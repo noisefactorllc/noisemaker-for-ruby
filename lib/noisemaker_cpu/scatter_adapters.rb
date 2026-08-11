@@ -160,6 +160,41 @@ module NoisemakerCpu
       { pixels: pixels }
     end
 
+    def self.flow3d_deposit(pass, uniforms, inputs, destination)
+      state1 = inputs.fetch("stateTex1")
+      state2 = inputs.fetch("stateTex2")
+      capacity = state1.width * state1.height
+      maximum = ([state1.width, state1.height].max * uniforms["density"].to_f * 0.2).truncate
+      draw_count = pass["count"] || capacity
+      count = [draw_count, capacity, maximum].min
+      count = 0 if count.negative?
+      volume_size = uniforms["volumeSize"].to_i
+      atlas_height = volume_size * volume_size
+      pixels = 0
+
+      count.times do |index|
+        x = index % state1.width
+        y = index / state1.width
+        position = texel_fetch_agent(state1, x, y)
+        color = texel_fetch_agent(state2, x, y)
+        atlas_x = position[0]
+        atlas_y = position[1] + position[2].floor * volume_size
+        offset = scatter_point_pixel(
+          (atlas_x.fdiv(volume_size) * 2) - 1,
+          (atlas_y.fdiv(atlas_height) * 2) - 1,
+          1, destination.width, destination.height
+        )
+        next if offset.nil?
+
+        3.times { |channel| destination.data[offset + channel] += color[channel] }
+        destination.data[offset + 3] += 1
+        pixels += 1
+      rescue FloatDomainError
+        next
+      end
+      { pixels: pixels }
+    end
+
     def self.billboard_hash(value, seed)
       bits = NoisemakerCpu::UintMath.float_bits_to_uint(f32(value + seed))
       state = NoisemakerCpu::UintMath.uadd(NoisemakerCpu::UintMath.umul(bits, 747_796_405), 2_891_336_453)
@@ -322,6 +357,7 @@ module NoisemakerCpu
       { pixels: pixels }
     end
 
+    register("filter3d/flow3d:deposit", method(:flow3d_deposit))
     register("points/dla:depositGrid", method(:dla_deposit))
     register("points/lenia:deposit", method(:lenia_deposit))
     register("points/physarum:deposit", method(:physarum_deposit))

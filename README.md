@@ -16,8 +16,8 @@ reference engine's arithmetic — float32 register rounding, half-float
 render-target quantization, GLSL uint32 wraparound with bit-exact PCG
 hashing, screen-space derivatives, and GL texture sampling.
 
-**All 167 catalog effects** are bundled (211 kernels) and render at
-**byte-parity** with the JavaScript engine's `effect` CLI (8×8, seed 1) —
+**All 205 catalog effects** are bundled (297 kernels) and render at
+**byte-parity** with the JavaScript engine's `effect` CLI —
 verified by `scripts/parity.rb` against a sibling `noisemaker-cpu` checkout.
 
 ## Install

@@ -35,7 +35,7 @@ run_pixel = lambda do |ctx, out|
   end
   prng__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, p, 'uint'))), rt.construct(1, rt.construct(1, rt.i(4294967295), 'uint')), 3, 'float')
+    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, rt.construct(3, p), 'uint'))), rt.construct(1, rt.construct(1, rt.i(4294967295), 'uint')), 3, 'float')
   end
   f__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
@@ -72,8 +72,8 @@ run_pixel = lambda do |ctx, out|
     _A = rt.matrix_mult(rt.matrix_mult(_T, _Q, 4), _S, 4)
     _t = rt.component_wise('fract', rt.swizzle(p, 'x'))
     _u = rt.component_wise('fract', rt.swizzle(p, 'y'))
-    tv = rt.construct(4, rt.f(1), _t, rt.binary('*', _t, _t, 1, 'float'), rt.binary('*', rt.binary('*', _t, _t, 1, 'float'), _t, 1, 'float'))
-    uv = rt.construct(4, rt.f(1), _u, rt.binary('*', _u, _u, 1, 'float'), rt.binary('*', rt.binary('*', _u, _u, 1, 'float'), _u, 1, 'float'))
+    tv = rt.construct(4, rt.construct(4, rt.f(1), _t, rt.binary('*', _t, _t, 1, 'float'), rt.binary('*', rt.binary('*', _t, _t, 1, 'float'), _t, 1, 'float')))
+    uv = rt.construct(4, rt.construct(4, rt.f(1), _u, rt.binary('*', _u, _u, 1, 'float'), rt.binary('*', rt.binary('*', _u, _u, 1, 'float'), _u, 1, 'float')))
     return rt.dot(rt.matrix_mult(tv, _A, 4), uv)
   end
   map__float_float_float_float_float = lambda do |value, inMin, inMax, outMin, outMax|
@@ -119,7 +119,7 @@ run_pixel = lambda do |ctx, out|
   glitch__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
     _g = nil; aberrationOffset = nil; blue = nil; blueOffset = nil; centerDist = nil; diff = nil; distort = nil; freq = nil; green = nil; lensedCoords = nil; localUV_blue = nil; localUV_green = nil; localUV_red = nil; rand = nil; red = nil; redOffset = nil; refract = nil; sparseness = nil; xDrift = nil; xOffset = nil; yDrift = nil; yOffset = nil; zoom = nil
-    freq = rt.construct(2, rt.f(1))
+    freq = rt.construct(2, rt.construct(2, rt.f(1)))
     freq = rt.assign_swizzle(freq, 'x', rt.binary('*', rt.swizzle(freq, 'x'), map__float_float_float_float_float.call(_u_xChonk, rt.f(1), rt.f(100), rt.f(50), rt.f(1)), 1, 'float'))
     freq = rt.assign_swizzle(freq, 'y', rt.binary('*', rt.swizzle(freq, 'y'), map__float_float_float_float_float.call(_u_yChonk, rt.f(1), rt.f(100), rt.f(50), rt.f(1)), 1, 'float'))
     freq.replace((rt.binary('*', freq, rt.construct(2, periodicFunction__float.call(rt.binary('-', rt.swizzle(prng__vec3.call(rt.construct(3, rt.component_wise('floor', rt.binary('*', st, freq, 2, 'float')), rt.f(0))), 'x'), _u_time, 1, 'float'))), 2, 'float')).map { |c| rt.f32(c) })
@@ -133,7 +133,7 @@ run_pixel = lambda do |ctx, out|
     refract = rt.binary('*', _g, rt.f(0.125), 1, 'float')
     st = rt.assign_swizzle(st, 'x', rt.component_wise('mod', rt.binary('+', rt.swizzle(st, 'x'), rt.binary('*', rt.component_wise('sin', rt.binary('*', xOffset, rt.f(6.2831853071800001), 1, 'float')), refract, 1, 'float'), 1, 'float'), rt.f(1)))
     st = rt.assign_swizzle(st, 'y', rt.component_wise('mod', rt.binary('+', rt.swizzle(st, 'y'), rt.binary('*', rt.component_wise('sin', rt.binary('*', yOffset, rt.f(6.2831853071800001), 1, 'float')), refract, 1, 'float'), 1, 'float'), rt.f(1)))
-    diff = rt.construct(2, rt.binary('-', rt.f(0.5), st, 2, 'float'))
+    diff = rt.construct(2, rt.construct(2, rt.binary('-', rt.f(0.5), st, 2, 'float')))
     if rt.bool(_u_aspectLens)
       diff.replace((rt.binary('-', rt.construct(2, rt.binary('/', rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(0.5)), rt.construct(2, rt.binary('/', rt.binary('*', rt.swizzle(st, 'x'), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.swizzle(st, 'y')), 2, 'float')).map { |c| rt.f32(c) })
     end
@@ -147,23 +147,23 @@ run_pixel = lambda do |ctx, out|
       distort = map__float_float_float_float_float.call(_u_distortion, rt.f(0), rt.f(100), rt.f(0), rt.f(0.5))
       zoom = map__float_float_float_float_float.call(_u_distortion, rt.f(0), rt.f(100), rt.f(0), rt.unary('-', rt.f(0.25)))
     end
-    lensedCoords = rt.component_wise('fract', rt.binary('-', rt.binary('-', st, rt.binary('*', diff, zoom, 2, 'float'), 2, 'float'), rt.binary('*', rt.binary('*', rt.binary('*', diff, centerDist, 2, 'float'), centerDist, 2, 'float'), distort, 2, 'float'), 2, 'float'))
+    lensedCoords = rt.construct(2, rt.component_wise('fract', rt.binary('-', rt.binary('-', st, rt.binary('*', diff, zoom, 2, 'float'), 2, 'float'), rt.binary('*', rt.binary('*', rt.binary('*', diff, centerDist, 2, 'float'), centerDist, 2, 'float'), distort, 2, 'float'), 2, 'float')))
     aberrationOffset = rt.binary('*', rt.binary('*', rt.binary('*', map__float_float_float_float_float.call(_u_aberration, rt.f(0), rt.f(100), rt.f(0), rt.f(0.050000000000000003)), centerDist, 1, 'float'), rt.f(3.1415926535900001), 1, 'float'), rt.f(0.5), 1, 'float')
     redOffset = rt.component_wise('mix', rt.component_wise('clamp', rt.binary('+', rt.swizzle(lensedCoords, 'x'), aberrationOffset, 1, 'float'), rt.f(0), rt.f(1)), rt.swizzle(lensedCoords, 'x'), rt.swizzle(lensedCoords, 'x'))
-    localUV_red = rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', rt.construct(2, redOffset, rt.swizzle(lensedCoords, 'y')), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    red = rt.texture(_u_inputTex, localUV_red)
-    localUV_green = rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', lensedCoords, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    green = rt.texture(_u_inputTex, localUV_green)
+    localUV_red = rt.construct(2, rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', rt.construct(2, redOffset, rt.swizzle(lensedCoords, 'y')), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    red = rt.construct(4, rt.texture(_u_inputTex, localUV_red))
+    localUV_green = rt.construct(2, rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', lensedCoords, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    green = rt.construct(4, rt.texture(_u_inputTex, localUV_green))
     blueOffset = rt.component_wise('mix', rt.swizzle(lensedCoords, 'x'), rt.component_wise('clamp', rt.binary('-', rt.swizzle(lensedCoords, 'x'), aberrationOffset, 1, 'float'), rt.f(0), rt.f(1)), rt.swizzle(lensedCoords, 'x'))
-    localUV_blue = rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', rt.construct(2, blueOffset, rt.swizzle(lensedCoords, 'y')), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    blue = rt.texture(_u_inputTex, localUV_blue)
+    localUV_blue = rt.construct(2, rt.component_wise('fract', rt.binary('/', rt.binary('-', rt.binary('*', rt.construct(2, blueOffset, rt.swizzle(lensedCoords, 'y')), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    blue = rt.construct(4, rt.texture(_u_inputTex, localUV_blue))
     return rt.construct(4, rt.swizzle(red, 'r'), rt.swizzle(green, 'g'), rt.swizzle(blue, 'b'), rt.swizzle(green, 'a'))
   end
   main__void = lambda do
     blendy = nil; color = nil; globalCoord = nil; uv = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    color = rt.construct(4, rt.f(0))
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    color = rt.construct(4, rt.construct(4, rt.f(0)))
     blendy = periodicFunction__float.call(rt.binary('-', _u_time, offsets__vec2.call(uv), 1, 'float'))
     color.replace((glitch__vec2.call(uv)).map { |c| rt.f32(c) })
     color.replace((scanlines__vec4_vec2.call(color, uv)).map { |c| rt.f32(c) })

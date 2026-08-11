@@ -11,8 +11,8 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     decay = nil; trailColor = nil; uv = nil
-    uv = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    trailColor = rt.texture(_u_trailTex, uv)
+    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    trailColor = rt.construct(4, rt.texture(_u_trailTex, uv))
     decay = rt.component_wise('clamp', rt.binary('/', _u_intensity, rt.f(100), 1, 'float'), rt.f(0), rt.f(1))
     g['fragColor'].replace((rt.component_wise('clamp', rt.binary('*', trailColor, decay, 4, 'float'), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
   end

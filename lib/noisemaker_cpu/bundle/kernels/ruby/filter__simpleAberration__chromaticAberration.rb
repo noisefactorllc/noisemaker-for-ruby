@@ -13,18 +13,18 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     blue = nil; blueGlobalUV = nil; blueLocalUV = nil; boundedDisplacement = nil; globalPixel = nil; globalUV = nil; green = nil; greenLocalUV = nil; maxDisplacementUV = nil; red = nil; redGlobalUV = nil; redLocalUV = nil
-    globalPixel = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    globalUV = rt.binary('/', globalPixel, _u_fullResolution, 2, 'float')
+    globalPixel = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary('/', globalPixel, _u_fullResolution, 2, 'float'))
     maxDisplacementUV = rt.binary('/', rt.f(256), rt.swizzle(_u_fullResolution, 'x'), 1, 'float')
     boundedDisplacement = rt.component_wise('clamp', _u_displacement, rt.unary('-', maxDisplacementUV), maxDisplacementUV)
-    redGlobalUV = rt.binary('+', globalUV, rt.construct(2, boundedDisplacement, rt.f(0)), 2, 'float')
-    redLocalUV = rt.binary('/', rt.binary('-', rt.binary('*', redGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')
-    red = rt.texture(_u_inputTex, redLocalUV)
-    greenLocalUV = rt.binary('/', rt.binary('-', rt.binary('*', globalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')
-    green = rt.texture(_u_inputTex, greenLocalUV)
-    blueGlobalUV = rt.binary('-', globalUV, rt.construct(2, boundedDisplacement, rt.f(0)), 2, 'float')
-    blueLocalUV = rt.binary('/', rt.binary('-', rt.binary('*', blueGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')
-    blue = rt.texture(_u_inputTex, blueLocalUV)
+    redGlobalUV = rt.construct(2, rt.binary('+', globalUV, rt.construct(2, boundedDisplacement, rt.f(0)), 2, 'float'))
+    redLocalUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', redGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    red = rt.construct(4, rt.texture(_u_inputTex, redLocalUV))
+    greenLocalUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', globalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    green = rt.construct(4, rt.texture(_u_inputTex, greenLocalUV))
+    blueGlobalUV = rt.construct(2, rt.binary('-', globalUV, rt.construct(2, boundedDisplacement, rt.f(0)), 2, 'float'))
+    blueLocalUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', blueGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    blue = rt.construct(4, rt.texture(_u_inputTex, blueLocalUV))
     g['fragColor'].replace((rt.construct(4, rt.swizzle(red, 'r'), rt.swizzle(green, 'g'), rt.swizzle(blue, 'b'), rt.swizzle(green, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

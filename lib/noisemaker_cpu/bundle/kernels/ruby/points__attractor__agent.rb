@@ -115,12 +115,12 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     agentSeed = nil; col = nil; coord = nil; dt = nil; initSeed = nil; needs3DInit = nil; newPos = nil; pos = nil; respawnSeed = nil; stateSize = nil; texSize = nil; vel = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     texSize = rt.texture_size(_u_xyzTex)
     stateSize = rt.swizzle(texSize, 'x')
-    pos = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
-    vel = rt.texel_fetch(_u_velTex, coord, rt.i(0))
-    col = rt.texel_fetch(_u_rgbaTex, coord, rt.i(0))
+    pos = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
+    vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
+    col = rt.construct(4, rt.texel_fetch(_u_rgbaTex, coord, rt.i(0)))
     agentSeed = rt.binary('+', rt.construct(1, rt.binary('+', rt.swizzle(coord, 'x'), rt.binary('*', rt.swizzle(coord, 'y'), stateSize, 1, 'int'), 1, 'int'), 'uint'), rt.construct(1, _u_seed, 'uint'), 1, 'uint')
     needs3DInit = (rt.bool((rt.bool((rt.bool((rt.bool((rt.bool(rt.binary('>=', rt.swizzle(pos, 'w'), rt.f(0.5))) && rt.bool(rt.binary('==', rt.swizzle(pos, 'z'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('>=', rt.swizzle(pos, 'x'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('<=', rt.swizzle(pos, 'x'), rt.f(1))) ? 1 : 0)) && rt.bool(rt.binary('>=', rt.swizzle(pos, 'y'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('<=', rt.swizzle(pos, 'y'), rt.f(1))) ? 1 : 0)
     initSeed = 0
@@ -141,7 +141,7 @@ run_pixel = lambda do |ctx, out|
       return
     end
     dt = rt.binary('*', _u_speed, rt.f(0.01), 1, 'float')
-    newPos = stepAttractor__vec3_int_float.call(rt.swizzle(pos, 'xyz'), _u_attractor, dt)
+    newPos = rt.construct(3, stepAttractor__vec3_int_float.call(rt.swizzle(pos, 'xyz'), _u_attractor, dt))
     respawnSeed = 0
     if rt.bool((rt.bool(rt.component_wise('any', rt.component_wise('isnan', newPos))) || rt.bool(rt.binary('>', rt.length(newPos), rt.f(1000))) ? 1 : 0))
       respawnSeed = rt.binary('+', agentSeed, rt.construct(1, rt.binary('*', _u_time, rt.f(1000), 1, 'float'), 'uint'), 1, 'uint')

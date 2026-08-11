@@ -13,8 +13,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; blurred = nil; center = nil; coord = nil; dist2 = nil; kx = nil; ky = nil; result = nil; samplePos = nil; scaledRadius = nil; sigma = nil; sigma2 = nil; sum = nil; texSample = nil; texSize = nil; weight = nil; weightSum = nil
     texSize = rt.texture_size(_u_inputTex)
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
-    center = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    center = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     scaledRadius = rt.construct(1, rt.binary('*', rt.construct(1, _u_blurRadius), _u_renderScale, 1, 'float'), 'int')
     if rt.bool((rt.bool(rt.binary('<=', scaledRadius, rt.i(0))) || rt.bool(rt.binary('<=', _u_blurAmount, rt.f(0))) ? 1 : 0))
       g['fragColor'].replace((center).map { |c| rt.f32(c) })
@@ -22,7 +22,7 @@ run_pixel = lambda do |ctx, out|
     end
     sigma = rt.binary('/', rt.construct(1, scaledRadius), rt.f(2), 1, 'float')
     sigma2 = rt.binary('*', sigma, sigma, 1, 'float')
-    sum = rt.construct(3, rt.f(0))
+    sum = rt.construct(3, rt.construct(3, rt.f(0)))
     weightSum = rt.f(0)
     ky = rt.unary('-', scaledRadius)
     _for0_first = true
@@ -48,13 +48,13 @@ run_pixel = lambda do |ctx, out|
         samplePos.replace(rt.component_wise('clamp', samplePos, rt.construct(2, rt.i(0), 'int'), rt.binary('-', texSize, rt.i(1), 2, 'int')))
         dist2 = rt.construct(1, rt.binary('+', rt.binary('*', kx, kx, 1, 'int'), rt.binary('*', ky, ky, 1, 'int'), 1, 'int'))
         weight = rt.component_wise('exp', rt.binary('/', rt.unary('-', dist2), rt.binary('*', rt.f(2), sigma2, 1, 'float'), 1, 'float'))
-        texSample = rt.texel_fetch(_u_inputTex, samplePos, rt.i(0))
+        texSample = rt.construct(4, rt.texel_fetch(_u_inputTex, samplePos, rt.i(0)))
         sum.replace((rt.binary('+', sum, rt.binary('*', rt.swizzle(texSample, 'rgb'), weight, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
         weightSum = rt.binary('+', weightSum, weight, 1, 'float')
       end
     end
-    blurred = rt.binary('/', sum, weightSum, 3, 'float')
-    result = rt.component_wise('mix', rt.swizzle(center, 'rgb'), blurred, _u_blurAmount)
+    blurred = rt.construct(3, rt.binary('/', sum, weightSum, 3, 'float'))
+    result = rt.construct(3, rt.component_wise('mix', rt.swizzle(center, 'rgb'), blurred, _u_blurAmount))
     g['fragColor'].replace((rt.construct(4, result, rt.swizzle(center, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

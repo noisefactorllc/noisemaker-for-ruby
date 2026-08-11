@@ -110,7 +110,7 @@ run_pixel = lambda do |ctx, out|
         m = rt.component_wise('max', m, fillEdge__float.call(d))
       else
         if rt.bool(rt.binary('==', _u_shape, rt.i(1)))
-          q = rt.construct(2, tangent, rt.unary('-', radial))
+          q = rt.construct(2, rt.construct(2, tangent, rt.unary('-', radial)))
           d = sdEquilateralTriangle__vec2_float.call(q, shapeSize)
           m = rt.component_wise('max', m, fillEdge__float.call(d))
         else
@@ -123,8 +123,8 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; globalCoord = nil; m = nil; p = nil; rad = nil; scaleFactor = nil; st = nil
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    st = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
     st.replace((rt.binary('*', rt.binary('-', st, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float')
@@ -136,9 +136,9 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', _u_animation, rt.i(2)))
       scaleFactor = rt.binary('*', scaleFactor, rt.binary('+', rt.f(1), rt.binary('*', _u_pulseDepth, rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float')), 1, 'float'), 1, 'float'), 1, 'float')
     end
-    p = rt.binary('*', st, scaleFactor, 2, 'float')
+    p = rt.construct(2, rt.binary('*', st, scaleFactor, 2, 'float'))
     m = rt.component_wise('clamp', mandalaMask__vec2.call(p), rt.f(0), rt.f(1))
-    color = rt.component_wise('mix', _u_bgColor, _u_fgColor, m)
+    color = rt.construct(3, rt.component_wise('mix', _u_bgColor, _u_fgColor, m))
     g['fragColor'].replace((rt.construct(4, color, rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

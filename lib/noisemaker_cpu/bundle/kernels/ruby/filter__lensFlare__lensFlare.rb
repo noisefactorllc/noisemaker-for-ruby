@@ -19,7 +19,7 @@ run_pixel = lambda do |ctx, out|
     flarePos = rt.copy(flarePos, 'float')
     mirrorPos = rt.copy(mirrorPos, 'float')
     a = nil
-    a = rt.component_wise('mix', flarePos, mirrorPos, _t)
+    a = rt.construct(2, rt.component_wise('mix', flarePos, mirrorPos, _t))
     a = rt.assign_swizzle(a, 'x', rt.binary('*', rt.swizzle(a, 'x'), aspectRatio, 1, 'float'))
     return a
   end
@@ -57,9 +57,9 @@ run_pixel = lambda do |ctx, out|
   hexDist__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     a0 = nil; a1 = nil; a2 = nil; d0 = nil; d1 = nil; d2 = nil
-    a0 = rt.construct(2, rt.f(1), rt.f(0))
-    a1 = rt.construct(2, rt.f(0.5), rt.f(0.86602540380000004))
-    a2 = rt.construct(2, rt.unary('-', rt.f(0.5)), rt.f(0.86602540380000004))
+    a0 = rt.construct(2, rt.construct(2, rt.f(1), rt.f(0)))
+    a1 = rt.construct(2, rt.construct(2, rt.f(0.5), rt.f(0.86602540380000004)))
+    a2 = rt.construct(2, rt.construct(2, rt.unary('-', rt.f(0.5)), rt.f(0.86602540380000004)))
     d0 = rt.component_wise('abs', rt.dot(p, a0))
     d1 = rt.component_wise('abs', rt.dot(p, a1))
     d2 = rt.component_wise('abs', rt.dot(p, a2))
@@ -72,18 +72,18 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _g = nil; aFlare = nil; aMirror = nil; aspectRatio = nil; d0 = nil; dc = nil; delta0 = nil; flare = nil; flarePos = nil; globalCoord = nil; localUV = nil; mirrorPos = nil; outFlare = nil; p = nil; src = nil; streakVal = nil; uv = nil
     aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
-    globalCoord = rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')
-    uv = rt.binary('/', globalCoord, _u_fullResolution, 2, 'float')
-    localUV = rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')
-    src = rt.texture(_u_inputTex, localUV)
-    flarePos = rt.construct(2, _u_centerX, _u_centerY)
-    mirrorPos = rt.binary('-', rt.construct(2, rt.f(1)), flarePos, 2, 'float')
+    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    localUV = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    src = rt.construct(4, rt.texture(_u_inputTex, localUV))
+    flarePos = rt.construct(2, rt.construct(2, _u_centerX, _u_centerY))
+    mirrorPos = rt.construct(2, rt.binary('-', rt.construct(2, rt.f(1)), flarePos, 2, 'float'))
     p = uv
     p = rt.assign_swizzle(p, 'x', rt.binary('*', rt.swizzle(p, 'x'), aspectRatio, 1, 'float'))
-    aFlare = flareAxis__vec2_vec2_float_float.call(flarePos, mirrorPos, rt.f(0), aspectRatio)
-    delta0 = rt.binary('-', p, aFlare, 2, 'float')
+    aFlare = rt.construct(2, flareAxis__vec2_vec2_float_float.call(flarePos, mirrorPos, rt.f(0), aspectRatio))
+    delta0 = rt.construct(2, rt.binary('-', p, aFlare, 2, 'float'))
     d0 = rt.length(delta0)
-    flare = rt.construct(3, rt.f(0))
+    flare = rt.construct(3, rt.construct(3, rt.f(0)))
     flare.replace((rt.binary('+', flare, rt.construct(3, coreGlow__float.call(d0)), 3, 'float')).map { |c| rt.f32(c) })
     streakVal = anamorphicStreak__vec2.call(delta0)
     if rt.bool(rt.binary('==', _u__LENS_TYPE, rt.i(3)))
@@ -93,10 +93,10 @@ run_pixel = lambda do |ctx, out|
     if rt.bool((rt.bool(rt.binary('==', _u__LENS_TYPE, rt.i(0))) || rt.bool(rt.binary('==', _u__LENS_TYPE, rt.i(3))) ? 1 : 0))
       flare.replace((rt.binary('+', flare, rt.construct(3, sixPointStar__vec2_float.call(delta0, d0)), 3, 'float')).map { |c| rt.f32(c) })
     end
-    aMirror = flareAxis__vec2_vec2_float_float.call(flarePos, mirrorPos, rt.f(1), aspectRatio)
+    aMirror = rt.construct(2, flareAxis__vec2_vec2_float_float.call(flarePos, mirrorPos, rt.f(1), aspectRatio))
     dc = rt.length(rt.binary('-', p, aMirror, 2, 'float'))
     flare.replace((rt.binary('+', flare, rt.binary('*', haloRainbow__float.call(dc), haloBand__float.call(dc), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-    _g = rt.construct(2, rt.f(0))
+    _g = rt.construct(2, rt.construct(2, rt.f(0)))
     if rt.bool((rt.bool(rt.binary('==', _u__LENS_TYPE, rt.i(0))) || rt.bool(rt.binary('==', _u__LENS_TYPE, rt.i(3))) ? 1 : 0))
       _g.replace((flareAxis__vec2_vec2_float_float.call(flarePos, mirrorPos, rt.f(0.25), aspectRatio)).map { |c| rt.f32(c) })
       flare.replace((rt.binary('+', flare, rt.binary('*', rt.binary('*', rt.construct(3, rt.f(1), rt.f(0.84999999999999998), rt.f(0.59999999999999998)), circleGhost__float_float.call(rt.length(rt.binary('-', p, _g, 2, 'float')), rt.f(0.059999999999999998)), 3, 'float'), rt.f(0.34999999999999998), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
@@ -129,7 +129,7 @@ run_pixel = lambda do |ctx, out|
         flare.replace((rt.binary('+', flare, rt.binary('*', rt.binary('*', rt.construct(3, rt.f(0.94999999999999996), rt.f(0.88), rt.f(0.80000000000000004)), softCircleGhost__float_float.call(rt.length(rt.binary('-', p, _g, 2, 'float')), rt.f(0.20000000000000001)), 3, 'float'), rt.f(0.14999999999999999), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
       end
     end
-    outFlare = rt.binary('*', rt.binary('*', flare, _u_tint, 3, 'float'), rt.binary('/', _u_brightness, rt.f(100), 1, 'float'), 3, 'float')
+    outFlare = rt.construct(3, rt.binary('*', rt.binary('*', flare, _u_tint, 3, 'float'), rt.binary('/', _u_brightness, rt.f(100), 1, 'float'), 3, 'float'))
     if rt.bool(rt.binary('==', _u__LENS_TYPE, rt.i(3)))
       outFlare.replace((rt.binary('*', outFlare, rt.construct(3, rt.f(0.90000000000000002), rt.f(0.94999999999999996), rt.f(1.1000000000000001)), 3, 'float')).map { |c| rt.f32(c) })
     end

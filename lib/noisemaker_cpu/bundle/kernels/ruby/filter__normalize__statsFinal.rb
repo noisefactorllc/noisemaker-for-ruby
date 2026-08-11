@@ -32,7 +32,7 @@ run_pixel = lambda do |ctx, out|
         unless rt.bool(rt.binary('<', x, rt.swizzle(inSize, 'x')))
           break
         end
-        color = rt.texel_fetch(_u_inputTex, rt.construct(2, x, y, 'int'), rt.i(0))
+        color = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, x, y, 'int'), rt.i(0)))
         minVal = rt.component_wise('min', minVal, rt.swizzle(color, 'r'))
         maxVal = rt.component_wise('max', maxVal, rt.swizzle(color, 'g'))
       end

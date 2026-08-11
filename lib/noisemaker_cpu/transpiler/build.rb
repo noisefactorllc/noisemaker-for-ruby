@@ -29,6 +29,7 @@ module NoisemakerCpu
   module Transpiler
     module Build
       SCATTER_ADAPTER_KEYS = %w[
+        filter3d/flow3d:deposit
         points/dla:depositGrid points/lenia:deposit points/physarum:deposit
         render/pointsRender:deposit render/pointsBillboardRender:deposit
       ].each_with_object({}) { |key, out| out[key] = true }.freeze
@@ -64,13 +65,31 @@ module NoisemakerCpu
 
       def self.infer_kind(effect_id, passes)
         namespace = effect_id.split("/", 2).first
-        return "generator" if namespace == "synth"
+        return "generator" if namespace == "synth" || namespace == "synth3d"
+        return "filter" if namespace == "filter3d"
         return "mixer" if namespace == "mixer"
 
         passes.each do |p|
           return "filter" if p["inputs"] && !p["inputs"].empty?
         end
         "generator"
+      end
+
+      def self.infer_domain(effect_id)
+        namespace = effect_id.split("/", 2).first
+        return "loop-begin" if effect_id == "render/loopBegin"
+        return "loop-end" if effect_id == "render/loopEnd"
+        return "volume-generator" if namespace == "synth3d"
+        return "volume-filter" if namespace == "filter3d"
+        return "volume-renderer" if effect_id.start_with?("render/render")
+
+        "image"
+      end
+
+      def self.pass_outputs(pass)
+        (pass["outputs"] || {}).to_h do |name, texture|
+          [(pass["drawBuffers"].to_i >= 2 && name == "color") ? "fragColor" : name, texture]
+        end
       end
 
       def self._key(eid, program)
@@ -101,6 +120,41 @@ module NoisemakerCpu
       end
 
       def self._adapt_source(effect_id, program, source)
+        if effect_id.start_with?("synth3d/")
+          source = source.gsub(
+            /\bint\s+(z|vz)\s*=\s*([A-Za-z_]\w*(?:\.y)?)\s*\/\s*([A-Za-z_]\w*)\s*;/,
+            'float \1 = float(\2) / float(\3);'
+          )
+        end
+        if effect_id == "synth3d/cell3d" && program == "precompute"
+          adapted = source.sub(
+            "return vec3(q) / 4294967295.0;",
+            "return cpu_cell3d_hash_result(q);"
+          )
+          raise "cannot locate synth3d/cell3d hash result for CPU lowering\n" if adapted == source
+
+          return adapted.sub(
+            /vec3\s+([A-Za-z_]\w*)\s*=\s*(neighbor\s*\+\s*mix\(vec3\(0\.5\),\s*randomOffset,\s*jitter\))\s*;\s*vec3\s+diff\s*=\s*\1\s*-\s*f\s*;/,
+            'vec3 diff = \2 - f;'
+          )
+        end
+        if effect_id == "synth3d/flythrough3d" && program == "precompute"
+          return source
+            .sub(/struct FractalResult \{.*?^\};\n/m, "")
+            .gsub(/\bFractalResult\b/, "vec3")
+            .gsub(/\.dist\b/, ".x")
+            .gsub(/\.trap\b/, ".y")
+            .gsub(/\.iterRatio\b/, ".z")
+        end
+        if effect_id == "synth3d/noise3d" && program == "precompute"
+          adapted = source.sub(
+            /\bfloat\s+hash4\s*\(\s*vec4\s+p\s*\)\s*\{.*?^\s*\}/m,
+            "float hash4(vec4 p) {\n    return cpu_noise3d_hash4(p, seed);\n}"
+          )
+          raise "cannot locate synth3d/noise3d hash4 for CPU lowering\n" if adapted == source
+
+          return adapted
+        end
         if effect_id == "filter/temporalAberration" && program == "temporalAberration"
           return source.gsub(
             /slots\[(\d+)\]\s*=\s*\(s\.a\s*<\s*0\.5\)\s*\?\s*cur\s*:\s*s\s*;/,
@@ -161,10 +215,10 @@ module NoisemakerCpu
                   "program" => p["program"],
                   "key" => nil,
                   "inputs" => (p["inputs"] || {}),
-                  "outputs" => (p["outputs"] || {}),
+                  "outputs" => pass_outputs(p),
                   "uniforms" => (p["uniforms"] || {}),
                 }
-                %w[repeat blend clear drawMode count countUniform type entryPoint drawBuffers conditions].each do |field|
+                %w[repeat blend clear drawMode count countUniform type entryPoint drawBuffers conditions viewport].each do |field|
                   pass_record[field] = p[field] unless p[field].nil?
                 end
                 passes << pass_record
@@ -196,10 +250,10 @@ module NoisemakerCpu
               "program" => p["program"],
               "key" => key,
               "inputs" => (p["inputs"] || {}),
-              "outputs" => (p["outputs"] || {}),
+              "outputs" => pass_outputs(p),
               "uniforms" => (p["uniforms"] || {}),
             }
-            %w[repeat blend clear drawMode count countUniform type entryPoint drawBuffers conditions].each do |field|
+            %w[repeat blend clear drawMode count countUniform type entryPoint drawBuffers conditions viewport].each do |field|
               pass_record[field] = p[field] unless p[field].nil?
             end
             passes << pass_record
@@ -210,6 +264,7 @@ module NoisemakerCpu
             "namespace" => (eff["namespace"] || eid.split("/", 2).first),
             "func" => eff["func"],
             "kind" => infer_kind(eid, eff["passes"]),
+            "domain" => infer_domain(eid),
             "params" => eff["params"],
             # Definition order of params -- the oracle binds positional DSL
             # args and mixer surface feeds by this order; Hash key order
@@ -221,7 +276,9 @@ module NoisemakerCpu
           }
           bundle["effects"][eid]["externalTexture"] = eff["externalTexture"] if eff["externalTexture"]
           bundle["effects"][eid]["iterated"] = true if eff["iterated"]
-          %w[outputXyz outputVel outputRgba].each do |field|
+          bundle["effects"][eid]["loopRole"] = "begin" if eid == "render/loopBegin"
+          bundle["effects"][eid]["loopRole"] = "end" if eid == "render/loopEnd"
+          %w[outputTex outputTex3d outputGeo outputXyz outputVel outputRgba].each do |field|
             bundle["effects"][eid][field] = eff[field] unless eff[field].nil?
           end
         end

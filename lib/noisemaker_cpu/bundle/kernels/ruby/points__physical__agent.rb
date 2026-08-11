@@ -32,8 +32,8 @@ run_pixel = lambda do |ctx, out|
   noise2D__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     a = nil; b = nil; c = nil; d = nil; f = nil; i = nil; n = nil
-    i = rt.component_wise('floor', p)
-    f = rt.component_wise('fract', p)
+    i = rt.construct(2, rt.component_wise('floor', p))
+    f = rt.construct(2, rt.component_wise('fract', p))
     f.replace((rt.binary('*', rt.binary('*', f, f, 2, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 2, 'float'), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
     n = rt.binary('+', rt.construct(1, rt.swizzle(i, 'x'), 'uint'), rt.binary('*', rt.construct(1, rt.swizzle(i, 'y'), 'uint'), rt.i(57), 1, 'uint'), 1, 'uint')
     a = hash__uint.call(n)
@@ -65,11 +65,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     alive = nil; ax = nil; ay = nil; coord = nil; deviationMultiplier = nil; dragFactor = nil; needsRespawn = nil; noiseScale = nil; px = nil; py = nil; pz = nil; rgba = nil; seed_f = nil; stateSize = nil; vel = nil; vx = nil; vy = nil; vz = nil; wanderAngle = nil; wanderStrength = nil; wanderX = nil; wanderY = nil; xyz = nil
-    coord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy'), 'int')
+    coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
-    xyz = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
-    vel = rt.texel_fetch(_u_velTex, coord, rt.i(0))
-    rgba = rt.texel_fetch(_u_rgbaTex, coord, rt.i(0))
+    xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
+    vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
+    rgba = rt.construct(4, rt.texel_fetch(_u_rgbaTex, coord, rt.i(0)))
     px = rt.swizzle(xyz, 'x')
     py = rt.swizzle(xyz, 'y')
     pz = rt.swizzle(xyz, 'z')

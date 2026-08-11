@@ -734,8 +734,10 @@ module NoisemakerCpu
 
     def self._compile_chain(chain, bindings, search, effects)
       steps = []
-      has_input = false
+      has_image = false
+      has_volume = false
       starts_with_generator = false
+      open_loop = nil
       chain["calls"].each_with_index do |raw_call, index|
         call = raw_call
         binding = bindings[call["name"]]
@@ -750,11 +752,12 @@ module NoisemakerCpu
             _throw("read(surface) must begin a chain", call["loc"])
           end
           steps << { "kind" => "read", "surface" => args[0]["value"]["name"], "loc" => call["loc"] }
-          has_input = true
+          has_image = true
           next
         end
         if call["name"] == "write"
-          if !has_input || args.length != 1 || !_is_surface(args[0]["value"])
+          _throw("loopBegin must be closed by loopEnd before write", call["loc"]) if open_loop
+          if !has_image || args.length != 1 || !_is_surface(args[0]["value"])
             _throw("write(surface) requires a current image", call["loc"])
           end
           steps << { "kind" => "write", "surface" => args[0]["value"]["name"], "loc" => call["loc"] }
@@ -765,12 +768,32 @@ module NoisemakerCpu
           _throw("Unknown effect \"#{call['name']}\" in search namespaces #{search.join(', ')}", call["loc"])
         end
         spec = effects[effect_id]
-        if spec["kind"] == "generator"
+        domain = spec["domain"] || "image"
+        if domain == "volume-generator"
+          if index != 0 && !(spec["iterated"] && has_volume)
+            _throw("Generator #{effect_id} must begin a chain", call["loc"])
+          end
+          starts_with_generator = true if index == 0
+          has_volume = true
+        elsif domain == "volume-filter"
+          _throw("volume filter #{effect_id} requires a volume input", call["loc"]) unless has_volume
+        elsif domain == "volume-renderer"
+          _throw("volume renderer #{effect_id} requires a volume input", call["loc"]) unless has_volume
+          has_image = true
+        elsif domain == "loop-begin"
+          _throw("#{effect_id} requires a current image", call["loc"]) unless has_image
+          _throw("nested loopBegin regions are not supported", call["loc"]) if open_loop
+          open_loop = call["loc"]
+        elsif domain == "loop-end"
+          _throw("loopEnd has no matching loopBegin", call["loc"]) unless open_loop
+          _throw("#{effect_id} requires a current image", call["loc"]) unless has_image
+          open_loop = nil
+        elsif spec["kind"] == "generator"
           _throw("Generator #{effect_id} must begin a chain", call["loc"]) if index != 0
 
           starts_with_generator = true
-          has_input = true
-        elsif !has_input
+          has_image = true
+        elsif !has_image
           requires_input_tex = (spec["passes"] || []).any? do |p|
             (p["inputs"] || {}).values.any? { |v| v == "inputTex" }
           end
@@ -778,7 +801,7 @@ module NoisemakerCpu
             _throw("#{spec['kind']} #{effect_id} requires an input; begin with a generator or read(oN)",
                    call["loc"])
           end
-          has_input = true
+          has_image = true
         end
         params, surfaces = _normalize_effect(effect_id, spec, args)
         steps << {
@@ -789,6 +812,7 @@ module NoisemakerCpu
           "loc" => call["loc"],
         }
       end
+      _throw("loopBegin must be closed by loopEnd before the chain ends", open_loop) if open_loop
       if starts_with_generator && (steps.empty? || steps[-1]["kind"] != "write")
         _throw("Generator chain must end with write(oN)", chain["loc"])
       end
