@@ -102,6 +102,7 @@ ruby_render = lambda do |effect_id, kind, ext, render_params|
 end
 
 effects = NoisemakerCpu::Renderer.meta["effects"]
+unknown_ids = only ? only.keys.reject { |eid| effects.key?(eid) }.sort : []
 ids = effects.keys.sort.select { |eid| !only || only[eid] }
 
 ok = []
@@ -182,7 +183,8 @@ unless oracle_err.empty?
   take_n = oracle_err.length > 5 ? 5 : oracle_err.length
   print "\nORACLE ERRORS (JS effect CLI failed): #{oracle_err.length}  e.g. #{oracle_err[0, take_n].join(" ")}\n"
 end
+print "\nUNKNOWN EFFECTS: #{unknown_ids.join(" ")}\n" unless unknown_ids.empty?
 print "\nPASS: #{ok.length}  (byte-exact: #{exact})\n"
 
-failed = ids.empty? || ok.length != ids.length || !diffs.empty? || !errors.empty? || !oracle_err.empty?
+failed = ids.empty? || ok.length != ids.length || !diffs.empty? || !errors.empty? || !oracle_err.empty? || !unknown_ids.empty?
 exit 1 if failed

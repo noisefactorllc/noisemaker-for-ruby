@@ -139,6 +139,21 @@ class TestParity < Minitest::Test
     assert_includes stdout, "0/0 pass"
   end
 
+  def test_parity_script_exits_nonzero_when_some_requested_effects_are_unknown
+    cpu_dir = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path("../../noisemaker-for-cpu", __dir__)
+    cli = File.join(cpu_dir, "bin", "noisemaker-cpu.js")
+    skip "JS oracle is unavailable" unless File.exist?(cli) && system("node", "--version", out: File::NULL, err: File::NULL)
+
+    stdout, _stderr, status = Open3.capture3(
+      { "NOISEMAKER_CPU_DIR" => cpu_dir },
+      RbConfig.ruby, PARITY_SCRIPT_PATH, "--only", "synth/solid,not/an-effect"
+    )
+
+    refute status.success?, stdout
+    assert_includes stdout, "UNKNOWN EFFECTS"
+    assert_includes stdout, "not/an-effect"
+  end
+
   # Not a perl mirror -- see file header. Scoped live-CDN checks: fetch a
   # couple of effects + the manifest, verify sha256 against perl's committed
   # lock, confirm the disk cache round-trips (second fetch hits disk).
