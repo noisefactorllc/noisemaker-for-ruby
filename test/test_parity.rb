@@ -21,13 +21,16 @@
 require "minitest/autorun"
 require "json"
 require "digest/sha2"
-require "tmpdir"
 require "fileutils"
+require "open3"
+require "rbconfig"
+require "tmpdir"
 
 class TestParity < Minitest::Test
   RENDERER_PATH = File.expand_path("../lib/noisemaker_cpu/renderer.rb", __dir__)
   PNG_PATH = File.expand_path("../lib/noisemaker_cpu/png.rb", __dir__)
   BUNDLE_METADATA_PATH = File.expand_path("../lib/noisemaker_cpu/bundle/metadata.json", __dir__)
+  PARITY_SCRIPT_PATH = File.expand_path("../scripts/parity.rb", __dir__)
   RENDER_DEPS_READY = File.exist?(RENDERER_PATH) && File.exist?(PNG_PATH)
 
   require_relative "../lib/noisemaker_cpu/renderer" if RENDER_DEPS_READY
@@ -113,6 +116,27 @@ class TestParity < Minitest::Test
     js = js_effect("synth/noise")
     rb = NoisemakerCpu::Renderer.render_effect("synth/noise", {}, nil, width: 8, height: 8, seed: 1, time: 0.25)
     assert_equal 0, max_diff(js, rb), "synth/noise byte-exact"
+  end
+
+  def test_parity_script_exits_nonzero_on_oracle_failure
+    missing_oracle = File.join(TMP_DIR, "missing-oracle")
+    stdout, _stderr, status = Open3.capture3(
+      { "NOISEMAKER_CPU_DIR" => missing_oracle },
+      RbConfig.ruby, PARITY_SCRIPT_PATH, "--only", "synth/solid"
+    )
+
+    refute status.success?, stdout
+    assert_includes stdout, "0/1 pass"
+    assert_includes stdout, "1 oracle-error"
+  end
+
+  def test_parity_script_exits_nonzero_when_no_effects_are_selected
+    stdout, _stderr, status = Open3.capture3(
+      RbConfig.ruby, PARITY_SCRIPT_PATH, "--only", "not/an-effect"
+    )
+
+    refute status.success?, stdout
+    assert_includes stdout, "0/0 pass"
   end
 
   # Not a perl mirror -- see file header. Scoped live-CDN checks: fetch a

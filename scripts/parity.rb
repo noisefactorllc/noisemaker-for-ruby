@@ -183,3 +183,6 @@ unless oracle_err.empty?
   print "\nORACLE ERRORS (JS effect CLI failed): #{oracle_err.length}  e.g. #{oracle_err[0, take_n].join(" ")}\n"
 end
 print "\nPASS: #{ok.length}  (byte-exact: #{exact})\n"
+
+failed = ids.empty? || ok.length != ids.length || !diffs.empty? || !errors.empty? || !oracle_err.empty?
+exit 1 if failed
