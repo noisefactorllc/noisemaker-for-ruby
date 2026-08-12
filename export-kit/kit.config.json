@@ -1,0 +1,26 @@
+{
+  "configVersion": 1,
+  "id": "ruby",
+  "series": "0.1",
+  "shaderSource": "kit",
+  "engineSource": "kit",
+  "pageTemplate": false,
+  "subtrees": [
+    { "from": "lib", "to": "engine/lib" },
+    { "from": "exe/noisemaker-rb", "to": "engine/exe/noisemaker-rb" }
+  ],
+  "licenses": [
+    { "from": "LICENSE", "to": "LICENSES/noisemaker-for-ruby-LICENSE.txt" }
+  ],
+  "requireFiles": ["run.rb", "engine/lib/noisemaker_cpu.rb", "engine/exe/noisemaker-rb"],
+  "forbidDirs": ["shaders"],
+  "inject": {
+    "type": "dsl-file",
+    "target": "program.dsl"
+  },
+  "compat": {
+    "mode": "list",
+    "fromBundleMetadata": "lib/noisemaker_cpu/bundle/metadata.json"
+  },
+  "engineBytesFrom": ["engine/"]
+}
