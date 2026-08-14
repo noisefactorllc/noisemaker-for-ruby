@@ -48,7 +48,7 @@ run_pixel = lambda do |ctx, out|
     return rt.texel_fetch(_u_inputTex, coord, rt.i(0))
   end
   main__void = lambda do
-    _for0_first = nil; _for1_first = nil; blueRecords = nil; center = nil; centerAlpha = nil; difference = nil; dimensions = nil; index = nil; left = nil; majorRecords = nil; maxDifference = nil; medianIndex = nil; medianRgb = nil; originalRgb = nil; pivotBlue = nil; pivotMajor = nil; replaceCenter = nil; right = nil; sampleColor = nil; scanLeft = nil; scanRight = nil; temporaryBlue = nil; temporaryMajor = nil; x = nil; y = nil
+    _for0_first = nil; _for1_first = nil; activeCount = nil; blueRecords = nil; center = nil; centerAlpha = nil; difference = nil; dimensions = nil; index = nil; left = nil; majorRecords = nil; maxDifference = nil; medianIndex = nil; medianRgb = nil; originalRgb = nil; pivotBlue = nil; pivotMajor = nil; replaceCenter = nil; right = nil; sampleColor = nil; scanLeft = nil; scanRight = nil; temporaryBlue = nil; temporaryMajor = nil; x = nil; y = nil
     majorRecords = rt.new_array(rt.i(49), 2)
     blueRecords = rt.new_array(rt.i(49), 1)
     dimensions = rt.texture_size(_u_inputTex)
@@ -86,9 +86,10 @@ run_pixel = lambda do |ctx, out|
         index = rt.binary('+', index, rt.i(1), 1, 'int')
       end
     end
-    medianIndex = rt.binary('/', rt.i(49), rt.i(2), 1, 'int')
+    activeCount = rt.binary('*', rt.binary('+', rt.binary('*', _u__RADIUS, rt.i(2), 1, 'int'), rt.i(1), 1, 'int'), rt.binary('+', rt.binary('*', _u__RADIUS, rt.i(2), 1, 'int'), rt.i(1), 1, 'int'), 1, 'int')
+    medianIndex = rt.binary('>>', rt.binary('-', activeCount, rt.i(1), 1, 'int'), rt.i(1), 1, 'int')
     left = rt.i(0)
-    right = rt.binary('-', rt.i(49), rt.i(1), 1, 'int')
+    right = rt.binary('-', activeCount, rt.i(1), 1, 'int')
     (0..1048575).each do |_wh2|
       unless rt.bool(rt.binary('<', left, right))
         break

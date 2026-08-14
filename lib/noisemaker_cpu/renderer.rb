@@ -24,6 +24,9 @@ require_relative "texture_format"
 require_relative "palette_data"
 require_relative "iteration"
 require_relative "scatter_adapters"
+require_relative "sink_manager"
+require_relative "frame_export_queue"
+require_relative "cpu_frame_export_adapter"
 
 module NoisemakerCpu
   module Renderer
@@ -957,6 +960,71 @@ module NoisemakerCpu
       raise "Surface #{plan['render_surface']} has not been written" if rendered.nil?
 
       rendered
+    end
+  end
+
+  class CpuRenderer
+    attr_reader :sink_manager
+
+    def initialize(on_sink_error: nil)
+      @sink_manager = NoisemakerCpu::SinkManager.new(on_error: on_sink_error)
+      @sink_descriptor = {
+        "width" => 0, "height" => 0, "format" => "rgba8unorm",
+        "colorSpace" => "srgb", "alphaMode" => "straight", "fps" => 60
+      }
+      @sinks_configured = false
+    end
+
+    def add_sink(sink)
+      @sink_manager.add(sink)
+    end
+
+    def create_frame_export_queue(slots: 3, on_error: nil)
+      NoisemakerCpu::FrameExportQueue.new(
+        NoisemakerCpu::CpuFrameExportAdapter.new, slots: slots, on_error: on_error
+      )
+    end
+
+    def render(source, width: 512, height: 512, seed: 1, time: 0.0,
+      external_textures: nil, seed_surfaces: nil, presentation_timestamp: nil)
+      validate_options(width, height, seed, time)
+      configure_sinks(width, height)
+      result = NoisemakerCpu::Renderer.render_dsl(
+        source, width: width, height: height, seed: seed, time: time,
+        external_textures: external_textures, seed_surfaces: seed_surfaces
+      )
+      timestamp = presentation_timestamp.nil? ? monotonic_milliseconds : presentation_timestamp
+      @sink_manager.submit(result, timestamp)
+      result
+    end
+
+    def dispose
+      @sink_manager.close
+    end
+
+    private
+
+    def validate_options(width, height, seed, time)
+      raise ArgumentError, "width must be a positive integer" unless width.is_a?(Integer) && width.positive?
+      raise ArgumentError, "height must be a positive integer" unless height.is_a?(Integer) && height.positive?
+      unless time.is_a?(Numeric) && time.real? && time.to_f.finite?
+        raise TypeError, "time must be finite"
+      end
+      raise TypeError, "seed must be an integer" unless seed.is_a?(Integer)
+    end
+
+    def configure_sinks(width, height)
+      unchanged = @sink_descriptor["width"] == width && @sink_descriptor["height"] == height
+      return if @sinks_configured && unchanged
+
+      @sink_descriptor["width"] = width
+      @sink_descriptor["height"] = height
+      @sinks_configured = true
+      @sink_manager.configure(@sink_descriptor)
+    end
+
+    def monotonic_milliseconds
+      Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000.0
     end
   end
 end
