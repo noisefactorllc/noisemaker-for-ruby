@@ -1,3 +1,8 @@
+<!-- repo-hero -->
+<a href="https://noisemaker.app/"><img src="docs/hero.jpg" alt="Noisemaker for CPU (Ruby)" width="100%"></a>
+
+<sub>Open source from <a href="https://noisefactor.io">Noise Factor</a> &middot; <a href="https://github.com/noisefactorllc">more projects</a></sub>
+
 # noisemaker-for-ruby
 
 This is not a classic noise library. This is a new effort centered around
