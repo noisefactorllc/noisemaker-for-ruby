@@ -16,10 +16,7 @@ PNG_LOADABLE = File.exist?(SURFACE_PATH)
 
 require_relative "../lib/noisemaker_cpu/png" if PNG_LOADABLE
 
-# The JS PNG-encoder cross-check needs a sibling noisemaker-cpu checkout + node.
-# Python's test_png.py falls back to a sibling "noisemaker-cpu" dir; in this
-# repo layout the JS oracle actually lives at "noisemaker-for-cpu" (per the
-# port contract's reference table), so that's the Ruby default here.
+# The JS PNG-encoder cross-check needs a sibling noisemaker-for-cpu checkout + node.
 CPU_DIR = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path("../../noisemaker-for-cpu", __dir__)
 
 SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10].pack("C*").b.freeze
@@ -106,7 +103,7 @@ class TestPng < Minitest::Test
   end
 
   def test_cross_check_against_js_encoder
-    skip "needs node + a sibling noisemaker-cpu checkout" unless system("which node > /dev/null 2>&1") && Dir.exist?(CPU_DIR)
+    skip "needs node + a sibling noisemaker-for-cpu checkout" unless system("which node > /dev/null 2>&1") && Dir.exist?(CPU_DIR)
 
     Dir.mktmpdir do |tmp_dir|
       output_path = File.join(tmp_dir, "nmpng_fix.png")

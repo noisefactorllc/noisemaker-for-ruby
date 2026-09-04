@@ -9,7 +9,7 @@ This is not a classic noise library. This is a new effort centered around
 software shader execution.
 
 A pure-Ruby CPU implementation of the [Noisemaker](https://noisemaker.app)
-shader engine — the Ruby port of [`noisemaker-cpu`](https://github.com/noisefactorllc/noisemaker-for-cpu),
+shader engine — the Ruby port of [`noisemaker-for-cpu`](https://github.com/noisefactorllc/noisemaker-for-cpu),
 sibling to the [Python](https://github.com/noisefactorllc/noisemaker-for-python)
 and [Perl](https://github.com/noisefactorllc/noisemaker-for-perl) ports.
 
@@ -23,7 +23,7 @@ hashing, screen-space derivatives, and GL texture sampling.
 
 **All 205 catalog effects** are bundled (297 kernels) and render at
 **byte-parity** with the JavaScript engine's `effect` CLI —
-verified by `scripts/parity.rb` against a sibling `noisemaker-cpu` checkout.
+verified by `scripts/parity.rb` against a sibling `noisemaker-for-cpu` checkout.
 
 ## Install
 
@@ -85,7 +85,7 @@ rake test
 ```
 
 Cross-language parity against the JS engine (`scripts/parity.rb`) needs a
-sibling `noisemaker-cpu` checkout (or `NOISEMAKER_CPU_DIR`) and Node.
+sibling `noisemaker-for-cpu` checkout (or `NOISEMAKER_CPU_DIR`) and Node.
 
 ## License
 

@@ -10,13 +10,13 @@ your report instead of improvising.
 
 Pure-Ruby port of the noisemaker-cpu shader engine, same shape as the sibling
 python and perl ports: GLSL→Ruby transpiler, float32-faithful runtime, the
-167-effect bundle (211 kernel files), Polymorphic DSL, PNG I/O, CLI, and the
+205-effect bundle (288 generated kernel files), Polymorphic DSL, PNG I/O, CLI, and the
 cross-language parity harness.
 
-**Definition of done for the repo:** `scripts/parity.rb` reports **167/167
+**Definition of done for the repo:** `scripts/parity.rb` reports **205/205
 pass (≤2 bytes/channel)** against the JS oracle at 8×8, seed 1, time 0.25 —
-matching today's measured perl baseline (164 byte-exact; known ≤2 near-misses:
-`filter/mosaicTiles`, `filter/stipple`, `filter/strokes`).
+with 202 byte-exact and three known ≤2 near-misses:
+`filter/mosaicTiles`, `filter/stipple`, `filter/strokes`.
 
 ## References (all READ-ONLY)
 
@@ -109,7 +109,7 @@ Coordinator owns: `lib/noisemaker_cpu.rb` (facade), `version.rb`, gemspec,
 lib/noisemaker_cpu/bundle/
 ├── metadata.json        # language-neutral; content-identical to perl/python's
 ├── bundle-lock.json     # sha256 per "<effect>:<program>" — MUST equal perl's
-└── kernels/ruby/<namespace>__<effect>__<program>.rb   # 211 files
+└── kernels/ruby/<namespace>__<effect>__<program>.rb   # 288 files
 ```
 
 CDN fetches cache to `.cdn-cache/<version>/` (gitignored, extracted JSON),
@@ -233,8 +233,8 @@ every assertion, adjusting only syntax.
 - Run: `cd /Users/alex/platform/noisemaker-for-ruby && /opt/homebrew/opt/ruby/bin/ruby -Ilib test/test_<name>.rb`
 - The parity harness contract (worker E): same flags and behavior as
   `scripts/parity.pl` — `--only id,id`, `--size N`, JS oracle located via
-  `NOISEMAKER_CPU_DIR` env (default `../noisemaker-cpu`), summary line format
-  `=== PARITY: N/167 pass (<=2) | ... ===`.
+  `NOISEMAKER_CPU_DIR` env (default `../noisemaker-for-cpu`), summary line format
+  `=== PARITY: N/M pass (<=2) | ... ===`, where `M` is 205 for the full sweep.
 
 ## Worker rules
 

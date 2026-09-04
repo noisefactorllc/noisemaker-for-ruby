@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Mirror of t/05-parity.t (Perl): Ruby renders must match the JS oracle
-# byte-for-byte on a fast subset (the full 167-effect sweep lives in
+# byte-for-byte on a fast subset (the full 205-effect sweep lives in
 # scripts/parity.rb). Guarded to skip gracefully -- rather than fail -- when
 # a dependency this worker doesn't own isn't ready yet: the JS oracle itself
 # (mirrors perl's `plan skip_all`), Worker C/D's renderer.rb/png.rb, and the
@@ -42,7 +42,7 @@ class TestParity < Minitest::Test
 
   require_relative "../lib/noisemaker_cpu/transpiler/cdn" if CDN_DEPS_READY
 
-  CPU_DIR = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path(File.join(__dir__, "..", "..", "noisemaker-cpu"))
+  CPU_DIR = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path(File.join(__dir__, "..", "..", "noisemaker-for-cpu"))
   CLI = File.join(CPU_DIR, "bin", "noisemaker-cpu.js")
 
   # Cross-port bootstrap check: the perl port's committed lock, expected at a
