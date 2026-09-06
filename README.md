@@ -13,17 +13,15 @@ shader engine — the Ruby port of [`noisemaker-for-cpu`](https://github.com/noi
 sibling to the [Python](https://github.com/noisefactorllc/noisemaker-for-python)
 and [Perl](https://github.com/noisefactorllc/noisemaker-for-perl) ports.
 
-Effect kernels are **transpiled directly from the upstream GLSL** served by
-the `shaders.noisedeck.app` CDN (sha256-locked), not hand-maintained: a
-pure-Ruby GLSL ES 3.00 front end lexes, preprocesses, parses, and emits a
-Ruby kernel per shader pass, and a float32-faithful runtime reproduces the
-reference engine's arithmetic — float32 register rounding, half-float
-render-target quantization, GLSL uint32 wraparound with bit-exact PCG
-hashing, screen-space derivatives, and GL texture sampling.
+Effect kernels are **transpiled directly from the upstream GLSL** served by the `shaders.noisedeck.app` CDN (sha256-locked). They are not hand-maintained. A pure-Ruby GLSL ES 3.00 front end lexes, preprocesses, parses, and emits a Ruby kernel per shader pass. A float32-faithful runtime reproduces the reference engine's arithmetic:
 
-**All 205 catalog effects** are bundled (297 kernels) and render at
-**byte-parity** with the JavaScript engine's `effect` CLI —
-verified by `scripts/parity.rb` against a sibling `noisemaker-for-cpu` checkout.
+- Float32 register rounding.
+- Half-float render-target quantization.
+- GLSL uint32 wraparound with bit-exact PCG hashing.
+- Screen-space derivatives.
+- GL texture sampling.
+
+The bundle includes **all 205 catalog effects** (297 kernels). They render at **byte-parity** with the JavaScript engine's `effect` CLI. `scripts/parity.rb` verifies this against a sibling `noisemaker-for-cpu` checkout.
 
 ## Install
 
