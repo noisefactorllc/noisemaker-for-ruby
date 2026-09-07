@@ -109,6 +109,18 @@ class TestParity < Minitest::Test
     assert_equal 0, max_diff(js, rb), "filter/invert byte-exact"
   end
 
+  %w[filter/mosaicTiles filter/stipple filter/strokes].each do |effect_id|
+    define_method("test_#{effect_id.tr('/', '_')}_canonical_rounding_is_byte_exact") do
+      skip_unless_renderable
+      js = js_effect(effect_id)
+      solid = NoisemakerCpu::Renderer.render_effect("synth/solid", {}, nil, width: 8, height: 8, seed: 1, time: 0.25)
+      rb = NoisemakerCpu::Renderer.render_effect(effect_id, {}, { "inputTex" => solid },
+                                                  width: 8, height: 8, seed: 1, time: 0.25)
+      assert_equal 0, max_diff(js, rb), "#{effect_id} canonical rounding byte-exact"
+    end
+  end
+
+
   # seeded generator (uint hash path)
   def test_synth_noise_byte_exact
     skip_unless_renderable

@@ -120,6 +120,22 @@ module NoisemakerCpu
       end
 
       def self._adapt_source(effect_id, program, source)
+        # Match canonical CPU float32 hash and pigment storage boundaries.
+        if %w[filter/mosaicTiles filter/stipple filter/strokes].include?(effect_id)
+          source = source.gsub(
+            "return fract((p3.x + p3.y) * p3.z);",
+            "return fract(float(float(p3.x + p3.y) * p3.z));"
+          ).gsub(
+            "return fract((p3.xx + p3.yz) * p3.zy);",
+            "return fract(vec2(float(float(p3.x + p3.y) * p3.z), float(float(p3.x + p3.z) * p3.y)));"
+          )
+        end
+        if effect_id == "filter/strokes" && program == "stkSmear"
+          pigment = "pigmentSum += srcSample(centerUV).rgb * mark;"
+          raise "strokes canonical pigment pattern changed" unless source.scan(pigment).length == 1
+
+          source = source.sub(pigment, "pigmentSum += vec3(srcSample(centerUV).rgb * mark);")
+        end
         if effect_id.start_with?("synth3d/")
           source = source.gsub(
             /\bint\s+(z|vz)\s*=\s*([A-Za-z_]\w*(?:\.y)?)\s*\/\s*([A-Za-z_]\w*)\s*;/,

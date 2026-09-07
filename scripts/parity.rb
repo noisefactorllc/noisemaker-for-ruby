@@ -179,20 +179,16 @@ ids.each do |eid|
     x = (ja[i] - pa[i]).abs
     d = x if x > d
   end
-  if d <= 2
+  if d == 0
     ok << eid
-    if d == 0
-      exact += 1
-    else
-      print "NEARMISS #{d} #{eid}\n"
-    end
+    exact += 1
   else
     diffs << [eid, d]
   end
 end
 
 err_count = errors.values.sum(&:length)
-printf("\n=== PARITY: %d/%d pass (<=2)  |  %d diff  |  %d runtime-error  |  %d oracle-error ===\n\n",
+printf("\n=== PARITY: %d/%d pass (byte-exact)  |  %d diff  |  %d runtime-error  |  %d oracle-error ===\n\n",
        ok.length, ids.length, diffs.length, err_count, oracle_err.length)
 unless errors.empty?
   print "RUNTIME ERRORS (grouped):\n"

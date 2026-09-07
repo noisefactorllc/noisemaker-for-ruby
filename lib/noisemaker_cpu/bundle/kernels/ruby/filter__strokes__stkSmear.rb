@@ -19,7 +19,7 @@ run_pixel = lambda do |ctx, out|
     p3 = nil
     p3 = rt.construct(3, rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.f(0.1031), 3, 'float')))
     p3.replace((rt.binary('+', p3, rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.329999999999998), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
-    return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float'), rt.swizzle(p3, 'z'), 1, 'float'))
+    return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')))
   end
   valueNoise2__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
@@ -34,7 +34,7 @@ run_pixel = lambda do |ctx, out|
     p3 = nil
     p3 = rt.construct(3, rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.construct(3, rt.f(0.1031), rt.f(0.10299999999999999), rt.f(0.097299999999999998)), 3, 'float')))
     p3.replace((rt.binary('+', p3, rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.329999999999998), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
-    return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p3, 'xx'), rt.swizzle(p3, 'yz'), 2, 'float'), rt.swizzle(p3, 'zy'), 2, 'float'))
+    return rt.component_wise('fract', rt.construct(2, rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')), rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'z'), 1, 'float')), rt.swizzle(p3, 'y'), 1, 'float'))))
   end
   lum__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
@@ -119,7 +119,7 @@ run_pixel = lambda do |ctx, out|
         mark = rt.binary('*', body, bristle, 1, 'float')
         centerGlobal = rt.construct(2, rt.binary('+', rt.binary('*', dirUnit, rt.swizzle(center, 'x'), 2, 'float'), rt.binary('*', across, rt.swizzle(center, 'y'), 2, 'float'), 2, 'float'))
         centerUV = rt.construct(2, rt.binary('+', uv, rt.binary('/', rt.binary('-', centerGlobal, gc, 2, 'float'), _u_resolution, 2, 'float'), 2, 'float'))
-        pigmentSum.replace((rt.binary('+', pigmentSum, rt.binary('*', rt.swizzle(srcSample__vec2.call(centerUV), 'rgb'), mark, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+        pigmentSum.replace((rt.binary('+', pigmentSum, rt.construct(3, rt.binary('*', rt.swizzle(srcSample__vec2.call(centerUV), 'rgb'), mark, 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
         pigmentWeight = rt.binary('+', pigmentWeight, mark, 1, 'float')
         field = rt.component_wise('max', field, mark)
       end

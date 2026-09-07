@@ -84,6 +84,8 @@ rake test
 
 Cross-language parity against the JS engine (`scripts/parity.rb`) needs a
 sibling `noisemaker-for-cpu` checkout (or `NOISEMAKER_CPU_DIR`) and Node.
+The harness requires exact RGBA8 bytes for all 205 effects and fails on any
+difference, render error, or unknown effect selection.
 
 ## License
 
