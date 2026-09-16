@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  map__float_float_float_float_float = rotate2D__vec2_float = tile__vec2 = getImage__vec2 = main__void = nil
+  map__float_float_float_float_float = rotate2D__vec2_float = tile__vec2 = mediaTexel__ivec2_ivec2 = sampleMedia__vec2 = getImage__vec2 = main__void = nil
   _retc = nil
   _u_imageTex = ctx.texture_binding('imageTex')
   _u_imageSize = u.key?('imageSize') ? u['imageSize'] : rt.construct(2, 0.0)
@@ -52,6 +52,22 @@ run_pixel = lambda do |ctx, out|
       end
     end
     return st
+  end
+  mediaTexel__ivec2_ivec2 = lambda do |p, size|
+    p = rt.copy(p, 'int')
+    size = rt.copy(size, 'int')
+    c = nil
+    c = rt.construct(4, rt.texel_fetch(_u_imageTex, rt.component_wise('clamp', p, rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int')), rt.i(0)))
+    return rt.construct(4, rt.binary('*', rt.swizzle(c, 'rgb'), rt.swizzle(c, 'a'), 3, 'float'), rt.swizzle(c, 'a'))
+  end
+  sampleMedia__vec2 = lambda do |uv|
+    uv = rt.copy(uv, 'float')
+    f = nil; lo = nil; p = nil; size = nil
+    size = rt.texture_size(_u_imageTex)
+    p = rt.construct(2, rt.binary('-', rt.binary('*', uv, rt.construct(2, size), 2, 'float'), rt.f(0.5), 2, 'float'))
+    lo = rt.construct(2, rt.construct(2, rt.component_wise('floor', p)), 'int')
+    f = rt.construct(2, rt.component_wise('fract', p))
+    return rt.component_wise('mix', rt.component_wise('mix', mediaTexel__ivec2_ivec2.call(lo, size), mediaTexel__ivec2_ivec2.call(rt.binary('+', lo, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), size), rt.swizzle(f, 'x')), rt.component_wise('mix', mediaTexel__ivec2_ivec2.call(rt.binary('+', lo, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), size), mediaTexel__ivec2_ivec2.call(rt.binary('+', lo, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), size), rt.swizzle(f, 'x')), rt.swizzle(f, 'y'))
   end
   getImage__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
@@ -108,7 +124,9 @@ run_pixel = lambda do |ctx, out|
     st = rt.assign_swizzle(st, 'x', rt.binary('-', rt.swizzle(st, 'x'), rt.binary('*', map__float_float_float_float_float.call(_u_offsetX, rt.unary('-', rt.f(100)), rt.f(100), rt.binary('*', rt.binary('/', rt.unary('-', rt.swizzle(_u_resolution, 'x')), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float')), rt.f(1.5), 1, 'float'), 1, 'float'))
     st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.swizzle(st, 'y'), rt.binary('*', map__float_float_float_float_float.call(_u_offsetY, rt.unary('-', rt.f(100)), rt.f(100), rt.binary('*', rt.binary('/', rt.unary('-', rt.swizzle(_u_resolution, 'y')), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float')), rt.f(1.5), 1, 'float'), 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), rt.binary('/', rt.swizzle(size, 'x'), rt.swizzle(size, 'y'), 1, 'float'), 1, 'float'))
-    st.replace((rotate2D__vec2_float.call(st, _u_rotation)).map { |c| rt.f32(c) })
+    if rt.bool(rt.binary('!=', _u_rotation, rt.f(0)))
+      st.replace((rotate2D__vec2_float.call(st, _u_rotation)).map { |c| rt.f32(c) })
+    end
     st = rt.assign_swizzle(st, 'x', rt.binary('/', rt.swizzle(st, 'x'), rt.binary('/', rt.swizzle(size, 'x'), rt.swizzle(size, 'y'), 1, 'float'), 1, 'float'))
     st.replace((tile__vec2.call(st)).map { |c| rt.f32(c) })
     st.replace((rt.binary('+', st, rt.binary('/', rt.f(1), size, 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
@@ -184,12 +202,9 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    text = rt.construct(4, rt.texture(_u_imageTex, st))
+    text = rt.construct(4, sampleMedia__vec2.call(st))
     if rt.bool((rt.bool((rt.bool((rt.bool(rt.binary('<', rt.swizzle(st, 'x'), rt.f(0))) || rt.bool(rt.binary('>', rt.swizzle(st, 'x'), rt.f(1))) ? 1 : 0)) || rt.bool(rt.binary('<', rt.swizzle(st, 'y'), rt.f(0))) ? 1 : 0)) || rt.bool(rt.binary('>', rt.swizzle(st, 'y'), rt.f(1))) ? 1 : 0))
-      return rt.construct(4, _u_bgColor, _u_bgAlpha)
-    end
-    if rt.bool(rt.binary('>', rt.swizzle(text, 'a'), rt.f(0)))
-      text = rt.assign_swizzle(text, 'rgb', rt.binary('/', rt.swizzle(text, 'rgb'), rt.swizzle(text, 'a'), 3, 'float'))
+      return rt.construct(4, rt.binary('*', _u_bgColor, _u_bgAlpha, 3, 'float'), _u_bgAlpha)
     end
     return text
   end

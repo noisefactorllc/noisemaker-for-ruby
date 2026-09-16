@@ -34,7 +34,7 @@ module NoisemakerCpu
 
       RENDER_ALLOWLIST = %w[
         loopBegin loopEnd pointsEmit pointsRender pointsBillboardRender
-        render3d renderCubemap3d renderCubemapSurface renderLit3d
+        render3d renderCubemap3d renderCubemapSurface renderLit3d renderLandscape3d
       ]
                          .each_with_object({}) { |k, h| h[k] = true }.freeze
       ID_EXCLUSIONS = %w[

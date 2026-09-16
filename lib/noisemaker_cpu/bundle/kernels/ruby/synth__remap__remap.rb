@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  getZoneMeta__int = getZonePack__int_int = getVert__int_int = getZoneCount__int = getZoneActive__int = getZoneAlpha__int = sampleZone__int_vec2 = pointInZone__vec2_int = distToZoneEdge__vec2_int = main__void = nil
+  sampleZone__int_vec2 = testEdge__struct1_vec2_vec2_vec2_bool = walkZone__int_int_vec2_bool = main__void = nil
   _retc = nil
   _u_data = u.key?('data') ? u['data'] : rt.construct(4, 0.0)
   _u_tileOffset = u.key?('tileOffset') ? u['tileOffset'] : rt.construct(2, 0.0)
@@ -17,26 +17,6 @@ run_pixel = lambda do |ctx, out|
   _u_zone6_tex = ctx.texture_binding('zone6_tex')
   _u_zone7_tex = ctx.texture_binding('zone7_tex')
   g['fragColor'] = rt.construct(4, 0.0)
-  getZoneMeta__int = lambda do |z|
-    return _u_data[(rt.binary('+', rt.i(2), z, 1, 'int')).to_i]
-  end
-  getZonePack__int_int = lambda do |zoneIdx, pairIdx|
-    return _u_data[(rt.binary('+', rt.binary('+', rt.i(10), rt.binary('*', zoneIdx, rt.i(32), 1, 'int'), 1, 'int'), pairIdx, 1, 'int')).to_i]
-  end
-  getVert__int_int = lambda do |zoneIdx, vertIdx|
-    packed = nil
-    packed = rt.construct(4, getZonePack__int_int.call(zoneIdx, rt.binary('/', vertIdx, rt.i(2), 1, 'int')))
-    return (rt.bool(rt.binary('==', rt.binary('%', vertIdx, rt.i(2), 1, 'int'), rt.i(0))) ? (rt.swizzle(packed, 'xy')) : (rt.swizzle(packed, 'zw')))
-  end
-  getZoneCount__int = lambda do |z|
-    return rt.construct(1, rt.swizzle(getZoneMeta__int.call(z), 'x'), 'int')
-  end
-  getZoneActive__int = lambda do |z|
-    return rt.construct(1, rt.binary('+', rt.swizzle(getZoneMeta__int.call(z), 'y'), rt.f(0.5), 1, 'float'), 'int')
-  end
-  getZoneAlpha__int = lambda do |z|
-    return rt.swizzle(getZoneMeta__int.call(z), 'w')
-  end
   sampleZone__int_vec2 = lambda do |z, uv|
     uv = rt.copy(uv, 'float')
     if rt.bool(rt.binary('==', z, rt.i(0)))
@@ -62,112 +42,120 @@ run_pixel = lambda do |ctx, out|
     end
     return rt.texture(_u_zone7_tex, uv)
   end
-  pointInZone__vec2_int = lambda do |p, zoneIdx|
-    p = rt.copy(p, 'float')
-    _for0_first = nil; crosses = nil; cur = nil; i = nil; inside = nil; n = nil; prev = nil; xCross = nil
-    n = getZoneCount__int.call(zoneIdx)
-    if rt.bool(rt.binary('<', n, rt.i(3)))
-      return 0
+  testEdge__struct1_vec2_vec2_vec2_bool = lambda do |_t, a, b, q, needDist|
+    a = rt.copy(a, 'float')
+    b = rt.copy(b, 'float')
+    q = rt.copy(q, 'float')
+    c = nil; e = nil; r = nil; s = nil; w = nil
+    e = rt.construct(2, rt.binary('-', b, a, 2, 'float'))
+    w = rt.construct(2, rt.binary('-', q, a, 2, 'float'))
+    c = rt.construct(3, rt.binary('>=', rt.swizzle(q, 'y'), rt.swizzle(a, 'y')), rt.binary('<', rt.swizzle(q, 'y'), rt.swizzle(b, 'y')), rt.binary('>', rt.binary('*', rt.swizzle(e, 'x'), rt.swizzle(w, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(e, 'y'), rt.swizzle(w, 'x'), 1, 'float')))
+    if rt.bool((rt.bool(rt.component_wise('all', c)) || rt.bool((rt.bool(rt.component_wise('any', c)) ? 0 : 1)) ? 1 : 0))
+      _t[0] = (rt.bool(_t[0]) ? 0 : 1)
     end
-    inside = 0
-    prev = rt.construct(2, getVert__int_int.call(zoneIdx, rt.binary('-', n, rt.i(1), 1, 'int')))
-    i = rt.i(0)
+    r = rt.construct(2, 0.0)
+    s = rt.f(0.0)
+    if rt.bool(needDist)
+      s = rt.component_wise('clamp', rt.binary('/', rt.dot(w, e), rt.component_wise('max', rt.dot(e, e), rt.f(9.9999999999999995e-07)), 1, 'float'), rt.f(0), rt.f(1))
+      r = rt.construct(2, rt.binary('-', w, rt.binary('*', e, s, 2, 'float'), 2, 'float'))
+      _t[1] = rt.component_wise('min', _t[1], rt.dot(r, r))
+    end
+    return _t
+  end
+  walkZone__int_int_vec2_bool = lambda do |base, n, q, needDist|
+    q = rt.copy(q, 'float')
+    _for0_first = nil; _t = nil; last = nil; lastPack = nil; pack = nil; pair = nil; pairs = nil; prev = nil; v0 = nil; v1 = nil
+    _t = [0, rt.f(1e+30)]
+    last = rt.binary('-', n, rt.i(1), 1, 'int')
+    lastPack = rt.construct(4, _u_data[(rt.binary('+', base, rt.binary('/', last, rt.i(2), 1, 'int'), 1, 'int')).to_i])
+    prev = rt.construct(2, rt.binary('*', (rt.bool(rt.binary('==', rt.binary('%', last, rt.i(2), 1, 'int'), rt.i(0))) ? (rt.swizzle(lastPack, 'xy')) : (rt.swizzle(lastPack, 'zw'))), _u_fullResolution, 2, 'float'))
+    pairs = rt.binary('/', rt.binary('+', n, rt.i(1), 1, 'int'), rt.i(2), 1, 'int')
+    pair = rt.i(0)
     _for0_first = true
     (0..1048575).each do |_for0|
       unless _for0_first
-        i = rt.binary('+', i, rt.i(1), 1, 'int')
+        pair = rt.binary('+', pair, rt.i(1), 1, 'int')
       end
       _for0_first = false
-      unless rt.bool(rt.binary('<', i, rt.i(64)))
+      unless rt.bool(rt.binary('<', pair, rt.i(32)))
         break
       end
-      if rt.bool(rt.binary('>=', i, n))
+      if rt.bool(rt.binary('>=', pair, pairs))
         break
       end
-      cur = rt.construct(2, getVert__int_int.call(zoneIdx, i))
-      crosses = rt.binary('!=', rt.binary('>', rt.swizzle(cur, 'y'), rt.swizzle(p, 'y')), rt.binary('>', rt.swizzle(prev, 'y'), rt.swizzle(p, 'y')))
-      xCross = rt.f(0.0)
-      if rt.bool(crosses)
-        xCross = rt.binary('+', rt.binary('/', rt.binary('*', rt.binary('-', rt.swizzle(prev, 'x'), rt.swizzle(cur, 'x'), 1, 'float'), rt.binary('-', rt.swizzle(p, 'y'), rt.swizzle(cur, 'y'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('-', rt.swizzle(prev, 'y'), rt.swizzle(cur, 'y'), 1, 'float'), rt.f(1.0000000000000001e-09), 1, 'float'), 1, 'float'), rt.swizzle(cur, 'x'), 1, 'float')
-        if rt.bool(rt.binary('<', rt.swizzle(p, 'x'), xCross))
-          inside = (rt.bool(inside) ? 0 : 1)
-        end
+      pack = rt.construct(4, _u_data[(rt.binary('+', base, pair, 1, 'int')).to_i])
+      v0 = rt.construct(2, rt.binary('*', rt.swizzle(pack, 'xy'), _u_fullResolution, 2, 'float'))
+      _t = testEdge__struct1_vec2_vec2_vec2_bool.call(_t, v0, prev, q, needDist)
+      prev.replace((v0).map { |c| rt.f32(c) })
+      v1 = rt.construct(2, 0.0)
+      if rt.bool(rt.binary('<', rt.binary('+', rt.binary('*', pair, rt.i(2), 1, 'int'), rt.i(1), 1, 'int'), n))
+        v1 = rt.construct(2, rt.binary('*', rt.swizzle(pack, 'zw'), _u_fullResolution, 2, 'float'))
+        _t = testEdge__struct1_vec2_vec2_vec2_bool.call(_t, v1, prev, q, needDist)
+        prev.replace((v1).map { |c| rt.f32(c) })
       end
-      prev.replace((cur).map { |c| rt.f32(c) })
     end
-    return inside
+    return _t
   end
-  distToZoneEdge__vec2_int = lambda do |p, zoneIdx|
-    p = rt.copy(p, 'float')
-    _for1_first = nil; _t = nil; ab = nil; closest = nil; cur = nil; d = nil; i = nil; len2 = nil; n = nil; prev = nil
-    n = getZoneCount__int.call(zoneIdx)
-    if rt.bool(rt.binary('<', n, rt.i(3)))
-      return rt.f(1000000000)
-    end
-    d = rt.f(1000000000)
-    prev = rt.construct(2, getVert__int_int.call(zoneIdx, rt.binary('-', n, rt.i(1), 1, 'int')))
-    i = rt.i(0)
+  main__void = lambda do
+    _for1_first = nil; _t = nil; activeCount = nil; base = nil; bounds = nil; controls = nil; coverage = nil; dilate = nil; featherPx = nil; globalPx = nil; header = nil; k = nil; n = nil; needDist = nil; p = nil; q = nil; result = nil; sampleUv = nil; src = nil; z = nil; zoneMeta = nil
+    globalPx = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    q = rt.construct(2, rt.construct(2, rt.swizzle(globalPx, 'x'), rt.binary('-', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(globalPx, 'y'), 1, 'float')))
+    p = rt.construct(2, rt.binary('/', q, _u_fullResolution, 2, 'float'))
+    sampleUv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.swizzle(_u_data[(rt.i(266)).to_i], 'xy'), 2, 'float'))
+    header = rt.construct(4, _u_data[(rt.i(0)).to_i])
+    controls = rt.construct(4, _u_data[(rt.i(1)).to_i])
+    activeCount = rt.component_wise('min', rt.construct(1, rt.swizzle(controls, 'x'), 'int'), rt.i(8))
+    featherPx = rt.binary('*', rt.binary('*', rt.component_wise('max', rt.swizzle(controls, 'y'), rt.f(0)), rt.f(0.050000000000000003), 1, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 1, 'float')
+    needDist = rt.binary('>', featherPx, rt.f(0))
+    dilate = rt.construct(2, rt.binary('/', rt.construct(2, featherPx), _u_fullResolution, 2, 'float'))
+    result = rt.construct(4, rt.construct(4, rt.f(0)))
+    k = rt.i(0)
     _for1_first = true
     (0..1048575).each do |_for1|
       unless _for1_first
-        i = rt.binary('+', i, rt.i(1), 1, 'int')
+        k = rt.binary('+', k, rt.i(1), 1, 'int')
       end
       _for1_first = false
-      unless rt.bool(rt.binary('<', i, rt.i(64)))
+      unless rt.bool(rt.binary('<', k, rt.i(8)))
         break
       end
-      if rt.bool(rt.binary('>=', i, n))
+      z = rt.binary('-', rt.binary('-', activeCount, rt.i(1), 1, 'int'), k, 1, 'int')
+      if rt.bool(rt.binary('<', z, rt.i(0)))
         break
       end
-      cur = rt.construct(2, getVert__int_int.call(zoneIdx, i))
-      ab = rt.construct(2, rt.binary('-', cur, prev, 2, 'float'))
-      len2 = rt.component_wise('max', rt.dot(ab, ab), rt.f(1.0000000000000001e-09))
-      _t = rt.component_wise('clamp', rt.binary('/', rt.dot(rt.binary('-', p, prev, 2, 'float'), ab), len2, 1, 'float'), rt.f(0), rt.f(1))
-      closest = rt.construct(2, rt.binary('+', prev, rt.binary('*', _t, ab, 2, 'float'), 2, 'float'))
-      d = rt.component_wise('min', d, rt.length(rt.binary('-', p, closest, 2, 'float')))
-      prev.replace((cur).map { |c| rt.f32(c) })
-    end
-    return d
-  end
-  main__void = lambda do
-    _for2_first = nil; a = nil; activeCount = nil; bgAlpha = nil; bgColor = nil; controls = nil; edge = nil; edgeWidth = nil; globalCoord = nil; globalScreen = nil; header = nil; p = nil; result = nil; sampleUv = nil; smoothEdge = nil; src = nil; z = nil; zAlpha = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    globalScreen = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), _u_fullResolution, 2, 'float'))
-    p = rt.construct(2, rt.construct(2, rt.swizzle(globalScreen, 'x'), rt.binary('-', rt.f(1), rt.swizzle(globalScreen, 'y'), 1, 'float')))
-    sampleUv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
-    header = rt.construct(4, _u_data[(rt.i(0)).to_i])
-    controls = rt.construct(4, _u_data[(rt.i(1)).to_i])
-    bgColor = rt.construct(3, rt.swizzle(header, 'xyz'))
-    bgAlpha = rt.swizzle(header, 'w')
-    activeCount = rt.component_wise('min', rt.construct(1, rt.swizzle(controls, 'x'), 'int'), rt.i(8))
-    smoothEdge = rt.swizzle(controls, 'y')
-    result = rt.construct(4, rt.construct(4, bgColor, bgAlpha))
-    z = rt.i(0)
-    _for2_first = true
-    (0..1048575).each do |_for2|
-      unless _for2_first
-        z = rt.binary('+', z, rt.i(1), 1, 'int')
-      end
-      _for2_first = false
-      unless rt.bool(rt.binary('<', z, rt.i(8)))
-        break
-      end
-      if rt.bool(rt.binary('>=', z, activeCount))
-        break
-      end
-      if rt.bool(rt.binary('==', getZoneActive__int.call(z), rt.i(0)))
+      zoneMeta = rt.construct(4, _u_data[(rt.binary('+', rt.i(2), z, 1, 'int')).to_i])
+      n = rt.component_wise('min', rt.construct(1, rt.swizzle(zoneMeta, 'x'), 'int'), rt.binary('*', rt.i(32), rt.i(2), 1, 'int'))
+      if rt.bool((rt.bool(rt.binary('<', n, rt.i(3))) || rt.bool(rt.binary('<', rt.swizzle(zoneMeta, 'y'), rt.f(0.5))) ? 1 : 0))
         next
       end
-      if rt.bool((rt.bool(pointInZone__vec2_int.call(p, z)) ? 0 : 1))
+      bounds = rt.construct(4, _u_data[(rt.binary('+', rt.i(267), z, 1, 'int')).to_i])
+      if rt.bool((rt.bool(rt.component_wise('any', rt.component_wise('lessThan', p, rt.binary('-', rt.swizzle(bounds, 'xy'), dilate, 2, 'float')))) || rt.bool(rt.component_wise('any', rt.component_wise('greaterThan', p, rt.binary('+', rt.swizzle(bounds, 'zw'), dilate, 2, 'float')))) ? 1 : 0))
         next
       end
-      src = rt.construct(4, sampleZone__int_vec2.call(z, sampleUv))
-      zAlpha = getZoneAlpha__int.call(z)
-      edgeWidth = rt.binary('*', smoothEdge, rt.f(0.050000000000000003), 1, 'float')
-      edge = (rt.bool(rt.binary('>', edgeWidth, rt.f(0))) ? (rt.component_wise('smoothstep', rt.f(0), edgeWidth, distToZoneEdge__vec2_int.call(p, z))) : (rt.f(1)))
-      a = rt.binary('*', zAlpha, edge, 1, 'float')
-      result.replace((rt.construct(4, rt.component_wise('mix', rt.swizzle(result, 'rgb'), rt.swizzle(src, 'rgb'), a), rt.component_wise('max', rt.swizzle(result, 'a'), rt.binary('*', rt.swizzle(src, 'a'), a, 1, 'float')))).map { |c| rt.f32(c) })
+      base = rt.binary('+', rt.i(10), rt.binary('*', z, rt.i(32), 1, 'int'), 1, 'int')
+      _t = [0, rt.f(0.0)]
+      if rt.bool(needDist)
+        _t = walkZone__int_int_vec2_bool.call(base, n, q, 1)
+      else
+        _t = walkZone__int_int_vec2_bool.call(base, n, q, 0)
+      end
+      coverage = rt.f(1)
+      if rt.bool((rt.bool(_t[0]) ? 0 : 1))
+        if rt.bool((rt.bool(needDist) ? 0 : 1))
+          next
+        end
+        coverage = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0), featherPx, rt.component_wise('sqrt', _t[1])), 1, 'float')
+        if rt.bool(rt.binary('<=', coverage, rt.f(0)))
+          next
+        end
+      end
+      src = rt.construct(4, rt.binary('*', sampleZone__int_vec2.call(z, sampleUv), rt.binary('*', coverage, rt.swizzle(zoneMeta, 'w'), 1, 'float'), 4, 'float'))
+      result.replace((rt.binary('+', result, rt.binary('*', src, rt.binary('-', rt.f(1), rt.swizzle(result, 'a'), 1, 'float'), 4, 'float'), 4, 'float')).map { |c| rt.f32(c) })
+      if rt.bool(rt.binary('>=', rt.swizzle(result, 'a'), rt.f(0.999)))
+        break
+      end
     end
+    result.replace((rt.binary('+', result, rt.binary('*', rt.construct(4, rt.binary('*', rt.swizzle(header, 'xyz'), rt.swizzle(header, 'w'), 3, 'float'), rt.swizzle(header, 'w')), rt.binary('-', rt.f(1), rt.swizzle(result, 'a'), 1, 'float'), 4, 'float'), 4, 'float')).map { |c| rt.f32(c) })
     g['fragColor'].replace((result).map { |c| rt.f32(c) })
   end
   main__void.call

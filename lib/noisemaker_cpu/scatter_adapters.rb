@@ -56,10 +56,26 @@ module NoisemakerCpu
       nil
     end
 
+    # Port of deposit.wgsl's vertex-stage world->clip projection, shared by
+    # pointsRender and pointsBillboardRender. Returns [clip_x, clip_y,
+    # camera_depth, camera_distance, projected_scale], or nil if the point is
+    # behind the near plane in perspective view (viewMode 2) -- the caller
+    # must cull on nil the same way the reference culls before emitting a
+    # vertex. camera_depth/camera_distance/projected_scale are only
+    # meaningful when viewMode != 0 (ortho/perspective); flat view returns
+    # the reference's fixed camera_depth=80, camera_distance=0,
+    # projected_scale=1.
+    #
+    # KNOWN GAP (this round, reference 0ed489ec): the reference's depth-sorted
+    # alpha-blend draw order and aperture defocus blur are NOT ported (see
+    # transpiler/computed_defs.rb's pointsBillboardRender header comment) --
+    # this method ports the perspective CAMERA and distance-based size/
+    # brightness fade only, which is pure per-agent math independent of both.
     def self.compute_clip_center(x, y, z, uniforms)
-      return [x * 2 - 1, y * 2 - 1] if uniforms["viewMode"].to_i == 0
+      view_mode = uniforms["viewMode"].to_i
+      return [x * 2 - 1, y * 2 - 1, 80.0, 0.0, 1.0] if view_mode == 0
 
-      two_dimensional = z.abs < 1.0 && x.between?(0.0, 1.0) && y.between?(0.0, 1.0)
+      two_dimensional = view_mode == 1 && z.abs < 1.0 && x.between?(0.0, 1.0) && y.between?(0.0, 1.0)
       px = two_dimensional ? x - 0.5 : x
       py = two_dimensional ? y - 0.5 : y
       pz = two_dimensional ? 0.0 : z
@@ -72,14 +88,31 @@ module NoisemakerCpu
       cos_y = Math.cos(uniforms["rotateY"].to_f)
       sin_y = Math.sin(uniforms["rotateY"].to_f)
       x2 = x1 * cos_y + z1 * sin_y
+      z2 = -x1 * sin_y + z1 * cos_y
       cos_z = Math.cos(uniforms["rotateZ"].to_f)
       sin_z = Math.sin(uniforms["rotateZ"].to_f)
       fx = x2 * cos_z - y1 * sin_z + uniforms["posX"].to_f
       fy = x2 * sin_z + y1 * cos_z + uniforms["posY"].to_f
+      fz = z2 + uniforms.fetch("posZ", 0.0).to_f
+      camera_depth = 80.0 - fz
+      camera_distance = Math.sqrt(fx * fx + fy * fy + camera_depth * camera_depth)
       scale = uniforms["viewScale"].to_f
-      return [fx * 3.5 * scale, fy * 3.5 * scale] if two_dimensional
 
-      [(fx / 40.0) * scale, (fy / 40.0) * scale]
+      if view_mode == 2
+        return nil if camera_depth <= 0.1
+
+        field_of_view = clamp(uniforms.fetch("fieldOfView", 60.0).to_f, 10.0, 150.0)
+        focal_length = 1.0 / Math.tan(field_of_view * 0.00872664626)
+        clip_x = fx * focal_length * scale / camera_depth
+        clip_x *= uniforms["resolution"][1].to_f / uniforms["resolution"][0].to_f
+        clip_y = fy * focal_length * scale / camera_depth
+        projected_scale = 80.0 * focal_length * scale / (1.732050808 * camera_depth)
+        return [clip_x, clip_y, camera_depth, camera_distance, projected_scale]
+      end
+
+      return [fx * 3.5 * scale, fy * 3.5 * scale, camera_depth, camera_distance, 1.0] if two_dimensional
+
+      [(fx / 40.0) * scale, (fy / 40.0) * scale, camera_depth, camera_distance, 1.0]
     end
 
     def self.each_agent(surface)
@@ -150,6 +183,8 @@ module NoisemakerCpu
         next if xyz[3] < 0.5
 
         clip = compute_clip_center(xyz[0], xyz[1], xyz[2], uniforms)
+        next if clip.nil?
+
         offset = scatter_point_pixel(clip[0], clip[1], 1, destination.width, destination.height)
         next if offset.nil?
 
@@ -306,9 +341,22 @@ module NoisemakerCpu
         next if xyz[3] < 0.5
 
         color = texel_fetch_agent(inputs["rgbaTex"], x, y)
-        center_x, center_y = compute_clip_center(xyz[0], xyz[1], xyz[2], uniforms)
-        size = uniforms["pointSize"].to_f *
-          (1.0 - size_variation * (billboard_hash(index, uniforms["seed"].to_f) - 0.5))
+        clip = compute_clip_center(xyz[0], xyz[1], xyz[2], uniforms)
+        next if clip.nil?
+
+        center_x, center_y, _camera_depth, camera_distance, projected_scale = clip
+        view_mode = uniforms["viewMode"].to_i
+        size_fade = 1.0
+        brightness_fade = 1.0
+        if view_mode != 0
+          size_distance = uniforms.fetch("sizeDistance", 0.0).to_f
+          brightness_distance = uniforms.fetch("brightnessDistance", 0.0).to_f
+          size_fade = 1.0 - smoothstep(0.0, size_distance, camera_distance) if size_distance > 0.0
+          brightness_fade = 1.0 - smoothstep(0.0, brightness_distance, camera_distance) if brightness_distance > 0.0
+        end
+        color = color.map { |channel| channel * brightness_fade }
+        size = uniforms["pointSize"].to_f * projected_scale *
+          (1.0 - size_variation * (billboard_hash(index, uniforms["seed"].to_f) - 0.5)) * size_fade
         next unless size > 0
 
         rotation = rotation_variation * billboard_hash(index + 1234.5, uniforms["seed"].to_f) * TAU_APPROX

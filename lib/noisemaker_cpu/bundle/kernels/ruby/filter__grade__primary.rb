@@ -143,11 +143,12 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('+', luma, rt.binary('*', chroma, satAmount, 3, 'float'), 3, 'float')
   end
   main__void = lambda do
-    color = nil; coord = nil; globalCoord = nil; rgb = nil
+    color = nil; coord = nil; globalCoord = nil; rgb = nil; straight = nil
     globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
-    rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))
+    straight = rt.construct(3, (rt.bool(rt.binary('>', rt.swizzle(color, 'a'), rt.f(0))) ? (rt.binary('/', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float')) : (rt.construct(3, rt.f(0)))))
+    rgb = rt.construct(3, srgbToLinear__vec3.call(straight))
     rgb.replace((applyWhiteBalance__vec3_float_float.call(rgb, _u_temperature, _u_tint)).map { |c| rt.f32(c) })
     rgb.replace((rt.binary('*', rgb, rt.component_wise('pow', rt.f(2), _u_exposure), 3, 'float')).map { |c| rt.f32(c) })
     rgb.replace((applyContrast__vec3_float.call(rgb, _u_contrast)).map { |c| rt.f32(c) })

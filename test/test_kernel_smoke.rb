@@ -203,7 +203,7 @@ class TestKernelSmoke < Minitest::Test
       synth3d/cellularAutomata3d synth3d/reactionDiffusion3d
     ].sort
     effects = NoisemakerCpu::Renderer.meta.fetch("effects")
-    assert_equal 205, effects.length
+    assert_equal 208, effects.length
     assert_equal iterated, effects.select { |_id, effect| effect["iterated"] }.keys.sort
     iterated.each do |effect_id|
       assert_equal 60, effects.fetch(effect_id).dig("params", "iterationCount", "default"), effect_id

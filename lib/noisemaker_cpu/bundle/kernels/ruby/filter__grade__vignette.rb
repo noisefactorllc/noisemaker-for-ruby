@@ -106,7 +106,7 @@ run_pixel = lambda do |ctx, out|
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     if rt.bool(rt.binary('<', rt.component_wise('abs', _u_vignetteAmount), rt.f(0.001)))
-      g['fragColor'].replace((color).map { |c| rt.f32(c) })
+      g['fragColor'].replace((rt.construct(4, rt.binary('*', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
       return
     end
     rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))
@@ -119,7 +119,7 @@ run_pixel = lambda do |ctx, out|
     vignetteMask = computeVignette__vec2_vec2_float_float_float.call(globalUV, aspectRatio, _u_vignetteMidpoint, _u_vignetteRoundness, _u_vignetteFeather)
     rgb.replace((applyVignette__vec3_float_float_float.call(rgb, vignetteMask, _u_vignetteAmount, _u_vigHiProtect)).map { |c| rt.f32(c) })
     rgb.replace((linearToSrgb__vec3.call(rt.component_wise('max', rgb, rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })
-    g['fragColor'].replace((rt.construct(4, rgb, rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.construct(4, rt.binary('*', rgb, rt.swizzle(color, 'a'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

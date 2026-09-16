@@ -112,6 +112,7 @@ run_pixel = lambda do |ctx, out|
     texSize = rt.texture_size(_u_inputTex)
     uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
     color = rt.construct(4, rt.texture(_u_inputTex, uv))
+    color = rt.assign_swizzle(color, 'rgb', (rt.bool(rt.binary('>', rt.swizzle(color, 'a'), rt.f(0))) ? (rt.binary('/', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float')) : (rt.construct(3, rt.f(0)))))
     _C = rt.f(0.0)
     _H = rt.f(0.0)
     _L = rt.f(0.0)
@@ -144,7 +145,7 @@ run_pixel = lambda do |ctx, out|
     color = rt.assign_swizzle(color, 'rgb', rt.binary('*', rt.swizzle(color, 'rgb'), _u_brightness, 3, 'float'))
     contrastFactor = rt.binary('*', _u_contrast, rt.f(2), 1, 'float')
     color = rt.assign_swizzle(color, 'rgb', rt.binary('+', rt.binary('*', rt.binary('-', rt.swizzle(color, 'rgb'), rt.f(0.5), 3, 'float'), contrastFactor, 3, 'float'), rt.f(0.5), 3, 'float'))
-    g['fragColor'].replace((color).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.construct(4, rt.binary('*', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

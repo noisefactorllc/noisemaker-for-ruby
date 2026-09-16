@@ -8449,27 +8449,27 @@
         "_primaryTex": {
           "width": "input",
           "height": "input",
-          "format": "rgba16float"
+          "format": "rgba16f"
         },
         "_creativeTex": {
           "width": "input",
           "height": "input",
-          "format": "rgba16float"
+          "format": "rgba16f"
         },
         "_wheelsTex": {
           "width": "input",
           "height": "input",
-          "format": "rgba16float"
+          "format": "rgba16f"
         },
         "_hslTex": {
           "width": "input",
           "height": "input",
-          "format": "rgba16float"
+          "format": "rgba16f"
         },
         "_lutTex": {
           "width": "input",
           "height": "input",
-          "format": "rgba16float"
+          "format": "rgba16f"
         }
       },
       "passes": [
@@ -17447,6 +17447,17 @@
             "label": "source b"
           }
         },
+        "baseTex": {
+          "type": "surface",
+          "default": "none",
+          "ui": {
+            "label": "mask background",
+            "enabledBy": {
+              "param": "maskMode",
+              "eq": true
+            }
+          }
+        },
         "mix": {
           "type": "float",
           "default": 0,
@@ -17474,6 +17485,7 @@
       },
       "paramOrder": [
         "tex",
+        "baseTex",
         "mix",
         "maskMode"
       ],
@@ -17485,7 +17497,8 @@
           "key": "mixer/alphaMask:alphaMask",
           "inputs": {
             "inputTex": "inputTex",
-            "tex": "tex"
+            "tex": "tex",
+            "baseTex": "baseTex"
           },
           "outputs": {
             "fragColor": "outputTex"
@@ -19992,6 +20005,114 @@
       "outputVel": "global_vel",
       "outputRgba": "global_rgba"
     },
+    "points/heightGrid": {
+      "namespace": "points",
+      "func": "heightGrid",
+      "kind": "filter",
+      "domain": "image",
+      "params": {
+        "heightTex": {
+          "type": "surface",
+          "default": "inputTex",
+          "ui": {
+            "label": "height map",
+            "category": "source"
+          }
+        },
+        "diffuseTex": {
+          "type": "surface",
+          "default": "inputTex",
+          "ui": {
+            "label": "diffuse map",
+            "category": "source"
+          }
+        },
+        "gridScale": {
+          "type": "float",
+          "default": 80,
+          "min": 1,
+          "max": 400,
+          "step": 1,
+          "uniform": "gridScale",
+          "ui": {
+            "label": "grid width",
+            "control": "slider",
+            "category": "terrain"
+          }
+        },
+        "heightScale": {
+          "type": "float",
+          "default": 20,
+          "min": -100,
+          "max": 100,
+          "step": 0.1,
+          "uniform": "heightScale",
+          "ui": {
+            "label": "height",
+            "control": "slider",
+            "category": "terrain"
+          }
+        },
+        "heightOffset": {
+          "type": "float",
+          "default": 0,
+          "min": -100,
+          "max": 100,
+          "step": 0.1,
+          "uniform": "heightOffset",
+          "ui": {
+            "label": "height offset",
+            "control": "slider",
+            "category": "terrain"
+          }
+        }
+      },
+      "paramOrder": [
+        "heightTex",
+        "diffuseTex",
+        "gridScale",
+        "heightScale",
+        "heightOffset"
+      ],
+      "textures": {},
+      "passes": [
+        {
+          "name": "agent",
+          "program": "agent",
+          "key": "points/heightGrid:agent",
+          "inputs": {
+            "xyzTex": "global_xyz",
+            "velTex": "global_vel",
+            "heightTex": "heightTex",
+            "diffuseTex": "diffuseTex"
+          },
+          "outputs": {
+            "outXYZ": "global_xyz",
+            "outVel": "global_vel",
+            "outRGBA": "global_rgba"
+          },
+          "uniforms": {
+            "gridScale": "gridScale",
+            "heightScale": "heightScale",
+            "heightOffset": "heightOffset"
+          },
+          "type": "compute",
+          "drawBuffers": 3
+        },
+        {
+          "name": "passthrough",
+          "program": "passthrough",
+          "key": "points/heightGrid:passthrough",
+          "inputs": {
+            "inputTex": "inputTex"
+          },
+          "outputs": {
+            "fragColor": "outputTex"
+          },
+          "uniforms": {}
+        }
+      ]
+    },
     "points/hydraulic": {
       "namespace": "points",
       "func": "hydraulic",
@@ -21164,7 +21285,7 @@
           "type": "int",
           "default": 42,
           "min": 0,
-          "max": 1000.0,
+          "max": 1000,
           "uniform": "seed",
           "ui": {
             "label": "seed",
@@ -21215,7 +21336,8 @@
           "uniform": "viewMode",
           "choices": {
             "flat": 0,
-            "ortho": 1
+            "ortho": 1,
+            "perspective": 2
           },
           "ui": {
             "label": "view",
@@ -21226,85 +21348,145 @@
         "rotateX": {
           "type": "float",
           "default": 0.3,
-          "uniform": "rotateX",
           "min": 0,
           "max": 6.283185,
-          "step": 0.01,
+          "uniform": "rotateX",
           "ui": {
             "label": "rotate x",
             "control": "slider",
-            "category": "view",
-            "enabledBy": "viewMode"
+            "category": "view"
           }
         },
         "rotateY": {
           "type": "float",
           "default": 0,
-          "uniform": "rotateY",
           "min": 0,
           "max": 6.283185,
-          "step": 0.01,
+          "uniform": "rotateY",
           "ui": {
             "label": "rotate y",
             "control": "slider",
-            "category": "view",
-            "enabledBy": "viewMode"
+            "category": "view"
           }
         },
         "rotateZ": {
           "type": "float",
           "default": 0,
-          "uniform": "rotateZ",
           "min": 0,
           "max": 6.283185,
-          "step": 0.01,
+          "uniform": "rotateZ",
           "ui": {
             "label": "rotate z",
             "control": "slider",
-            "category": "view",
-            "enabledBy": "viewMode"
+            "category": "view"
           }
         },
         "viewScale": {
           "type": "float",
           "default": 0.8,
-          "uniform": "viewScale",
           "min": 0.1,
           "max": 10,
-          "step": 0.01,
+          "uniform": "viewScale",
           "ui": {
             "label": "zoom",
             "control": "slider",
-            "category": "view",
-            "enabledBy": "viewMode"
+            "category": "view"
           }
         },
         "posX": {
           "type": "float",
           "default": 0,
-          "uniform": "posX",
           "min": -50,
           "max": 50,
-          "step": 0.1,
+          "uniform": "posX",
           "ui": {
             "label": "pos x",
             "control": "slider",
-            "category": "view",
-            "enabledBy": "viewMode"
+            "category": "view"
           }
         },
         "posY": {
           "type": "float",
           "default": 0,
-          "uniform": "posY",
           "min": -50,
           "max": 50,
-          "step": 0.1,
+          "uniform": "posY",
           "ui": {
             "label": "pos y",
             "control": "slider",
-            "category": "view",
-            "enabledBy": "viewMode"
+            "category": "view"
+          }
+        },
+        "posZ": {
+          "type": "float",
+          "default": 0,
+          "min": -200,
+          "max": 200,
+          "uniform": "posZ",
+          "ui": {
+            "label": "pos z",
+            "control": "slider",
+            "category": "view"
+          }
+        },
+        "fieldOfView": {
+          "type": "float",
+          "default": 60,
+          "min": 10,
+          "max": 150,
+          "uniform": "fieldOfView",
+          "ui": {
+            "label": "field of view",
+            "control": "slider",
+            "category": "view"
+          }
+        },
+        "sizeDistance": {
+          "type": "float",
+          "default": 0,
+          "min": 0,
+          "max": 500,
+          "uniform": "sizeDistance",
+          "ui": {
+            "label": "size distance",
+            "control": "slider",
+            "category": "view"
+          }
+        },
+        "brightnessDistance": {
+          "type": "float",
+          "default": 0,
+          "min": 0,
+          "max": 500,
+          "uniform": "brightnessDistance",
+          "ui": {
+            "label": "brightness distance",
+            "control": "slider",
+            "category": "view"
+          }
+        },
+        "aperture": {
+          "type": "float",
+          "default": 0,
+          "min": 0,
+          "max": 20,
+          "uniform": "aperture",
+          "ui": {
+            "label": "aperture",
+            "control": "slider",
+            "category": "view"
+          }
+        },
+        "focalDistance": {
+          "type": "float",
+          "default": 80,
+          "min": 1,
+          "max": 500,
+          "uniform": "focalDistance",
+          "ui": {
+            "label": "focal distance",
+            "control": "slider",
+            "category": "view"
           }
         },
         "iterationCount": {
@@ -21334,6 +21516,12 @@
         "viewScale",
         "posX",
         "posY",
+        "posZ",
+        "fieldOfView",
+        "sizeDistance",
+        "brightnessDistance",
+        "aperture",
+        "focalDistance",
         "iterationCount"
       ],
       "textures": {
@@ -21396,7 +21584,13 @@
             "rotateZ": "rotateZ",
             "viewScale": "viewScale",
             "posX": "posX",
-            "posY": "posY"
+            "posY": "posY",
+            "posZ": "posZ",
+            "fieldOfView": "fieldOfView",
+            "sizeDistance": "sizeDistance",
+            "brightnessDistance": "brightnessDistance",
+            "aperture": "aperture",
+            "focalDistance": "focalDistance"
           },
           "blend": true,
           "drawMode": "billboards",
@@ -21436,7 +21630,13 @@
             "rotateZ": "rotateZ",
             "viewScale": "viewScale",
             "posX": "posX",
-            "posY": "posY"
+            "posY": "posY",
+            "posZ": "posZ",
+            "fieldOfView": "fieldOfView",
+            "sizeDistance": "sizeDistance",
+            "brightnessDistance": "brightnessDistance",
+            "aperture": "aperture",
+            "focalDistance": "focalDistance"
           },
           "blend": [
             "ONE",
@@ -21689,10 +21889,13 @@
         "viewMode": {
           "type": "int",
           "default": 0,
+          "min": 0,
+          "max": 2,
           "uniform": "viewMode",
           "choices": {
             "flat": 0,
-            "ortho": 1
+            "ortho": 1,
+            "perspective": 2
           },
           "ui": {
             "label": "view",
@@ -21784,6 +21987,37 @@
             "enabledBy": "viewMode"
           }
         },
+        "posZ": {
+          "type": "float",
+          "default": 0,
+          "uniform": "posZ",
+          "min": -200,
+          "max": 200,
+          "step": 0.1,
+          "ui": {
+            "label": "pos z",
+            "control": "slider",
+            "category": "view",
+            "enabledBy": "viewMode"
+          }
+        },
+        "fieldOfView": {
+          "type": "float",
+          "default": 60,
+          "uniform": "fieldOfView",
+          "min": 10,
+          "max": 150,
+          "step": 1,
+          "ui": {
+            "label": "field of view",
+            "control": "slider",
+            "category": "view",
+            "enabledBy": {
+              "param": "viewMode",
+              "eq": 2
+            }
+          }
+        },
         "matteOpacity": {
           "type": "float",
           "default": 1,
@@ -21816,6 +22050,8 @@
         "viewScale",
         "posX",
         "posY",
+        "posZ",
+        "fieldOfView",
         "matteOpacity",
         "iterationCount"
       ],
@@ -21872,7 +22108,9 @@
             "rotateZ": "rotateZ",
             "viewScale": "viewScale",
             "posX": "posX",
-            "posY": "posY"
+            "posY": "posY",
+            "posZ": "posZ",
+            "fieldOfView": "fieldOfView"
           },
           "blend": true,
           "drawMode": "points",
@@ -22275,6 +22513,345 @@
             "geoOut": "screenGeoBuffer"
           },
           "uniforms": {},
+          "drawBuffers": 2
+        }
+      ],
+      "outputTex3d": "inputTex3d",
+      "outputGeo": "screenGeoBuffer"
+    },
+    "render/renderLandscape3d": {
+      "namespace": "render",
+      "func": "renderLandscape3d",
+      "kind": "filter",
+      "domain": "volume-renderer",
+      "params": {
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "ui": {
+            "label": "volume size",
+            "control": false
+          }
+        },
+        "threshold": {
+          "type": "float",
+          "default": 0.5,
+          "min": 0,
+          "max": 1,
+          "uniform": "threshold",
+          "ui": {
+            "label": "density threshold",
+            "control": false
+          }
+        },
+        "densitySource": {
+          "type": "int",
+          "default": 0,
+          "choices": {
+            "geometry": 0
+          },
+          "ui": {
+            "label": "density source",
+            "control": false
+          }
+        },
+        "zoom": {
+          "type": "float",
+          "default": 1,
+          "min": 0.25,
+          "max": 4,
+          "uniform": "zoom",
+          "ui": {
+            "label": "zoom",
+            "control": "slider"
+          }
+        },
+        "panX": {
+          "type": "float",
+          "default": 0,
+          "min": -1,
+          "max": 1,
+          "uniform": "panX",
+          "ui": {
+            "label": "pan x",
+            "control": "slider"
+          }
+        },
+        "panY": {
+          "type": "float",
+          "default": 0,
+          "min": -1,
+          "max": 1,
+          "uniform": "panY",
+          "ui": {
+            "label": "pan y",
+            "control": "slider"
+          }
+        },
+        "lightDirection": {
+          "type": "vec3",
+          "default": [
+            -0.4,
+            0.85,
+            0.6
+          ],
+          "uniform": "lightDirection",
+          "min": -1,
+          "max": 1,
+          "ui": {
+            "label": "light direction",
+            "control": "vector3"
+          }
+        },
+        "ambient": {
+          "type": "float",
+          "default": 0.35,
+          "min": 0,
+          "max": 1,
+          "uniform": "ambient",
+          "ui": {
+            "label": "ambient light",
+            "control": "slider"
+          }
+        },
+        "diffuseIntensity": {
+          "type": "float",
+          "default": 0.85,
+          "min": 0,
+          "max": 2,
+          "uniform": "diffuseIntensity",
+          "ui": {
+            "label": "diffuse light",
+            "control": "slider"
+          }
+        },
+        "specularIntensity": {
+          "type": "float",
+          "default": 0.12,
+          "min": 0,
+          "max": 1,
+          "uniform": "specularIntensity",
+          "ui": {
+            "label": "specular light",
+            "control": "slider"
+          }
+        },
+        "bgColor": {
+          "type": "color",
+          "default": [
+            0.025,
+            0.045,
+            0.075
+          ],
+          "uniform": "bgColor",
+          "ui": {
+            "label": "background color",
+            "control": "color"
+          }
+        },
+        "bgAlpha": {
+          "type": "float",
+          "default": 1,
+          "min": 0,
+          "max": 1,
+          "uniform": "bgAlpha",
+          "ui": {
+            "label": "background opacity",
+            "control": "slider"
+          }
+        },
+        "viewMode": {
+          "type": "int",
+          "default": 1,
+          "define": "VIEW_MODE",
+          "choices": {
+            "ortho": 1,
+            "perspective": 2
+          },
+          "ui": {
+            "label": "view",
+            "control": "dropdown",
+            "category": "view"
+          }
+        },
+        "rotateX": {
+          "type": "float",
+          "default": 0.3,
+          "min": 0,
+          "max": 6.283185,
+          "step": 0.01,
+          "uniform": "rotateX",
+          "ui": {
+            "label": "rotate x",
+            "control": "slider",
+            "category": "view",
+            "enabledBy": {
+              "param": "viewMode",
+              "eq": 2
+            }
+          }
+        },
+        "rotateY": {
+          "type": "float",
+          "default": 0,
+          "min": 0,
+          "max": 6.283185,
+          "step": 0.01,
+          "uniform": "rotateY",
+          "ui": {
+            "label": "rotate y",
+            "control": "slider",
+            "category": "view",
+            "enabledBy": {
+              "param": "viewMode",
+              "eq": 2
+            }
+          }
+        },
+        "rotateZ": {
+          "type": "float",
+          "default": 0,
+          "min": 0,
+          "max": 6.283185,
+          "step": 0.01,
+          "uniform": "rotateZ",
+          "ui": {
+            "label": "rotate z",
+            "control": "slider",
+            "category": "view",
+            "enabledBy": {
+              "param": "viewMode",
+              "eq": 2
+            }
+          }
+        },
+        "viewScale": {
+          "type": "float",
+          "default": 0.8,
+          "min": 0.1,
+          "max": 10,
+          "step": 0.01,
+          "uniform": "viewScale",
+          "ui": {
+            "label": "zoom",
+            "control": false
+          }
+        },
+        "posX": {
+          "type": "float",
+          "default": 0,
+          "min": -50,
+          "max": 50,
+          "step": 0.1,
+          "uniform": "posX",
+          "ui": {
+            "label": "pos x",
+            "control": "slider",
+            "category": "view",
+            "enabledBy": {
+              "param": "viewMode",
+              "eq": 2
+            }
+          }
+        },
+        "posY": {
+          "type": "float",
+          "default": 0,
+          "min": -50,
+          "max": 50,
+          "step": 0.1,
+          "uniform": "posY",
+          "ui": {
+            "label": "pos y",
+            "control": "slider",
+            "category": "view",
+            "enabledBy": {
+              "param": "viewMode",
+              "eq": 2
+            }
+          }
+        },
+        "posZ": {
+          "type": "float",
+          "default": 0,
+          "min": -200,
+          "max": 200,
+          "step": 0.1,
+          "uniform": "posZ",
+          "ui": {
+            "label": "pos z",
+            "control": "slider",
+            "category": "view",
+            "enabledBy": {
+              "param": "viewMode",
+              "eq": 2
+            }
+          }
+        },
+        "fieldOfView": {
+          "type": "float",
+          "default": 60,
+          "min": 10,
+          "max": 150,
+          "step": 1,
+          "uniform": "fieldOfView",
+          "ui": {
+            "label": "field of view",
+            "control": "slider",
+            "category": "view",
+            "enabledBy": {
+              "param": "viewMode",
+              "eq": 2
+            }
+          }
+        }
+      },
+      "paramOrder": [
+        "volumeSize",
+        "threshold",
+        "densitySource",
+        "zoom",
+        "panX",
+        "panY",
+        "lightDirection",
+        "ambient",
+        "diffuseIntensity",
+        "specularIntensity",
+        "bgColor",
+        "bgAlpha",
+        "viewMode",
+        "rotateX",
+        "rotateY",
+        "rotateZ",
+        "viewScale",
+        "posX",
+        "posY",
+        "posZ",
+        "fieldOfView"
+      ],
+      "textures": {
+        "screenGeoBuffer": {
+          "width": "screen",
+          "height": "screen",
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "render",
+          "program": "landscape",
+          "key": "render/renderLandscape3d:landscape",
+          "inputs": {
+            "volumeCache": "inputTex3d",
+            "analyticalGeo": "inputGeo"
+          },
+          "outputs": {
+            "fragColor": "outputTex",
+            "geoOut": "screenGeoBuffer"
+          },
+          "uniforms": {},
+          "type": "compute",
           "drawBuffers": 2
         }
       ],
@@ -28309,6 +28886,134 @@
             "geoOut": "geoBuffer"
           },
           "uniforms": {},
+          "drawBuffers": 2,
+          "viewport": {
+            "width": {
+              "param": "volumeSize",
+              "default": 64
+            },
+            "height": {
+              "param": "volumeSize",
+              "power": 2,
+              "default": 4096
+            }
+          }
+        }
+      ],
+      "outputTex3d": "volumeCache",
+      "outputGeo": "geoBuffer"
+    },
+    "synth3d/heightmap3d": {
+      "namespace": "synth3d",
+      "func": "heightmap3d",
+      "kind": "generator",
+      "domain": "volume-generator",
+      "params": {
+        "heightTex": {
+          "type": "surface",
+          "default": "none",
+          "ui": {
+            "label": "height image"
+          }
+        },
+        "tex": {
+          "type": "surface",
+          "default": "none",
+          "ui": {
+            "label": "color image"
+          }
+        },
+        "volumeSize": {
+          "type": "int",
+          "default": 64,
+          "uniform": "volumeSize",
+          "choices": {
+            "x16": 16,
+            "x32": 32,
+            "x64": 64,
+            "x128": 128
+          },
+          "randChoices": [
+            16,
+            32,
+            64
+          ],
+          "ui": {
+            "label": "volume size",
+            "control": "dropdown"
+          }
+        },
+        "heightScale": {
+          "type": "float",
+          "default": 0.35,
+          "min": 0,
+          "max": 1,
+          "uniform": "heightScale",
+          "ui": {
+            "label": "height scale",
+            "control": "slider"
+          }
+        },
+        "baseHeight": {
+          "type": "float",
+          "default": 0,
+          "min": 0,
+          "max": 1,
+          "uniform": "baseHeight",
+          "ui": {
+            "label": "base height",
+            "control": "slider"
+          }
+        }
+      },
+      "paramOrder": [
+        "heightTex",
+        "tex",
+        "volumeSize",
+        "heightScale",
+        "baseHeight"
+      ],
+      "textures": {
+        "volumeCache": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        },
+        "geoBuffer": {
+          "width": {
+            "param": "volumeSize",
+            "default": 64
+          },
+          "height": {
+            "param": "volumeSize",
+            "power": 2,
+            "default": 4096
+          },
+          "format": "rgba16f"
+        }
+      },
+      "passes": [
+        {
+          "name": "precompute",
+          "program": "precompute",
+          "key": "synth3d/heightmap3d:precompute",
+          "inputs": {
+            "heightTex": "heightTex",
+            "tex": "tex"
+          },
+          "outputs": {
+            "fragColor": "volumeCache",
+            "geoOut": "geoBuffer"
+          },
+          "uniforms": {},
+          "type": "compute",
           "drawBuffers": 2,
           "viewport": {
             "width": {

@@ -14,9 +14,9 @@ run_pixel = lambda do |ctx, out|
     uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
     color = rt.construct(4, rt.texture(_u_inputTex, uv))
     if rt.bool(rt.binary('==', _u_mode, rt.i(1)))
-      color = rt.assign_swizzle(color, 'rgb', rt.component_wise('min', rt.swizzle(color, 'rgb'), rt.binary('-', rt.f(1), rt.swizzle(color, 'rgb'), 3, 'float')))
+      color = rt.assign_swizzle(color, 'rgb', rt.component_wise('min', rt.swizzle(color, 'rgb'), rt.binary('-', rt.swizzle(color, 'a'), rt.swizzle(color, 'rgb'), 3, 'float')))
     else
-      color = rt.assign_swizzle(color, 'rgb', rt.binary('-', rt.f(1), rt.swizzle(color, 'rgb'), 3, 'float'))
+      color = rt.assign_swizzle(color, 'rgb', rt.binary('-', rt.swizzle(color, 'a'), rt.swizzle(color, 'rgb'), 3, 'float'))
     end
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end
