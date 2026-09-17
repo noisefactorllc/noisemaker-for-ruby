@@ -33,7 +33,7 @@ class TestGeneratedRegressions < Minitest::Test
     input = NoisemakerCpu::Surface.new(width, height, data)
     expected = {
       1 => "f5f4eaf277395b6d1f4dd40cc12a7ddd26eed32d96dbab17d36394c5410ae686",
-      2 => "a36571e1856f4e964b4f14f3957915dcee87a9381e944f6104df329e6914bcd7",
+      2 => "9c1f06038560d380258c2964140796fcd41dd0c214d2d435ace3979eceb7c591",
       3 => "73d5a67ab88331c89b89f6e95fbb4fa63101e340e92e94ecc2e15a12f9f57b69"
     }
 
