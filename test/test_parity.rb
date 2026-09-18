@@ -45,13 +45,10 @@ class TestParity < Minitest::Test
   CPU_DIR = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path(File.join(__dir__, "..", "..", "noisemaker-for-cpu"))
   CLI = File.join(CPU_DIR, "bin", "noisemaker-cpu.js")
 
-  # Cross-port bootstrap check: the perl port's committed lock, expected at a
-  # sibling checkout (same convention as NOISEMAKER_CPU_DIR), overridable via
+  # Cross-port bootstrap check: the perl port's committed lock, overridable via
   # NOISEMAKER_PERL_LOCK. Skips gracefully when absent -- the durable source
   # of truth for this repo's pins is its own committed bundle-lock.json.
-  PERL_LOCK_PATH = ENV["NOISEMAKER_PERL_LOCK"] ||
-                   File.expand_path("../../noisemaker-for-perl/lib/Math/Fractal/Noisemaker/bundle/bundle-lock.json",
-                                    __dir__)
+  PERL_LOCK_PATH = ENV["NOISEMAKER_PERL_LOCK"]
 
   TMP_DIR = Dir.mktmpdir
   at_exit { FileUtils.remove_entry(TMP_DIR) }
@@ -290,7 +287,7 @@ class TestParity < Minitest::Test
   # this exercised the full happy path even before the cdn.rb fixes below.
   def test_cdn_live_hash_filter_invert
     skip_unless_cdn_live_ready
-    skip "perl reference lock not found at #{PERL_LOCK_PATH}" unless File.exist?(PERL_LOCK_PATH)
+    skip "perl reference lock not configured (set NOISEMAKER_PERL_LOCK to enable)" unless PERL_LOCK_PATH && File.exist?(PERL_LOCK_PATH)
 
     perl_hashes = JSON.parse(File.read(PERL_LOCK_PATH))["hashes"]
     version_dir = NoisemakerCpu::Transpiler::CDN._cache_dir(NoisemakerCpu::Transpiler::CDN::CDN_VERSION)
@@ -304,7 +301,7 @@ class TestParity < Minitest::Test
   # of-failure test before that fix landed; now a real verification.
   def test_cdn_live_hash_synth_solid
     skip_unless_cdn_live_ready
-    skip "perl reference lock not found at #{PERL_LOCK_PATH}" unless File.exist?(PERL_LOCK_PATH)
+    skip "perl reference lock not configured (set NOISEMAKER_PERL_LOCK to enable)" unless PERL_LOCK_PATH && File.exist?(PERL_LOCK_PATH)
 
     perl_hashes = JSON.parse(File.read(PERL_LOCK_PATH))["hashes"]
     version_dir = NoisemakerCpu::Transpiler::CDN._cache_dir(NoisemakerCpu::Transpiler::CDN::CDN_VERSION)
@@ -316,7 +313,7 @@ class TestParity < Minitest::Test
   # of `.NN` entries (e.g. `[.83,.6,.63]`), not just the 2-3 in synth/solid.
   def test_cdn_live_hash_classic_noisedeck_color_lab
     skip_unless_cdn_live_ready
-    skip "perl reference lock not found at #{PERL_LOCK_PATH}" unless File.exist?(PERL_LOCK_PATH)
+    skip "perl reference lock not configured (set NOISEMAKER_PERL_LOCK to enable)" unless PERL_LOCK_PATH && File.exist?(PERL_LOCK_PATH)
 
     perl_hashes = JSON.parse(File.read(PERL_LOCK_PATH))["hashes"]
     version_dir = NoisemakerCpu::Transpiler::CDN._cache_dir(NoisemakerCpu::Transpiler::CDN::CDN_VERSION)
@@ -328,7 +325,7 @@ class TestParity < Minitest::Test
   # leading-dot decimals, so this is a clean control alongside the other 3.
   def test_cdn_live_hash_mixer_blend_mode
     skip_unless_cdn_live_ready
-    skip "perl reference lock not found at #{PERL_LOCK_PATH}" unless File.exist?(PERL_LOCK_PATH)
+    skip "perl reference lock not configured (set NOISEMAKER_PERL_LOCK to enable)" unless PERL_LOCK_PATH && File.exist?(PERL_LOCK_PATH)
 
     perl_hashes = JSON.parse(File.read(PERL_LOCK_PATH))["hashes"]
     version_dir = NoisemakerCpu::Transpiler::CDN._cache_dir(NoisemakerCpu::Transpiler::CDN::CDN_VERSION)

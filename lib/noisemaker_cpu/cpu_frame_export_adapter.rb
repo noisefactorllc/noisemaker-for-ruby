@@ -38,15 +38,34 @@ module NoisemakerCpu
       end
 
       source = surface.data
+      data = slot.data
       index = 0
-      while index < source.length
-        alpha = source[index + 3]
-        color_scale = slot.alpha_mode == "premultiplied" ? alpha : 1
-        slot.data.setbyte(index, byte_from_float(source[index] * color_scale))
-        slot.data.setbyte(index + 1, byte_from_float(source[index + 1] * color_scale))
-        slot.data.setbyte(index + 2, byte_from_float(source[index + 2] * color_scale))
-        slot.data.setbyte(index + 3, byte_from_float(slot.alpha_mode == "opaque" ? 1 : alpha))
-        index += 4
+      case slot.alpha_mode
+      when "premultiplied"
+        while index < source.length
+          alpha = source[index + 3]
+          data.setbyte(index, byte_from_float(source[index] * alpha))
+          data.setbyte(index + 1, byte_from_float(source[index + 1] * alpha))
+          data.setbyte(index + 2, byte_from_float(source[index + 2] * alpha))
+          data.setbyte(index + 3, byte_from_float(alpha))
+          index += 4
+        end
+      when "opaque"
+        while index < source.length
+          data.setbyte(index, byte_from_float(source[index]))
+          data.setbyte(index + 1, byte_from_float(source[index + 1]))
+          data.setbyte(index + 2, byte_from_float(source[index + 2]))
+          data.setbyte(index + 3, 255)
+          index += 4
+        end
+      else
+        while index < source.length
+          data.setbyte(index, byte_from_float(source[index]))
+          data.setbyte(index + 1, byte_from_float(source[index + 1]))
+          data.setbyte(index + 2, byte_from_float(source[index + 2]))
+          data.setbyte(index + 3, byte_from_float(source[index + 3]))
+          index += 4
+        end
       end
       slot.ready = true
     end

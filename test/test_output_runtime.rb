@@ -100,6 +100,7 @@ class TestOutputRuntime < Minitest::Test
   end
 
   def test_public_api_exports_output_runtime
+    assert_equal NoisemakerCpu::CpuFrameExportAdapter, NoisemakerCpu.const_get(:CpuFrameExportAdapter)
     assert_equal NoisemakerCpu::CpuRenderer, NoisemakerCpu.const_get(:CpuRenderer)
     assert_equal NoisemakerCpu::FrameExportQueue, NoisemakerCpu.const_get(:FrameExportQueue)
     assert_equal NoisemakerCpu::SinkManager, NoisemakerCpu.const_get(:SinkManager)
@@ -310,6 +311,73 @@ class TestOutputRuntime < Minitest::Test
     assert_match(/source extent 1x1 does not match configured extent 2x1/, errors[0])
     assert_equal({ accepted: 0, dropped: 0, completed: 0, failed: 1 }, queue.stats)
     assert queue.available?
+  end
+
+  def test_cpu_frame_export_adapter_direct_lifecycle_and_alpha_modes
+    adapter = NoisemakerCpu::CpuFrameExportAdapter.new
+    slot = adapter.create_slot(
+      0,
+      {
+        "width" => 2,
+        "height" => 1,
+        "format" => "rgba8unorm",
+        "colorSpace" => "srgb",
+        "alphaMode" => "straight",
+        "fps" => 30
+      }
+    )
+    assert_equal 0, slot.index
+    refute slot.ready
+    refute adapter.poll(slot)
+
+    frame = NoisemakerCpu::Surface.new(2, 1, [0.5, 0.2, 0.8, 1.0, 0.0, 1.0, 0.0, 0.5])
+    adapter.begin(slot, frame)
+    assert adapter.poll(slot)
+
+    read_frame = adapter.read(slot)
+    assert_equal 2, read_frame.width
+    assert_equal 1, read_frame.height
+    assert_equal [128, 51, 204, 255, 0, 255, 0, 128], read_frame.data.bytes
+    refute adapter.poll(slot)
+
+    opaque_slot = adapter.create_slot(
+      1,
+      {
+        "width" => 1,
+        "height" => 1,
+        "format" => "rgba8unorm",
+        "colorSpace" => "srgb",
+        "alphaMode" => "opaque",
+        "fps" => 30
+      }
+    )
+    adapter.begin(opaque_slot, NoisemakerCpu::Surface.new(1, 1, [0.25, 0.5, 0.75, 0.1]))
+    assert_equal [64, 128, 191, 255], adapter.read(opaque_slot).data.bytes
+
+    premul_slot = adapter.create_slot(
+      2,
+      {
+        "width" => 1,
+        "height" => 1,
+        "format" => "rgba8unorm",
+        "colorSpace" => "srgb",
+        "alphaMode" => "premultiplied",
+        "fps" => 30
+      }
+    )
+    adapter.begin(premul_slot, NoisemakerCpu::Surface.new(1, 1, [0.5, 1.0, 0.25, 0.5]))
+    assert_equal [64, 128, 32, 128], adapter.read(premul_slot).data.bytes
+
+    adapter.destroy_slot(slot)
+    assert_error(/not usable/) { adapter.begin(slot, frame) }
+    assert_error(/not usable/) { adapter.poll(slot) }
+    assert_error(/not usable/) { adapter.read(slot) }
+
+    adapter.destroy_slot(opaque_slot)
+    assert_error(/not usable/) { adapter.poll(opaque_slot) }
+
+    adapter.destroy_slot(premul_slot)
+    assert_error(/not usable/) { adapter.poll(premul_slot) }
   end
 
   def test_cpu_renderer_configures_sinks_submits_successes_and_validates_first
