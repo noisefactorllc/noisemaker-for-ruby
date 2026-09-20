@@ -38,14 +38,21 @@ class TestTranspilerPipeline < Minitest::Test
   class StubRuntime
     SWZ = { "x" => 0, "y" => 1, "z" => 2, "w" => 3, "r" => 0, "g" => 1, "b" => 2, "a" => 3 }.freeze
 
-    def f(x) = x.to_f
-    def i(x) = x.to_i
+    def f(x)
+      x.to_f
+    end
+
+    def i(x)
+      x.to_i
+    end
 
     def f32(x)
       [x].pack("e").unpack1("e")
     end
 
-    def bool(x) = x != 0
+    def bool(x)
+      x != 0
+    end
 
     def copy(vec, _base = nil)
       vec.is_a?(Array) ? vec.dup : vec
@@ -59,7 +66,9 @@ class TestTranspilerPipeline < Minitest::Test
       width == 1 ? vals[0] : vals
     end
 
-    def array(elems) = elems
+    def array(elems)
+      elems
+    end
 
     def new_array(n, width)
       Array.new(n) { width == 1 ? 0.0 : Array.new(width, 0.0) }
@@ -86,7 +95,9 @@ class TestTranspilerPipeline < Minitest::Test
       end
     end
 
-    def bit_not(x) = ~x
+    def bit_not(x)
+      ~x
+    end
 
     def binary(op, a, b, width = nil, base = nil)
       scalar = lambda do |x, y|
@@ -156,17 +167,30 @@ class TestTranspilerPipeline < Minitest::Test
       end
     end
 
-    def dot(a, b) = a.zip(b).sum { |x, y| x * y }
-    def length(v) = Math.sqrt(v.is_a?(Array) ? v.sum { |x| x * x } : v * v)
+    def dot(a, b)
+      a.zip(b).sum { |x, y| x * y }
+    end
+
+    def length(v)
+      Math.sqrt(v.is_a?(Array) ? v.sum { |x| x * x } : v * v)
+    end
 
     def normalize(v)
       l = length(v)
       v.map { |x| x / l }
     end
 
-    def texture(tex, _uv) = tex.dup
-    def texture_size(_tex) = [1, 1]
-    def texel_fetch(tex, _coord, _lod) = tex.dup
+    def texture(tex, _uv)
+      tex.dup
+    end
+
+    def texture_size(_tex)
+      [1, 1]
+    end
+
+    def texel_fetch(tex, _coord, _lod)
+      tex.dup
+    end
 
     def matrix_mult(m, v, n)
       if v.length == n
@@ -182,7 +206,9 @@ class TestTranspilerPipeline < Minitest::Test
       end
     end
 
-    def mat_col(m, idx, n) = m[(idx * n)...((idx * n) + n)]
+    def mat_col(m, idx, n)
+      m[(idx * n)...((idx * n) + n)]
+    end
   end
 
   class StubCtx

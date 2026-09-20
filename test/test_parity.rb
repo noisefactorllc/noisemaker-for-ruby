@@ -358,4 +358,17 @@ class TestParity < Minitest::Test
     warm = NoisemakerCpu::Transpiler::CDN.fetch_effect("filter/invert")
     assert_equal cold["paramOrder"], warm["paramOrder"], "cold and warm fetches must derive identical paramOrder"
   end
+
+  def test_cpu_upstream_source_lock_and_snapshot_parity
+    source_lock_path = File.join(CPU_DIR, "scripts", "upstream", "source-lock.js")
+    snapshot_path = File.join(CPU_DIR, "src", "effects", "generated", "upstream-snapshot.js")
+    skip "noisemaker-for-cpu files not found" unless File.exist?(source_lock_path) && File.exist?(snapshot_path)
+
+    source_lock_text = File.read(source_lock_path)
+    assert_includes source_lock_text, "export const PINNED_UPSTREAM_REVISION = 'beabda385253a3461d2ee5ee2f1b032cbe9a2832'"
+    assert_includes source_lock_text, "export const PINNED_SOURCE_DIGEST = '7c536c61938402fe8f56156e792b57ad201747798a8a943fac3eadb1ff53b885'"
+
+    snapshot_text = File.read(snapshot_path)
+    assert_includes snapshot_text, 'export const UPSTREAM_REVISION = "beabda385253a3461d2ee5ee2f1b032cbe9a2832"'
+  end
 end
