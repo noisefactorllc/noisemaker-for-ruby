@@ -5163,55 +5163,6 @@
         }
       ]
     },
-    "filter/bc": {
-      "namespace": "filter",
-      "func": "bc",
-      "kind": "filter",
-      "domain": "image",
-      "params": {
-        "brightness": {
-          "type": "float",
-          "default": 1,
-          "uniform": "brightness",
-          "min": 0,
-          "max": 10,
-          "ui": {
-            "label": "brightness",
-            "control": "slider"
-          }
-        },
-        "contrast": {
-          "type": "float",
-          "default": 0.5,
-          "uniform": "contrast",
-          "min": 0,
-          "max": 1,
-          "ui": {
-            "label": "contrast",
-            "control": "slider"
-          }
-        }
-      },
-      "paramOrder": [
-        "brightness",
-        "contrast"
-      ],
-      "textures": {},
-      "passes": [
-        {
-          "name": "render",
-          "program": "bc",
-          "key": "filter/bc:bc",
-          "inputs": {
-            "inputTex": "inputTex"
-          },
-          "outputs": {
-            "fragColor": "outputTex"
-          },
-          "uniforms": {}
-        }
-      ]
-    },
     "filter/bloom": {
       "namespace": "filter",
       "func": "bloom",
@@ -6147,46 +6098,6 @@
           },
           "outputs": {
             "color": "outputTex"
-          },
-          "uniforms": {}
-        }
-      ]
-    },
-    "filter/colorspace": {
-      "namespace": "filter",
-      "func": "colorspace",
-      "kind": "filter",
-      "domain": "image",
-      "params": {
-        "mode": {
-          "type": "int",
-          "default": 0,
-          "uniform": "mode",
-          "choices": {
-            "hsv": 0,
-            "oklab": 1,
-            "oklch": 2
-          },
-          "ui": {
-            "label": "mode",
-            "control": "dropdown"
-          }
-        }
-      },
-      "paramOrder": [
-        "mode"
-      ],
-      "textures": {},
-      "passes": [
-        {
-          "name": "render",
-          "program": "colorspace",
-          "key": "filter/colorspace:colorspace",
-          "inputs": {
-            "inputTex": "inputTex"
-          },
-          "outputs": {
-            "fragColor": "outputTex"
           },
           "uniforms": {}
         }
@@ -9204,67 +9115,6 @@
           "name": "render",
           "program": "historicPalette",
           "key": "filter/historicPalette:historicPalette",
-          "inputs": {
-            "inputTex": "inputTex"
-          },
-          "outputs": {
-            "fragColor": "outputTex"
-          },
-          "uniforms": {}
-        }
-      ]
-    },
-    "filter/hs": {
-      "namespace": "filter",
-      "func": "hs",
-      "kind": "filter",
-      "domain": "image",
-      "params": {
-        "rotation": {
-          "type": "float",
-          "default": 0,
-          "uniform": "rotation",
-          "min": -180,
-          "max": 180,
-          "ui": {
-            "label": "hue rotation",
-            "control": "slider"
-          }
-        },
-        "hueRange": {
-          "type": "float",
-          "default": 100,
-          "uniform": "hueRange",
-          "min": 0,
-          "max": 200,
-          "ui": {
-            "label": "hue range",
-            "control": "slider"
-          }
-        },
-        "saturation": {
-          "type": "float",
-          "default": 1,
-          "uniform": "saturation",
-          "min": 0,
-          "max": 4,
-          "ui": {
-            "label": "saturation",
-            "control": "slider"
-          }
-        }
-      },
-      "paramOrder": [
-        "rotation",
-        "hueRange",
-        "saturation"
-      ],
-      "textures": {},
-      "passes": [
-        {
-          "name": "render",
-          "program": "hs",
-          "key": "filter/hs:hs",
           "inputs": {
             "inputTex": "inputTex"
           },

@@ -365,10 +365,10 @@ class TestParity < Minitest::Test
     skip "noisemaker-for-cpu files not found" unless File.exist?(source_lock_path) && File.exist?(snapshot_path)
 
     source_lock_text = File.read(source_lock_path)
-    assert_includes source_lock_text, "export const PINNED_UPSTREAM_REVISION = 'beabda385253a3461d2ee5ee2f1b032cbe9a2832'"
-    assert_includes source_lock_text, "export const PINNED_SOURCE_DIGEST = '7c536c61938402fe8f56156e792b57ad201747798a8a943fac3eadb1ff53b885'"
+    assert_includes source_lock_text, "export const PINNED_UPSTREAM_REVISION = 'f61ac07320888732594689258c6f7042cde0303b'"
+    assert_includes source_lock_text, "export const PINNED_SOURCE_DIGEST = 'cfc89f8f95b9b1798e14d3604a8cd786bfcc2243e427e8042f5a8aea0b982caf'"
 
     snapshot_text = File.read(snapshot_path)
-    assert_includes snapshot_text, 'export const UPSTREAM_REVISION = "beabda385253a3461d2ee5ee2f1b032cbe9a2832"'
+    assert_includes snapshot_text, 'export const UPSTREAM_REVISION = "f61ac07320888732594689258c6f7042cde0303b"'
   end
 end

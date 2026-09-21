@@ -15,6 +15,6 @@ class TestExportKit < Minitest::Test
     assert File.exist?(metadata_path), "#{metadata_rel} must exist"
 
     metadata = JSON.parse(File.read(metadata_path))
-    assert_equal 208, metadata.fetch("effects").length, "expected 208 bundled effects"
+    assert_equal 205, metadata.fetch("effects").length, "expected 205 bundled effects"
   end
 end

@@ -23,7 +23,7 @@ Effect kernels are **transpiled directly from the upstream GLSL** served by the 
 - Screen-space derivatives.
 - GL texture sampling.
 
-The bundle includes **all 208 catalog effects** (292 kernels). They render at **byte-parity** with the JavaScript engine's `effect` CLI. `scripts/parity.rb` verifies this against a sibling `noisemaker-for-cpu` checkout.
+The bundle includes **all 205 catalog effects** (289 kernels). They render at **byte-parity** with the JavaScript engine's `effect` CLI. `scripts/parity.rb` verifies this against a sibling `noisemaker-for-cpu` checkout.
 
 ## Install
 
