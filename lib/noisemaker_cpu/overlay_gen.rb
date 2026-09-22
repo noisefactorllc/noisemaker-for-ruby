@@ -17,15 +17,7 @@
 # - Field/surface storage is float32; reads promote to float64, writes round.
 # - Final surface is quantized to 8-bit like the reference.
 
-# NOTE (parallel-build bootstrap): Surface is owned by Worker A. Only
-# render_worm_overlay (via _trace/_draw_segment) needs it, and only when
-# actually CALLED, so this file -- including SeededRng, which never touches
-# Surface -- loads standalone even before surface.rb lands.
-begin
-  require_relative "surface"
-rescue LoadError
-  nil
-end
+require_relative "surface"
 
 module NoisemakerCpu
   module OverlayGen

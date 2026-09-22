@@ -4,11 +4,13 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "../scripts/oracle"
 
 require_relative "../lib/noisemaker_cpu/png"
 require_relative "../lib/noisemaker_cpu/renderer"
 
 class TestSimulationEffects < Minitest::Test
+  include NoisemakerOracle::Tests
   CPU_DIR = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path("../../noisemaker-for-cpu", __dir__)
   CPU_CLI = File.join(CPU_DIR, "bin", "noisemaker-cpu.js")
 
@@ -19,6 +21,7 @@ class TestSimulationEffects < Minitest::Test
   end
 
   def js_effect(effect_id, params = {})
+    require_oracle
     Dir.mktmpdir do |tmp|
       output = File.join(tmp, "effect.png")
       command = [
@@ -35,6 +38,7 @@ class TestSimulationEffects < Minitest::Test
   end
 
   def js_dsl(program, width: 8, height: 8)
+    require_oracle
     Dir.mktmpdir do |tmp|
       output = File.join(tmp, "dsl.png")
       command = [
@@ -83,6 +87,16 @@ class TestSimulationEffects < Minitest::Test
     end
     assert_equal "", message
     assert_equal expected.to_rgba8, actual.to_rgba8
+  end
+
+  def test_particle_renderers_and_dla_match_the_same_explicit_scene
+    %w[dla pointsRender pointsBillboardRender].each do |function|
+      program = "search synth, points, render\n" \
+        "solid().pointsEmit(stateSize: x64, iterationCount: 1).#{function}().write(o0)\nrender(o0)"
+      expected = js_dsl(program)
+      actual = NoisemakerCpu::Renderer.render_dsl(program, width: 8, height: 8, seed: 1, time: 0.25)
+      assert_equal expected.to_rgba8, actual.to_rgba8, function
+    end
   end
 
   def test_non_particle_iterated_effects_match_javascript_across_frames

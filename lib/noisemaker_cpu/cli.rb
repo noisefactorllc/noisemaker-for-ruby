@@ -53,6 +53,8 @@ module NoisemakerCpu
       "apply" => :cmd_apply,
       "animate" => :cmd_animate,
       "run" => :cmd_run,
+      "effects" => :cmd_effects,
+      "describe" => :cmd_describe,
     }.freeze
 
     # ---------------------------------------------------------------------
@@ -75,7 +77,7 @@ module NoisemakerCpu
       command = argv.shift
       handler = COMMANDS[command]
       unless handler
-        warn "Unknown command: '#{command}'. Choose from: generate, apply, animate, run."
+        warn "Unknown command: '#{command}'. Choose from: #{COMMANDS.keys.join(', ')}."
         return 2
       end
 
@@ -84,7 +86,7 @@ module NoisemakerCpu
       rescue StandardError => e
         msg = e.message.dup
         msg << "\n" unless msg.end_with?("\n")
-        usage_error = e.is_a?(UsageError)
+        usage_error = e.is_a?(UsageError) || e.is_a?(ArgumentError)
         $stderr.print(msg)
         return usage_error ? 2 : 1
       end
@@ -108,6 +110,8 @@ module NoisemakerCpu
           effect that would render degenerately.
 
         Commands:
+          effects [QUERY]       List catalog ids, optionally filtered by text
+          describe EFFECT       Show parameter types, defaults and choices
           generate EFFECT       Render a catalog effect to a .png
           apply EFFECT INPUT    Apply an effect to a .png image
           animate EFFECT        Render an effect over time to an animation (.mp4)
@@ -159,6 +163,35 @@ module NoisemakerCpu
     # ---------------------------------------------------------------------
     # Commands
     # ---------------------------------------------------------------------
+
+    def self.cmd_effects(argv)
+      return print(usage) if argv == ["--help"] || argv == ["-h"]
+
+      query = argv.shift.to_s
+      _no_extra_args(argv)
+      Renderer.meta.fetch("effects").keys.sort.each { |id| puts id if id.include?(query) }
+      0
+    end
+
+    def self.cmd_describe(argv)
+      return print(usage) if argv == ["--help"] || argv == ["-h"]
+
+      id = argv.shift
+      _no_extra_args(argv)
+      effect = Renderer.meta.fetch("effects")[id]
+      raise UsageError, "Unknown effect #{id.inspect}; use 'noisemaker-rb effects' to list ids." unless effect
+
+      puts "#{id} (#{effect['kind']}; #{effect['domain'] || 'image'})"
+      effect.fetch("params").each do |name, spec|
+        puts "  #{name}: #{spec['type']}, default=#{spec['default'].inspect}"
+        choices = Parameters.choices(spec)
+        puts "    choices: #{choices.map { |key, value| "#{key}=#{value}" }.join(', ')}" unless choices.empty?
+        if spec.key?("min") || spec.key?("max")
+          puts "    UI range: #{spec['min'] || '-infinity'}..#{spec['max'] || 'infinity'}"
+        end
+      end
+      0
+    end
 
     def self.cmd_generate(argv)
       width_s = "1024"
@@ -350,6 +383,7 @@ module NoisemakerCpu
           ffmpeg, "-y",
           "-framerate", fps.to_s,
           "-i", File.join(frames_dir, "frame_%04d.png"),
+          "-frames:v", frame_count.to_s,
           "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
           "-c:v", "libx264",
           "-pix_fmt", "yuv420p",

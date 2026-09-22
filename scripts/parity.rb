@@ -1,4 +1,4 @@
-#!/opt/homebrew/opt/ruby/bin/ruby
+#!/usr/bin/env ruby
 # frozen_string_literal: true
 
 # Cross-language parity harness: render every bundled effect in Ruby vs the
@@ -6,31 +6,36 @@
 #
 # Usage: ruby scripts/parity.rb [--only id,id] [--size N] [--volume-size N]
 #
-# NOTE (integration dependency): this requires lib/noisemaker_cpu/{png,
-# renderer,surface}.rb (Workers D/C/A) and a generated bundle
-# (lib/noisemaker_cpu/bundle/, via scripts/build-bundle.rb --all, which
-# itself needs Worker B's transpiler). It will only run at integration.
-
 require "fileutils"
 require "tmpdir"
+require "optparse"
+require_relative "oracle"
 
 require_relative "../lib/noisemaker_cpu/png"
 require_relative "../lib/noisemaker_cpu/renderer"
 require_relative "../lib/noisemaker_cpu/surface"
 
-cpu_dir = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path(File.join(__dir__, "..", "..", "noisemaker-for-cpu"))
-cli = File.join(cpu_dir, "bin", "noisemaker-cpu.js")
+cpu_dir = NoisemakerOracle::ROOT
+cli = NoisemakerOracle::CLI
+oracle_error = begin
+  NoisemakerOracle.verify!
+  nil
+rescue StandardError => error
+  error.message
+end
 
 size = 8
 seed = 1
 render_time = 0.25
 only = nil
 volume_size = 16
-ARGV.each_index do |i|
-  only = ARGV[i + 1].split(",").each_with_object({}) { |x, h| h[x] = true } if ARGV[i] == "--only"
-  size = ARGV[i + 1].to_i if ARGV[i] == "--size"
-  volume_size = ARGV[i + 1].to_i if ARGV[i] == "--volume-size"
-end
+OptionParser.new do |opts|
+  opts.on("--only IDS") { |value| only = value.split(",").to_h { |id| [id, true] } }
+  opts.on("--size N", Integer) { |value| size = value }
+  opts.on("--volume-size N", Integer) { |value| volume_size = value }
+end.parse!
+abort "sizes must be positive integers" unless size.positive? && volume_size.positive?
+abort "unexpected arguments: #{ARGV.join(' ')}" unless ARGV.empty?
 
 tmp = Dir.mktmpdir
 at_exit { FileUtils.remove_entry(tmp) }
@@ -45,7 +50,7 @@ ext_texture = lambda do
   d = []
   (0...size).each do |y|
     (0...size).each do |x|
-      d << x.fdiv(size - 1) << y.fdiv(size - 1) << ((x + y) % size).fdiv(size - 1) << 1.0
+      d << x.fdiv([size - 1, 1].max) << y.fdiv([size - 1, 1].max) << ((x + y) % size).fdiv([size - 1, 1].max) << 1.0
     end
   end
   surf = NoisemakerCpu::Surface.new(size, size, d)
@@ -55,13 +60,19 @@ ext_texture = lambda do
 end
 
 js_effect = lambda do |effect_id, out, input_png, params|
+  raise oracle_error if oracle_error
+  program = NoisemakerOracle.particle_program(NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id), params)
   cmd = ["node", cli, "effect", effect_id,
          "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s,
          "--output", out]
   cmd += ["--input", input_png] if input_png
-  params.each { |name, value| cmd += ["--param", "#{name}=#{value}"] }
-  ok = system(*cmd, chdir: cpu_dir, out: File::NULL, err: File::NULL)
-  raise "oracle failed\n" unless ok
+  if program
+    cmd[2, 2] = ["render", "-"]
+  else
+    params.each { |name, value| cmd += ["--param", "#{name}=#{value}"] }
+  end
+  _stdout, stderr, status = Open3.capture3(*cmd, chdir: cpu_dir, stdin_data: program || "")
+  raise "oracle failed: #{stderr}" unless status.success?
 
   bytes =
     begin
@@ -81,6 +92,10 @@ end
 
 ruby_render = lambda do |effect_id, kind, ext, render_params|
   eff = NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id)
+  program = NoisemakerOracle.particle_program(eff, render_params)
+  if program
+    return NoisemakerCpu::Renderer.render_dsl(program, width: size, height: size, seed: seed, time: render_time)
+  end
   domain = eff["domain"] || "image"
   unless domain == "image"
     args = render_params.map { |name, value| "#{name}: #{value}" }.join(", ")
@@ -151,7 +166,8 @@ ids.each do |eid|
   js =
     begin
       js_effect.call(eid, File.join(tmp, "ph_js.png"), input_png, render_params)
-    rescue StandardError
+    rescue StandardError => error
+      warn "#{eid}: #{error.message}"
       nil
     end
   if js.nil?

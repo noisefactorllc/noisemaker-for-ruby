@@ -1,4 +1,4 @@
-name: Export kit
+name: Ruby CI and export kit
 
 # Public repo: holds NO deploy credentials. Dispatches scaffold's
 # export-kit-release.yml, which builds this repo's export kit at this exact
@@ -9,21 +9,107 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - "export-kit/**"
-      - ".github/workflows/export-kit.yml"
-      # LICENSE is shipped kit content (vendored into LICENSES/): a relicense must auto-publish.
-      - "LICENSE"
-      - "lib/**"
-      - "exe/noisemaker-rb"
+  pull_request:
+
+permissions:
+  contents: read
 
 concurrency:
   group: export-kit-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  test:
+    name: Ruby ${{ matrix.ruby }} / ${{ matrix.os }}
+    timeout-minutes: 10
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        ruby: ['3.2', '3.3', '3.4', '4.0']
+        include:
+          - os: macos-latest
+            ruby: '4.0'
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@e8944e80fb94b20106697132f8c20c665fab29e9 # v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Standalone tests, including archive installation and C locale
+        env:
+          NOISEMAKER_CPU_DIR: /no-oracle-in-standalone-tests
+          LC_ALL: C
+        run: bundle exec rake test
+
+  parity:
+    name: Pinned JavaScript parity and integration
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@e8944e80fb94b20106697132f8c20c665fab29e9 # v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '22'
+      - name: Read oracle revision
+        id: oracle
+        run: ruby -rjson -e 'puts "revision=#{JSON.parse(File.read("scripts/oracle-lock.json")).fetch("revision")}"' >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          repository: noisefactorllc/noisemaker-for-cpu
+          ref: ${{ steps.oracle.outputs.revision }}
+          path: oracle
+          persist-credentials: false
+      - name: Install video test tools
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Required integration tests
+        env:
+          NOISEMAKER_CPU_DIR: ${{ github.workspace }}/oracle
+          NOISEMAKER_REQUIRE_ORACLE: '1'
+          LC_ALL: C
+        run: bundle exec rake test
+      - name: All 205 effects, exact RGBA8 comparison
+        env:
+          NOISEMAKER_CPU_DIR: ${{ github.workspace }}/oracle
+        run: bundle exec ruby scripts/parity.rb
+
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.paths.outputs.release }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check existing export-kit publication paths
+        id: paths
+        env:
+          BEFORE: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          ruby -ropen3 -e '
+            before = ENV.fetch("BEFORE", "")
+            args = before.match?(/\A[0-9a-f]{40}\z/) && before != "0" * 40 ?
+              ["diff", "--name-only", before, ENV.fetch("GITHUB_SHA"), "--"] : ["ls-files"]
+            out, status = Open3.capture2("git", *args)
+            abort "could not inspect changed files" unless status.success?
+            changed = out.lines.any? { |path| path.strip.match?(%r{\A(?:export-kit/|lib/|exe/noisemaker-rb$|LICENSE$|\.github/workflows/export-kit\.yml$)}) }
+            puts "release=#{ENV["EVENT_NAME"] == "workflow_dispatch" || changed}"
+          ' >> "$GITHUB_OUTPUT"
+
   dispatch:
-    if: github.ref == 'refs/heads/main'
+    needs: [test, parity, changes]
+    if: github.event_name != 'pull_request' && needs.changes.outputs.release == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Mint scaffold-dispatch token

@@ -147,7 +147,7 @@ class TestVolumeCatalog < Minitest::Test
       with_singleton_stub(CDN, :fetch_effect, ->(_id) { effect }) do
         Build.build([effect["id"]], out_dir: dir, update_lock: true)
       end
-      built = JSON.parse(File.read(File.join(dir, "metadata.json"))).fetch("effects").fetch(effect["id"])
+      built = JSON.parse(File.binread(File.join(dir, "metadata.json"))).fetch("effects").fetch(effect["id"])
       assert_equal "generator", built["kind"]
       assert_equal "volume-generator", built["domain"]
       assert_equal "volumeCache", built["outputTex3d"]

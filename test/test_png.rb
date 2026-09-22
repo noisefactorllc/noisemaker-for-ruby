@@ -1,20 +1,11 @@
 # frozen_string_literal: true
 
-# Mirror of noisemaker-for-python/tests/test_png.py, translated to Ruby /
-# minitest. png.rb's only cross-worker dependency is Worker A's surface.rb
-# (Surface#width/#height/#to_rgba8, Surface.from_rgba8 -- a "thin" surface,
-# per the port contract's dependency note for Worker D); this file checks
-# for it at run time and skips every PNG-dependent assertion (with a clear
-# reason) if it is not yet present, rather than failing to load altogether.
-
 require "minitest/autorun"
+require_relative "../scripts/oracle"
 require "zlib"
 require "tmpdir"
 
-SURFACE_PATH = File.expand_path("../lib/noisemaker_cpu/surface.rb", __dir__)
-PNG_LOADABLE = File.exist?(SURFACE_PATH)
-
-require_relative "../lib/noisemaker_cpu/png" if PNG_LOADABLE
+require_relative "../lib/noisemaker_cpu/png"
 
 # The JS PNG-encoder cross-check needs a sibling noisemaker-for-cpu checkout + node.
 CPU_DIR = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path("../../noisemaker-for-cpu", __dir__)
@@ -71,10 +62,7 @@ def _build_png(width, height, filtered_scanlines)
 end
 
 class TestPng < Minitest::Test
-  def setup
-    skip "surface.rb (Worker A) not yet available -- png.rb cannot load" unless PNG_LOADABLE
-  end
-
+  include NoisemakerOracle::Tests
   def test_encode_png_has_signature_and_chunk_markers
     surface = NoisemakerCpu::Surface.from_rgba8(
       2, 2, [255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255].pack("C*")
@@ -103,7 +91,7 @@ class TestPng < Minitest::Test
   end
 
   def test_cross_check_against_js_encoder
-    skip "needs node + a sibling noisemaker-for-cpu checkout" unless system("which node > /dev/null 2>&1") && Dir.exist?(CPU_DIR)
+    require_oracle
 
     Dir.mktmpdir do |tmp_dir|
       output_path = File.join(tmp_dir, "nmpng_fix.png")

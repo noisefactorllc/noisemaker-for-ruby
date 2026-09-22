@@ -686,14 +686,8 @@ module NoisemakerCpu
       _throw("Parameter \"#{name}\" must be a surface reference", loc)
     end
 
-    # Map a call's arguments onto the effect's params, splitting value
-    # params (handed to render_effect) from surface bindings. Like the
-    # Python port (and unlike JS normalizeArguments) this does NOT validate
-    # value type/range/enum-membership here; render_effect's _coerce
-    # performs the coercion and fills defaults, so malformed values render
-    # leniently while unknown parameter NAMES are still rejected.
-    # paramOrder stands in for Python's list(param_specs.keys()) (see
-    # module header).
+    # Split value parameters from surface bindings. Renderer validates and
+    # coerces values for both direct calls and compiled DSL steps.
     def self._normalize_effect(effect_id, spec, args)
       param_specs = spec["params"]
       param_names = spec["paramOrder"]
@@ -716,7 +710,7 @@ module NoisemakerCpu
         pspec = param_specs[supplied]
         if pspec.is_a?(Hash) && pspec["type"] == "surface"
           marker = _surface_marker(arg["value"], supplied, arg["loc"])
-          surfaces[supplied] = marker unless marker.nil?
+          surfaces[supplied] = marker
         else
           params[supplied] = arg["value"]
         end

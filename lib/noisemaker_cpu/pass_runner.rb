@@ -8,23 +8,8 @@
 # (bottom-left) and uv = fragCoord / resolution. The kernel writes 4 floats
 # into out; we store them into the top-down row.
 
-# NOTE (parallel-build bootstrap): Surface and Runtime are owned by Worker A
-# and may not exist yet while this file is authored. Neither run_pass nor
-# run_pass_deriv resolves NoisemakerCpu::Surface until actually CALLED (Ruby
-# only looks up a bare constant when the method body executes), so this file
-# -- including the Ctx class, which never touches Surface -- loads standalone
-# even before surface.rb/runtime.rb land. Once they exist, these requires
-# succeed normally and nothing else changes.
-begin
-  require_relative "surface"
-rescue LoadError
-  nil
-end
-begin
-  require_relative "runtime"
-rescue LoadError
-  nil
-end
+require_relative "surface"
+require_relative "runtime"
 
 module NoisemakerCpu
   module PassRunner

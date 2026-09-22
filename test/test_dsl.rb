@@ -20,7 +20,7 @@ require "json"
 require_relative "../lib/noisemaker_cpu/renderer"
 
 EFFECTS = JSON.parse(
-  File.read(File.expand_path("../lib/noisemaker_cpu/bundle/metadata.json", __dir__))
+  File.binread(File.expand_path("../lib/noisemaker_cpu/bundle/metadata.json", __dir__))
 )["effects"]
 
 # Run the block, returning '' on success or the raised error's message.

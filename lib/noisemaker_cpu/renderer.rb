@@ -2,7 +2,7 @@
 
 # Render a bundled effect: load metadata + transpiled kernel, run the pass(es).
 #
-# Faithful port of the (167/167 parity-proven) Python/Perl renderer: canonical
+# CPU renderer using the reference engine's canonical
 # uniforms matching createCanonicalBindings, seed threading into an effect's
 # own `seed` param, texture-filter model (only the declared externalTexture is
 # 'linear'; pooled surfaces stay 'nearest'), per-pass quantization to the
@@ -12,6 +12,7 @@
 require "json"
 
 require_relative "kernel_cache"
+require_relative "parameters"
 require_relative "pass_runner"
 require_relative "adapters"
 require_relative "draw_ops"
@@ -84,7 +85,7 @@ module NoisemakerCpu
 
       path = File.join(bundle_dir, "metadata.json")
       text = begin
-        File.read(path)
+        File.read(path, encoding: "UTF-8")
       rescue SystemCallError => e
         raise "cannot read bundle metadata #{path}: #{e.message}"
       end
@@ -96,54 +97,15 @@ module NoisemakerCpu
         fname = key.gsub(%r{[/:]}, "__")
         path = File.join(bundle_dir, "kernels", "ruby", "#{fname}.rb")
         begin
-          File.read(path)
+          File.read(path, encoding: "UTF-8")
         rescue SystemCallError => e
           raise "cannot read kernel #{path}: #{e.message}"
         end
       end)
     end
 
-    def self._parse_hex(s)
-      s = s.delete_prefix("#")
-      s = s.chars.map { |c| c * 2 }.join if s.length == 3
-      rgb = (0..2).map { |i| s[i * 2, 2].to_i(16).fdiv(255.0) }
-      rgb << s[6, 2].to_i(16).fdiv(255.0) if s.length >= 8
-      rgb
-    end
-
     def self._coerce(spec, value)
-      t = spec["type"] || ""
-      value = spec["default"] if value.nil?
-      if t == "color"
-        value = _parse_hex(value) if !value.nil? && !value.is_a?(Array)
-        return (value || [0, 0, 0]).map { |c| f32(c) }
-      end
-      if t == "vec2" || t == "vec3" || t == "vec4"
-        if !value.nil? && !value.is_a?(Array) # CLI --param: "0.1,0.2,0.3"
-          value = value.split(",").map { |x| 0 + x.to_f }
-        end
-        return (value || []).map { |c| f32(c) }
-      end
-      return f32(value.nil? ? 0 : value) if t == "float"
-      if t == "int" || t == "enum" || t == "member"
-        if !value.nil? && value.to_s =~ /[^\d\s.+-]/ # enum name lookup
-          choices = spec["choices"] || {}
-          m = value.to_s.match(/([^.]+)\z/) # "oscType.sine" -> "sine"
-          key = m ? m[1] : nil
-          return choices[value].to_i if choices.key?(value)
-          return choices[key].to_i if !key.nil? && choices.key?(key)
-
-          return 0 # CDN member with no inline choices: 0th member
-        end
-        return (value.nil? ? 0 : value).to_i
-      end
-      if t == "bool" || t == "boolean"
-        return 1 if !value.nil? && value.to_s =~ /\A\s*(?:true|yes|on)\s*\z/i
-        return 0 if !value.nil? && value.to_s =~ /\A\s*(?:false|no|off)\s*\z/i
-
-        return (!value.nil? && value) ? 1 : 0
-      end
-      value
+      Parameters.coerce(spec, value)
     end
 
     # Pack synth/remap's std140 data[267] block from the bound uniforms --
@@ -198,7 +160,16 @@ module NoisemakerCpu
       )
     end
 
+    def self._surface_input(spec, name, inputs)
+      sampler = spec["uniform"] || spec["texture"] || name
+      return inputs[sampler] if inputs.key?(sampler)
+      return inputs[name] if inputs.key?(name)
+
+      inputs["inputTex"] if spec["default"] == "inputTex"
+    end
+
     def self._normalize_iteration_params(eff, params, inputs, seed)
+      params = Parameters.normalize(eff, params)
       normalized = {}
       effect_uniforms = {}
       surface_params = {}
@@ -207,7 +178,7 @@ module NoisemakerCpu
 
         if (spec["type"] || "") == "surface"
           sampler = spec["uniform"] || spec["texture"] || pname
-          surface = inputs[sampler].nil? ? inputs[pname] : inputs[sampler]
+          surface = _surface_input(spec, pname, inputs)
           surface_params[sampler] = surface
           normalized[pname] = surface
           effect_uniforms[spec["colorModeUniform"]] = surface.nil? ? 0 : 1 if spec["colorModeUniform"]
@@ -648,6 +619,8 @@ module NoisemakerCpu
       inputs ||= {}
       eff = meta["effects"][effect_id]
       raise "unknown effect '#{effect_id}' (not in bundle)" if eff.nil?
+      params = Parameters.normalize(eff, params)
+      inputs = inputs.transform_keys(&:to_s)
       return _render_iterated_effect(eff, params, inputs, width: width, height: height, seed: seed, time: time) if eff["iterated"]
       if %w[volume-generator volume-filter volume-renderer].include?(eff["domain"])
         return _render_typed_effect(eff, params, inputs, width: width, height: height, seed: seed, time: time)
@@ -661,7 +634,7 @@ module NoisemakerCpu
 
         if (spec["type"] || "") == "surface"
           sampler = spec["uniform"] || spec["texture"] || pname
-          surf = inputs[sampler].nil? ? inputs[pname] : inputs[sampler]
+          surf = _surface_input(spec, pname, inputs)
           surface_params[sampler] = surf
           # colorModeUniform (e.g. mashup's layerN_active): 1 when the
           # surface is wired, 0 when unbound.
@@ -819,6 +792,7 @@ module NoisemakerCpu
     # '@current' is the chain's current image, ['surface', 'oN'] a named
     # surface that must already have been written.
     def self._resolve_surface_marker(marker, current, surfaces)
+      return nil if marker.nil?
       return _chain_bundle(current)["image"] if !marker.is_a?(Array) && marker == "@current"
 
       name = marker[1]
@@ -841,7 +815,7 @@ module NoisemakerCpu
       inputs["inputGeo"] = bundle["geometry"] unless bundle["geometry"].nil?
       step["surfaces"].keys.sort.each do |pname|
         surf = _resolve_surface_marker(step["surfaces"][pname], current, surfaces)
-        inputs[pname] = surf unless surf.nil?
+        inputs[pname] = surf
       end
       render_effect(
         step["effect_id"], step["params"], inputs,
@@ -857,7 +831,7 @@ module NoisemakerCpu
       inputs["inputGeo"] = bundle["geometry"] unless bundle["geometry"].nil?
       (step["surfaces"] || {}).each do |name, marker|
         surface = _resolve_surface_marker(marker, current, surfaces)
-        inputs[name] = surface unless surface.nil?
+        inputs[name] = surface
       end
       inputs
     end

@@ -5,7 +5,7 @@
 # Faithful port of the (parity-proven) Perl runtime
 # (lib/Math/Fractal/Noisemaker/Runtime.pm), itself a port of noisemaker-cpu
 # src/csl/runtime.js + glsl-runtime.js semantics. The float model that
-# achieved 167/167 byte-parity is baked in:
+# follows the reference storage boundaries:
 #
 # - Scalars are Ruby Floats (float64). Scalar arithmetic accumulates raw f64,
 #   rounded to float32 only at boundaries.
@@ -22,19 +22,6 @@
 #   uint_math.rb header and contract trap #4 -- Ruby has no native float32).
 # - Screen-space derivatives use the FINE 2x2-quad record/replay model.
 #
-# Integration note for Worker C (pass_runner.rb, NOT part of this file):
-# Perl's Renderer.pm constructs the runtime with NO arguments
-# (`Math::Fractal::Noisemaker::Runtime->new`) once per render, then hands it
-# to `Math::Fractal::Noisemaker::Ctx->new(rt => $rt, ...)` (defined inside
-# PassRunner.pm), which stores it as `$ctx->{rt}`; kernels read it back via
-# `ctx.rt` per the kernel ABI. `NoisemakerCpu::Runtime.new` mirrors this
-# exactly: zero required arguments. Ruby's `stdlib_override` is exposed via
-# an `attr_reader` (a mutable String-keyed Hash), since Perl's tests mutate
-# it as `$rt->{stdlib_override}{name} = sub {...}` (direct blessed-hashref
-# access) -- there is no `stdlib_override=` writer, only in-place mutation
-# of the Hash `rt.stdlib_override` returns, exactly matching Perl's
-# in-place-hash-mutation usage in t/03-runtime.t.
-
 require_relative "uint_math"
 require_relative "sampler"
 
@@ -67,7 +54,7 @@ module NoisemakerCpu
     # Math::DomainError for out-of-domain input; Perl's POSIX:: equivalents
     # (like JS Math.*) silently return NaN. This is NOT one of the
     # contract's enumerated traps -- discovered and verified empirically
-    # (see worker report) -- and is guarded at every domain-restricted
+    # and is guarded at every domain-restricted
     # transcendental below, not just sqrt/log (whose guards Perl already
     # names `_safe_sqrt`/`_safe_log`).
     def self._safe_sqrt(x)
@@ -125,7 +112,7 @@ module NoisemakerCpu
     # Complex for a negative base with a non-integer exponent (e.g.
     # `(-1.0) ** 0.5 == (0.0+1.0i)`), which is NOT one of the contract's
     # traps and would silently poison every downstream float op with a
-    # Complex value. Verified empirically (see worker report); guarded by
+    # Complex value. Guarded by
     # replicating C pow()/JS Math.pow's domain rule directly: negative base
     # with a non-integer, finite exponent is NaN, matching perl/JS pow.
     def self._pow(x, y)

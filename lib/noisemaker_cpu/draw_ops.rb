@@ -7,15 +7,7 @@
 # lightness-driven offset destination, accumulating weighted color with
 # float16 truncation (matching the GPU rgba16f attachment).
 
-# NOTE (parallel-build bootstrap): TextureFormat is owned by Worker A.
-# wormhole_deposit only resolves NoisemakerCpu::TextureFormat when actually
-# CALLED, so the registry + pure helpers in this file load standalone even
-# before texture_format.rb lands.
-begin
-  require_relative "texture_format"
-rescue LoadError
-  nil
-end
+require_relative "texture_format"
 
 module NoisemakerCpu
   module DrawOps
@@ -121,8 +113,7 @@ module NoisemakerCpu
           # which Perl's `+` numifies to 0 (with a warning) while Ruby's `+`
           # raises. Skipping the deposit when do_ falls outside the
           # destination data range reproduces the JS oracle's observable
-          # behavior exactly (see worker report -- flagged dispute, resolved
-          # via the JS oracle per the contract's tie-break rule).
+          # behavior exactly.
           if do_.negative? || do_ >= odata.length
             next
           end

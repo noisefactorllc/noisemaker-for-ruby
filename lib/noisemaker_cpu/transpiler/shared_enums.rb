@@ -30,7 +30,12 @@ module NoisemakerCpu
         "vintage" => 54, "vintagePhoto" => 55,
       }.freeze
 
-      SHARED_ENUMS = { "palette" => PALETTE }.freeze
+      SHARED_ENUMS = {
+        "palette" => PALETTE,
+        "channel" => { "r" => 0, "g" => 1, "b" => 2, "a" => 3 }.freeze,
+        "oscType" => { "sine" => 0, "linear" => 1, "sawtooth" => 2, "sawtoothInv" => 3,
+                       "square" => 4, "noise1d" => 5, "noise2d" => 6 }.freeze,
+      }.freeze
     end
   end
 end

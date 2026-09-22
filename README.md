@@ -23,7 +23,18 @@ Effect kernels are **transpiled directly from the upstream GLSL** served by the 
 - Screen-space derivatives.
 - GL texture sampling.
 
-The bundle includes **all 205 catalog effects** (289 kernels). They render at **byte-parity** with the JavaScript engine's `effect` CLI. `scripts/parity.rb` verifies this against a sibling `noisemaker-for-cpu` checkout.
+The bundle includes 205 catalog effects (289 kernels). The parity harness
+compares exact RGBA8 output with a pinned JavaScript reference. It uses 8×8
+images, seed 1, time 0.25, small volume atlases, and identical explicit scenes
+for particle consumers. These checks cover the catalog, not every parameter,
+resolution, or animation. Iterated scenes also have separate integration tests.
+
+This implementation is useful for offline rendering and running exported
+Noisedeck compositions in Ruby without native extensions or a GPU. It is an
+interpreter, and shader-heavy effects are slow: a warm 32×32 `synth/curl` render
+allocated about 24 million objects and took several seconds on the development
+machine with Ruby 4.0. Start at 32×32 before increasing resolution. Real-time
+playback and large production renders are not its practical target.
 
 ## Install
 
@@ -34,39 +45,78 @@ gem build noisemaker-for-ruby.gemspec
 gem install noisemaker-for-ruby-0.0.0.gem
 ```
 
-Or straight from a checkout: `ruby -Ilib exe/noisemaker-rb ...`
+The build also works from a source archive without a `.git` directory.
+For Bundler, add `gem "noisemaker-for-ruby", path: "/path/to/checkout"` to your
+Gemfile. Both `require "noisemaker-for-ruby"` and `require "noisemaker_cpu"` load
+the engine. There are no runtime network requests.
+
+Or run directly from a checkout: `ruby -Ilib exe/noisemaker-rb ...`.
 
 ## Render an effect
 
-CLI:
+Discover effects and their parameters without reading generated code:
 
 ```bash
-# generate a single frame
-noisemaker-rb generate synth/curl --width 512 --height 512 --filename curl.png
-noisemaker-rb generate random --seed 42
-
-# apply an effect to an existing image
-noisemaker-rb apply filter/chrome photo.png --filename chrome.png
-
-# animate an effect over time (needs ffmpeg for .mp4)
-noisemaker-rb animate synth/curl --frame-count 60 --filename curl.mp4
-
-# render a Polymorphic DSL program from stdin
-echo 'search synth, filter
-noise(seed: 3, ridges: true).vignette().write(o0)
-render(o0)' | noisemaker-rb run --width 512 --height 512
+noisemaker-rb effects
+noisemaker-rb effects filter/
+noisemaker-rb describe synth/curl
 ```
+
+CLI examples use small images deliberately. The existing command defaults are
+1024×1024 for `generate` and 512×512 for `run` and `animate`; pass dimensions
+explicitly for an initial render.
+
+```bash
+noisemaker-rb generate synth/solid --width 64 --height 64 --param 'color=#4080c0' --filename solid.png
+noisemaker-rb generate synth/curl --width 32 --height 32 --seed 1 --param scale=16 --filename curl.png
+noisemaker-rb apply filter/lighting curl.png --filename lit.png
+
+# Needs ffmpeg for MP4; saved PNGs are retained if ffmpeg is unavailable.
+noisemaker-rb animate synth/solid --width 32 --height 32 --frame-count 4 --save-frames frames --filename solid.mp4
+
+# Render a Polymorphic DSL program from stdin.
+printf 'search synth, filter\nnoise(seed: 3, ridges: true).vignette().write(o0)\nrender(o0)\n' |
+  noisemaker-rb run --width 32 --height 32 --filename noise.png
+```
+
+Image input and output are PNG. MP4 encoding requires an `ffmpeg` executable
+on `PATH`; the renderer itself has no external runtime dependencies.
 
 Library:
 
 ```ruby
-require "noisemaker_cpu"
+require "noisemaker-for-ruby"
 
-surface = NoisemakerCpu::Renderer.render_effect(
-  "synth/curl", { "scale" => 16 }, nil, width: 512, height: 512, seed: 1
+renderer = NoisemakerCpu::Renderer
+surface = renderer.render_effect(
+  "synth/curl", { scale: 16, ridges: false }, nil,
+  width: 32, height: 32, seed: 1
 )
 File.binwrite("curl.png", NoisemakerCpu::PNG.encode_png(surface))
+
+# A filter consumes a Surface through the inputs Hash. Surface parameters
+# defaulting to inputTex, such as lighting's heightMap, use this image.
+filtered = renderer.render_effect(
+  "filter/lighting", {}, { inputTex: surface }, width: 32, height: 32
+)
+File.binwrite("lit.png", NoisemakerCpu::PNG.encode_png(filtered))
 ```
+
+Parameter and input keys accept strings or symbols. Booleans accept
+`true`/`false`, `1`/`0`, and the corresponding CLI spellings `yes`/`no` or
+`on`/`off`. Enum parameters accept the names or numeric values printed by
+`describe`. Colors accept RGB(A) arrays or hex strings; vectors accept numeric
+arrays or comma-separated CLI values. Invalid names and values raise
+`ArgumentError` with the effect and parameter identified. Metadata slider
+ranges are hints, not clamps; `volumeSize` and `stateSize` accept custom positive
+sizes as well as their named presets.
+
+Bind explicit surface overrides in the inputs Hash, for example
+`{ inputTex: surface, heightMap: another_surface }`. Set `heightMap: nil` to
+leave it unbound; the equivalent DSL argument is `heightMap: none`.
+Use `Renderer.render_dsl(program, width: 32, height: 32, seed: 1)` for multi-effect
+compositions, including particle and volume pipelines. Methods prefixed with
+`_` and generated kernel files are implementation details.
 
 ## Regenerating the bundle
 
@@ -78,16 +128,43 @@ generated from the CDN (cached to `.cdn-cache/`, sha256-locked in
 ruby scripts/build-bundle.rb --all
 ```
 
+Builds are staged and validated before replacing the installed bundle. Fetch,
+compile, or lock-drift errors leave the previous bundle intact. An intentional
+source update requires `--update-lock`; review both the generated changes and
+the parity results before publishing. `--only id,id` builds a subset bundle,
+so use `--all` when regenerating the shipped catalog.
+
 ## Tests
 
 ```bash
-rake test
+bundle install
+bundle exec rake test
 ```
 
-Cross-language parity against the JS engine (`scripts/parity.rb`) needs a
-sibling `noisemaker-for-cpu` checkout (or `NOISEMAKER_CPU_DIR`) and Node.
-The harness requires exact RGBA8 bytes for all 205 effects and fails on any
-difference, render error, or unknown effect selection.
+A standalone checkout runs unit, CLI, archive-installation, and regression
+tests. Only external checks skip when their dependencies are unavailable:
+JavaScript parity needs the pinned reference checkout and Node 22+, video
+verification needs ffmpeg/ffprobe, and live CDN checks are opt-in through
+`NOISEMAKER_LIVE_CDN=1`.
+
+`scripts/oracle-lock.json` records the exact JavaScript repository revision
+and source identity. Place that revision in a sibling `noisemaker-for-cpu`
+checkout, or set `NOISEMAKER_CPU_DIR` to its path. A changed or dirty reference
+is rejected; upgrading it requires an explicit lock update and parity review.
+
+```bash
+NOISEMAKER_REQUIRE_ORACLE=1 bundle exec rake test
+bundle exec ruby scripts/parity.rb
+# A focused check, useful during development:
+bundle exec ruby scripts/parity.rb --only synth/curl,filter/lighting
+```
+
+The harness fails on any pixel difference, runtime failure, missing oracle,
+or unknown selection. Required CI checks run Ruby 3.2, 3.3, 3.4 and 4.0 on
+Linux, Ruby 4.0 on macOS, archive installation under Bundler, C-locale
+rendering, video frame counts, and all 205 reference comparisons. Export-kit
+publication waits for those checks. Live CDN checks are separate from this
+reproducible gate and may require `NOISEMAKER_PERL_LOCK` for cross-port lock checks.
 
 ## License
 

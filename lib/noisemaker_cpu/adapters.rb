@@ -14,20 +14,8 @@
 # An adapter factory is factory(rt, compiled) -> kernel callable(ctx, out); it
 # may wrap the transpiled kernel or replace it entirely.
 
-# NOTE (parallel-build bootstrap): Sampler and PaletteData are owned by
-# Worker A. Only the snow/palette adapter BODIES (invoked per-pixel, long
-# after registration) need them, so the registry + pure helpers in this file
-# load standalone even before sampler.rb/palette_data.rb land.
-begin
-  require_relative "sampler"
-rescue LoadError
-  nil
-end
-begin
-  require_relative "palette_data"
-rescue LoadError
-  nil
-end
+require_relative "sampler"
+require_relative "palette_data"
 
 module NoisemakerCpu
   module Adapters

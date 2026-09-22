@@ -3,8 +3,8 @@
 # Pure-Ruby CPU implementation of the Noisemaker shader engine — the Ruby port
 # of noisemaker-cpu, at byte-parity with the reference JavaScript engine.
 #
-# The transpiler (lib/noisemaker_cpu/transpiler/) is build-time only and is not
-# loaded here; scripts/build-bundle.rb requires it directly.
+# The GLSL compiler is build-time only. Rendering loads the vendored kernels
+# and the shared enum data, without compiling or fetching shader source.
 
 require_relative "noisemaker_cpu/version"
 require_relative "noisemaker_cpu/uint_math"

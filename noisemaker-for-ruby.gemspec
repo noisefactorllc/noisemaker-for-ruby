@@ -17,8 +17,8 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["rubygems_mfa_required"] = "true"
 
-  spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
-    ls.read.split("\x0").reject { |f| f.start_with?("docs/", "test/", "scripts/", ".") }
+  spec.files = Dir.chdir(__dir__) do
+    (Dir.glob("lib/**/*") + %w[exe/noisemaker-rb LICENSE README.md]).select { |path| File.file?(path) }.sort
   end
   spec.bindir = "exe"
   spec.executables = ["noisemaker-rb"]

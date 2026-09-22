@@ -7,14 +7,14 @@ class TestExportKit < Minitest::Test
   def test_export_kit_config_points_to_valid_metadata
     config_path = File.expand_path("../export-kit/kit.config.json", __dir__)
     assert File.exist?(config_path), "export-kit/kit.config.json must exist"
-    config = JSON.parse(File.read(config_path))
+    config = JSON.parse(File.binread(config_path))
 
     metadata_rel = config.dig("compat", "fromBundleMetadata")
     assert metadata_rel, "compat.fromBundleMetadata must be configured"
     metadata_path = File.expand_path("../#{metadata_rel}", __dir__)
     assert File.exist?(metadata_path), "#{metadata_rel} must exist"
 
-    metadata = JSON.parse(File.read(metadata_path))
+    metadata = JSON.parse(File.binread(metadata_path))
     assert_equal 205, metadata.fetch("effects").length, "expected 205 bundled effects"
   end
 end

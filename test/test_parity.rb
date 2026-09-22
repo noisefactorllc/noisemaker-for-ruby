@@ -1,22 +1,7 @@
 # frozen_string_literal: true
 
-# Mirror of t/05-parity.t (Perl): Ruby renders must match the JS oracle
-# byte-for-byte on a fast subset (the full 205-effect sweep lives in
-# scripts/parity.rb). Guarded to skip gracefully -- rather than fail -- when
-# a dependency this worker doesn't own isn't ready yet: the JS oracle itself
-# (mirrors perl's `plan skip_all`), Worker C/D's renderer.rb/png.rb, and the
-# generated bundle (lib/noisemaker_cpu/bundle/, produced by
-# scripts/build-bundle.rb --all, which itself needs Worker B's transpiler).
-#
-# test_cdn_live_* is NOT a perl mirror (perl's t/ has no CDN test) -- it is
-# this worker's own scoped live-network check per the port coordinator's
-# instructions: fetch a small spread of effects (synth/solid, filter/invert,
-# classicNoisedeck/colorLab, mixer/blendMode) + the manifest from the real
-# CDN, verify the sha256 of each fetched GLSL program against perl's
-# committed lock (proving the CDN still serves the pinned content Perl
-# transpiled against), and confirm the disk cache round-trips -- cold and
-# warm fetches must derive identical data, including paramOrder. Mirrors how
-# the Python port's tests/test_cdn.py rescues CDNError -> skip when offline.
+# Exact reference-image comparisons. Only optional external dependencies
+# (the pinned JavaScript checkout and live CDN) may skip tests.
 
 require "minitest/autorun"
 require "json"
@@ -25,22 +10,14 @@ require "fileutils"
 require "open3"
 require "rbconfig"
 require "tmpdir"
+require_relative "../scripts/oracle"
 
 class TestParity < Minitest::Test
-  RENDERER_PATH = File.expand_path("../lib/noisemaker_cpu/renderer.rb", __dir__)
-  PNG_PATH = File.expand_path("../lib/noisemaker_cpu/png.rb", __dir__)
-  BUNDLE_METADATA_PATH = File.expand_path("../lib/noisemaker_cpu/bundle/metadata.json", __dir__)
+  include NoisemakerOracle::Tests
   PARITY_SCRIPT_PATH = File.expand_path("../scripts/parity.rb", __dir__)
-  RENDER_DEPS_READY = File.exist?(RENDERER_PATH) && File.exist?(PNG_PATH)
-
-  require_relative "../lib/noisemaker_cpu/renderer" if RENDER_DEPS_READY
-  require_relative "../lib/noisemaker_cpu/png" if RENDER_DEPS_READY
-
-  CDN_PATH = File.expand_path("../lib/noisemaker_cpu/transpiler/cdn.rb", __dir__)
-  COMPUTED_DEFS_PATH = File.expand_path("../lib/noisemaker_cpu/transpiler/computed_defs.rb", __dir__)
-  CDN_DEPS_READY = File.exist?(CDN_PATH) && File.exist?(COMPUTED_DEFS_PATH)
-
-  require_relative "../lib/noisemaker_cpu/transpiler/cdn" if CDN_DEPS_READY
+  require_relative "../lib/noisemaker_cpu/renderer"
+  require_relative "../lib/noisemaker_cpu/png"
+  require_relative "../lib/noisemaker_cpu/transpiler/cdn"
 
   CPU_DIR = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path(File.join(__dir__, "..", "..", "noisemaker-for-cpu"))
   CLI = File.join(CPU_DIR, "bin", "noisemaker-cpu.js")
@@ -50,15 +27,16 @@ class TestParity < Minitest::Test
   # of truth for this repo's pins is its own committed bundle-lock.json.
   PERL_LOCK_PATH = ENV["NOISEMAKER_PERL_LOCK"]
 
-  TMP_DIR = Dir.mktmpdir
-  at_exit { FileUtils.remove_entry(TMP_DIR) }
+  def setup
+    @tmp_dir = Dir.mktmpdir("noisemaker-parity-test-")
+  end
 
-  def oracle_available?
-    File.exist?(CLI) && system("node", "--version", out: File::NULL, err: File::NULL)
+  def teardown
+    FileUtils.remove_entry(@tmp_dir)
   end
 
   def js_effect(effect_id, *extra)
-    out = File.join(TMP_DIR, "js.png")
+    out = File.join(@tmp_dir, "js.png")
     cmd = ["node", CLI, "effect", effect_id,
            "--width", "8", "--height", "8", "--seed", "1", "--time", "0.25",
            "--output", out] + extra
@@ -80,9 +58,23 @@ class TestParity < Minitest::Test
   end
 
   def skip_unless_renderable
-    skip "renderer.rb/png.rb not yet present (Worker C/D pending)" unless RENDER_DEPS_READY
-    skip "JS oracle (node + noisemaker-cpu) not available" unless oracle_available?
-    skip "bundle not yet generated (lib/noisemaker_cpu/bundle/metadata.json missing)" unless File.exist?(BUNDLE_METADATA_PATH)
+    require_oracle
+  end
+
+  def test_lighting_default_surface_matches_javascript_on_a_nonuniform_image
+    require_oracle
+    bytes = (0...221).flat_map { |i| [i % 256, (i * 7) % 256, (i * 19) % 256, 255] }.pack("C*")
+    input = NoisemakerCpu::Surface.from_rgba8(17, 13, bytes)
+    source = File.join(@tmp_dir, "lighting-input.png")
+    output = File.join(@tmp_dir, "lighting-output.png")
+    File.binwrite(source, NoisemakerCpu::PNG.encode_png(input))
+    _out, err, status = Open3.capture3("node", CLI, "apply", "filter/lighting", source,
+      "--seed", "1", "--time", "0.25", "--output", output)
+    assert status.success?, err
+    expected = NoisemakerCpu::PNG.decode_png(File.binread(output))
+    actual = NoisemakerCpu::Renderer.render_effect("filter/lighting", {}, { inputTex: input },
+      width: 17, height: 13, seed: 1, time: 0.25)
+    assert_equal expected.to_rgba8, actual.to_rgba8
   end
 
   # generator with params
@@ -128,7 +120,7 @@ class TestParity < Minitest::Test
   end
 
   def test_parity_script_exits_nonzero_on_oracle_failure
-    missing_oracle = File.join(TMP_DIR, "missing-oracle")
+    missing_oracle = File.join(@tmp_dir, "missing-oracle")
     stdout, _stderr, status = Open3.capture3(
       { "NOISEMAKER_CPU_DIR" => missing_oracle },
       RbConfig.ruby, PARITY_SCRIPT_PATH, "--only", "synth/solid"
@@ -151,7 +143,7 @@ class TestParity < Minitest::Test
   def test_parity_script_exits_nonzero_when_some_requested_effects_are_unknown
     cpu_dir = ENV["NOISEMAKER_CPU_DIR"] || File.expand_path("../../noisemaker-for-cpu", __dir__)
     cli = File.join(cpu_dir, "bin", "noisemaker-cpu.js")
-    skip "JS oracle is unavailable" unless File.exist?(cli) && system("node", "--version", out: File::NULL, err: File::NULL)
+    require_oracle
 
     stdout, _stderr, status = Open3.capture3(
       { "NOISEMAKER_CPU_DIR" => cpu_dir },
@@ -182,7 +174,7 @@ class TestParity < Minitest::Test
   end
 
   def skip_unless_cdn_live_ready
-    skip "cdn.rb requires Worker B's transpiler/computed_defs.rb (not yet present)" unless CDN_DEPS_READY
+    skip "live CDN tests require NOISEMAKER_LIVE_CDN=1" unless ENV["NOISEMAKER_LIVE_CDN"] == "1"
   end
 
   # Offline unit test for _json5_decode's number grammar -- no network
@@ -192,7 +184,6 @@ class TestParity < Minitest::Test
   # bareword and replaced with "0", corrupting `1e3`->`10`, `2E+4`->`204`,
   # `-1e3`->`-10`, and leaving `1.5e-7` with a dangling, unparseable "-7".
   def test_json5_decode_number_grammar
-    skip "cdn.rb requires Worker B's transpiler/computed_defs.rb (not yet present)" unless CDN_DEPS_READY
 
     result = NoisemakerCpu::Transpiler::CDN._json5_decode("{a:1e3,b:1.5e-7,c:.5,d:-1e3,e:2E+4,f:1001}")
     assert_equal 1000, result["a"]
@@ -289,7 +280,7 @@ class TestParity < Minitest::Test
     skip_unless_cdn_live_ready
     skip "perl reference lock not configured (set NOISEMAKER_PERL_LOCK to enable)" unless PERL_LOCK_PATH && File.exist?(PERL_LOCK_PATH)
 
-    perl_hashes = JSON.parse(File.read(PERL_LOCK_PATH))["hashes"]
+    perl_hashes = JSON.parse(File.binread(PERL_LOCK_PATH))["hashes"]
     version_dir = NoisemakerCpu::Transpiler::CDN._cache_dir(NoisemakerCpu::Transpiler::CDN::CDN_VERSION)
     verify_effect_hash_and_roundtrip("filter/invert", perl_hashes, version_dir)
   end
@@ -303,7 +294,7 @@ class TestParity < Minitest::Test
     skip_unless_cdn_live_ready
     skip "perl reference lock not configured (set NOISEMAKER_PERL_LOCK to enable)" unless PERL_LOCK_PATH && File.exist?(PERL_LOCK_PATH)
 
-    perl_hashes = JSON.parse(File.read(PERL_LOCK_PATH))["hashes"]
+    perl_hashes = JSON.parse(File.binread(PERL_LOCK_PATH))["hashes"]
     version_dir = NoisemakerCpu::Transpiler::CDN._cache_dir(NoisemakerCpu::Transpiler::CDN::CDN_VERSION)
     verify_effect_hash_and_roundtrip("synth/solid", perl_hashes, version_dir)
   end
@@ -315,7 +306,7 @@ class TestParity < Minitest::Test
     skip_unless_cdn_live_ready
     skip "perl reference lock not configured (set NOISEMAKER_PERL_LOCK to enable)" unless PERL_LOCK_PATH && File.exist?(PERL_LOCK_PATH)
 
-    perl_hashes = JSON.parse(File.read(PERL_LOCK_PATH))["hashes"]
+    perl_hashes = JSON.parse(File.binread(PERL_LOCK_PATH))["hashes"]
     version_dir = NoisemakerCpu::Transpiler::CDN._cache_dir(NoisemakerCpu::Transpiler::CDN::CDN_VERSION)
     verify_effect_hash_and_roundtrip("classicNoisedeck/colorLab", perl_hashes, version_dir)
   end
@@ -327,7 +318,7 @@ class TestParity < Minitest::Test
     skip_unless_cdn_live_ready
     skip "perl reference lock not configured (set NOISEMAKER_PERL_LOCK to enable)" unless PERL_LOCK_PATH && File.exist?(PERL_LOCK_PATH)
 
-    perl_hashes = JSON.parse(File.read(PERL_LOCK_PATH))["hashes"]
+    perl_hashes = JSON.parse(File.binread(PERL_LOCK_PATH))["hashes"]
     version_dir = NoisemakerCpu::Transpiler::CDN._cache_dir(NoisemakerCpu::Transpiler::CDN::CDN_VERSION)
     verify_effect_hash_and_roundtrip("mixer/blendMode", perl_hashes, version_dir)
   end
@@ -362,13 +353,13 @@ class TestParity < Minitest::Test
   def test_cpu_upstream_source_lock_and_snapshot_parity
     source_lock_path = File.join(CPU_DIR, "scripts", "upstream", "source-lock.js")
     snapshot_path = File.join(CPU_DIR, "src", "effects", "generated", "upstream-snapshot.js")
-    skip "noisemaker-for-cpu files not found" unless File.exist?(source_lock_path) && File.exist?(snapshot_path)
+    require_oracle
 
-    source_lock_text = File.read(source_lock_path)
-    assert_includes source_lock_text, "export const PINNED_UPSTREAM_REVISION = '643b2be1e28b62e3282a4009c2ea65c583ed6ccc'"
-    assert_includes source_lock_text, "export const PINNED_SOURCE_DIGEST = '504eba783dbf4f894a56aec7da682c081fdf479536caeb2a853d0151e4db4390'"
+    source_lock_text = File.binread(source_lock_path)
+    assert_includes source_lock_text, "export const PINNED_UPSTREAM_REVISION = '#{NoisemakerOracle::LOCK.fetch('upstreamRevision')}'"
+    assert_includes source_lock_text, "export const PINNED_SOURCE_DIGEST = '#{NoisemakerOracle::LOCK.fetch('sourceDigest')}'"
 
-    snapshot_text = File.read(snapshot_path)
-    assert_includes snapshot_text, 'export const UPSTREAM_REVISION = "643b2be1e28b62e3282a4009c2ea65c583ed6ccc"'
+    snapshot_text = File.binread(snapshot_path)
+    assert_includes snapshot_text, "export const UPSTREAM_REVISION = \"#{NoisemakerOracle::LOCK.fetch('upstreamRevision')}\""
   end
 end

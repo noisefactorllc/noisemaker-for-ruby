@@ -6,19 +6,9 @@ require "tmpdir"
 require_relative "../lib/noisemaker_cpu/kernel_cache"
 require_relative "../lib/noisemaker_cpu/pass_runner"
 
-# Mirrors t/04-kernel-smoke.t: renders a representative slice of the catalog
-# (one generator and one filter per namespace, plus the native-adapter and
-# draw-op effects) via NoisemakerCpu::Renderer.render_effect/meta, checking
-# dimensions, determinism, and that every pixel is finite. That real mirror
-# needs the generated Ruby kernel bundle (Worker E) plus Workers A/B/D's
-# files, so it `skip`s cleanly with an explicit reason while any of those are
-# unavailable (guarded by File.exist? / rescue).
-#
-# Independent of all of that: this worker's own eval/ctx/out plumbing
-# (KernelCache + PassRunner::Ctx) is proven directly against a hand-written
-# kernel file, following the contract's kernel ABI example, with a minimal
-# fake `rt` object -- self-sufficient today regardless of any other worker's
-# progress.
+# Kernel ABI tests and deterministic smoke renders of representative effects.
+require_relative "../lib/noisemaker_cpu/renderer"
+
 class TestKernelSmoke < Minitest::Test
   # A minimal stand-in for NoisemakerCpu::Runtime exposing only the rt
   # surface the hand-written kernel below actually calls (f32/i/bool/binary),
@@ -72,7 +62,7 @@ class TestKernelSmoke < Minitest::Test
 
       # Bare load_kernel: eval's the source and returns the { kernel:,
       # uses_derivatives: } hash the contract's ABI specifies.
-      compiled = NoisemakerCpu::KernelCache.load_kernel(File.read(path), path)
+      compiled = NoisemakerCpu::KernelCache.load_kernel(File.binread(path), path)
       assert_kind_of Hash, compiled
       assert_respond_to compiled[:kernel], :call
       refute compiled[:uses_derivatives]
@@ -89,7 +79,7 @@ class TestKernelSmoke < Minitest::Test
       factory_calls = 0
       factory = lambda do
         factory_calls += 1
-        File.read(path)
+        File.binread(path)
       end
       first = cache.get("hand_written:main", factory)
       second = cache.get("hand_written:main", factory)
@@ -160,9 +150,6 @@ class TestKernelSmoke < Minitest::Test
     assert_equal [5.0, 6.0, 7.0, 8.0, 5.0, 6.0, 7.0, 8.0], surfaces[1].data
   end
 
-  # ---- (a)/(b): mirror t/04-kernel-smoke.t; skip cleanly until the bundle +
-  # Workers A/B/D/E dependency chain is ready ----
-
   EFFECTS = %w[
     synth/solid synth/curl synth/noise
     filter/invert filter/vignette filter/crt filter/snow filter/palette
@@ -171,27 +158,7 @@ class TestKernelSmoke < Minitest::Test
     mixer/blendMode
   ].freeze
 
-  def renderer_available?
-    return @renderer_available if defined?(@renderer_available)
-
-    bundle_metadata = File.expand_path("../lib/noisemaker_cpu/bundle/metadata.json", __dir__)
-    @renderer_available =
-      if !File.exist?(bundle_metadata)
-        @skip_reason = "generated bundle not present yet at #{bundle_metadata} (Worker E)"
-        false
-      else
-        begin
-          require_relative "../lib/noisemaker_cpu/renderer"
-          true
-        rescue LoadError, StandardError => e
-          @skip_reason = "renderer.rb dependency chain not ready yet: #{e.class}: #{e.message}"
-          false
-        end
-      end
-  end
-
   def test_bundle_has_complete_iterated_catalog
-    skip @skip_reason || "renderer/bundle dependencies not ready yet" unless renderer_available?
 
     iterated = %w[
       filter/convolutionFeedback filter/feedback filter/motionBlur filter/temporalAberration
@@ -216,7 +183,6 @@ class TestKernelSmoke < Minitest::Test
   end
 
   def test_bundle_effects_render_finite_deterministic_pixels
-    skip @skip_reason || "renderer/bundle dependencies not ready yet" unless renderer_available?
 
     solid = NoisemakerCpu::Renderer.render_effect("synth/solid", { "color" => "#4080c0" }, nil,
       width: 8, height: 8, seed: 1, time: 0.25)
@@ -235,7 +201,6 @@ class TestKernelSmoke < Minitest::Test
   end
 
   def test_seed_changes_generator_output
-    skip @skip_reason || "renderer/bundle dependencies not ready yet" unless renderer_available?
 
     s1 = NoisemakerCpu::Renderer.render_effect("synth/noise", {}, nil, width: 8, height: 8, seed: 1, time: 0.25)
     s2 = NoisemakerCpu::Renderer.render_effect("synth/noise", {}, nil, width: 8, height: 8, seed: 2, time: 0.25)
@@ -243,7 +208,6 @@ class TestKernelSmoke < Minitest::Test
   end
 
   def test_explicit_loop_uses_registered_kernel_adapter
-    skip @skip_reason || "renderer/bundle dependencies not ready yet" unless renderer_available?
 
     direct = NoisemakerCpu::Renderer.render_dsl(
       "search synth, filter\nsolid(color: #58c).snow().write(o0)\nrender(o0)",
@@ -259,7 +223,6 @@ class TestKernelSmoke < Minitest::Test
   end
 
   def test_explicit_loop_uses_registered_draw_operation
-    skip @skip_reason || "renderer/bundle dependencies not ready yet" unless renderer_available?
 
     direct = NoisemakerCpu::Renderer.render_dsl(
       "search synth, filter\nsolid(color: #58c).wormhole().write(o0)\nrender(o0)",

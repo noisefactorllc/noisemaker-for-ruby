@@ -15,10 +15,11 @@ require "minitest/autorun"
 require "open3"
 require "json"
 require "tmpdir"
+require "rbconfig"
 
 DIST_ROOT = File.expand_path("..", __dir__)
 NOISEMAKER_RB = File.join(DIST_ROOT, "exe", "noisemaker-rb")
-RUBY_BIN = "/opt/homebrew/opt/ruby/bin/ruby"
+RUBY_BIN = RbConfig.ruby
 
 # Run exe/noisemaker-rb as a subprocess. Returns [exit_code, stdout, stderr].
 # opts: stdin: STRING, env: { "VAR" => "VALUE" } (merged over the current
@@ -31,6 +32,76 @@ def run_cli(args, stdin: nil, env: {})
 end
 
 class TestCli < Minitest::Test
+  def test_effect_discovery_and_parameter_help
+    rc, out, err = run_cli(["effects"])
+    assert_equal 0, rc, err
+    assert_equal 205, out.lines.size
+    assert_includes out, "synth/curl"
+    rc, out, err = run_cli(["effects", "filter/"])
+    assert_equal 0, rc, err
+    assert out.lines.all? { |line| line.start_with?("filter/") }
+    rc, out, err = run_cli(["describe", "synth/curl"])
+    assert_equal 0, rc, err
+    assert_match(/scale.*float.*16/, out)
+    assert_match(/outputMode.*int/, out)
+    assert_includes out, "magnitude=4"
+    rc, _out, err = run_cli(["describe", "missing"])
+    assert_equal 2, rc
+    assert_match(/Unknown effect/, err)
+  end
+
+  def test_bad_parameter_has_actionable_error_and_no_output_file
+    Dir.mktmpdir do |dir|
+      output = File.join(dir, "out.png")
+      rc, _out, err = run_cli(["generate", "synth/curl", "--param", "outputMode=typo", "--filename", output])
+      assert_equal 2, rc
+      assert_includes err, "synth/curl"
+      assert_includes err, "outputMode"
+      refute File.exist?(output)
+    end
+  end
+
+  def test_reused_frame_directory_does_not_extend_a_shorter_video
+    require_relative "../lib/noisemaker_cpu/cli"
+    skip "ffmpeg and ffprobe required" unless %w[ffmpeg ffprobe].all? { |name| NoisemakerCpu::CLI._which(name) }
+    Dir.mktmpdir do |dir|
+      video = File.join(dir, "video.mp4")
+      frames = File.join(dir, "frames")
+      [4, 2].each do |count|
+        rc, _out, err = run_cli(["animate", "synth/solid", "--width", 8, "--height", 8,
+          "--frame-count", count, "--save-frames", frames, "--filename", video])
+        assert_equal 0, rc, err
+        out, err, status = Open3.capture3("ffprobe", "-v", "error", "-select_streams", "v:0",
+          "-count_frames", "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", video)
+        assert status.success?, err
+        assert_equal count, Integer(out.strip)
+      end
+      assert File.file?(File.join(frames, "frame_0003.png")), "preserve previously saved frames"
+    end
+  end
+
+  def test_render_under_the_c_locale
+    Dir.mktmpdir do |dir|
+      rc, _out, err = run_cli(["generate", "synth/solid", "--width", 2, "--height", 2,
+        "--filename", File.join(dir, "solid.png")], env: { "LC_ALL" => "C", "LANG" => "C" })
+      assert_equal 0, rc, err
+    end
+  end
+
+  def test_float_parameters_match_the_library
+    require_relative "../lib/noisemaker_cpu"
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "curl.png")
+      rc, _out, err = run_cli(["generate", "synth/curl", "--width", 3, "--height", 2,
+        "--seed", 1, "--param", "scale=1.6e1", "--param", "intensity=0.5", "--filename", path])
+      assert_equal 0, rc, err
+      actual = NoisemakerCpu::PNG.decode_png(File.binread(path))
+      expected = NoisemakerCpu::Renderer.render_effect("synth/curl", { "scale" => 16, "intensity" => 0.5 },
+        nil, width: 3, height: 2, seed: 1)
+      assert_equal expected.to_rgba8, actual.to_rgba8
+    end
+  end
+
   def test_executable_exists_and_is_executable
     assert File.file?(NOISEMAKER_RB), "exe/noisemaker-rb should exist"
     assert File.executable?(NOISEMAKER_RB), "exe/noisemaker-rb should be executable"
@@ -235,7 +306,7 @@ class TestCli < Minitest::Test
       refute_nil echoed_id
       refute_empty echoed_id
 
-      meta = JSON.parse(File.read(File.join(DIST_ROOT, "lib", "noisemaker_cpu", "bundle", "metadata.json")))
+      meta = JSON.parse(File.binread(File.join(DIST_ROOT, "lib", "noisemaker_cpu", "bundle", "metadata.json")))
       assert meta["effects"].key?(echoed_id), "echoed id '#{echoed_id}' should be a known catalog effect"
       assert_equal "generator", meta["effects"][echoed_id]["kind"]
       assert_equal "image", meta["effects"][echoed_id]["domain"] || "image"

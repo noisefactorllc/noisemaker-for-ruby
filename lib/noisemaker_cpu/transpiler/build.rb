@@ -8,16 +8,11 @@
 #   ruby -Ilib -r noisemaker_cpu/transpiler/build -e 'NoisemakerCpu::Transpiler::Build.run(*ARGV)' -- --all
 #   (or scripts/build-bundle.rb [--all | --only a,b] [--update-lock])
 #
-# NOTE (integration dependency): normalize/parse/emit_ruby come from Worker
-# B's transpiler/{preprocess,parser,codegen}.rb and SHARED_ENUMS from
-# transpiler/shared_enums.rb -- written here against those CONTRACTED module
-# and method names (docs/2026-08-08-ruby-port-contract.md's file map), same
-# as Perl's Build.pm calls its Transpiler siblings 1:1. Those files are not
-# this worker's to create; `build`/`run` cannot execute until they land.
-
 require "digest/sha2"
 require "json"
 require "fileutils"
+require "tmpdir"
+require_relative "../kernel_cache"
 
 require_relative "cdn"
 require_relative "preprocess"
@@ -104,7 +99,7 @@ module NoisemakerCpu
         text =
           begin
             File.binread(path)
-          rescue SystemCallError
+          rescue Errno::ENOENT
             return nil
           end
         JSON.parse(text)
@@ -185,13 +180,48 @@ module NoisemakerCpu
         )
       end
 
+      # Construct and validate a complete bundle before touching the installed one.
+      # Keep the old directory until the replacement has been installed successfully.
       def self.build(ids, out_dir: nil, update_lock: false)
-        out_dir ||= bundle_dir
+        raise ArgumentError, "select at least one effect" if ids.empty?
+
+        out_dir = File.expand_path(out_dir || bundle_dir)
+        FileUtils.mkdir_p(File.dirname(out_dir))
+        work = Dir.mktmpdir(".noisemaker-build-", File.dirname(out_dir))
+        preserve_backup = false
+        begin
+          staged = File.join(work, "bundle")
+          old = _read_json(File.join(out_dir, "bundle-lock.json")) || { "hashes" => {} }
+          build_staged(ids, staged, old, update_lock)
+          backup = File.join(work, "previous")
+          begin
+            File.rename(out_dir, backup) if File.exist?(out_dir)
+            File.rename(staged, out_dir)
+          # Recover even on Interrupt/SystemExit; never swallow the original
+          # exception after restoring the previous bundle.
+          rescue Exception => install_error
+            begin
+              File.rename(backup, out_dir) if File.exist?(backup)
+            rescue Exception => restore_error
+              preserve_backup = true
+              raise "bundle installation failed: #{install_error.message}; restoration failed: " \
+                    "#{restore_error.message}. Previous bundle preserved at #{backup}"
+            end
+            raise install_error
+          end
+        ensure
+          # An asynchronous interruption can occur between any two Ruby
+          # statements, including inside recovery. Keep the only copy.
+          preserve_backup = true if backup && File.exist?(backup) && !File.exist?(out_dir)
+          FileUtils.remove_entry(work) unless preserve_backup
+        end
+      end
+
+      def self.build_staged(ids, out_dir, old, update_lock)
         kdir = File.join(out_dir, "kernels", "ruby")
         FileUtils.mkdir_p(kdir)
         lock_path = File.join(out_dir, "bundle-lock.json")
-        old = _read_json(lock_path) || { "hashes" => {} }
-        hashes = (old["hashes"] || {}).dup
+        hashes = {}
         drift = []
         bundle = {
           "provenance" => {
@@ -208,12 +238,9 @@ module NoisemakerCpu
             begin
               NoisemakerCpu::Transpiler::CDN.fetch_effect(eid)
             rescue StandardError => e
-              n_skip += 1
-              first_line = e.message.to_s.split("\n", 2).first || ""
-              warn "skip #{eid}: cdn: #{first_line[0, 70]}"
-              nil
+              raise "cannot build #{eid}: #{e.message}"
             end
-          next unless eff
+          raise "missing effect definition for #{eid}" unless eff.is_a?(Hash)
 
           _resolve_shared_enums(eff["params"])
           defines = runtime_defines(eff["params"])
@@ -238,6 +265,8 @@ module NoisemakerCpu
                   pass_record[field] = p[field] unless p[field].nil?
                 end
                 passes << pass_record
+              else
+                raise "missing shader source for #{key}"
               end
               next
             end
@@ -250,12 +279,9 @@ module NoisemakerCpu
                 ast = NoisemakerCpu::Transpiler::Parser.parse(norm["source"])
                 NoisemakerCpu::Transpiler::Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"])
               rescue StandardError => e
-                n_skip += 1
-                first_line = e.message.to_s.split("\n", 2).first || ""
-                warn "skip #{key}: #{first_line[0, 80]}"
-                nil
+                raise "cannot compile #{key}: #{e.message}"
               end
-            next if ruby_src.nil?
+            NoisemakerCpu::KernelCache.load_kernel(ruby_src, key)
 
             _write_raw(File.join(kdir, _file(key)), ruby_src)
             drift << key if old["hashes"] && old["hashes"][key] && old["hashes"][key] != h
@@ -274,7 +300,7 @@ module NoisemakerCpu
             end
             passes << pass_record
           end
-          next if passes.empty?
+          raise "no renderable passes for #{eid}" if passes.empty?
 
           bundle["effects"][eid] = {
             "namespace" => (eff["namespace"] || eid.split("/", 2).first),
@@ -300,8 +326,8 @@ module NoisemakerCpu
         end
         if !drift.empty? && !update_lock
           shown = drift[0, [drift.length, 8].min]
-          warn "\nSHADER DRIFT vs bundle-lock.json (#{drift.length}): #{shown.join(", ")}\nRe-run with --update-lock to accept.\n"
-          exit(1)
+          raise "SHADER DRIFT vs bundle-lock.json (#{drift.length}): #{shown.join(', ')}. " \
+                "Re-run with --update-lock to accept."
         end
         _write_raw(File.join(out_dir, "metadata.json"), JSON.pretty_generate(bundle))
         _write_raw(
@@ -317,6 +343,8 @@ module NoisemakerCpu
         puts "wrote #{bundle["effects"].keys.length} effect(s) (#{n_ok} programs, #{n_skip} skipped) " \
              "from CDN #{NoisemakerCpu::Transpiler::CDN::CDN_VERSION}"
       end
+
+      private_class_method :build_staged
 
       def self.run(*argv)
         argv = ARGV if argv.empty?
