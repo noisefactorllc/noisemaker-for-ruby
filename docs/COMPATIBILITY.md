@@ -44,6 +44,7 @@ Unknown values mean `not measured`, never zero.
 | Gate | Expected cases | Executed | Strict passes | Failures | Skips | Status |
 |---|---|---|---|---|---|---|
 | Current full render suite | not measured | not measured | not measured | not measured | not measured | unverified |
+| Pinned JavaScript effect sweep | 205 | 205 | 205 | 0 | 0 | bounded sweep passed; full qualification unverified |
 
 Served compatibility inventory declares 205 effect IDs. Declaration does not establish execution or parity.
 IDs absent from the served declaration: `render/meshLoader`, `render/meshRender`, `synth/roll`, `synth/scope`, `synth/spectrum`.
@@ -272,6 +273,13 @@ Official ecosystem reference: [Current RubyGems guide, accessed 2026-09-24](http
 Source CI, export dispatch, artifact delivery, and rendered parity are separate evidence dimensions.
 A successful dispatch or unit-test summary does not establish a full rendered gate.
 
+Publication CI at `b4d7cdda69967db15dd2adb69ea9cf5b5381e843` passed. The pinned JavaScript effect sweep passed all 205 cases byte-for-byte.
+This result covers the declared sweep at its pinned authority. It does not prove all current-authority parameters, inputs, states, or host combinations.
+Required integration tests reported 226 runs, 1,401 assertions, and six skips. Standalone matrix jobs each reported 24 skips.
+These skips remain qualification gaps. The documentation-only update did not dispatch an artifact release.
+[Exact publication CI](https://github.com/noisefactorllc/noisemaker-for-ruby/actions/runs/35959915028).
+[Raw CI evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/ruby-final-ci.log).
+
 ## 5. Open compatibility limits
 
 See [GAP-001 and the complete gap register](COMPLETION_GAPS.md#4-known-gaps) for evidence, dependencies, and acceptance criteria.
@@ -289,5 +297,7 @@ Implementation corrections remain with the separate job. This report does not ad
 | Date | Source | Result | Change |
 |---|---|---|---|
 | 2026-09-24 | `379aa03df26df8b17f6916535c83328bb0e8eaa3` | Full qualification unverified | Created the requested maintained compatibility report. Preserved historical evidence and open gaps. |
+
+Publication follow-up: recorded exact-source CI and retained every observed skip. No gap was closed.
 
 Run: `20260924-remaining-gap-documents`. Later audits and reviews update this report with source-bound results.
