@@ -953,6 +953,11 @@ module NoisemakerCpu
       @sink_manager.add(sink)
     end
 
+    def should_defer_render
+      @sink_manager.should_defer_render
+    end
+    alias shouldDeferRender should_defer_render
+
     def create_frame_export_queue(slots: 3, on_error: nil)
       NoisemakerCpu::FrameExportQueue.new(
         NoisemakerCpu::CpuFrameExportAdapter.new, slots: slots, on_error: on_error

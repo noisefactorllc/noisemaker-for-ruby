@@ -68,6 +68,38 @@ module NoisemakerCpu
       end
     end
 
+    def should_defer_render
+      return false if @closed
+
+      @iteration_depth += 1
+      begin
+        @registrations.each do |registration|
+          next unless registration.active
+
+          sink = registration.sink
+          defer_method = if sink.respond_to?(:defer_render)
+                           :defer_render
+                         elsif sink.respond_to?(:deferRender)
+                           :deferRender
+                         end
+          next unless defer_method
+
+          begin
+            result = sink.public_send(defer_method)
+            return true if result.equal?(true)
+          rescue StandardError => error
+            registration.stats[:failed] += 1
+            report(error, sink)
+          end
+        end
+        false
+      ensure
+        @iteration_depth -= 1
+        compact_registrations if @iteration_depth.zero?
+      end
+    end
+    alias shouldDeferRender should_defer_render
+
     def submit(frame, timestamp)
       return if @closed
 

@@ -175,6 +175,104 @@ class TestOutputRuntime < Minitest::Test
     assert_error(/closed/) { closing.add(RecordingSink.new) }
   end
 
+  def test_sink_manager_should_defer_render_reports_sink_deferral_handles_exceptions_and_honors_removal
+    reported = []
+    manager = NoisemakerCpu::SinkManager.new(on_error: lambda do |error, sink|
+      reported << [error.message, sink]
+    end)
+
+    defer_val = false
+    deferring_sink = Object.new
+    deferring_sink.define_singleton_method(:configure) { |_descriptor| }
+    deferring_sink.define_singleton_method(:submit) { |_frame, _timestamp| true }
+    deferring_sink.define_singleton_method(:close) { |*_args| }
+    deferring_sink.define_singleton_method(:defer_render) { defer_val }
+
+    regular_sink = RecordingSink.new
+
+    throwing_sink = Object.new
+    throwing_sink.define_singleton_method(:configure) { |_descriptor| }
+    throwing_sink.define_singleton_method(:submit) { |_frame, _timestamp| true }
+    throwing_sink.define_singleton_method(:close) { |*_args| }
+    throwing_sink.define_singleton_method(:defer_render) { raise "defer failed" }
+
+    refute manager.should_defer_render
+    refute manager.shouldDeferRender
+
+    manager.add(regular_sink)
+    refute manager.should_defer_render
+
+    unregister = manager.add(deferring_sink)
+    refute manager.should_defer_render
+
+    # Non-boolean truthy values must not trigger deferral (strict boolean true required)
+    defer_val = 1
+    refute manager.should_defer_render
+    defer_val = "yes"
+    refute manager.should_defer_render
+
+    defer_val = true
+    assert manager.should_defer_render
+    assert manager.shouldDeferRender
+
+    defer_val = false
+    manager.add(throwing_sink)
+    # Throwing sink does not cause should_defer_render to throw or defer; reported via on_error
+    refute manager.should_defer_render
+    assert_equal 1, reported.length
+    assert_equal "defer failed", reported[0][0]
+    assert_same throwing_sink, reported[0][1]
+    assert_equal 1, manager.stats[throwing_sink][:failed]
+
+    defer_val = true
+    assert manager.should_defer_render
+
+    unregister.call
+    refute manager.should_defer_render
+
+    manager.close
+    refute manager.should_defer_render
+  end
+
+  def test_sink_manager_should_defer_render_supports_camel_case
+    manager = NoisemakerCpu::SinkManager.new
+    defer_val = true
+    sink = Object.new
+    sink.define_singleton_method(:configure) { |_descriptor| }
+    sink.define_singleton_method(:submit) { |_frame, _timestamp| true }
+    sink.define_singleton_method(:close) { |*_args| }
+    sink.define_singleton_method(:deferRender) { defer_val }
+
+    manager.add(sink)
+    assert manager.should_defer_render
+    assert manager.shouldDeferRender
+    defer_val = false
+    refute manager.should_defer_render
+  end
+
+  def test_cpu_renderer_delegates_should_defer_render
+    renderer = NoisemakerCpu::CpuRenderer.new
+    refute renderer.should_defer_render
+    refute renderer.shouldDeferRender
+
+    defer_val = false
+    sink = Object.new
+    sink.define_singleton_method(:configure) { |_descriptor| }
+    sink.define_singleton_method(:submit) { |_frame, _timestamp| true }
+    sink.define_singleton_method(:close) { |*_args| }
+    sink.define_singleton_method(:defer_render) { defer_val }
+
+    remove = renderer.add_sink(sink)
+    refute renderer.should_defer_render
+
+    defer_val = true
+    assert renderer.should_defer_render
+    assert renderer.shouldDeferRender
+
+    remove.call
+    refute renderer.should_defer_render
+  end
+
   def test_frame_export_queue_enforces_bounds_backpressure_context_and_reuse
     assert_error(/adapter/) { NoisemakerCpu::FrameExportQueue.new(Object.new) }
     assert_error(/2 through 8/) { NoisemakerCpu::FrameExportQueue.new(FakeAdapter.new, slots: 1) }
