@@ -5,6 +5,10 @@
 
 # noisemaker-for-ruby
 
+Current measured support: [compatibility report](docs/COMPATIBILITY.md).
+
+Current qualification limits: [completion gaps](docs/COMPLETION_GAPS.md).
+
 > This package supports the "Export Shader Pipeline" feature in Noisedeck.app. The feature runs shader compositions on other platforms. Noise Factor derives this package from the upstream Noisemaker Engine project and tests it for pixel-level parity.
 
 This is not a classic noise library. This is a new effort centered around
