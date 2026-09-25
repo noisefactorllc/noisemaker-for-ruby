@@ -2,6 +2,14 @@
 
 ## 1. Source and authority revisions
 
+Daily review: 2026-09-25. Current inspected source: [`d7942883e2e56486dd6c186486cd794cc3a512a4`](https://github.com/noisefactorllc/noisemaker-for-ruby/commit/d7942883e2e56486dd6c186486cd794cc3a512a4).
+Full rendered parity remains **unverified**. No release approval or new closure follows from this review.
+Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
+The observations below retain their original source and authority identities; they do not qualify later updates.
+Current served kit: `0.1.7`, source `1229d40fd08c3a8dce23173ca187eadcf831820c`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
+
+### Earlier source observations
+
 Report date: 2026-09-24. Source inspected: [`379aa03df26df8b17f6916535c83328bb0e8eaa3`](https://github.com/noisefactorllc/noisemaker-for-ruby/commit/379aa03df26df8b17f6916535c83328bb0e8eaa3).
 Full rendered parity at this SHA: **unverified**. This is not a release approval.
 A later documentation-only commit does not change this tested source identity.
@@ -21,6 +29,9 @@ Historical measurements remain bound to their original revisions in [completion 
 
 ## 2. Host and distribution matrix
 
+Current tests and qualification limits are in [section 3](#3-parity-coverage).
+The matrix below retains the earlier measured scope. A historical verified row is not a current-source or full-platform certification.
+
 | Dimension | Status | Measured scope or limit |
 |---|---|---|
 | Source-level checks | verified | Five public API tests passed with 68 assertions. Full parity, package installation, and minimum-version checks were not rerun locally. |
@@ -36,6 +47,14 @@ Historical measurements remain bound to their original revisions in [completion 
 
 ## 3. Parity coverage
 
+### Daily review, 2026-09-25
+
+Exact-source CI reports 205 of 205 default CPU cases byte-exact. Its integration test log reports 229 runs, 1,426 assertions, and six skips; standalone variants retain 24 skips. Five current effect IDs and broader parameters, state, platforms, and installed workflows remain unqualified. This is bounded evidence, not full parity. [Raw evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/ruby-ci-36076250675.log).
+
+The current full case denominator remains incomplete. Missing parameters, hosts, external inputs, and stateful sequences remain qualification gaps. No skip or tolerated difference counts as exact parity.
+
+### Earlier measurements
+
 Full parity requires complete applicable coverage with no skips or missing cases.
 Historical NEAR, CHAOS, and tolerated differences do not count as strict equality.
 The existing numerical contracts remain separate from exact comparison. This report does not change tolerances or goldens.
@@ -46,9 +65,11 @@ Unknown values mean `not measured`, never zero.
 | Current full render suite | not measured | not measured | not measured | not measured | not measured | unverified |
 | Pinned JavaScript effect sweep | 205 | 205 | 205 | 0 | 0 | bounded sweep passed; full qualification unverified |
 
-Served compatibility inventory declares 205 effect IDs. Declaration does not establish execution or parity.
+Earlier served compatibility inventory declares 205 effect IDs. Declaration does not establish execution or parity.
 IDs absent from the served declaration: `render/meshLoader`, `render/meshRender`, `synth/roll`, `synth/scope`, `synth/spectrum`.
 Missing effects remain visible toward the full-parity goal. Contract exclusions do not become successful tests.
+
+Current served declaration: 205 effect IDs. This inventory is not evidence of execution. The declaration column below reflects kit `0.1.7`.
 
 ### Effect inventory
 
@@ -282,6 +303,9 @@ These skips remain qualification gaps. The documentation-only update did not dis
 
 ## 5. Open compatibility limits
 
+Next bounded check: Install the built gem in an isolated GEM_HOME on the declared Ruby floor and current supported Ruby. Execute the documented PNG example, invalid-input recovery, and removal. Reconcile the six integration skips and 24 standalone skips, then extend the current 205-case default gate to the five missing IDs and parameter/state cases.
+See the stable entries in [completion gaps](COMPLETION_GAPS.md).
+
 See [GAP-001 and the complete gap register](COMPLETION_GAPS.md#4-known-gaps) for evidence, dependencies, and acceptance criteria.
 
 1. Reconcile the current authority and complete case inventory, including parameters, inputs, stateful frames, and host versions.
@@ -293,6 +317,8 @@ All eligible ports have equal priority. Full parity and zero skipped cases remai
 Implementation corrections remain with the separate job. This report does not advance the parity checkpoint.
 
 ## 6. History
+
+2026-09-25 daily review at `d7942883e2e56486dd6c186486cd794cc3a512a4`: source freshness and bounded evidence reviewed; open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/ruby-ci-36076250675.log). No new closure claimed.
 
 | Date | Source | Result | Change |
 |---|---|---|---|
