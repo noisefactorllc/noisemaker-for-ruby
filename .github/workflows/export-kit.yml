@@ -9,7 +9,27 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    # Inert documentation does not build. README.md stays in: the gem ships
+    # it and test/test_packaging.rb checks it.
+    paths:
+      - '**'
+      - '!*.md'
+      - '!docs/**'
+      - '!.github/ISSUE_TEMPLATE/**'
+      - '!.github/PULL_REQUEST_TEMPLATE*'
+      - '!.github/CODEOWNERS'
+      - '!.editorconfig'
+      - 'README.md'
   pull_request:
+    paths:
+      - '**'
+      - '!*.md'
+      - '!docs/**'
+      - '!.github/ISSUE_TEMPLATE/**'
+      - '!.github/PULL_REQUEST_TEMPLATE*'
+      - '!.github/CODEOWNERS'
+      - '!.editorconfig'
+      - 'README.md'
 
 permissions:
   contents: read
