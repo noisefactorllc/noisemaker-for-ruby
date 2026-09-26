@@ -232,6 +232,29 @@ module NoisemakerCpu
       "s" => 0, "t" => 1, "p" => 2, "q" => 3,
     }.freeze
 
+    # Frozen swizzle names arrive from generated kernels as constant string
+    # literals, so the per-call `sw.chars.map { SWIZZLE[c] }` work is pure
+    # recomputation. Memoize the index arrays; keying by the string itself is
+    # exact (frozen literals deduplicate, and dynamic strings hash by value).
+    SWIZZLE_INDEX = Hash.new { |h, sw| h[sw] = sw.chars.map { |c| SWIZZLE.fetch(c) } }
+    # NB: deliberately NOT frozen -- the default proc memoizes lazily. The
+    # key space is bounded (all literals drawn from SWIZZLE above), so the
+    # cache cannot grow unboundedly.
+
+    # Frozen binary-op lambdas for the float path of #binary (pure functions
+    # of their arguments, so sharing one frozen instance per op is exact and
+    # avoids allocating a fresh lambda on every kernel call).
+    BINARY_FLOAT_OPS = {
+      "+" => ->(x, y) { x + y },
+      "-" => ->(x, y) { x - y },
+      "*" => ->(x, y) { x * y },
+      "/" => ->(x, y) { NoisemakerCpu::UintMath.fdiv(x, y) },
+      "%" => ->(x, y) { y == 0 ? NAN : x.remainder(y) },
+    }.freeze
+
+    LOGICAL_OPS = %w[== != < > <= >= && ||].freeze
+    BITWISE_OPS = %w[& | ^ << >>].freeze
+
     # ---- construction ----
 
     def initialize
@@ -429,7 +452,7 @@ module NoisemakerCpu
     # ---- swizzles ----
 
     def swizzle(vec, sw)
-      idx = sw.chars.map { |c| SWIZZLE[c] }
+      idx = SWIZZLE_INDEX[sw]
       if _is_ivec(vec)
         return vec[idx[0]].to_i if idx.length == 1
 
@@ -445,7 +468,7 @@ module NoisemakerCpu
     # `obj = rt.assign_swizzle(obj, ...)` rebinds obj to this fresh copy. A
     # stored vector is f32 in JS; snap the base and the assigned value.
     def assign_swizzle(vec, sw, value)
-      idx = sw.chars.map { |c| SWIZZLE[c] }
+      idx = SWIZZLE_INDEX[sw]
       if _is_ivec(vec)
         v = IVec.new(vec)
         if _is_vec(value)
@@ -472,22 +495,15 @@ module NoisemakerCpu
 
     def binary(op, a, b, width = nil, base = nil)
       base = "float" if base.nil?
-      if %w[== != < > <= >= && ||].include?(op)
+      if LOGICAL_OPS.include?(op)
         return _logical(op, a, b)
       end
-      if base == "int" || base == "uint" || %w[& | ^ << >>].include?(op)
+      if base == "int" || base == "uint" || BITWISE_OPS.include?(op)
         return _int_binary(op, a, b, base == "uint" ? "uint" : "int")
       end
       # Float path: compute raw f64 and DEFER the f32 rounding to the
       # consumption boundaries (see module header).
-      fn = case op
-           when "+" then ->(x, y) { x + y }
-           when "-" then ->(x, y) { x - y }
-           when "*" then ->(x, y) { x * y }
-           when "/" then ->(x, y) { NoisemakerCpu::UintMath.fdiv(x, y) }
-           when "%" then ->(x, y) { y == 0 ? NAN : x.remainder(y) }
-           else raise "unsupported binary op '#{op}'"
-           end
+      fn = BINARY_FLOAT_OPS[op] or raise "unsupported binary op '#{op}'"
       _bc2(fn, a, b)
     end
 
@@ -539,7 +555,7 @@ module NoisemakerCpu
       fn = COMPONENT[name]
       raise "unsupported builtin '#{name}'" if fn.nil?
 
-      snapped = args.map { |x| _is_vec(x) ? _snap32(x) : x }
+      snapped = args.any? { |x| _is_vec(x) } ? args.map { |x| _is_vec(x) ? _snap32(x) : x } : args
       r = _bcn(fn, *snapped)
       _is_vec(r) ? r.map { |c| f32(c) } : f32(r)
     end
@@ -842,7 +858,15 @@ module NoisemakerCpu
       args.each { |a| w = a.length if _is_vec(a) && w.nil? }
       return fn.call(*args) if w.nil?
 
-      (0...w).map { |idx| fn.call(*args.map { |a| _is_vec(a) ? a[idx] : a }) }
+      # Reuse one scratch row across component iterations instead of
+      # allocating a fresh `args.map` array per component; fn.call consumes
+      # the row before it is overwritten. Values are identical.
+      row = Array.new(args.length)
+      vec_mask = args.map { |a| _is_vec(a) }
+      (0...w).map do |idx|
+        args.each_with_index { |a, j| row[j] = vec_mask[j] ? a[idx] : a }
+        fn.call(*row)
+      end
     end
 
     def _int_binary(op, a, b, base)
