@@ -1,0 +1,217 @@
+{
+  "schema": "noisemaker-for-ruby/gap-001-evidence/1",
+  "task": "GAP-001 current authority and parity qualification",
+  "authority": {
+    "oracle_lock": {
+      "repository": "https://github.com/noisefactorllc/noisemaker-for-cpu.git",
+      "revision": "aaa6df50421d9d6db752289cdc1ff7c1efb1d9d1",
+      "upstreamRevision": "2f47612c29045c1b91af94887a8ff20106e980ef",
+      "sourceDigest": "182a4a518dcc52586d56470ae04ca17050babccd9fc53889fa2d2cc2ffbd7c5d"
+    },
+    "provenance": {
+      "pin_repin_commits": [
+        "47a863d",
+        "0261bcf",
+        "0984199"
+      ],
+      "historical_pins": {
+        "cpu": "16c38245c42030c8ee46dc61108791d2fea4bda9",
+        "upstream": "44bc4ed4ac729bddaa95b083d64bee942ade35da"
+      },
+      "note": "Lock repinned by the upstream sync automation commits listed above; historical pins, goldens and tolerances are preserved and were not regenerated."
+    }
+  },
+  "environments": {
+    "extended_sweep": {
+      "ruby": "ruby 3.4.5 (2025-07-16 revision 20cda200d3) +PRISM [x86_64-linux]",
+      "node": "v26.5.1",
+      "host": "Linux 6.8.0-134-generic x86_64",
+      "oracle_git_head": "aaa6df50421d9d6db752289cdc1ff7c1efb1d9d1",
+      "candidate_git_head_at_runs": "7f3d4261b9533aa2f85a228463a73f06a42be7cc",
+      "candidate_dirty_at_runs": false
+    },
+    "default_gate_ruby_3_2_8": {
+      "ruby": "ruby 3.2.8 (2025-03-26 revision 13f495dc2c) [x86_64-linux]",
+      "log": "docs/evidence/gap-001/parity-default-ruby-3.2.8.log",
+      "exit": 0,
+      "result": "205/205 byte-exact"
+    }
+  },
+  "results": {
+    "default_gate": {
+      "effects": 205,
+      "exact": 205,
+      "diff": 0,
+      "errors": 0,
+      "tolerance": "byte-exact RGBA8 (maxdiff 0)"
+    },
+    "extended_sweep": {
+      "effects": 205,
+      "cases": 1625,
+      "by_status": {
+        "exact": 1607,
+        "diff": 17,
+        "ruby-error": 1
+      },
+      "all_exact": false
+    },
+    "non_exact_cases": [
+      {
+        "effect": "classicNoisedeck/noise3d",
+        "case": "param-type",
+        "status": "diff",
+        "maxdiff": 112,
+        "error": null
+      },
+      {
+        "effect": "filter/craquelure",
+        "case": "size-16",
+        "status": "diff",
+        "maxdiff": 1,
+        "error": null
+      },
+      {
+        "effect": "filter/median",
+        "case": "param-radius",
+        "status": "diff",
+        "maxdiff": 128,
+        "error": null
+      },
+      {
+        "effect": "filter/spookyTicker",
+        "case": "param-seed",
+        "status": "diff",
+        "maxdiff": 102,
+        "error": null
+      },
+      {
+        "effect": "filter/spookyTicker",
+        "case": "seed-7",
+        "status": "diff",
+        "maxdiff": 63,
+        "error": null
+      },
+      {
+        "effect": "filter/spookyTicker",
+        "case": "size-16",
+        "status": "diff",
+        "maxdiff": 63,
+        "error": null
+      },
+      {
+        "effect": "filter/spookyTicker",
+        "case": "time-0",
+        "status": "diff",
+        "maxdiff": 63,
+        "error": null
+      },
+      {
+        "effect": "filter/spookyTicker",
+        "case": "time-1",
+        "status": "diff",
+        "maxdiff": 63,
+        "error": null
+      },
+      {
+        "effect": "mixer/shapeMask",
+        "case": "param-shape",
+        "status": "diff",
+        "maxdiff": 128,
+        "error": null
+      },
+      {
+        "effect": "points/dla",
+        "case": "size-16",
+        "status": "diff",
+        "maxdiff": 1,
+        "error": null
+      },
+      {
+        "effect": "render/pointsBillboardRender",
+        "case": "param-blendMode",
+        "status": "diff",
+        "maxdiff": 128,
+        "error": null
+      },
+      {
+        "effect": "render/render3d",
+        "case": "param-filtering",
+        "status": "diff",
+        "maxdiff": 142,
+        "error": null
+      },
+      {
+        "effect": "render/renderCubemap3d",
+        "case": "param-filtering",
+        "status": "diff",
+        "maxdiff": 129,
+        "error": null
+      },
+      {
+        "effect": "synth/gradient",
+        "case": "param-rotation",
+        "status": "diff",
+        "maxdiff": 1,
+        "error": null
+      },
+      {
+        "effect": "synth/mandelbrot",
+        "case": "param-outputMode",
+        "status": "diff",
+        "maxdiff": 249,
+        "error": null
+      },
+      {
+        "effect": "synth/testPattern",
+        "case": "param-pattern",
+        "status": "ruby-error",
+        "maxdiff": null,
+        "error": "can't convert Array into Float"
+      },
+      {
+        "effect": "synth/testPattern",
+        "case": "size-16",
+        "status": "diff",
+        "maxdiff": 255,
+        "error": null
+      },
+      {
+        "effect": "synth3d/flythrough3d",
+        "case": "param-power",
+        "status": "diff",
+        "maxdiff": 13,
+        "error": null
+      }
+    ]
+  },
+  "case_grid": [
+    "default (size 8, seed 1, time 0.25)",
+    "up to 3 nondefault-parameter cases per effect (off-default value derived from metadata)",
+    "animation time 0.0 and 1.0",
+    "iterated state iterationCount 3 (iterated effects)",
+    "seed 7",
+    "size 16x16",
+    "volumeSize 8 (volume effects)"
+  ],
+  "ci": {
+    "observed_run_ids": {
+      "36223872818": "c47fd429 ci: avoid builds for inert documentation changes",
+      "35820283884": "379aa03d",
+      "35959915028": "b4d7cdda"
+    }
+  },
+  "sha256": {
+    "parity-sweep-report.json": "206f17b802a699c96a8c7f594c85c75ad350474675b1d2a7f261cc33f376230a",
+    "parity-default-ruby-3.2.8.log": "5b2a85b953943ab235cb6db1bae183281a4569ab89785c296e09d5992dd7554d",
+    "scripts/parity.rb": "356c425a96ebe375a9498569c44c5d4f133e8a0d30163e57c7f205745bc0f6e1",
+    "scripts/parity-sweep.rb": "8bfad83e6c8049f43fb357246e72c45663e73d979e05e3454a8a815d20c02e16",
+    "scripts/oracle-lock.json": "7c2c62267238dc7bda66994ec3e15420483b7397a272b3514b78c80bd48566b9"
+  },
+  "provenance": {
+    "merge_command": "ruby scripts/parity-sweep.rb --merge <6 shard/completion reports> --report <path> (committed harness, exit 0, case-grid completeness and oracle-identity checks enforced)",
+    "run_head": "7f3d4261b9533aa2f85a228463a73f06a42be7cc",
+    "run_tree_dirty": false,
+    "publication_note": "The final candidate commit adds only docs/evidence files, which are outside the harness source-hash globs (lib, scripts, test, gemspec, Gemfile, Gemfile.lock, Rakefile, exe); candidate.source_hashes are identical at the run head and at the published commit, verified after the final amend.",
+    "ruby_png_sha256": "per-case Ruby PNG bytes are SHA-256 hashed via NoisemakerCpu::PNG.encode_png in the committed harness; absent only for the single ruby-error case."
+  }
+}

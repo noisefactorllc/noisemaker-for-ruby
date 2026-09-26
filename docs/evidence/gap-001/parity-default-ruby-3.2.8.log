@@ -1,0 +1,11 @@
+# command: ruby scripts/parity.rb (default parity gate)
+ruby 3.2.8 (2025-03-26 revision 13f495dc2c) [x86_64-linux]
+# candidate HEAD 7f3d4261b9533aa2f85a228463a73f06a42be7cc
+# oracle aaa6df50421d9d6db752289cdc1ff7c1efb1d9d1
+# scripts/parity.rb sha256 356c425a96ebe375a9498569c44c5d4f133e8a0d30163e57c7f205745bc0f6e1
+
+=== PARITY: 205/205 pass (byte-exact)  |  0 diff  |  0 runtime-error  |  0 oracle-error ===
+
+
+PASS: 205  (byte-exact: 205)
+exit 0
