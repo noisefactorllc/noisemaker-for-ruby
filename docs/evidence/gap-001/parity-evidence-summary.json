@@ -213,5 +213,164 @@
     "run_tree_dirty": false,
     "publication_note": "The final candidate commit adds only docs/evidence files, which are outside the harness source-hash globs (lib, scripts, test, gemspec, Gemfile, Gemfile.lock, Rakefile, exe); candidate.source_hashes are identical at the run head and at the published commit, verified after the final amend.",
     "ruby_png_sha256": "per-case Ruby PNG bytes are SHA-256 hashed via NoisemakerCpu::PNG.encode_png in the committed harness; absent only for the single ruby-error case."
+  },
+  "audit": {
+    "purpose": "Machine-checkable pointers for independent verification of GAP-001 acceptance criteria against docs/evidence/gap-001/parity-sweep-report.json (the raw merged output of scripts/parity-sweep.rb) and lib/noisemaker_cpu/bundle/metadata.json.",
+    "artifact_sha256": "206f17b802a699c96a8c7f594c85c75ad350474675b1d2a7f261cc33f376230a",
+    "artifact_paths": {
+      "cases": "$.cases",
+      "exclusions": "$.exclusions",
+      "runs": "$.runs",
+      "tolerance": "$.tolerance",
+      "run_heads": "$.runs[*].candidate.git_head",
+      "run_dirty": "$.runs[*].candidate.git_dirty",
+      "oracle_head": "$.oracle.git_head"
+    },
+    "denominators": {
+      "effects": 205,
+      "cases": 1625,
+      "case_decomposition": {
+        "default": 205,
+        "seed-7": 205,
+        "size-16": 205,
+        "time-0": 205,
+        "time-1": 205,
+        "iter-3": 25,
+        "volume-8": 15,
+        "param-*": 560
+      },
+      "case_decomposition_identity": true,
+      "effects_with_defects": 13,
+      "nonexact_cases": [
+        {
+          "effect": "classicNoisedeck/noise3d",
+          "case": "param-type",
+          "status": "diff",
+          "maxdiff": 112
+        },
+        {
+          "effect": "filter/craquelure",
+          "case": "size-16",
+          "status": "diff",
+          "maxdiff": 1
+        },
+        {
+          "effect": "filter/median",
+          "case": "param-radius",
+          "status": "diff",
+          "maxdiff": 128
+        },
+        {
+          "effect": "filter/spookyTicker",
+          "case": "param-seed",
+          "status": "diff",
+          "maxdiff": 102
+        },
+        {
+          "effect": "filter/spookyTicker",
+          "case": "seed-7",
+          "status": "diff",
+          "maxdiff": 63
+        },
+        {
+          "effect": "filter/spookyTicker",
+          "case": "size-16",
+          "status": "diff",
+          "maxdiff": 63
+        },
+        {
+          "effect": "filter/spookyTicker",
+          "case": "time-0",
+          "status": "diff",
+          "maxdiff": 63
+        },
+        {
+          "effect": "filter/spookyTicker",
+          "case": "time-1",
+          "status": "diff",
+          "maxdiff": 63
+        },
+        {
+          "effect": "mixer/shapeMask",
+          "case": "param-shape",
+          "status": "diff",
+          "maxdiff": 128
+        },
+        {
+          "effect": "points/dla",
+          "case": "size-16",
+          "status": "diff",
+          "maxdiff": 1
+        },
+        {
+          "effect": "render/pointsBillboardRender",
+          "case": "param-blendMode",
+          "status": "diff",
+          "maxdiff": 128
+        },
+        {
+          "effect": "render/render3d",
+          "case": "param-filtering",
+          "status": "diff",
+          "maxdiff": 142
+        },
+        {
+          "effect": "render/renderCubemap3d",
+          "case": "param-filtering",
+          "status": "diff",
+          "maxdiff": 129
+        },
+        {
+          "effect": "synth/gradient",
+          "case": "param-rotation",
+          "status": "diff",
+          "maxdiff": 1
+        },
+        {
+          "effect": "synth/mandelbrot",
+          "case": "param-outputMode",
+          "status": "diff",
+          "maxdiff": 249
+        },
+        {
+          "effect": "synth/testPattern",
+          "case": "param-pattern",
+          "status": "ruby-error",
+          "error": "can't convert Array into Float"
+        },
+        {
+          "effect": "synth/testPattern",
+          "case": "size-16",
+          "status": "diff",
+          "maxdiff": 255
+        },
+        {
+          "effect": "synth3d/flythrough3d",
+          "case": "param-power",
+          "status": "diff",
+          "maxdiff": 13
+        }
+      ],
+      "nonexact_identity": true,
+      "exclusions": {
+        "capped: at most 3 nondefault-parameter cases per effect": 826,
+        "no deterministic nondefault value derivable from metadata": 41,
+        "bound via inputs": 55
+      },
+      "exclusion_total": 922,
+      "exclusion_identity": true
+    },
+    "ruby_output_binding": "every non-error case carries ruby_png_sha256 (SHA-256 of NoisemakerCpu::PNG.encode_png of the Ruby surface) and oracle_png_sha256; exact status means byte-identical RGBA8 (maxdiff 0).",
+    "recompute_examples": [
+      "ruby -rjson -e \"r=JSON.parse(File.read(%q(docs/evidence/gap-001/parity-sweep-report.json))); p r.dig(%q(summary),%q(by_status))\"",
+      "ruby -rjson -rdigest -e \"p Digest::SHA256.file(%q(docs/evidence/gap-001/parity-sweep-report.json)).hexdigest\"",
+      "ruby -rjson -e \"r=JSON.parse(File.read(%q(docs/evidence/gap-001/parity-sweep-report.json))); p r[%q(cases)].group_by { |c| c[%q(effect)] }.transform_values(&:size)\""
+    ],
+    "historical_preservation": "historical authority pins, goldens, tolerances, and exclusions are preserved in docs/COMPATIBILITY.md sections 1-4 and docs/COMPLETION_GAPS.md sections 1-3; no goldens were regenerated.",
+    "authority_binding": {
+      "cpu_git_head": "aaa6df50421d9d6db752289cdc1ff7c1efb1d9d1",
+      "upstream_git_head": null,
+      "lock_file": "scripts/oracle-lock.json"
+    }
   }
 }
