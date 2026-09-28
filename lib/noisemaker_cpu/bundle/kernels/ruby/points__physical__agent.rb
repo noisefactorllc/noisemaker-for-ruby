@@ -27,13 +27,13 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967295), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
   end
   noise2D__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     a = nil; b = nil; c = nil; d = nil; f = nil; i = nil; n = nil
-    i = rt.construct(2, rt.component_wise('floor', p))
-    f = rt.construct(2, rt.component_wise('fract', p))
+    i = rt.construct(2, rt.component_wise('floor', p[0]), rt.component_wise('floor', p[1]))
+    f = rt.construct(2, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]))
     f.replace((rt.binary('*', rt.binary('*', f, f, 2, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 2, 'float'), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
     n = rt.binary('+', rt.construct(1, rt.swizzle(i, 'x'), 'uint'), rt.binary('*', rt.construct(1, rt.swizzle(i, 'y'), 'uint'), rt.i(57), 1, 'uint'), 1, 'uint')
     a = hash__uint.call(n)
@@ -44,7 +44,7 @@ run_pixel = lambda do |ctx, out|
   end
   fbm__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    _for0_first = nil; a = nil; i = nil; v = nil
+    __sc1664 = nil; _for0_first = nil; a = nil; i = nil; v = nil
     v = rt.f(0)
     a = rt.f(0.5)
     i = rt.i(0)
@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       v = rt.binary('+', v, rt.binary('*', a, noise2D__vec2.call(p), 1, 'float'), 1, 'float')
-      p.replace((rt.binary('*', p, rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
+      __sc1664 = rt.f(2); p[0] = rt.f32(rt.binary('*', p[0], __sc1664, 1, 'float')); p[1] = rt.f32(rt.binary('*', p[1], __sc1664, 1, 'float'))
       a = rt.binary('*', a, rt.f(0.5), 1, 'float')
     end
     return v
@@ -86,12 +86,12 @@ run_pixel = lambda do |ctx, out|
     end
     deviationMultiplier = rt.binary('+', rt.f(1), rt.binary('*', rt.binary('*', rt.binary('-', seed_f, rt.f(0.5), 1, 'float'), _u_deviation, 1, 'float'), rt.f(2), 1, 'float'), 1, 'float')
     noiseScale = rt.f(2)
-    wanderAngle = rt.binary('*', rt.binary('*', fbm__vec2.call(rt.binary('+', rt.binary('*', rt.construct(2, px, py), noiseScale, 2, 'float'), rt.binary('*', _u_time, rt.f(0.5), 1, 'float'), 2, 'float')), rt.f(6.2831849999999996), 1, 'float'), rt.f(2), 1, 'float')
-    wanderStrength = rt.binary('*', _u_wander, rt.f(0.002), 1, 'float')
+    wanderAngle = rt.binary('*', rt.binary('*', fbm__vec2.call(rt.construct(2, (((((px)) * (noiseScale))) + (((_u_time) * (rt.f(0.5))))), (((((py)) * (noiseScale))) + (((_u_time) * (rt.f(0.5))))))), rt.f(6.2831850051879883), 1, 'float'), rt.f(2), 1, 'float')
+    wanderStrength = rt.binary('*', _u_wander, rt.f(0.0020000000949949026), 1, 'float')
     wanderX = rt.binary('*', rt.component_wise('cos', wanderAngle), wanderStrength, 1, 'float')
     wanderY = rt.binary('*', rt.component_wise('sin', wanderAngle), wanderStrength, 1, 'float')
-    ax = rt.binary('*', rt.binary('+', rt.binary('*', _u_wind, rt.f(0.01), 1, 'float'), wanderX, 1, 'float'), _u_energy, 1, 'float')
-    ay = rt.binary('*', rt.binary('+', rt.binary('*', rt.unary('-', _u_gravity), rt.f(0.01), 1, 'float'), wanderY, 1, 'float'), _u_energy, 1, 'float')
+    ax = rt.binary('*', rt.binary('+', rt.binary('*', _u_wind, rt.f(0.0099999997764825821), 1, 'float'), wanderX, 1, 'float'), _u_energy, 1, 'float')
+    ay = rt.binary('*', rt.binary('+', rt.binary('*', rt.unary('-', _u_gravity), rt.f(0.0099999997764825821), 1, 'float'), wanderY, 1, 'float'), _u_energy, 1, 'float')
     vx = rt.binary('+', vx, rt.binary('*', ax, deviationMultiplier, 1, 'float'), 1, 'float')
     vy = rt.binary('+', vy, rt.binary('*', ay, deviationMultiplier, 1, 'float'), 1, 'float')
     dragFactor = rt.binary('-', rt.f(1), _u_drag, 1, 'float')
@@ -104,12 +104,12 @@ run_pixel = lambda do |ctx, out|
       needsRespawn = 1
     end
     if rt.bool(needsRespawn)
-      g['outXYZ'].replace((rt.construct(4, px, py, pz, rt.f(0))).map { |c| rt.f32(c) })
-      g['outVel'].replace((rt.construct(4, vx, vy, vz, seed_f)).map { |c| rt.f32(c) })
+      g['outXYZ'][0] = rt.f32(px); g['outXYZ'][1] = rt.f32(py); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(0))
+      g['outVel'][0] = rt.f32(vx); g['outVel'][1] = rt.f32(vy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f)
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
     else
-      g['outXYZ'].replace((rt.construct(4, px, py, pz, rt.f(1))).map { |c| rt.f32(c) })
-      g['outVel'].replace((rt.construct(4, vx, vy, vz, seed_f)).map { |c| rt.f32(c) })
+      g['outXYZ'][0] = rt.f32(px); g['outXYZ'][1] = rt.f32(py); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(1))
+      g['outVel'][0] = rt.f32(vx); g['outVel'][1] = rt.f32(vy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f)
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
     end
   end

@@ -20,8 +20,8 @@ run_pixel = lambda do |ctx, out|
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
-  g['TAU'] = rt.f(6.2831853071795862)
-  g['RIGHT_ANGLE'] = rt.f(1.5707963267948966)
+  g['TAU'] = rt.f(6.2831854820251465)
+  g['RIGHT_ANGLE'] = rt.f(1.5707963705062866)
   hash_uint__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
@@ -29,13 +29,13 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967295), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
   end
   srgb_to_linear__float = lambda do |value|
-    if rt.bool(rt.binary('<=', value, rt.f(0.04045)))
-      return rt.binary('/', value, rt.f(12.92), 1, 'float')
+    if rt.bool(rt.binary('<=', value, rt.f(0.040449999272823334)))
+      return rt.binary('/', value, rt.f(12.920000076293945), 1, 'float')
     end
-    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.055), 1, 'float'), rt.f(1.0549999999999999), 1, 'float'), rt.f(2.3999999999999999))
+    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
   end
   cube_root__float = lambda do |value|
     sign_value = nil
@@ -43,7 +43,7 @@ run_pixel = lambda do |ctx, out|
       return rt.f(0)
     end
     sign_value = (rt.bool(rt.binary('>=', value, rt.f(0))) ? (rt.f(1)) : (rt.unary('-', rt.f(1))))
-    return rt.binary('*', sign_value, rt.component_wise('pow', rt.component_wise('abs', value), rt.binary('/', rt.f(1), rt.f(3), 1, 'float')), 1, 'float')
+    return rt.binary('*', sign_value, rt.component_wise('pow', rt.component_wise('abs', value), rt.f(0.3333333432674408)), 1, 'float')
   end
   oklab_l__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
@@ -51,10 +51,10 @@ run_pixel = lambda do |ctx, out|
     r_lin = srgb_to_linear__float.call(rt.component_wise('clamp', rt.swizzle(rgb, 'x'), rt.f(0), rt.f(1)))
     g_lin = srgb_to_linear__float.call(rt.component_wise('clamp', rt.swizzle(rgb, 'y'), rt.f(0), rt.f(1)))
     b_lin = srgb_to_linear__float.call(rt.component_wise('clamp', rt.swizzle(rgb, 'z'), rt.f(0), rt.f(1)))
-    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561200000001), r_lin, 1, 'float'), rt.binary('*', rt.f(0.53627520799999995), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565300000001), b_lin, 1, 'float'), 1, 'float')
-    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910699999999), r_lin, 1, 'float'), rt.binary('*', rt.f(0.68071895839999996), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.107406579), b_lin, 1, 'float'), 1, 'float')
-    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794699999999), r_lin, 1, 'float'), rt.binary('*', rt.f(0.28184741740000002), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136160000001), b_lin, 1, 'float'), 1, 'float')
-    return rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.2104542553), cube_root__float.call(l), 1, 'float'), rt.binary('*', rt.f(0.79361778500000002), cube_root__float.call(m), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720467999999996), cube_root__float.call(s), 1, 'float'), 1, 'float')
+    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561198234558), r_lin, 1, 'float'), rt.binary('*', rt.f(0.53627520799636841), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565277814865), b_lin, 1, 'float'), 1, 'float')
+    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910701751709), r_lin, 1, 'float'), rt.binary('*', rt.f(0.68071895837783813), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.10740657895803452), b_lin, 1, 'float'), 1, 'float')
+    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794664382935), r_lin, 1, 'float'), rt.binary('*', rt.f(0.28184741735458374), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136159896851), b_lin, 1, 'float'), 1, 'float')
+    return rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.21045425534248352), cube_root__float.call(l), 1, 'float'), rt.binary('*', rt.f(0.79361778497695923), cube_root__float.call(m), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720468387007713), cube_root__float.call(s), 1, 'float'), 1, 'float')
   end
   normalized_sine__float = lambda do |value|
     return rt.binary('*', rt.binary('+', rt.component_wise('sin', value), rt.f(1), 1, 'float'), rt.f(0.5), 1, 'float')
@@ -131,7 +131,7 @@ run_pixel = lambda do |ctx, out|
     texCoord.replace(rt.component_wise('clamp', texCoord, rt.construct(2, rt.i(0), 'int'), rt.binary('-', texSize, rt.i(1), 2, 'int')))
     texel = rt.construct(4, rt.texel_fetch(_u_inputTex, texCoord, rt.i(0)))
     inputLuma = oklab_l__vec3.call(rt.swizzle(texel, 'rgb'))
-    weightBlend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.01), 1, 'float'), rt.f(0), rt.f(1))
+    weightBlend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.0099999997764825821), 1, 'float'), rt.f(0), rt.f(1))
     indexValue = rt.component_wise('mix', rt.f(0.5), inputLuma, weightBlend)
     baseHeading = rt.binary('*', hash__uint.call(rt.i(0)), g['TAU'], 1, 'float')
     behaviorMode = rt.construct(1, _u_behavior, 'int')
@@ -144,13 +144,13 @@ run_pixel = lambda do |ctx, out|
     end
     scale = rt.component_wise('max', rt.binary('/', rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y')), rt.f(1024), 1, 'float'), rt.f(1))
     devFactor = rt.binary('+', rt.f(1), rt.binary('*', rt.binary('*', strideRand, rt.f(2), 1, 'float'), _u_strideDeviation, 1, 'float'), 1, 'float')
-    actualStride = rt.component_wise('max', rt.f(0.0001), rt.binary('/', rt.binary('*', rt.binary('*', rt.binary('*', _u_stride, rt.f(0.10000000000000001), 1, 'float'), scale, 1, 'float'), devFactor, 1, 'float'), rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y')), 1, 'float'))
+    actualStride = rt.component_wise('max', rt.f(9.9999997473787516e-05), rt.binary('/', rt.binary('*', rt.binary('*', rt.binary('*', _u_stride, rt.f(0.10000000149011612), 1, 'float'), scale, 1, 'float'), devFactor, 1, 'float'), rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y')), 1, 'float'))
     newX = rt.binary('+', px, rt.binary('*', rt.component_wise('sin', finalAngle), actualStride, 1, 'float'), 1, 'float')
     newY = rt.binary('+', py, rt.binary('*', rt.component_wise('cos', finalAngle), actualStride, 1, 'float'), 1, 'float')
     newX = rt.component_wise('fract', newX)
     newY = rt.component_wise('fract', newY)
-    g['outXYZ'].replace((rt.construct(4, newX, newY, pz, rt.f(1))).map { |c| rt.f32(c) })
-    g['outVel'].replace((rt.construct(4, rt.f(0), rt.f(0), rotRand, strideRand)).map { |c| rt.f32(c) })
+    g['outXYZ'][0] = rt.f32(newX); g['outXYZ'][1] = rt.f32(newY); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(1))
+    g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rotRand); g['outVel'][3] = rt.f32(strideRand)
     g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
   end
   main__void.call

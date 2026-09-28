@@ -70,6 +70,13 @@ class TestTranspilerPipeline < Minitest::Test
       elems
     end
 
+    # GLSL array element reads compile to rt.array_index in the generated
+    # kernels (bounds/NaN-checked in the real runtime); mirror the plain
+    # in-bounds read here.
+    def array_index(arr, idx)
+      arr[idx.to_i]
+    end
+
     def new_array(n, width)
       Array.new(n) { width == 1 ? 0.0 : Array.new(width, 0.0) }
     end
@@ -441,8 +448,12 @@ class TestTranspilerPipeline < Minitest::Test
       out vec4 fragColor;
       void main() { fragColor = vec4(6.28318530718, 0.15, 0.0, 1.0); }
     GLSL
-    assert_includes src, "rt.f(6.2831853071800001)"
-    assert_includes src, "rt.f(0.14999999999999999)"
+    # Regenerated: the oracle bakes F32 literals into the compiled kernels
+    # (canonical-kernels.js emits 6.2831854820251465, 0.15000000596046448),
+    # so the transpiler snaps each literal to f32 before printing; rt.f
+    # re-rounds to the identical runtime value.
+    assert_includes src, "rt.f(6.2831854820251465)"
+    assert_includes src, "rt.f(0.15000000596046448)"
   end
 
   FOR_LOOP_GLSL = <<~GLSL
@@ -543,7 +554,10 @@ class TestTranspilerPipeline < Minitest::Test
     # %.17g strips the trailing ".0" (rt.f(1), not rt.f(1.0)) -- same as
     # Perl's sprintf("%.17g", ...), verified byte-for-byte in the report.
     assert_includes src, "taps[(rt.i(0)).to_i] = rt.f(1)"
-    assert_includes src, "taps[(i).to_i]"
+    # Regenerated: array element reads compile to rt.array_index (the
+    # pooled-array read helper; bounds/NaN-checked like the JS arrays the
+    # oracle generator emits).
+    assert_includes src, "rt.array_index(taps, i)"
   end
 
   DERIV_GLSL = <<~GLSL
@@ -890,7 +904,11 @@ class TestTranspilerPipeline < Minitest::Test
       }
     GLSL
 
-    assert_includes src, "stored = rt.construct(4, rt.binary"
+    # Regenerated: whole-vector arithmetic inits project per component
+    # ((p[0]) + (rt.f(0.10000000149011612)) ...), each f32-snapped by the
+    # construct - the same single-boundary round the oracle's
+    # PooledFloat32Array literal applies.
+    assert_includes src, "stored = rt.construct(4, ((p[0]) + (rt.f(0.10000000149011612)))"
     out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
     assert_equal(-2900.0, out[0])
   end

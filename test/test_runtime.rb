@@ -27,7 +27,12 @@ class TestRuntime < Minitest::Test
     b = @rt.construct(2, 0.3, 0.7)
     c = @rt.construct(2, 1e-8, 2.5)
     chain = @rt.binary("+", @rt.binary("/", a, b, 2, "float"), c, 2, "float")
-    feq @rt.swizzle(chain, "x"), 0.3333333432674408, "chain swizzle x (deferred round)"
+    # Regenerated under the oracle's stdlib model: every VECTOR binary op
+    # f32-rounds each component at creation (glsl-runtime.js #binary
+    # `out[index] = F32(operation(...))`), so the division rounds before the
+    # add (0.1f/0.3f -> 0.3333333134651184). The old golden assumed the
+    # pre-oracle deferred-rounding model.
+    feq @rt.swizzle(chain, "x"), 0.3333333134651184, "chain swizzle x (deferred round)"
     feq @rt.swizzle(chain, "y"), 2.7857143878936768, "chain swizzle y"
     feq @rt.dot(chain, chain), 7.871315956115723, "chain dot"
     feq @rt.length(chain), 2.805586576461792, "chain length (double-rounded)"
@@ -67,18 +72,28 @@ class TestRuntime < Minitest::Test
 
   def test_int_and_uint_vectors
     u = @rt.construct(3, @rt.i(7), @rt.i(11), @rt.i(4294967295), "uint")
-    assert_equal [11651675, 18309775, 4293302771],
+    # uint arithmetic follows the oracle's |0 (ToInt32) emission
+    # (canonical-kernels.js e.g. spookyTicker rowSeed), so the wrapped
+    # product of 4294967295 * 1664525 surfaces SIGNED (-1664525), not the
+    # unsigned >>>0 form (only hashUint32-style helpers >>>0).
+    assert_equal [11651675, 18309775, -1664525],
                  @rt.binary("*", u, @rt.construct(3, @rt.i(1664525), "uint"), 3, "uint").to_a,
                  "uvec wrapping multiply"
     assert_equal [4204755366, 1223881804, 1500469937],
                  @rt.pcg3d(@rt.construct(3, @rt.i(1), @rt.i(2), @rt.i(3), "uint")).to_a,
                  "pcg3d via runtime"
-    assert_equal [-3, -2],
+    # Regenerated: the oracle's compiled kernels are JavaScript — int-typed
+    # `/` is f64 division (testPattern's `digits[i] = temp % 10; temp /= 10;`
+    # keeps fractional digits in the canonical kernel), not GLSL truncation.
+    assert_equal [-3.5, -2.25],
                  @rt.binary("/", @rt.construct(2, @rt.i(-7), @rt.i(9), "int"),
                                  @rt.construct(2, @rt.i(2), @rt.i(-4), "int"), 2, "int").to_a,
-                 "ivec division truncates toward zero"
+                 "ivec division follows JS f64 semantics"
     assert_equal(-2, @rt.to_int(-2.7), "to_int truncates toward zero")
-    assert_equal 3221225472, @rt.binary("<<", @rt.i(3), @rt.i(30), 1, "uint"), "uint shift"
+      # JS `<<` is signed (ToInt32 result): 3 << 30 == -1073741824 in the
+    # compiled kernels; >>>0 unsigned forms appear only at explicit helper
+    # sites (hashUint32).
+    assert_equal(-1073741824, @rt.binary("<<", @rt.i(3), @rt.i(30), 1, "uint"), "uint shift")
   end
 
   def test_cpu_noise3d_hash4_matches_canonical_javascript_number_semantics

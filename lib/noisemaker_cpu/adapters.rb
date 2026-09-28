@@ -41,7 +41,7 @@ module NoisemakerCpu
 
     def self._metal_sine(value)
       turns = _f32(value * INV_TAU)
-      phase = turns - turns.floor
+      phase = turns - (turns.nan? ? turns : turns.floor)
       _f32(Math.sin(phase * TAU32))
     end
 
@@ -271,6 +271,175 @@ module NoisemakerCpu
         alpha = ctx.uniforms["alpha"].nil? ? 0.0 : ctx.uniforms["alpha"]
         (0..2).each { |idx| out[idx] = _f32(_pmix(inp[idx], color[idx], alpha)) }
         out[3] = _f32(inp[3])
+      end
+    end)
+
+    # ---- filter/median: bit-faithful port of src/effects/adapters/median.js ----
+    # The oracle renders median through the hand-written CPU adapter (the
+    # transpiled CDN GLSL disagrees with it on the pivot index, the half
+    # packing and the alpha source), so the adapter is the parity target.
+
+    def self._f32_bits(value)
+      [value].pack("e").unpack1("L<")
+    end
+
+    def self._median_float_to_half(value)
+      return 0x7e00 if value.is_a?(Float) && value.nan?
+      return 0x7c00 if value == Float::INFINITY
+      return 0xfc00 if value == -Float::INFINITY
+
+      bits = _f32_bits(value)
+      sign = (bits >> 16) & 0x8000
+      exponent = ((bits >> 23) & 0xff) - 127 + 15
+      fraction = bits & 0x7fffff
+      if exponent <= 0
+        return sign if exponent < -10
+
+        fraction = (fraction | 0x800000) >> (1 - exponent)
+        return sign | ((fraction + 0x1000) >> 13)
+      end
+      return sign | 0x7c00 if exponent >= 31
+
+      fraction += 0x1000
+      if (fraction & 0x800000) != 0
+        fraction = 0
+        exponent += 1
+        return sign | 0x7c00 if exponent >= 31
+      end
+      sign | (exponent << 10) | (fraction >> 13)
+    end
+
+    def self._median_half_to_float(value)
+      sign = (value & 0x8000) != 0 ? -1 : 1
+      exponent = (value >> 10) & 0x1f
+      fraction = value & 0x3ff
+      return sign * (2**-14) * fraction.fdiv(1024) if exponent.zero?
+      # JS order: the NaN branch requires BOTH exponent 0x1f and a nonzero
+      # fraction; a normal fraction with a smaller exponent is a normal half.
+      return Float::NAN if exponent == 0x1f && fraction != 0
+      return sign * Float::INFINITY if exponent == 0x1f
+
+      sign * (2**(exponent - 15)) * (1 + fraction.fdiv(1024))
+    end
+
+    register("filter/median", "median", lambda do |_rt, _compiled|
+      lambda do |ctx, out|
+        surface = ctx.textures["inputTex"]
+        radius = ctx.uniforms["RADIUS"].to_i
+        center_x = ctx.frag_coord[0].to_i
+        center_y = ctx.frag_coord[1].to_i
+        center_row = surface.height - 1 - center_y
+        center_offset = (center_row * surface.width + center_x) * 4
+        original_red = surface.data[center_offset]
+        original_green = surface.data[center_offset + 1]
+        original_blue = surface.data[center_offset + 2]
+
+        brightness = Array.new(49, 0)
+        red_green = Array.new(49, 0)
+        blue = Array.new(49, 0)
+        index = 0
+        (-radius..radius).each do |y|
+          sample_y = [center_y + y, 0].max
+          sample_y = [sample_y, surface.height - 1].min
+          sample_row = surface.height - 1 - sample_y
+          (-radius..radius).each do |x|
+            sample_x = [center_x + x, 0].max
+            sample_x = [sample_x, surface.width - 1].min
+            offset = (sample_row * surface.width + sample_x) * 4
+            red = surface.data[offset]
+            green = surface.data[offset + 1]
+            sample_blue = surface.data[offset + 2]
+            luminance = _f32(_f32(_f32(red * 0.2126) + _f32(green * 0.7152)) + _f32(sample_blue * 0.0722))
+            packed_red = _median_float_to_half(red)
+            packed_green = _median_float_to_half(green)
+            brightness[index] = _f32_bits(luminance)
+            red_green[index] = NoisemakerCpu::UintMath.u32((packed_red << 16) | packed_green)
+            blue[index] = _median_float_to_half(sample_blue)
+            index += 1
+          end
+        end
+        count = index
+        median_index = (count - 1) >> 1
+        left = 0
+        right = count - 1
+        less = lambda do |l, r|
+          if brightness[l] != brightness[r]
+            brightness[l] < brightness[r]
+          elsif red_green[l] != red_green[r]
+            red_green[l] < red_green[r]
+          else
+            blue[l] < blue[r]
+          end
+        end
+        swap = lambda do |l, r|
+          value = brightness[l]
+          brightness[l] = brightness[r]
+          brightness[r] = value
+          value = red_green[l]
+          red_green[l] = red_green[r]
+          red_green[r] = value
+          value = blue[l]
+          blue[l] = blue[r]
+          blue[r] = value
+        end
+        while left < right
+          pivot_brightness = brightness[median_index]
+          pivot_red_green = red_green[median_index]
+          pivot_blue = blue[median_index]
+          less_pivot = lambda do |record|
+            if brightness[record] != pivot_brightness
+              brightness[record] < pivot_brightness
+            elsif red_green[record] != pivot_red_green
+              red_green[record] < pivot_red_green
+            else
+              blue[record] < pivot_blue
+            end
+          end
+          pivot_less = lambda do |record|
+            if pivot_brightness != brightness[record]
+              pivot_brightness < brightness[record]
+            elsif pivot_red_green != red_green[record]
+              pivot_red_green < red_green[record]
+            else
+              pivot_blue < blue[record]
+            end
+          end
+          scan_left = left
+          scan_right = right
+          while scan_left <= scan_right
+            scan_left += 1 while less_pivot.call(scan_left)
+            scan_right -= 1 while pivot_less.call(scan_right)
+            if scan_left <= scan_right
+              swap.call(scan_left, scan_right)
+              scan_left += 1
+              scan_right -= 1
+            end
+          end
+          left = scan_left if scan_right < median_index
+          right = scan_right if median_index < scan_left
+        end
+        packed = red_green[median_index]
+        median_red = _median_half_to_float(packed >> 16)
+        median_green = _median_half_to_float(packed & 0xffff)
+        median_blue = _median_half_to_float(blue[median_index])
+        # JS Math.max propagates NaN (Math.max(NaN, x) = NaN), and `NaN >= t`
+        # is false — the packed half can be a NaN pattern for out-of-domain
+        # inputs. Ruby's Array#max and `>=` would instead raise or misorder.
+        maximum_difference = [
+          (original_red - median_red).abs,
+          (original_green - median_green).abs,
+          (original_blue - median_blue).abs
+        ].reduce do |acc, value|
+          next Float::NAN if acc.nan? || value.nan?
+
+          value > acc ? value : acc
+        end
+        threshold = ctx.uniforms["threshold"]
+        replace = threshold.to_f <= 0 || !(maximum_difference < threshold.to_f / 100)
+        out[0] = replace ? median_red : original_red
+        out[1] = replace ? median_green : original_green
+        out[2] = replace ? median_blue : original_blue
+        out[3] = surface.data[center_offset + 3]
       end
     end)
   end

@@ -15,29 +15,21 @@ run_pixel = lambda do |ctx, out|
   _u_alpha = u.key?('alpha') ? u['alpha'] : rt.f(0.0)
   _u_seed = u.key?('seed') ? u['seed'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
-  pcg3__uvec3 = lambda do |v|
-    v = rt.copy(v, 'uint')
-    v.replace(rt.binary('+', rt.binary('*', v, rt.i(1664525), 3, 'uint'), rt.i(1013904223), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    v.replace(rt.binary('^', v, rt.binary('>>', v, rt.i(16), 3, 'uint'), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    return v
+  pcg3__uvec3 = lambda do |value|
+    value = rt.copy(value, 'uint')
+    return rt.pcg3d(value)
   end
   pcg__uint = lambda do |v|
     return rt.swizzle(pcg3__uvec3.call(rt.construct(3, v, rt.i(0), rt.i(0), 'uint')), 'x')
   end
   hashf__uint = lambda do |h|
-    return rt.binary('/', rt.construct(1, rt.swizzle(pcg3__uvec3.call(rt.construct(3, h, rt.i(0), rt.i(0), 'uint')), 'x')), rt.construct(1, rt.i(4294967295)), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.swizzle(pcg3__uvec3.call(rt.construct(3, h, rt.i(0), rt.i(0), 'uint')), 'x')), rt.f(4294967296), 1, 'float')
   end
   gridVal__ivec2_uint = lambda do |p, sd|
     p = rt.copy(p, 'int')
     h = nil
     h = pcg3__uvec3.call(rt.construct(3, rt.construct(1, rt.binary('+', rt.swizzle(p, 'x'), rt.i(32768), 1, 'int'), 'uint'), rt.construct(1, rt.binary('+', rt.swizzle(p, 'y'), rt.i(32768), 1, 'int'), 'uint'), sd, 'uint'))
-    return rt.binary('/', rt.construct(1, rt.swizzle(h, 'x')), rt.construct(1, rt.i(4294967295)), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.swizzle(h, 'x')), rt.f(4294967296), 1, 'float')
   end
   cubic__float_float_float_float_float = lambda do |a, b, c, d, _t|
     t2 = nil; t3 = nil
@@ -49,7 +41,7 @@ run_pixel = lambda do |ctx, out|
     pos = rt.copy(pos, 'float')
     c = nil; f = nil; r0 = nil; r1 = nil; r2 = nil; r3 = nil
     c = rt.construct(2, rt.construct(2, rt.component_wise('floor', pos)), 'int')
-    f = rt.construct(2, rt.component_wise('fract', pos))
+    f = rt.construct(2, rt.component_wise('fract', pos[0]), rt.component_wise('fract', pos[1]))
     r0 = cubic__float_float_float_float_float.call(rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.unary('-', rt.i(1)), rt.unary('-', rt.i(1)), 'int'), 2, 'int'), sd), rt.f(4)), rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(0), rt.unary('-', rt.i(1)), 'int'), 2, 'int'), sd), rt.f(4)), rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(1), rt.unary('-', rt.i(1)), 'int'), 2, 'int'), sd), rt.f(4)), rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(2), rt.unary('-', rt.i(1)), 'int'), 2, 'int'), sd), rt.f(4)), rt.swizzle(f, 'x'))
     r1 = cubic__float_float_float_float_float.call(rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.unary('-', rt.i(1)), rt.i(0), 'int'), 2, 'int'), sd), rt.f(4)), rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(0), rt.i(0), 'int'), 2, 'int'), sd), rt.f(4)), rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), sd), rt.f(4)), rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(2), rt.i(0), 'int'), 2, 'int'), sd), rt.f(4)), rt.swizzle(f, 'x'))
     r2 = cubic__float_float_float_float_float.call(rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.unary('-', rt.i(1)), rt.i(1), 'int'), 2, 'int'), sd), rt.f(4)), rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), sd), rt.f(4)), rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), sd), rt.f(4)), rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(2), rt.i(1), 'int'), 2, 'int'), sd), rt.f(4)), rt.swizzle(f, 'x'))
@@ -60,7 +52,7 @@ run_pixel = lambda do |ctx, out|
     pos = rt.copy(pos, 'float')
     c = nil; f = nil; v00 = nil; v01 = nil; v10 = nil; v11 = nil
     c = rt.construct(2, rt.construct(2, rt.component_wise('floor', pos)), 'int')
-    f = rt.construct(2, rt.component_wise('fract', pos))
+    f = rt.construct(2, rt.component_wise('fract', pos[0]), rt.component_wise('fract', pos[1]))
     v00 = rt.component_wise('pow', gridVal__ivec2_uint.call(c, sd), rt.f(4))
     v10 = rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), sd), rt.f(4))
     v01 = rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), sd), rt.f(4))
@@ -71,8 +63,8 @@ run_pixel = lambda do |ctx, out|
     pos = rt.copy(pos, 'float')
     _t = nil; c = nil; f = nil; v00 = nil; v01 = nil; v10 = nil; v11 = nil
     c = rt.construct(2, rt.construct(2, rt.component_wise('floor', pos)), 'int')
-    f = rt.construct(2, rt.component_wise('fract', pos))
-    _t = rt.construct(2, rt.binary('*', rt.binary('-', rt.f(1), rt.component_wise('cos', rt.binary('*', f, rt.f(3.1415926500000002), 2, 'float')), 2, 'float'), rt.f(0.5), 2, 'float'))
+    f = rt.construct(2, rt.component_wise('fract', pos[0]), rt.component_wise('fract', pos[1]))
+    _t = rt.construct(2, ((((rt.f(1)) - (rt.component_wise('cos', rt.f32(((f[0]) * (rt.f(3.1415927410125732)))))))) * (rt.f(0.5))), ((((rt.f(1)) - (rt.component_wise('cos', rt.f32(((f[1]) * (rt.f(3.1415927410125732)))))))) * (rt.f(0.5))))
     v00 = rt.component_wise('pow', gridVal__ivec2_uint.call(c, sd), rt.f(4))
     v10 = rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), sd), rt.f(4))
     v01 = rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), sd), rt.f(4))
@@ -84,12 +76,12 @@ run_pixel = lambda do |ctx, out|
     freq = rt.copy(freq, 'float')
     a = nil
     a = rt.f(0)
-    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.binary('*', uv, freq, 2, 'float'), sd), rt.f(0.5), 1, 'float'), 1, 'float')
-    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(2), 2, 'float'), rt.binary('+', sd, rt.i(10000), 1, 'uint')), rt.f(0.25), 1, 'float'), 1, 'float')
-    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(4), 2, 'float'), rt.binary('+', sd, rt.i(20000), 1, 'uint')), rt.f(0.125), 1, 'float'), 1, 'float')
-    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(8), 2, 'float'), rt.binary('+', sd, rt.i(30000), 1, 'uint')), rt.f(0.0625), 1, 'float'), 1, 'float')
-    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(16), 2, 'float'), rt.binary('+', sd, rt.i(40000), 1, 'uint')), rt.f(0.03125), 1, 'float'), 1, 'float')
-    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(32), 2, 'float'), rt.binary('+', sd, rt.i(50000), 1, 'uint')), rt.f(0.015625), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.construct(2, ((uv[0]) * (freq[0])), ((uv[1]) * (freq[1]))), sd), rt.f(0.5), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(2))), ((((uv[1]) * (freq[1]))) * (rt.f(2)))), rt.binary('+', sd, rt.i(10000), 1, 'uint')), rt.f(0.25), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(4))), ((((uv[1]) * (freq[1]))) * (rt.f(4)))), rt.binary('+', sd, rt.i(20000), 1, 'uint')), rt.f(0.125), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(8))), ((((uv[1]) * (freq[1]))) * (rt.f(8)))), rt.binary('+', sd, rt.i(30000), 1, 'uint')), rt.f(0.0625), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(16))), ((((uv[1]) * (freq[1]))) * (rt.f(16)))), rt.binary('+', sd, rt.i(40000), 1, 'uint')), rt.f(0.03125), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bicubicExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(32))), ((((uv[1]) * (freq[1]))) * (rt.f(32)))), rt.binary('+', sd, rt.i(50000), 1, 'uint')), rt.f(0.015625), 1, 'float'), 1, 'float')
     return rt.binary('/', a, rt.f(0.984375), 1, 'float')
   end
   expFbm4Bilinear__vec2_vec2_uint = lambda do |uv, freq, sd|
@@ -97,10 +89,10 @@ run_pixel = lambda do |ctx, out|
     freq = rt.copy(freq, 'float')
     a = nil
     a = rt.f(0)
-    a = rt.binary('+', a, rt.binary('*', bilinearExpGrid__vec2_uint.call(rt.binary('*', uv, freq, 2, 'float'), sd), rt.f(0.5), 1, 'float'), 1, 'float')
-    a = rt.binary('+', a, rt.binary('*', bilinearExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(2), 2, 'float'), rt.binary('+', sd, rt.i(10000), 1, 'uint')), rt.f(0.25), 1, 'float'), 1, 'float')
-    a = rt.binary('+', a, rt.binary('*', bilinearExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(4), 2, 'float'), rt.binary('+', sd, rt.i(20000), 1, 'uint')), rt.f(0.125), 1, 'float'), 1, 'float')
-    a = rt.binary('+', a, rt.binary('*', bilinearExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(8), 2, 'float'), rt.binary('+', sd, rt.i(30000), 1, 'uint')), rt.f(0.0625), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bilinearExpGrid__vec2_uint.call(rt.construct(2, ((uv[0]) * (freq[0])), ((uv[1]) * (freq[1]))), sd), rt.f(0.5), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bilinearExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(2))), ((((uv[1]) * (freq[1]))) * (rt.f(2)))), rt.binary('+', sd, rt.i(10000), 1, 'uint')), rt.f(0.25), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bilinearExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(4))), ((((uv[1]) * (freq[1]))) * (rt.f(4)))), rt.binary('+', sd, rt.i(20000), 1, 'uint')), rt.f(0.125), 1, 'float'), 1, 'float')
+    a = rt.binary('+', a, rt.binary('*', bilinearExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(8))), ((((uv[1]) * (freq[1]))) * (rt.f(8)))), rt.binary('+', sd, rt.i(30000), 1, 'uint')), rt.f(0.0625), 1, 'float'), 1, 'float')
     return rt.binary('/', a, rt.f(0.9375), 1, 'float')
   end
   expRidgedFbm3Cosine__vec2_vec2_uint = lambda do |uv, freq, sd|
@@ -109,24 +101,24 @@ run_pixel = lambda do |ctx, out|
     a = nil; v = nil
     a = rt.f(0)
     v = rt.f(0.0)
-    v = cosineExpGrid__vec2_uint.call(rt.binary('*', uv, freq, 2, 'float'), sd)
+    v = cosineExpGrid__vec2_uint.call(rt.construct(2, ((uv[0]) * (freq[0])), ((uv[1]) * (freq[1]))), sd)
     a = rt.binary('+', a, rt.binary('*', rt.binary('-', rt.f(1), rt.component_wise('abs', rt.binary('-', rt.binary('*', rt.f(2), v, 1, 'float'), rt.f(1), 1, 'float')), 1, 'float'), rt.f(0.5), 1, 'float'), 1, 'float')
-    v = cosineExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(2), 2, 'float'), rt.binary('+', sd, rt.i(10000), 1, 'uint'))
+    v = cosineExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(2))), ((((uv[1]) * (freq[1]))) * (rt.f(2)))), rt.binary('+', sd, rt.i(10000), 1, 'uint'))
     a = rt.binary('+', a, rt.binary('*', rt.binary('-', rt.f(1), rt.component_wise('abs', rt.binary('-', rt.binary('*', rt.f(2), v, 1, 'float'), rt.f(1), 1, 'float')), 1, 'float'), rt.f(0.25), 1, 'float'), 1, 'float')
-    v = cosineExpGrid__vec2_uint.call(rt.binary('*', rt.binary('*', uv, freq, 2, 'float'), rt.f(4), 2, 'float'), rt.binary('+', sd, rt.i(20000), 1, 'uint'))
+    v = cosineExpGrid__vec2_uint.call(rt.construct(2, ((((uv[0]) * (freq[0]))) * (rt.f(4))), ((((uv[1]) * (freq[1]))) * (rt.f(4)))), rt.binary('+', sd, rt.i(20000), 1, 'uint'))
     a = rt.binary('+', a, rt.binary('*', rt.binary('-', rt.f(1), rt.component_wise('abs', rt.binary('-', rt.binary('*', rt.f(2), v, 1, 'float'), rt.f(1), 1, 'float')), 1, 'float'), rt.f(0.125), 1, 'float'), 1, 'float')
     return rt.binary('/', a, rt.f(0.875), 1, 'float')
   end
   main__void = lambda do
     aspect = nil; base = nil; colored = nil; combined = nil; dims = nil; disp = nil; dotFreq = nil; dots = nil; fullRes = nil; globalCoord = nil; globalUV = nil; mask = nil; nUV = nil; result = nil; ridge = nil; ridgeFreq = nil; s = nil; smear = nil; smearFreq = nil; speckFreq = nil; specks = nil; uv = nil; warpFreqX = nil; warpFreqY = nil; warpX = nil; warpY = nil; warpedUV = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     dims = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, dims), 2, 'float'))
-    base = rt.construct(4, rt.texture(_u_inputTex, uv))
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (rt.construct(2, dims))))
-    globalUV = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((dims[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((dims[1]))))
+    base = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : ((dims[0]))), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : ((dims[1]))))
+    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
     aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-    nUV = rt.construct(2, rt.binary('*', globalUV, rt.construct(2, aspect, rt.f(1)), 2, 'float'))
+    nUV = rt.construct(2, ((globalUV[0]) * ((aspect))), ((globalUV[1]) * ((rt.f(1)))))
     s = rt.binary('*', rt.construct(1, _u_seed, 'uint'), rt.i(17), 1, 'uint')
     smearFreq = rt.component_wise('mix', rt.f(3), rt.f(6), hashf__uint.call(pcg__uint.call(rt.binary('+', s, rt.i(10), 1, 'uint'))))
     dotFreq = rt.component_wise('mix', rt.f(32), rt.f(64), hashf__uint.call(pcg__uint.call(rt.binary('+', s, rt.i(50), 1, 'uint'))))
@@ -134,22 +126,22 @@ run_pixel = lambda do |ctx, out|
     ridgeFreq = rt.component_wise('mix', rt.f(2), rt.f(3), hashf__uint.call(pcg__uint.call(rt.binary('+', s, rt.i(130), 1, 'uint'))))
     warpFreqX = rt.component_wise('mix', rt.f(2), rt.f(3), hashf__uint.call(pcg__uint.call(rt.binary('+', s, rt.i(160), 1, 'uint'))))
     warpFreqY = rt.component_wise('mix', rt.f(1), rt.f(3), hashf__uint.call(pcg__uint.call(rt.binary('+', s, rt.i(170), 1, 'uint'))))
-    warpX = bilinearExpGrid__vec2_uint.call(rt.binary('*', nUV, rt.construct(2, warpFreqX, warpFreqY), 2, 'float'), rt.binary('+', s, rt.i(200), 1, 'uint'))
-    warpY = bilinearExpGrid__vec2_uint.call(rt.binary('*', nUV, rt.construct(2, warpFreqX, warpFreqY), 2, 'float'), rt.binary('+', s, rt.i(300), 1, 'uint'))
+    warpX = bilinearExpGrid__vec2_uint.call(rt.construct(2, ((nUV[0]) * ((warpFreqX))), ((nUV[1]) * ((warpFreqY)))), rt.binary('+', s, rt.i(200), 1, 'uint'))
+    warpY = bilinearExpGrid__vec2_uint.call(rt.construct(2, ((nUV[0]) * ((warpFreqX))), ((nUV[1]) * ((warpFreqY)))), rt.binary('+', s, rt.i(300), 1, 'uint'))
     disp = rt.binary('+', rt.f(1), hashf__uint.call(pcg__uint.call(rt.binary('+', s, rt.i(150), 1, 'uint'))), 1, 'float')
-    warpedUV = rt.construct(2, rt.binary('+', nUV, rt.binary('*', rt.binary('*', rt.binary('-', rt.construct(2, warpX, warpY), rt.f(0.5), 2, 'float'), disp, 2, 'float'), rt.f(0.12), 2, 'float'), 2, 'float'))
-    smear = expFbm6Bicubic__vec2_vec2_uint.call(warpedUV, rt.construct(2, smearFreq), rt.binary('+', s, rt.i(100), 1, 'uint'))
-    dots = expFbm4Bilinear__vec2_vec2_uint.call(nUV, rt.construct(2, dotFreq), rt.binary('+', s, rt.i(43), 1, 'uint'))
-    dots = rt.component_wise('clamp', rt.binary('-', rt.binary('*', rt.f(4), dots, 1, 'float'), rt.f(1.6000000000000001), 1, 'float'), rt.f(0), rt.f(1))
-    specks = expFbm4Bilinear__vec2_vec2_uint.call(nUV, rt.construct(2, speckFreq), rt.binary('+', s, rt.i(71), 1, 'uint'))
+    warpedUV = rt.construct(2, ((nUV[0]) + ((((((((warpX)) - (rt.f(0.5)))) * (disp))) * (rt.f(0.11999999731779099))))), ((nUV[1]) + ((((((((warpY)) - (rt.f(0.5)))) * (disp))) * (rt.f(0.11999999731779099))))))
+    smear = expFbm6Bicubic__vec2_vec2_uint.call(warpedUV, rt.construct(2, (smearFreq), (smearFreq)), rt.binary('+', s, rt.i(100), 1, 'uint'))
+    dots = expFbm4Bilinear__vec2_vec2_uint.call(nUV, rt.construct(2, (dotFreq), (dotFreq)), rt.binary('+', s, rt.i(43), 1, 'uint'))
+    dots = rt.component_wise('clamp', rt.binary('-', rt.binary('*', rt.f(4), dots, 1, 'float'), rt.f(1.6000000238418579), 1, 'float'), rt.f(0), rt.f(1))
+    specks = expFbm4Bilinear__vec2_vec2_uint.call(nUV, rt.construct(2, (speckFreq), (speckFreq)), rt.binary('+', s, rt.i(71), 1, 'uint'))
     specks = rt.component_wise('clamp', rt.binary('-', rt.binary('*', rt.f(4), specks, 1, 'float'), rt.f(2), 1, 'float'), rt.f(0), rt.f(1))
     combined = rt.component_wise('max', smear, rt.component_wise('max', dots, specks))
-    ridge = expRidgedFbm3Cosine__vec2_vec2_uint.call(nUV, rt.construct(2, ridgeFreq), rt.binary('+', s, rt.i(89), 1, 'uint'))
+    ridge = expRidgedFbm3Cosine__vec2_vec2_uint.call(nUV, rt.construct(2, (ridgeFreq), (ridgeFreq)), rt.binary('+', s, rt.i(89), 1, 'uint'))
     combined = rt.component_wise('max', rt.f(0), rt.binary('-', combined, ridge, 1, 'float'))
     combined = rt.binary('*', combined, rt.binary('+', rt.f(0.5), rt.binary('*', _u_density, rt.f(2), 1, 'float'), 1, 'float'), 1, 'float')
     mask = rt.component_wise('step', rt.f(0.5), combined)
-    colored = rt.construct(3, rt.binary('*', rt.swizzle(base, 'rgb'), _u_color, 3, 'float'))
-    result = rt.construct(3, rt.component_wise('mix', rt.swizzle(base, 'rgb'), rt.component_wise('mix', rt.swizzle(base, 'rgb'), colored, mask), _u_alpha))
+    colored = rt.construct(3, ((rt.swizzle(base, 'r')) * (_u_color[0])), ((rt.swizzle(base, 'g')) * (_u_color[1])), ((rt.swizzle(base, 'b')) * (_u_color[2])))
+    result = rt.construct(3, rt.component_wise('mix', rt.swizzle(base, 'r'), rt.component_wise('mix', rt.swizzle(base, 'r'), colored[0], mask), _u_alpha), rt.component_wise('mix', rt.swizzle(base, 'g'), rt.component_wise('mix', rt.swizzle(base, 'g'), colored[1], mask), _u_alpha), rt.component_wise('mix', rt.swizzle(base, 'b'), rt.component_wise('mix', rt.swizzle(base, 'b'), colored[2], mask), _u_alpha))
     g['fragColor'].replace((rt.construct(4, result, rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

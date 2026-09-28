@@ -35,16 +35,16 @@ run_pixel = lambda do |ctx, out|
   g['PALETTE_ZX_SPECTRUM'] = rt.i(7)
   g['PALETTE_APPLE_II'] = rt.i(8)
   g['PALETTE_EGA'] = rt.i(9)
-  g['bayer2x2'] = rt.construct(16, rt.binary('/', rt.f(0), rt.f(4), 1, 'float'), rt.binary('/', rt.f(2), rt.f(4), 1, 'float'), rt.binary('/', rt.f(0), rt.f(4), 1, 'float'), rt.binary('/', rt.f(2), rt.f(4), 1, 'float'), rt.binary('/', rt.f(3), rt.f(4), 1, 'float'), rt.binary('/', rt.f(1), rt.f(4), 1, 'float'), rt.binary('/', rt.f(3), rt.f(4), 1, 'float'), rt.binary('/', rt.f(1), rt.f(4), 1, 'float'), rt.binary('/', rt.f(0), rt.f(4), 1, 'float'), rt.binary('/', rt.f(2), rt.f(4), 1, 'float'), rt.binary('/', rt.f(0), rt.f(4), 1, 'float'), rt.binary('/', rt.f(2), rt.f(4), 1, 'float'), rt.binary('/', rt.f(3), rt.f(4), 1, 'float'), rt.binary('/', rt.f(1), rt.f(4), 1, 'float'), rt.binary('/', rt.f(3), rt.f(4), 1, 'float'), rt.binary('/', rt.f(1), rt.f(4), 1, 'float'))
-  g['bayer4x4'] = rt.construct(16, rt.binary('/', rt.f(0), rt.f(16), 1, 'float'), rt.binary('/', rt.f(8), rt.f(16), 1, 'float'), rt.binary('/', rt.f(2), rt.f(16), 1, 'float'), rt.binary('/', rt.f(10), rt.f(16), 1, 'float'), rt.binary('/', rt.f(12), rt.f(16), 1, 'float'), rt.binary('/', rt.f(4), rt.f(16), 1, 'float'), rt.binary('/', rt.f(14), rt.f(16), 1, 'float'), rt.binary('/', rt.f(6), rt.f(16), 1, 'float'), rt.binary('/', rt.f(3), rt.f(16), 1, 'float'), rt.binary('/', rt.f(11), rt.f(16), 1, 'float'), rt.binary('/', rt.f(1), rt.f(16), 1, 'float'), rt.binary('/', rt.f(9), rt.f(16), 1, 'float'), rt.binary('/', rt.f(15), rt.f(16), 1, 'float'), rt.binary('/', rt.f(7), rt.f(16), 1, 'float'), rt.binary('/', rt.f(13), rt.f(16), 1, 'float'), rt.binary('/', rt.f(5), rt.f(16), 1, 'float'))
-  g['DOT_MATRIX'] = rt.array([rt.construct(3, rt.f(0.059999999999999998), rt.f(0.22), rt.f(0.059999999999999998)), rt.construct(3, rt.f(0.19), rt.f(0.38), rt.f(0.19)), rt.construct(3, rt.f(0.55000000000000004), rt.f(0.67000000000000004), rt.f(0.059999999999999998)), rt.construct(3, rt.f(0.60999999999999999), rt.f(0.73999999999999999), rt.f(0.059999999999999998))])
-  g['AMBER'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.40000000000000002), rt.f(0.20000000000000001), rt.f(0)), rt.construct(3, rt.f(0.80000000000000004), rt.f(0.40000000000000002), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0.59999999999999998), rt.f(0))])
-  g['PICO8'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.114), rt.f(0.16900000000000001), rt.f(0.32500000000000001)), rt.construct(3, rt.f(0.49399999999999999), rt.f(0.14499999999999999), rt.f(0.32500000000000001)), rt.construct(3, rt.f(0), rt.f(0.52900000000000003), rt.f(0.318)), rt.construct(3, rt.f(0.67100000000000004), rt.f(0.32200000000000001), rt.f(0.21199999999999999)), rt.construct(3, rt.f(0.373), rt.f(0.34100000000000003), rt.f(0.31)), rt.construct(3, rt.f(0.76100000000000001), rt.f(0.76500000000000001), rt.f(0.78000000000000003)), rt.construct(3, rt.f(1), rt.f(0.94499999999999995), rt.f(0.91000000000000003)), rt.construct(3, rt.f(1), rt.f(0), rt.f(0.30199999999999999)), rt.construct(3, rt.f(1), rt.f(0.63900000000000001), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0.92500000000000004), rt.f(0.153)), rt.construct(3, rt.f(0), rt.f(0.89400000000000002), rt.f(0.21199999999999999)), rt.construct(3, rt.f(0.161), rt.f(0.67800000000000005), rt.f(1)), rt.construct(3, rt.f(0.51400000000000001), rt.f(0.46300000000000002), rt.f(0.61199999999999999)), rt.construct(3, rt.f(1), rt.f(0.46700000000000003), rt.f(0.65900000000000003)), rt.construct(3, rt.f(1), rt.f(0.80000000000000004), rt.f(0.66700000000000004))])
-  g['C64'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(1), rt.f(1), rt.f(1)), rt.construct(3, rt.f(0.53300000000000003), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.66700000000000004), rt.f(1), rt.f(0.93300000000000005)), rt.construct(3, rt.f(0.80000000000000004), rt.f(0.26700000000000002), rt.f(0.80000000000000004)), rt.construct(3, rt.f(0), rt.f(0.80000000000000004), rt.f(0.33300000000000002)), rt.construct(3, rt.f(0), rt.f(0), rt.f(0.66700000000000004)), rt.construct(3, rt.f(0.93300000000000005), rt.f(0.93300000000000005), rt.f(0.46700000000000003)), rt.construct(3, rt.f(0.86699999999999999), rt.f(0.53300000000000003), rt.f(0.33300000000000002)), rt.construct(3, rt.f(0.40000000000000002), rt.f(0.26700000000000002), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0.46700000000000003), rt.f(0.46700000000000003)), rt.construct(3, rt.f(0.20000000000000001), rt.f(0.20000000000000001), rt.f(0.20000000000000001)), rt.construct(3, rt.f(0.46700000000000003), rt.f(0.46700000000000003), rt.f(0.46700000000000003)), rt.construct(3, rt.f(0.66700000000000004), rt.f(1), rt.f(0.40000000000000002)), rt.construct(3, rt.f(0), rt.f(0.53300000000000003), rt.f(1)), rt.construct(3, rt.f(0.59999999999999998), rt.f(0.59999999999999998), rt.f(0.59999999999999998))])
+  g['bayer2x2'] = rt.construct(16, rt.f(0), rt.f(0.5), rt.f(0), rt.f(0.5), rt.f(0.75), rt.f(0.25), rt.f(0.75), rt.f(0.25), rt.f(0), rt.f(0.5), rt.f(0), rt.f(0.5), rt.f(0.75), rt.f(0.25), rt.f(0.75), rt.f(0.25))
+  g['bayer4x4'] = rt.construct(16, rt.f(0), rt.f(0.5), rt.f(0.125), rt.f(0.625), rt.f(0.75), rt.f(0.25), rt.f(0.875), rt.f(0.375), rt.f(0.1875), rt.f(0.6875), rt.f(0.0625), rt.f(0.5625), rt.f(0.9375), rt.f(0.4375), rt.f(0.8125), rt.f(0.3125))
+  g['DOT_MATRIX'] = rt.array([rt.construct(3, rt.f(0.059999998658895493), rt.f(0.2199999988079071), rt.f(0.059999998658895493)), rt.construct(3, rt.f(0.18999999761581421), rt.f(0.37999999523162842), rt.f(0.18999999761581421)), rt.construct(3, rt.f(0.55000001192092896), rt.f(0.67000001668930054), rt.f(0.059999998658895493)), rt.construct(3, rt.f(0.61000001430511475), rt.f(0.74000000953674316), rt.f(0.059999998658895493))])
+  g['AMBER'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.40000000596046448), rt.f(0.20000000298023224), rt.f(0)), rt.construct(3, rt.f(0.80000001192092896), rt.f(0.40000000596046448), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0.60000002384185791), rt.f(0))])
+  g['PICO8'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.11400000005960464), rt.f(0.16899999976158142), rt.f(0.32499998807907104)), rt.construct(3, rt.f(0.49399998784065247), rt.f(0.14499999582767487), rt.f(0.32499998807907104)), rt.construct(3, rt.f(0), rt.f(0.52899998426437378), rt.f(0.31799998879432678)), rt.construct(3, rt.f(0.67100000381469727), rt.f(0.32199999690055847), rt.f(0.21199999749660492)), rt.construct(3, rt.f(0.37299999594688416), rt.f(0.34099999070167542), rt.f(0.31000000238418579)), rt.construct(3, rt.f(0.76099997758865356), rt.f(0.76499998569488525), rt.f(0.77999997138977051)), rt.construct(3, rt.f(1), rt.f(0.94499999284744263), rt.f(0.9100000262260437)), rt.construct(3, rt.f(1), rt.f(0), rt.f(0.30199998617172241)), rt.construct(3, rt.f(1), rt.f(0.63899999856948853), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0.92500001192092896), rt.f(0.15299999713897705)), rt.construct(3, rt.f(0), rt.f(0.89399999380111694), rt.f(0.21199999749660492)), rt.construct(3, rt.f(0.16099999845027924), rt.f(0.67799997329711914), rt.f(1)), rt.construct(3, rt.f(0.51399999856948853), rt.f(0.46299999952316284), rt.f(0.6119999885559082)), rt.construct(3, rt.f(1), rt.f(0.46700000762939453), rt.f(0.6589999794960022)), rt.construct(3, rt.f(1), rt.f(0.80000001192092896), rt.f(0.66699999570846558))])
+  g['C64'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(1), rt.f(1), rt.f(1)), rt.construct(3, rt.f(0.53299999237060547), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.66699999570846558), rt.f(1), rt.f(0.93300002813339233)), rt.construct(3, rt.f(0.80000001192092896), rt.f(0.2669999897480011), rt.f(0.80000001192092896)), rt.construct(3, rt.f(0), rt.f(0.80000001192092896), rt.f(0.33300000429153442)), rt.construct(3, rt.f(0), rt.f(0), rt.f(0.66699999570846558)), rt.construct(3, rt.f(0.93300002813339233), rt.f(0.93300002813339233), rt.f(0.46700000762939453)), rt.construct(3, rt.f(0.86699998378753662), rt.f(0.53299999237060547), rt.f(0.33300000429153442)), rt.construct(3, rt.f(0.40000000596046448), rt.f(0.2669999897480011), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0.46700000762939453), rt.f(0.46700000762939453)), rt.construct(3, rt.f(0.20000000298023224), rt.f(0.20000000298023224), rt.f(0.20000000298023224)), rt.construct(3, rt.f(0.46700000762939453), rt.f(0.46700000762939453), rt.f(0.46700000762939453)), rt.construct(3, rt.f(0.66699999570846558), rt.f(1), rt.f(0.40000000596046448)), rt.construct(3, rt.f(0), rt.f(0.53299999237060547), rt.f(1)), rt.construct(3, rt.f(0.60000002384185791), rt.f(0.60000002384185791), rt.f(0.60000002384185791))])
   g['CGA'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0), rt.f(1), rt.f(1)), rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), rt.construct(3, rt.f(1), rt.f(1), rt.f(1))])
-  g['ZX_SPECTRUM'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0), rt.f(0.83899999999999997)), rt.construct(3, rt.f(0.83899999999999997), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.83899999999999997), rt.f(0), rt.f(0.83899999999999997)), rt.construct(3, rt.f(0), rt.f(0.83899999999999997), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0.83899999999999997), rt.f(0.83899999999999997)), rt.construct(3, rt.f(0.83899999999999997), rt.f(0.83899999999999997), rt.f(0)), rt.construct(3, rt.f(0.83899999999999997), rt.f(0.83899999999999997), rt.f(0.83899999999999997)), rt.construct(3, rt.f(0), rt.f(0), rt.f(1)), rt.construct(3, rt.f(1), rt.f(0), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), rt.construct(3, rt.f(0), rt.f(1), rt.f(0)), rt.construct(3, rt.f(0), rt.f(1), rt.f(1)), rt.construct(3, rt.f(1), rt.f(1), rt.f(0)), rt.construct(3, rt.f(1), rt.f(1), rt.f(1))])
-  g['APPLE_II'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.88200000000000001), rt.f(0), rt.f(0.49399999999999999)), rt.construct(3, rt.f(0.247), rt.f(0), rt.f(0.68200000000000005)), rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), rt.construct(3, rt.f(0), rt.f(0.49399999999999999), rt.f(0.26300000000000001)), rt.construct(3, rt.f(0.502), rt.f(0.502), rt.f(0.502)), rt.construct(3, rt.f(0), rt.f(0.32500000000000001), rt.f(1)), rt.construct(3, rt.f(0.66700000000000004), rt.f(0.67100000000000004), rt.f(1)), rt.construct(3, rt.f(0.502), rt.f(0.30199999999999999), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0.46700000000000003), rt.f(0)), rt.construct(3, rt.f(0.502), rt.f(0.502), rt.f(0.502)), rt.construct(3, rt.f(1), rt.f(0.61599999999999999), rt.f(0.66700000000000004)), rt.construct(3, rt.f(0), rt.f(0.83099999999999996), rt.f(0)), rt.construct(3, rt.f(1), rt.f(1), rt.f(0)), rt.construct(3, rt.f(0.33300000000000002), rt.f(1), rt.f(0.55700000000000005)), rt.construct(3, rt.f(1), rt.f(1), rt.f(1))])
-  g['EGA'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0), rt.f(0.66700000000000004)), rt.construct(3, rt.f(0), rt.f(0.66700000000000004), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0.66700000000000004), rt.f(0.66700000000000004)), rt.construct(3, rt.f(0.66700000000000004), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.66700000000000004), rt.f(0), rt.f(0.66700000000000004)), rt.construct(3, rt.f(0.66700000000000004), rt.f(0.33300000000000002), rt.f(0)), rt.construct(3, rt.f(0.66700000000000004), rt.f(0.66700000000000004), rt.f(0.66700000000000004)), rt.construct(3, rt.f(0.33300000000000002), rt.f(0.33300000000000002), rt.f(0.33300000000000002)), rt.construct(3, rt.f(0.33300000000000002), rt.f(0.33300000000000002), rt.f(1)), rt.construct(3, rt.f(0.33300000000000002), rt.f(1), rt.f(0.33300000000000002)), rt.construct(3, rt.f(0.33300000000000002), rt.f(1), rt.f(1)), rt.construct(3, rt.f(1), rt.f(0.33300000000000002), rt.f(0.33300000000000002)), rt.construct(3, rt.f(1), rt.f(0.33300000000000002), rt.f(1)), rt.construct(3, rt.f(1), rt.f(1), rt.f(0.33300000000000002)), rt.construct(3, rt.f(1), rt.f(1), rt.f(1))])
+  g['ZX_SPECTRUM'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0), rt.f(0.83899998664855957)), rt.construct(3, rt.f(0.83899998664855957), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.83899998664855957), rt.f(0), rt.f(0.83899998664855957)), rt.construct(3, rt.f(0), rt.f(0.83899998664855957), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0.83899998664855957), rt.f(0.83899998664855957)), rt.construct(3, rt.f(0.83899998664855957), rt.f(0.83899998664855957), rt.f(0)), rt.construct(3, rt.f(0.83899998664855957), rt.f(0.83899998664855957), rt.f(0.83899998664855957)), rt.construct(3, rt.f(0), rt.f(0), rt.f(1)), rt.construct(3, rt.f(1), rt.f(0), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), rt.construct(3, rt.f(0), rt.f(1), rt.f(0)), rt.construct(3, rt.f(0), rt.f(1), rt.f(1)), rt.construct(3, rt.f(1), rt.f(1), rt.f(0)), rt.construct(3, rt.f(1), rt.f(1), rt.f(1))])
+  g['APPLE_II'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.88200002908706665), rt.f(0), rt.f(0.49399998784065247)), rt.construct(3, rt.f(0.24699999392032623), rt.f(0), rt.f(0.68199998140335083)), rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), rt.construct(3, rt.f(0), rt.f(0.49399998784065247), rt.f(0.2630000114440918)), rt.construct(3, rt.f(0.50199997425079346), rt.f(0.50199997425079346), rt.f(0.50199997425079346)), rt.construct(3, rt.f(0), rt.f(0.32499998807907104), rt.f(1)), rt.construct(3, rt.f(0.66699999570846558), rt.f(0.67100000381469727), rt.f(1)), rt.construct(3, rt.f(0.50199997425079346), rt.f(0.30199998617172241), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0.46700000762939453), rt.f(0)), rt.construct(3, rt.f(0.50199997425079346), rt.f(0.50199997425079346), rt.f(0.50199997425079346)), rt.construct(3, rt.f(1), rt.f(0.61599999666213989), rt.f(0.66699999570846558)), rt.construct(3, rt.f(0), rt.f(0.83099997043609619), rt.f(0)), rt.construct(3, rt.f(1), rt.f(1), rt.f(0)), rt.construct(3, rt.f(0.33300000429153442), rt.f(1), rt.f(0.55699998140335083)), rt.construct(3, rt.f(1), rt.f(1), rt.f(1))])
+  g['EGA'] = rt.array([rt.construct(3, rt.f(0), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0), rt.f(0.66699999570846558)), rt.construct(3, rt.f(0), rt.f(0.66699999570846558), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0.66699999570846558), rt.f(0.66699999570846558)), rt.construct(3, rt.f(0.66699999570846558), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0.66699999570846558), rt.f(0), rt.f(0.66699999570846558)), rt.construct(3, rt.f(0.66699999570846558), rt.f(0.33300000429153442), rt.f(0)), rt.construct(3, rt.f(0.66699999570846558), rt.f(0.66699999570846558), rt.f(0.66699999570846558)), rt.construct(3, rt.f(0.33300000429153442), rt.f(0.33300000429153442), rt.f(0.33300000429153442)), rt.construct(3, rt.f(0.33300000429153442), rt.f(0.33300000429153442), rt.f(1)), rt.construct(3, rt.f(0.33300000429153442), rt.f(1), rt.f(0.33300000429153442)), rt.construct(3, rt.f(0.33300000429153442), rt.f(1), rt.f(1)), rt.construct(3, rt.f(1), rt.f(0.33300000429153442), rt.f(0.33300000429153442)), rt.construct(3, rt.f(1), rt.f(0.33300000429153442), rt.f(1)), rt.construct(3, rt.f(1), rt.f(1), rt.f(0.33300000429153442)), rt.construct(3, rt.f(1), rt.f(1), rt.f(1))])
   g['FS_BLOCK'] = rt.i(4)
   g['FS_APRON_MIN'] = rt.i(4)
   g['FS_APRON_MAX'] = rt.i(11)
@@ -55,218 +55,210 @@ run_pixel = lambda do |ctx, out|
     y = rt.binary('&', y, rt.i(7), 1, 'int')
     if rt.bool(rt.binary('==', y, rt.i(0)))
       if rt.bool(rt.binary('==', x, rt.i(0)))
-        return rt.binary('/', rt.f(0), rt.f(64), 1, 'float')
+        return rt.f(0)
       end
       if rt.bool(rt.binary('==', x, rt.i(1)))
-        return rt.binary('/', rt.f(32), rt.f(64), 1, 'float')
+        return rt.f(0.5)
       end
       if rt.bool(rt.binary('==', x, rt.i(2)))
-        return rt.binary('/', rt.f(8), rt.f(64), 1, 'float')
+        return rt.f(0.125)
       end
       if rt.bool(rt.binary('==', x, rt.i(3)))
-        return rt.binary('/', rt.f(40), rt.f(64), 1, 'float')
+        return rt.f(0.625)
       end
       if rt.bool(rt.binary('==', x, rt.i(4)))
-        return rt.binary('/', rt.f(2), rt.f(64), 1, 'float')
+        return rt.f(0.03125)
       end
       if rt.bool(rt.binary('==', x, rt.i(5)))
-        return rt.binary('/', rt.f(34), rt.f(64), 1, 'float')
+        return rt.f(0.53125)
       end
       if rt.bool(rt.binary('==', x, rt.i(6)))
-        return rt.binary('/', rt.f(10), rt.f(64), 1, 'float')
+        return rt.f(0.15625)
       end
-      return rt.binary('/', rt.f(42), rt.f(64), 1, 'float')
+      return rt.f(0.65625)
     end
     if rt.bool(rt.binary('==', y, rt.i(1)))
       if rt.bool(rt.binary('==', x, rt.i(0)))
-        return rt.binary('/', rt.f(48), rt.f(64), 1, 'float')
+        return rt.f(0.75)
       end
       if rt.bool(rt.binary('==', x, rt.i(1)))
-        return rt.binary('/', rt.f(16), rt.f(64), 1, 'float')
+        return rt.f(0.25)
       end
       if rt.bool(rt.binary('==', x, rt.i(2)))
-        return rt.binary('/', rt.f(56), rt.f(64), 1, 'float')
+        return rt.f(0.875)
       end
       if rt.bool(rt.binary('==', x, rt.i(3)))
-        return rt.binary('/', rt.f(24), rt.f(64), 1, 'float')
+        return rt.f(0.375)
       end
       if rt.bool(rt.binary('==', x, rt.i(4)))
-        return rt.binary('/', rt.f(50), rt.f(64), 1, 'float')
+        return rt.f(0.78125)
       end
       if rt.bool(rt.binary('==', x, rt.i(5)))
-        return rt.binary('/', rt.f(18), rt.f(64), 1, 'float')
+        return rt.f(0.28125)
       end
       if rt.bool(rt.binary('==', x, rt.i(6)))
-        return rt.binary('/', rt.f(58), rt.f(64), 1, 'float')
+        return rt.f(0.90625)
       end
-      return rt.binary('/', rt.f(26), rt.f(64), 1, 'float')
+      return rt.f(0.40625)
     end
     if rt.bool(rt.binary('==', y, rt.i(2)))
       if rt.bool(rt.binary('==', x, rt.i(0)))
-        return rt.binary('/', rt.f(12), rt.f(64), 1, 'float')
+        return rt.f(0.1875)
       end
       if rt.bool(rt.binary('==', x, rt.i(1)))
-        return rt.binary('/', rt.f(44), rt.f(64), 1, 'float')
+        return rt.f(0.6875)
       end
       if rt.bool(rt.binary('==', x, rt.i(2)))
-        return rt.binary('/', rt.f(4), rt.f(64), 1, 'float')
+        return rt.f(0.0625)
       end
       if rt.bool(rt.binary('==', x, rt.i(3)))
-        return rt.binary('/', rt.f(36), rt.f(64), 1, 'float')
+        return rt.f(0.5625)
       end
       if rt.bool(rt.binary('==', x, rt.i(4)))
-        return rt.binary('/', rt.f(14), rt.f(64), 1, 'float')
+        return rt.f(0.21875)
       end
       if rt.bool(rt.binary('==', x, rt.i(5)))
-        return rt.binary('/', rt.f(46), rt.f(64), 1, 'float')
+        return rt.f(0.71875)
       end
       if rt.bool(rt.binary('==', x, rt.i(6)))
-        return rt.binary('/', rt.f(6), rt.f(64), 1, 'float')
+        return rt.f(0.09375)
       end
-      return rt.binary('/', rt.f(38), rt.f(64), 1, 'float')
+      return rt.f(0.59375)
     end
     if rt.bool(rt.binary('==', y, rt.i(3)))
       if rt.bool(rt.binary('==', x, rt.i(0)))
-        return rt.binary('/', rt.f(60), rt.f(64), 1, 'float')
+        return rt.f(0.9375)
       end
       if rt.bool(rt.binary('==', x, rt.i(1)))
-        return rt.binary('/', rt.f(28), rt.f(64), 1, 'float')
+        return rt.f(0.4375)
       end
       if rt.bool(rt.binary('==', x, rt.i(2)))
-        return rt.binary('/', rt.f(52), rt.f(64), 1, 'float')
+        return rt.f(0.8125)
       end
       if rt.bool(rt.binary('==', x, rt.i(3)))
-        return rt.binary('/', rt.f(20), rt.f(64), 1, 'float')
+        return rt.f(0.3125)
       end
       if rt.bool(rt.binary('==', x, rt.i(4)))
-        return rt.binary('/', rt.f(62), rt.f(64), 1, 'float')
+        return rt.f(0.96875)
       end
       if rt.bool(rt.binary('==', x, rt.i(5)))
-        return rt.binary('/', rt.f(30), rt.f(64), 1, 'float')
+        return rt.f(0.46875)
       end
       if rt.bool(rt.binary('==', x, rt.i(6)))
-        return rt.binary('/', rt.f(54), rt.f(64), 1, 'float')
+        return rt.f(0.84375)
       end
-      return rt.binary('/', rt.f(22), rt.f(64), 1, 'float')
+      return rt.f(0.34375)
     end
     if rt.bool(rt.binary('==', y, rt.i(4)))
       if rt.bool(rt.binary('==', x, rt.i(0)))
-        return rt.binary('/', rt.f(3), rt.f(64), 1, 'float')
+        return rt.f(0.046875)
       end
       if rt.bool(rt.binary('==', x, rt.i(1)))
-        return rt.binary('/', rt.f(35), rt.f(64), 1, 'float')
+        return rt.f(0.546875)
       end
       if rt.bool(rt.binary('==', x, rt.i(2)))
-        return rt.binary('/', rt.f(11), rt.f(64), 1, 'float')
+        return rt.f(0.171875)
       end
       if rt.bool(rt.binary('==', x, rt.i(3)))
-        return rt.binary('/', rt.f(43), rt.f(64), 1, 'float')
+        return rt.f(0.671875)
       end
       if rt.bool(rt.binary('==', x, rt.i(4)))
-        return rt.binary('/', rt.f(1), rt.f(64), 1, 'float')
+        return rt.f(0.015625)
       end
       if rt.bool(rt.binary('==', x, rt.i(5)))
-        return rt.binary('/', rt.f(33), rt.f(64), 1, 'float')
+        return rt.f(0.515625)
       end
       if rt.bool(rt.binary('==', x, rt.i(6)))
-        return rt.binary('/', rt.f(9), rt.f(64), 1, 'float')
+        return rt.f(0.140625)
       end
-      return rt.binary('/', rt.f(41), rt.f(64), 1, 'float')
+      return rt.f(0.640625)
     end
     if rt.bool(rt.binary('==', y, rt.i(5)))
       if rt.bool(rt.binary('==', x, rt.i(0)))
-        return rt.binary('/', rt.f(51), rt.f(64), 1, 'float')
+        return rt.f(0.796875)
       end
       if rt.bool(rt.binary('==', x, rt.i(1)))
-        return rt.binary('/', rt.f(19), rt.f(64), 1, 'float')
+        return rt.f(0.296875)
       end
       if rt.bool(rt.binary('==', x, rt.i(2)))
-        return rt.binary('/', rt.f(59), rt.f(64), 1, 'float')
+        return rt.f(0.921875)
       end
       if rt.bool(rt.binary('==', x, rt.i(3)))
-        return rt.binary('/', rt.f(27), rt.f(64), 1, 'float')
+        return rt.f(0.421875)
       end
       if rt.bool(rt.binary('==', x, rt.i(4)))
-        return rt.binary('/', rt.f(49), rt.f(64), 1, 'float')
+        return rt.f(0.765625)
       end
       if rt.bool(rt.binary('==', x, rt.i(5)))
-        return rt.binary('/', rt.f(17), rt.f(64), 1, 'float')
+        return rt.f(0.265625)
       end
       if rt.bool(rt.binary('==', x, rt.i(6)))
-        return rt.binary('/', rt.f(57), rt.f(64), 1, 'float')
+        return rt.f(0.890625)
       end
-      return rt.binary('/', rt.f(25), rt.f(64), 1, 'float')
+      return rt.f(0.390625)
     end
     if rt.bool(rt.binary('==', y, rt.i(6)))
       if rt.bool(rt.binary('==', x, rt.i(0)))
-        return rt.binary('/', rt.f(15), rt.f(64), 1, 'float')
+        return rt.f(0.234375)
       end
       if rt.bool(rt.binary('==', x, rt.i(1)))
-        return rt.binary('/', rt.f(47), rt.f(64), 1, 'float')
+        return rt.f(0.734375)
       end
       if rt.bool(rt.binary('==', x, rt.i(2)))
-        return rt.binary('/', rt.f(7), rt.f(64), 1, 'float')
+        return rt.f(0.109375)
       end
       if rt.bool(rt.binary('==', x, rt.i(3)))
-        return rt.binary('/', rt.f(39), rt.f(64), 1, 'float')
+        return rt.f(0.609375)
       end
       if rt.bool(rt.binary('==', x, rt.i(4)))
-        return rt.binary('/', rt.f(13), rt.f(64), 1, 'float')
+        return rt.f(0.203125)
       end
       if rt.bool(rt.binary('==', x, rt.i(5)))
-        return rt.binary('/', rt.f(45), rt.f(64), 1, 'float')
+        return rt.f(0.703125)
       end
       if rt.bool(rt.binary('==', x, rt.i(6)))
-        return rt.binary('/', rt.f(5), rt.f(64), 1, 'float')
+        return rt.f(0.078125)
       end
-      return rt.binary('/', rt.f(37), rt.f(64), 1, 'float')
+      return rt.f(0.578125)
     end
     if rt.bool(rt.binary('==', x, rt.i(0)))
-      return rt.binary('/', rt.f(63), rt.f(64), 1, 'float')
+      return rt.f(0.984375)
     end
     if rt.bool(rt.binary('==', x, rt.i(1)))
-      return rt.binary('/', rt.f(31), rt.f(64), 1, 'float')
+      return rt.f(0.484375)
     end
     if rt.bool(rt.binary('==', x, rt.i(2)))
-      return rt.binary('/', rt.f(55), rt.f(64), 1, 'float')
+      return rt.f(0.859375)
     end
     if rt.bool(rt.binary('==', x, rt.i(3)))
-      return rt.binary('/', rt.f(23), rt.f(64), 1, 'float')
+      return rt.f(0.359375)
     end
     if rt.bool(rt.binary('==', x, rt.i(4)))
-      return rt.binary('/', rt.f(61), rt.f(64), 1, 'float')
+      return rt.f(0.953125)
     end
     if rt.bool(rt.binary('==', x, rt.i(5)))
-      return rt.binary('/', rt.f(29), rt.f(64), 1, 'float')
+      return rt.f(0.453125)
     end
     if rt.bool(rt.binary('==', x, rt.i(6)))
-      return rt.binary('/', rt.f(53), rt.f(64), 1, 'float')
+      return rt.f(0.828125)
     end
-    return rt.binary('/', rt.f(21), rt.f(64), 1, 'float')
+    return rt.f(0.328125)
   end
-  pcg__uvec3 = lambda do |v|
-    v = rt.copy(v, 'uint')
-    v.replace(rt.binary('+', rt.binary('*', v, rt.i(1664525), 3, 'uint'), rt.i(1013904223), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    v.replace(rt.binary('^', v, rt.binary('>>', v, rt.i(16), 3, 'uint'), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    return v
+  pcg__uvec3 = lambda do |value|
+    value = rt.copy(value, 'uint')
+    return rt.pcg3d(value)
   end
   hash__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     v = nil
-    v = pcg__uvec3.call(rt.construct(3, rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.i(0), 'uint'))
-    return rt.binary('/', rt.construct(1, rt.swizzle(v, 'x')), rt.construct(1, rt.i(4294967295)), 1, 'float')
+    v = rt.pcg3d(rt.construct(3, rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.i(0), 'uint'))
+    return rt.binary('/', rt.construct(1, rt.swizzle(v, 'x')), rt.f(4294967296), 1, 'float')
   end
   dotPattern__vec2_float = lambda do |uv, scale|
     uv = rt.copy(uv, 'float')
     c = nil; d = nil; p = nil
-    p = rt.construct(2, rt.binary('*', uv, scale, 2, 'float'))
-    c = rt.construct(2, rt.binary('+', rt.component_wise('floor', p), rt.f(0.5), 2, 'float'))
+    p = rt.construct(2, ((uv[0]) * (scale)), ((uv[1]) * (scale)))
+    c = rt.construct(2, ((rt.component_wise('floor', p[0])) + (rt.f(0.5))), ((rt.component_wise('floor', p[1])) + (rt.f(0.5))))
     d = rt.length(rt.binary('-', rt.component_wise('fract', p), rt.f(0.5), 2, 'float'))
     return rt.component_wise('smoothstep', rt.f(0.5), rt.f(0), d)
   end
@@ -279,7 +271,7 @@ run_pixel = lambda do |ctx, out|
   crosshatchPattern__vec2_float = lambda do |uv, scale|
     uv = rt.copy(uv, 'float')
     line1 = nil; line2 = nil; p = nil
-    p = rt.construct(2, rt.binary('*', uv, scale, 2, 'float'))
+    p = rt.construct(2, ((uv[0]) * (scale)), ((uv[1]) * (scale)))
     line1 = rt.binary('*', rt.component_wise('abs', rt.binary('-', rt.component_wise('fract', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float')), rt.f(0.5), 1, 'float')), rt.f(2), 1, 'float')
     line2 = rt.binary('*', rt.component_wise('abs', rt.binary('-', rt.component_wise('fract', rt.binary('-', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float')), rt.f(0.5), 1, 'float')), rt.f(2), 1, 'float')
     return rt.component_wise('min', line1, line2)
@@ -287,7 +279,7 @@ run_pixel = lambda do |ctx, out|
   getDitherThreshold__vec2_int_float = lambda do |pixelCoord, type, scale|
     pixelCoord = rt.copy(pixelCoord, 'float')
     scaledCoord = nil; x = nil; y = nil
-    scaledCoord = rt.construct(2, rt.component_wise('floor', rt.binary('/', pixelCoord, scale, 2, 'float')))
+    scaledCoord = rt.construct(2, rt.component_wise('floor', rt.f32(((pixelCoord[0]) / (scale)))), rt.component_wise('floor', rt.f32(((pixelCoord[1]) / (scale)))))
     x = rt.construct(1, rt.swizzle(scaledCoord, 'x'), 'int')
     y = rt.construct(1, rt.swizzle(scaledCoord, 'y'), 'int')
     if rt.bool(rt.binary('==', type, g['DITHER_BAYER_2X2']))
@@ -309,7 +301,7 @@ run_pixel = lambda do |ctx, out|
                 return crosshatchPattern__vec2_float.call(pixelCoord, rt.binary('/', rt.f(1), rt.binary('*', rt.f(8), scale, 1, 'float'), 1, 'float'))
               else
                 if rt.bool(rt.binary('==', type, g['DITHER_NOISE']))
-                  return hash__vec2.call(rt.binary('+', scaledCoord, rt.binary('*', _u_time, rt.f(0.001), 1, 'float'), 2, 'float'))
+                  return hash__vec2.call(rt.construct(2, ((scaledCoord[0]) + (((_u_time) * (rt.f(0.0010000000474974513))))), ((scaledCoord[1]) + (((_u_time) * (rt.f(0.0010000000474974513)))))))
                 end
               end
             end
@@ -323,21 +315,21 @@ run_pixel = lambda do |ctx, out|
     color = rt.copy(color, 'float')
     adjustedDither = nil; dithered = nil
     adjustedDither = rt.binary('+', rt.binary('-', ditherValue, rt.f(0.5), 1, 'float'), thresh, 1, 'float')
-    dithered = rt.construct(3, rt.binary('+', color, rt.binary('/', adjustedDither, levels, 1, 'float'), 3, 'float'))
-    return rt.binary('/', rt.component_wise('floor', rt.binary('*', dithered, levels, 3, 'float')), rt.binary('-', levels, rt.f(1), 1, 'float'), 3, 'float')
+    dithered = rt.construct(3, ((color[0]) + (((adjustedDither) / (levels)))), ((color[1]) + (((adjustedDither) / (levels)))), ((color[2]) + (((adjustedDither) / (levels)))))
+    return rt.construct(3, ((rt.component_wise('floor', rt.f32(((dithered[0]) * (levels))))) / (((levels) - (rt.f(1))))), ((rt.component_wise('floor', rt.f32(((dithered[1]) * (levels))))) / (((levels) - (rt.f(1))))), ((rt.component_wise('floor', rt.f32(((dithered[2]) * (levels))))) / (((levels) - (rt.f(1))))))
   end
   colorDistance__vec3_vec3 = lambda do |a, b|
     a = rt.copy(a, 'float')
     b = rt.copy(b, 'float')
     diff = nil
-    diff = rt.construct(3, rt.binary('-', a, b, 3, 'float'))
+    diff = rt.construct(3, ((a[0]) - (b[0])), ((a[1]) - (b[1])), ((a[2]) - (b[2])))
     return rt.dot(diff, diff)
   end
   findClosest4__vec3_vec3 = lambda do |color, pal|
     color = rt.copy(color, 'float')
     pal = rt.copy(pal, 'float')
     _for0_first = nil; closest = nil; dist = nil; i = nil; minDist = nil
-    closest = rt.construct(3, pal[(rt.i(0)).to_i])
+    closest = rt.construct(3, pal[(rt.i(0)).to_i], pal[(rt.i(0)).to_i], pal[(rt.i(0)).to_i])
     minDist = colorDistance__vec3_vec3.call(color, pal[(rt.i(0)).to_i])
     i = rt.i(1)
     _for0_first = true
@@ -361,7 +353,7 @@ run_pixel = lambda do |ctx, out|
     color = rt.copy(color, 'float')
     pal = rt.copy(pal, 'float')
     _for1_first = nil; closest = nil; dist = nil; i = nil; minDist = nil
-    closest = rt.construct(3, pal[(rt.i(0)).to_i])
+    closest = rt.construct(3, pal[(rt.i(0)).to_i], pal[(rt.i(0)).to_i], pal[(rt.i(0)).to_i])
     minDist = colorDistance__vec3_vec3.call(color, pal[(rt.i(0)).to_i])
     i = rt.i(1)
     _for1_first = true
@@ -385,7 +377,7 @@ run_pixel = lambda do |ctx, out|
     color = rt.copy(color, 'float')
     pal = rt.copy(pal, 'float')
     _for2_first = nil; closest = nil; dist = nil; i = nil; minDist = nil
-    closest = rt.construct(3, pal[(rt.i(0)).to_i])
+    closest = rt.construct(3, pal[(rt.i(0)).to_i], pal[(rt.i(0)).to_i], pal[(rt.i(0)).to_i])
     minDist = colorDistance__vec3_vec3.call(color, pal[(rt.i(0)).to_i])
     i = rt.i(1)
     _for2_first = true
@@ -410,7 +402,7 @@ run_pixel = lambda do |ctx, out|
     luma = nil
     luma = rt.f(0.0)
     if rt.bool(rt.binary('==', paletteType, g['PALETTE_MONOCHROME']))
-      luma = rt.dot(color, rt.construct(3, rt.f(0.29899999999999999), rt.f(0.58699999999999997), rt.f(0.114)))
+      luma = rt.dot(color, rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
       return rt.construct(3, (rt.bool(rt.binary('>', luma, rt.f(0.5))) ? (rt.f(1)) : (rt.f(0))))
     else
       if rt.bool(rt.binary('==', paletteType, g['PALETTE_DOT_MATRIX_GREEN']))
@@ -450,7 +442,7 @@ run_pixel = lambda do |ctx, out|
   ditherWithPalette__vec3_float_float_int = lambda do |color, ditherValue, thresh, paletteType|
     color = rt.copy(color, 'float')
     dithered = nil
-    dithered = rt.construct(3, rt.binary('+', color, rt.binary('*', rt.binary('+', rt.binary('-', ditherValue, rt.f(0.5), 1, 'float'), thresh, 1, 'float'), rt.f(0.25), 1, 'float'), 3, 'float'))
+    dithered = rt.construct(3, ((color[0]) + (((((((ditherValue) - (rt.f(0.5)))) + (thresh))) * (rt.f(0.25))))), ((color[1]) + (((((((ditherValue) - (rt.f(0.5)))) + (thresh))) * (rt.f(0.25))))), ((color[2]) + (((((((ditherValue) - (rt.f(0.5)))) + (thresh))) * (rt.f(0.25))))))
     dithered.replace((rt.component_wise('clamp', dithered, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     return findClosestPaletteColor__vec3_int.call(dithered, paletteType)
   end
@@ -460,7 +452,7 @@ run_pixel = lambda do |ctx, out|
     maxLevel = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_palette, g['PALETTE_INPUT']))
       maxLevel = rt.binary('-', rt.construct(1, _u_levels), rt.f(1), 1, 'float')
-      return rt.binary('/', rt.component_wise('floor', rt.binary('+', rt.binary('*', v, maxLevel, 3, 'float'), rt.f(0.5), 3, 'float')), maxLevel, 3, 'float')
+      return rt.construct(3, ((rt.component_wise('floor', rt.f32(((((v[0]) * (maxLevel))) + (rt.f(0.5)))))) / (maxLevel)), ((rt.component_wise('floor', rt.f32(((((v[1]) * (maxLevel))) + (rt.f(0.5)))))) / (maxLevel)), ((rt.component_wise('floor', rt.f32(((((v[2]) * (maxLevel))) + (rt.f(0.5)))))) / (maxLevel)))
     end
     return findClosestPaletteColor__vec3_int.call(v, _u_palette)
   end
@@ -473,14 +465,14 @@ run_pixel = lambda do |ctx, out|
   fsSeedNoise__ivec2_int = lambda do |blockOrigin, lane|
     blockOrigin = rt.copy(blockOrigin, 'int')
     v = nil
-    v = pcg__uvec3.call(rt.construct(3, rt.construct(1, rt.binary('+', rt.swizzle(blockOrigin, 'x'), rt.i(1), 1, 'int'), 'uint'), rt.construct(1, rt.binary('+', rt.swizzle(blockOrigin, 'y'), rt.i(1), 1, 'int'), 'uint'), rt.construct(1, rt.binary('+', lane, rt.i(1), 1, 'int'), 'uint'), 'uint'))
-    return rt.binary('-', rt.binary('/', rt.construct(3, v), rt.construct(1, rt.i(4294967295)), 3, 'float'), rt.f(0.5), 3, 'float')
+    v = rt.pcg3d(rt.construct(3, rt.construct(1, rt.binary('+', rt.swizzle(blockOrigin, 'x'), rt.i(1), 1, 'int'), 'uint'), rt.construct(1, rt.binary('+', rt.swizzle(blockOrigin, 'y'), rt.i(1), 1, 'int'), 'uint'), rt.construct(1, rt.binary('+', lane, rt.i(1), 1, 'int'), 'uint'), 'uint'))
+    return rt.construct(3, (((((v[0])) / (rt.f(4294967296)))) - (rt.f(0.5))), (((((v[1])) / (rt.f(4294967296)))) - (rt.f(0.5))), (((((v[2])) / (rt.f(4294967296)))) - (rt.f(0.5))))
   end
   fsFetchCell__ivec2_float_ivec2 = lambda do |cell, cellSize, texSize|
     cell = rt.copy(cell, 'int')
     texSize = rt.copy(texSize, 'int')
     pGlobal = nil; pLocal = nil
-    pGlobal = rt.construct(2, rt.binary('*', rt.binary('+', rt.construct(2, cell), rt.f(0.5), 2, 'float'), cellSize, 2, 'float'))
+    pGlobal = rt.construct(2, (((((cell[0])) + (rt.f(0.5)))) * (cellSize)), (((((cell[1])) + (rt.f(0.5)))) * (cellSize)))
     pLocal = rt.binary('-', rt.construct(2, rt.construct(2, rt.component_wise('floor', pGlobal)), 'int'), rt.construct(2, rt.construct(2, _u_tileOffset), 'int'), 2, 'int')
     pLocal.replace(rt.component_wise('clamp', pLocal, rt.construct(2, rt.i(0), 'int'), rt.binary('-', texSize, rt.i(1), 2, 'int')))
     return rt.swizzle(rt.texel_fetch(_u_inputTex, pLocal, rt.i(0)), 'rgb')
@@ -489,11 +481,11 @@ run_pixel = lambda do |ctx, out|
     globalCoord = rt.copy(globalCoord, 'float')
     texSize = rt.copy(texSize, 'int')
     _for3_first = nil; _for4_first = nil; _for5_first = nil; apronX = nil; apronY = nil; bias = nil; blockOrigin = nil; c = nil; carried = nil; cell = nil; diag = nil; err = nil; errRow = nil; i = nil; incoming = nil; jitterHash = nil; lastRow = nil; lx = nil; ly = nil; r = nil; rightErr = nil; src = nil; stepScale = nil; v = nil
-    cell = rt.construct(2, rt.construct(2, rt.component_wise('floor', rt.binary('/', globalCoord, cellSize, 2, 'float'))), 'int')
-    blockOrigin = rt.binary('*', rt.binary('/', cell, g['FS_BLOCK'], 2, 'int'), g['FS_BLOCK'], 2, 'int')
+    cell = rt.construct(2, rt.construct(2, rt.component_wise('floor', rt.construct(2, ((globalCoord[0]) / (cellSize)), ((globalCoord[1]) / (cellSize))))), 'int')
+    blockOrigin = rt.binary('*', rt.construct(2, rt.construct(1, rt.component_wise('floor', rt.binary('/', rt.construct(1, rt.swizzle(cell, 'x')), rt.construct(1, g['FS_BLOCK']), 1, 'float')), 'int'), rt.construct(1, rt.component_wise('floor', rt.binary('/', rt.construct(1, rt.swizzle(cell, 'y')), rt.construct(1, g['FS_BLOCK']), 1, 'float')), 'int'), 'int'), g['FS_BLOCK'], 2, 'int')
     lx = rt.binary('-', rt.swizzle(cell, 'x'), rt.swizzle(blockOrigin, 'x'), 1, 'int')
     ly = rt.binary('-', rt.swizzle(cell, 'y'), rt.swizzle(blockOrigin, 'y'), 1, 'int')
-    jitterHash = pcg__uvec3.call(rt.construct(3, rt.construct(1, rt.binary('+', rt.swizzle(blockOrigin, 'x'), rt.i(1), 1, 'int'), 'uint'), rt.construct(1, rt.binary('+', rt.swizzle(blockOrigin, 'y'), rt.i(1), 1, 'int'), 'uint'), rt.i(1367130551), 'uint'))
+    jitterHash = rt.pcg3d(rt.construct(3, rt.construct(1, rt.binary('+', rt.swizzle(blockOrigin, 'x'), rt.i(1), 1, 'int'), 'uint'), rt.construct(1, rt.binary('+', rt.swizzle(blockOrigin, 'y'), rt.i(1), 1, 'int'), 'uint'), rt.i(1367130551), 'uint'))
     apronX = rt.binary('+', g['FS_APRON_MIN'], rt.construct(1, rt.binary('%', rt.swizzle(jitterHash, 'x'), rt.construct(1, rt.binary('+', rt.binary('-', g['FS_APRON_MAX'], g['FS_APRON_MIN'], 1, 'int'), rt.i(1), 1, 'int'), 'uint'), 1, 'uint'), 'int'), 1, 'int')
     apronY = rt.binary('+', g['FS_APRON_MIN'], rt.construct(1, rt.binary('%', rt.swizzle(jitterHash, 'y'), rt.construct(1, rt.binary('+', rt.binary('-', g['FS_APRON_MAX'], g['FS_APRON_MIN'], 1, 'int'), rt.i(1), 1, 'int'), 'uint'), 1, 'uint'), 'int'), 1, 'int')
     stepScale = fsScale__void.call()
@@ -509,7 +501,7 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, g['FS_ERR_W']))
         break
       end
-      errRow[(i).to_i] = rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, i), stepScale, 3, 'float')
+      errRow[(i).to_i] = (rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, i), stepScale, 3, 'float')).map { |c| rt.f32(c) }
     end
     carried = rt.construct(3, rt.construct(3, rt.f(0)))
     r = rt.unary('-', g['FS_APRON_MAX'])
@@ -526,7 +518,7 @@ run_pixel = lambda do |ctx, out|
         next
       end
       lastRow = rt.binary('==', r, ly)
-      rightErr = rt.construct(3, rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, rt.binary('+', rt.binary('+', g['FS_ERR_W'], g['FS_APRON_MAX'], 1, 'int'), r, 1, 'int')), stepScale, 3, 'float'))
+      rightErr = rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, rt.binary('+', rt.binary('+', g['FS_ERR_W'], g['FS_APRON_MAX'], 1, 'int'), r, 1, 'int')), stepScale, 3, 'float')
       diag = rt.construct(3, rt.construct(3, rt.f(0)))
       c = rt.unary('-', g['FS_APRON_MAX'])
       _for5_first = true
@@ -543,39 +535,39 @@ run_pixel = lambda do |ctx, out|
         v = rt.construct(3, 0.0)
         if rt.bool((rt.bool(rt.binary('>=', c, rt.unary('-', apronX))) && rt.bool((rt.bool((rt.bool(lastRow) && rt.bool(rt.binary('>=', c, lx)) ? 1 : 0)) ? 0 : 1)) ? 1 : 0))
           src = rt.construct(3, fsFetchCell__ivec2_float_ivec2.call(rt.binary('+', blockOrigin, rt.construct(2, c, r, 'int'), 2, 'int'), cellSize, texSize))
-          v = rt.construct(3, rt.component_wise('clamp', rt.binary('+', rt.binary('+', rt.binary('+', src, errRow[(rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')).to_i], 3, 'float'), rightErr, 3, 'float'), bias, 3, 'float'), rt.f(0), rt.f(1)))
+          v = rt.construct(3, rt.component_wise('clamp', rt.f32(((((((src[0]) + ((rt.array_index(errRow, rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')))[0]))) + (rightErr[0]))) + (bias[0]))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((((src[1]) + ((rt.array_index(errRow, rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')))[1]))) + (rightErr[1]))) + (bias[1]))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((((src[2]) + ((rt.array_index(errRow, rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')))[2]))) + (rightErr[2]))) + (bias[2]))), rt.f(0), rt.f(1)))
           err = rt.construct(3, rt.binary('-', v, fsQuantize__vec3.call(v), 3, 'float'))
-          rightErr.replace((rt.binary('*', err, rt.binary('/', rt.f(7), rt.f(16), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-          errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i] = rt.binary('+', errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i], rt.binary('*', err, rt.binary('/', rt.f(3), rt.f(16), 1, 'float'), 3, 'float'), 3, 'float')
-          errRow[(rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')).to_i] = rt.binary('+', diag, rt.binary('*', err, rt.binary('/', rt.f(5), rt.f(16), 1, 'float'), 3, 'float'), 3, 'float')
-          diag.replace((rt.binary('*', err, rt.binary('/', rt.f(1), rt.f(16), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+          rightErr.replace(rt.binary('*', err, rt.f(0.4375), 3, 'float'))
+          errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i] = (rt.binary('+', errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i], rt.binary('*', err, rt.f(0.1875), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) }
+          errRow[(rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')).to_i] = (rt.binary('+', diag, rt.binary('*', err, rt.f(0.3125), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) }
+          diag.replace((rt.binary('*', err, rt.f(0.0625), 3, 'float')).map { |c| rt.f32(c) })
         end
       end
       incoming = rt.construct(3, 0.0)
       if rt.bool(lastRow)
-        incoming = rt.construct(3, errRow[(rt.binary('+', g['FS_APRON_MAX'], rt.i(1), 1, 'int')).to_i])
+        incoming = rt.construct(3, rt.array_index(errRow, rt.binary('+', g['FS_APRON_MAX'], rt.i(1), 1, 'int')))
         if rt.bool(rt.binary('==', lx, rt.i(1)))
-          incoming.replace((errRow[(rt.binary('+', g['FS_APRON_MAX'], rt.i(2), 1, 'int')).to_i]).map { |c| rt.f32(c) })
+          incoming.replace((rt.array_index(errRow, rt.binary('+', g['FS_APRON_MAX'], rt.i(2), 1, 'int'))).map { |c| rt.f32(c) })
         end
         if rt.bool(rt.binary('==', lx, rt.i(2)))
-          incoming.replace((errRow[(rt.binary('+', g['FS_APRON_MAX'], rt.i(3), 1, 'int')).to_i]).map { |c| rt.f32(c) })
+          incoming.replace((rt.array_index(errRow, rt.binary('+', g['FS_APRON_MAX'], rt.i(3), 1, 'int'))).map { |c| rt.f32(c) })
         end
         if rt.bool(rt.binary('==', lx, rt.i(3)))
-          incoming.replace((errRow[(rt.binary('+', g['FS_APRON_MAX'], rt.i(4), 1, 'int')).to_i]).map { |c| rt.f32(c) })
+          incoming.replace((rt.array_index(errRow, rt.binary('+', g['FS_APRON_MAX'], rt.i(4), 1, 'int'))).map { |c| rt.f32(c) })
         end
         carried.replace((rt.binary('+', incoming, rightErr, 3, 'float')).map { |c| rt.f32(c) })
       end
     end
-    src = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_inputTex, rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int'), rt.i(0)), 'rgb'))
-    v = rt.construct(3, rt.component_wise('clamp', rt.binary('+', rt.binary('+', src, carried, 3, 'float'), bias, 3, 'float'), rt.f(0), rt.f(1)))
+    src = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_inputTex, rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int'), rt.i(0)), 'r'), rt.swizzle(rt.texel_fetch(_u_inputTex, rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int'), rt.i(0)), 'g'), rt.swizzle(rt.texel_fetch(_u_inputTex, rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int'), rt.i(0)), 'b'))
+    v = rt.construct(3, rt.component_wise('clamp', rt.f32(((((src[0]) + (carried[0]))) + (bias[0]))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((src[1]) + (carried[1]))) + (bias[1]))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((src[2]) + (carried[2]))) + (bias[2]))), rt.f(0), rt.f(1)))
     return fsQuantize__vec3.call(v)
   end
   main__void = lambda do
     color = nil; ditherValue = nil; globalCoord = nil; result = nil; texSize = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
-    color = rt.construct(4, rt.texture(_u_inputTex, uv))
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
+    color = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     result = rt.construct(3, 0.0)
     ditherValue = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_ditherType, g['DITHER_ERROR_DIFFUSION']))

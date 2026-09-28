@@ -13,8 +13,8 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   tent3x3__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
-    _for0_first = nil; _for1_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
-    px = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
+    __hoist1336 = nil; _for0_first = nil; _for1_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
+    px = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
     sum = rt.construct(3, rt.construct(3, rt.f(0)))
     wsum = rt.f(0)
     dy = rt.unary('-', rt.i(1))
@@ -38,19 +38,19 @@ run_pixel = lambda do |ctx, out|
           break
         end
         w = rt.binary('*', (rt.bool(rt.binary('==', dx, rt.i(0))) ? (rt.f(2)) : (rt.f(1))), (rt.bool(rt.binary('==', dy, rt.i(0))) ? (rt.f(2)) : (rt.f(1))), 1, 'float')
-        sum.replace((rt.binary('+', sum, rt.binary('*', rt.swizzle(rt.texture(_u_smearTex, rt.binary('+', uv, rt.binary('*', rt.construct(2, rt.construct(1, dx), rt.construct(1, dy)), px, 2, 'float'), 2, 'float')), 'rgb'), w, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+        __hoist1336 = rt.binary('*', rt.swizzle(rt.texture(_u_smearTex, rt.binary('+', uv, rt.binary('*', rt.construct(2, rt.construct(1, dx), rt.construct(1, dy)), px, 2, 'float'), 2, 'float')), 'rgb'), w, 3, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1336[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1336[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1336[2], 1, 'float'))
         wsum = rt.binary('+', wsum, w, 1, 'float')
       end
     end
-    return rt.binary('/', sum, wsum, 3, 'float')
+    return rt.construct(3, ((sum[0]) / (wsum)), ((sum[1]) / (wsum)), ((sum[2]) / (wsum)))
   end
   main__void = lambda do
     c = nil; sharpened = nil; src = nil; tent = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    src = rt.construct(4, rt.texture(_u_inputTex, uv))
-    c = rt.construct(3, rt.swizzle(rt.texture(_u_smearTex, uv), 'rgb'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
+    src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    c = rt.construct(3, rt.swizzle(rt.texture(_u_smearTex, uv), 'r'), rt.swizzle(rt.texture(_u_smearTex, uv), 'g'), rt.swizzle(rt.texture(_u_smearTex, uv), 'b'))
     tent = rt.construct(3, tent3x3__vec2.call(uv))
-    sharpened = rt.construct(3, rt.binary('+', c, rt.binary('*', rt.binary('-', c, tent, 3, 'float'), rt.binary('/', _u_sharpness, rt.f(33), 1, 'float'), 3, 'float'), 3, 'float'))
+    sharpened = rt.construct(3, ((c[0]) + (((((c[0]) - (tent[0]))) * (((_u_sharpness) / (rt.f(33))))))), ((c[1]) + (((((c[1]) - (tent[1]))) * (((_u_sharpness) / (rt.f(33))))))), ((c[2]) + (((((c[2]) - (tent[2]))) * (((_u_sharpness) / (rt.f(33))))))))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', sharpened, rt.f(0), rt.f(1)), rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

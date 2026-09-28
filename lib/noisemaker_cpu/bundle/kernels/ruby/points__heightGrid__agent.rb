@@ -19,11 +19,11 @@ run_pixel = lambda do |ctx, out|
     coord = nil; elevation = nil; heightColor = nil; stateSize = nil; uv = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
-    uv = rt.construct(2, rt.binary('/', rt.binary('+', rt.construct(2, coord), rt.f(0.5), 2, 'float'), rt.construct(2, stateSize), 2, 'float'))
-    heightColor = rt.construct(3, rt.swizzle(rt.texture(_u_heightTex, uv), 'rgb'))
-    elevation = rt.dot(heightColor, rt.construct(3, rt.f(0.21260000000000001), rt.f(0.71519999999999995), rt.f(0.0722)))
-    g['outXYZ'].replace((rt.construct(4, rt.binary('*', rt.binary('-', rt.swizzle(uv, 'x'), rt.f(0.5), 1, 'float'), _u_gridScale, 1, 'float'), rt.binary('+', rt.binary('*', elevation, _u_heightScale, 1, 'float'), _u_heightOffset, 1, 'float'), rt.binary('*', rt.binary('-', rt.swizzle(uv, 'y'), rt.f(0.5), 1, 'float'), _u_gridScale, 1, 'float'), rt.f(1))).map { |c| rt.f32(c) })
-    g['outVel'].replace((rt.construct(4, rt.f(0), rt.f(0), rt.f(0), rt.swizzle(rt.texel_fetch(_u_velTex, coord, rt.i(0)), 'w'))).map { |c| rt.f32(c) })
+    uv = rt.construct(2, (((((coord[0])) + (rt.f(0.5)))) / ((stateSize[0]))), (((((coord[1])) + (rt.f(0.5)))) / ((stateSize[1]))))
+    heightColor = rt.construct(3, rt.swizzle(rt.texture(_u_heightTex, uv), 'r'), rt.swizzle(rt.texture(_u_heightTex, uv), 'g'), rt.swizzle(rt.texture(_u_heightTex, uv), 'b'))
+    elevation = rt.dot(heightColor, rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
+    g['outXYZ'][0] = rt.f32(rt.binary('*', rt.binary('-', rt.swizzle(uv, 'x'), rt.f(0.5), 1, 'float'), _u_gridScale, 1, 'float')); g['outXYZ'][1] = rt.f32(rt.binary('+', rt.binary('*', elevation, _u_heightScale, 1, 'float'), _u_heightOffset, 1, 'float')); g['outXYZ'][2] = rt.f32(rt.binary('*', rt.binary('-', rt.swizzle(uv, 'y'), rt.f(0.5), 1, 'float'), _u_gridScale, 1, 'float')); g['outXYZ'][3] = rt.f32(rt.f(1))
+    g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(rt.swizzle(rt.texel_fetch(_u_velTex, coord, rt.i(0)), 'w'))
     g['outRGBA'].replace((rt.texture(_u_diffuseTex, uv)).map { |c| rt.f32(c) })
   end
   main__void.call

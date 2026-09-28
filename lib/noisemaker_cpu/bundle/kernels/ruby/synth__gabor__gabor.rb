@@ -18,33 +18,25 @@ run_pixel = lambda do |ctx, out|
   _u_octaves = u.key?('octaves') ? u['octaves'] : rt.f(0.0)
   _u_speed = u.key?('speed') ? u['speed'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
-  pcg__uvec3 = lambda do |v|
-    v = rt.copy(v, 'uint')
-    v.replace(rt.binary('+', rt.binary('*', v, rt.i(1664525), 3, 'uint'), rt.i(1013904223), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    v.replace(rt.binary('^', v, rt.binary('>>', v, rt.i(16), 3, 'uint'), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    return v
+  pcg__uvec3 = lambda do |value|
+    value = rt.copy(value, 'uint')
+    return rt.pcg3d(value)
   end
   prng__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     p = rt.assign_swizzle(p, 'x', (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
     p = rt.assign_swizzle(p, 'y', (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
     p = rt.assign_swizzle(p, 'z', (rt.bool(rt.binary('>=', rt.swizzle(p, 'z'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'z'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'z')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
-    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, rt.construct(3, p), 'uint'))), rt.construct(1, rt.i(4294967295)), 3, 'float')
+    return rt.construct(3, rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[0], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[1], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[2], rt.f(4294967296), 1, 'uint'))
   end
   map__float_float_float_float_float = lambda do |value, inMin, inMax, outMin, outMax|
     return rt.binary('+', outMin, rt.binary('/', rt.binary('*', rt.binary('-', outMax, outMin, 1, 'float'), rt.binary('-', value, inMin, 1, 'float'), 1, 'float'), rt.binary('-', inMax, inMin, 1, 'float'), 1, 'float'), 1, 'float')
   end
   gaborNoise__vec2_float_float_float_float_int_float_float = lambda do |st, freq, sigma, baseAngle, iso, impulses, _t, sd|
     st = rt.copy(st, 'float')
-    _for0_first = nil; _for1_first = nil; _for2_first = nil; angle = nil; cell = nil; cellId = nil; delta = nil; dir = nil; dx = nil; dy = nil; envelope = nil; frac = nil; impulsePos = nil; k = nil; neighbor = nil; phase = nil; r1 = nil; r2 = nil; sum = nil; weight = nil
-    cell = rt.construct(2, rt.component_wise('floor', st))
-    frac = rt.construct(2, rt.component_wise('fract', st))
+    __hoist1744 = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; angle = nil; cell = nil; cellId = nil; delta = nil; dir = nil; dx = nil; dy = nil; envelope = nil; frac = nil; impulsePos = nil; k = nil; neighbor = nil; phase = nil; r1 = nil; r2 = nil; sum = nil; weight = nil
+    cell = rt.construct(2, rt.component_wise('floor', st[0]), rt.component_wise('floor', st[1]))
+    frac = rt.construct(2, rt.component_wise('fract', st[0]), rt.component_wise('fract', st[1]))
     sum = rt.f(0)
     dy = rt.unary('-', rt.i(1))
     _for0_first = true
@@ -67,7 +59,7 @@ run_pixel = lambda do |ctx, out|
           break
         end
         neighbor = rt.construct(2, rt.construct(2, rt.construct(1, dx), rt.construct(1, dy)))
-        cellId = rt.construct(2, rt.binary('+', cell, neighbor, 2, 'float'))
+        cellId = rt.construct(2, ((cell[0]) + (neighbor[0])), ((cell[1]) + (neighbor[1])))
         k = rt.i(0)
         _for2_first = true
         (0..1048575).each do |_for2|
@@ -81,16 +73,16 @@ run_pixel = lambda do |ctx, out|
           if rt.bool(rt.binary('>=', k, impulses))
             break
           end
-          r1 = rt.construct(3, prng__vec3.call(rt.construct(3, cellId, rt.binary('+', sd, rt.binary('*', rt.construct(1, k), rt.f(7), 1, 'float'), 1, 'float'))))
-          r2 = rt.construct(3, prng__vec3.call(rt.construct(3, rt.binary('+', sd, rt.binary('*', rt.construct(1, k), rt.f(13), 1, 'float'), 1, 'float'), cellId)))
-          impulsePos = rt.construct(2, rt.swizzle(r1, 'xy'))
-          impulsePos.replace((rt.binary('+', impulsePos, rt.binary('*', rt.construct(2, rt.component_wise('sin', rt.binary('+', _t, rt.binary('*', rt.swizzle(r2, 'x'), rt.f(6.2831853071800001), 1, 'float'), 1, 'float')), rt.component_wise('cos', rt.binary('+', _t, rt.binary('*', rt.swizzle(r2, 'y'), rt.f(6.2831853071800001), 1, 'float'), 1, 'float'))), rt.f(0.14999999999999999), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
-          delta = rt.construct(2, rt.binary('-', rt.binary('+', neighbor, impulsePos, 2, 'float'), frac, 2, 'float'))
-          angle = rt.component_wise('mix', baseAngle, rt.binary('*', rt.swizzle(r2, 'z'), rt.f(6.2831853071800001), 1, 'float'), iso)
+          r1 = rt.construct(3, prng__vec3.call(rt.construct(3, (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')), (((sd) + ((((k)) * (rt.f(7)))))))))
+          r2 = rt.construct(3, prng__vec3.call(rt.construct(3, (((sd) + ((((k)) * (rt.f(13)))))), (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')))))
+          impulsePos = rt.construct(2, rt.swizzle(r1, 'x'), rt.swizzle(r1, 'y'))
+          __hoist1744 = rt.binary('*', rt.construct(2, rt.component_wise('sin', rt.binary('+', _t, rt.binary('*', rt.swizzle(r2, 'x'), rt.f(6.2831854820251465), 1, 'float'), 1, 'float')), rt.component_wise('cos', rt.binary('+', _t, rt.binary('*', rt.swizzle(r2, 'y'), rt.f(6.2831854820251465), 1, 'float'), 1, 'float'))), rt.f(0.15000000596046448), 2, 'float'); impulsePos[0] = rt.f32(rt.binary('+', impulsePos[0], __hoist1744[0], 1, 'float')); impulsePos[1] = rt.f32(rt.binary('+', impulsePos[1], __hoist1744[1], 1, 'float'))
+          delta = rt.construct(2, ((((neighbor[0]) + (impulsePos[0]))) - (frac[0])), ((((neighbor[1]) + (impulsePos[1]))) - (frac[1])))
+          angle = rt.component_wise('mix', baseAngle, rt.binary('*', rt.swizzle(r2, 'z'), rt.f(6.2831854820251465), 1, 'float'), iso)
           dir = rt.construct(2, rt.construct(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle)))
           weight = (rt.bool(rt.binary('<', rt.swizzle(r1, 'z'), rt.f(0.5))) ? (rt.unary('-', rt.f(1))) : (rt.f(1)))
           envelope = rt.component_wise('exp', rt.binary('/', rt.unary('-', rt.dot(delta, delta)), rt.binary('*', rt.binary('*', rt.f(2), sigma, 1, 'float'), sigma, 1, 'float'), 1, 'float'))
-          phase = rt.binary('*', rt.binary('*', rt.f(6.2831853071800001), freq, 1, 'float'), rt.dot(dir, delta), 1, 'float')
+          phase = rt.binary('*', rt.binary('*', rt.f(6.2831854820251465), freq, 1, 'float'), rt.dot(dir, delta), 1, 'float')
           sum = rt.binary('+', sum, rt.binary('*', rt.binary('*', weight, envelope, 1, 'float'), rt.component_wise('cos', phase), 1, 'float'), 1, 'float')
         end
       end
@@ -98,18 +90,18 @@ run_pixel = lambda do |ctx, out|
     return sum
   end
   main__void = lambda do
-    _for3_first = nil; _t = nil; amplitude = nil; baseAngle = nil; fi = nil; freq = nil; globalCoord = nil; i = nil; impulses = nil; iso = nil; n = nil; oct = nil; octFreq = nil; octSigma = nil; p = nil; pOct = nil; sigma = nil; spd = nil; st = nil; totalAmp = nil; value = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary('/', globalCoord, rt.swizzle(_u_fullResolution, 'y'), 2, 'float'))
+    __sc1752 = nil; _for3_first = nil; _t = nil; amplitude = nil; baseAngle = nil; fi = nil; freq = nil; globalCoord = nil; i = nil; impulses = nil; iso = nil; n = nil; oct = nil; octFreq = nil; octSigma = nil; p = nil; pOct = nil; sigma = nil; spd = nil; st = nil; totalAmp = nil; value = nil
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    st = rt.construct(2, ((globalCoord[0]) / (rt.swizzle(_u_fullResolution, 'y'))), ((globalCoord[1]) / (rt.swizzle(_u_fullResolution, 'y'))))
     freq = map__float_float_float_float_float.call(_u_scale, rt.f(1), rt.f(100), rt.f(20), rt.f(1))
-    sigma = map__float_float_float_float_float.call(_u_bandwidth, rt.f(1), rt.f(100), rt.f(0.050000000000000003), rt.f(0.34999999999999998))
-    baseAngle = rt.binary('/', rt.binary('*', _u_orientation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float')
+    sigma = map__float_float_float_float_float.call(_u_bandwidth, rt.f(1), rt.f(100), rt.f(0.05000000074505806), rt.f(0.34999999403953552))
+    baseAngle = rt.binary('/', rt.binary('*', _u_orientation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')
     iso = rt.binary('/', _u_isotropy, rt.f(100), 1, 'float')
     impulses = rt.construct(1, _u_density, 'int')
     oct = rt.construct(1, _u_octaves, 'int')
     spd = rt.component_wise('floor', _u_speed)
-    _t = rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), spd, 1, 'float')
-    p = rt.construct(2, rt.binary('*', st, freq, 2, 'float'))
+    _t = rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float')
+    p = rt.construct(2, ((st[0]) * (freq)), ((st[1]) * (freq)))
     value = rt.f(0)
     amplitude = rt.f(1)
     totalAmp = rt.f(0)
@@ -130,10 +122,10 @@ run_pixel = lambda do |ctx, out|
       octFreq = rt.binary('+', rt.f(1), rt.binary('*', rt.construct(1, i), rt.f(0.5), 1, 'float'), 1, 'float')
       octSigma = rt.binary('/', sigma, rt.binary('+', rt.f(1), rt.binary('*', rt.construct(1, i), rt.f(0.5), 1, 'float'), 1, 'float'), 1, 'float')
       fi = rt.construct(1, i)
-      value = rt.binary('+', value, rt.binary('*', amplitude, gaborNoise__vec2_float_float_float_float_int_float_float.call(pOct, octFreq, octSigma, baseAngle, iso, impulses, rt.binary('+', _t, rt.binary('*', fi, rt.f(3.7000000000000002), 1, 'float'), 1, 'float'), rt.binary('+', _u_seed, rt.binary('*', fi, rt.f(17), 1, 'float'), 1, 'float')), 1, 'float'), 1, 'float')
+      value = rt.binary('+', value, rt.binary('*', amplitude, gaborNoise__vec2_float_float_float_float_int_float_float.call(pOct, octFreq, octSigma, baseAngle, iso, impulses, rt.binary('+', _t, rt.binary('*', fi, rt.f(3.7000000476837158), 1, 'float'), 1, 'float'), rt.binary('+', _u_seed, rt.binary('*', fi, rt.f(17), 1, 'float'), 1, 'float')), 1, 'float'), 1, 'float')
       totalAmp = rt.binary('+', totalAmp, amplitude, 1, 'float')
       amplitude = rt.binary('*', amplitude, rt.f(0.5), 1, 'float')
-      pOct.replace((rt.binary('*', pOct, rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
+      __sc1752 = rt.f(2); pOct[0] = rt.f32(rt.binary('*', pOct[0], __sc1752, 1, 'float')); pOct[1] = rt.f32(rt.binary('*', pOct[1], __sc1752, 1, 'float'))
     end
     value = rt.binary('/', value, totalAmp, 1, 'float')
     n = rt.binary('/', rt.f(1), rt.binary('+', rt.f(1), rt.component_wise('exp', rt.binary('*', rt.unary('-', value), rt.f(3), 1, 'float')), 1, 'float'), 1, 'float')

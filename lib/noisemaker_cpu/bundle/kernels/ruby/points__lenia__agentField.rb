@@ -17,7 +17,7 @@ run_pixel = lambda do |ctx, out|
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
-  g['EPSILON'] = rt.f(0.0001)
+  g['EPSILON'] = rt.f(9.9999997473787516e-05)
   growth__float_float_float = lambda do |_u, mu, sigma|
     x = nil
     x = rt.binary('/', rt.binary('-', _u, mu, 1, 'float'), sigma, 1, 'float')
@@ -29,7 +29,7 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('/', rt.binary('*', _G, rt.binary('*', rt.unary('-', rt.f(2)), rt.binary('-', _u, mu, 1, 'float'), 1, 'float'), 1, 'float'), rt.binary('*', sigma, sigma, 1, 'float'), 1, 'float')
   end
   main__void = lambda do
-    _U = nil; _Ux_minus = nil; _Ux_plus = nil; _Uy_minus = nil; _Uy_plus = nil; age = nil; alive = nil; coord = nil; dGdU = nil; fieldSize = nil; force = nil; forceMag = nil; gradG = nil; gradR = nil; gradU = nil; newPos = nil; rgba = nil; stateSize = nil; texelSize = nil; uv = nil; vel = nil; velocity = nil; worldScale = nil; xyz = nil
+    _U = nil; _Ux_minus = nil; _Ux_plus = nil; _Uy_minus = nil; _Uy_plus = nil; __sc1640 = nil; age = nil; alive = nil; coord = nil; dGdU = nil; fieldSize = nil; force = nil; forceMag = nil; gradG = nil; gradR = nil; gradU = nil; newPos = nil; rgba = nil; stateSize = nil; texelSize = nil; uv = nil; vel = nil; velocity = nil; worldScale = nil; xyz = nil
     stateSize = rt.texture_size(_u_xyzTex)
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
@@ -42,29 +42,29 @@ run_pixel = lambda do |ctx, out|
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
       return
     end
-    uv = rt.construct(2, rt.swizzle(xyz, 'xy'))
+    uv = rt.construct(2, rt.swizzle(xyz, 'x'), rt.swizzle(xyz, 'y'))
     _U = rt.swizzle(rt.texture(_u_fieldTex, uv), 'r')
     fieldSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_fieldTex)))
-    texelSize = rt.construct(2, rt.binary('/', rt.f(1), fieldSize, 2, 'float'))
-    _Ux_plus = rt.swizzle(rt.texture(_u_fieldTex, rt.component_wise('fract', rt.binary('+', uv, rt.construct(2, rt.swizzle(texelSize, 'x'), rt.f(0)), 2, 'float'))), 'r')
-    _Ux_minus = rt.swizzle(rt.texture(_u_fieldTex, rt.component_wise('fract', rt.binary('-', uv, rt.construct(2, rt.swizzle(texelSize, 'x'), rt.f(0)), 2, 'float'))), 'r')
-    _Uy_plus = rt.swizzle(rt.texture(_u_fieldTex, rt.component_wise('fract', rt.binary('+', uv, rt.construct(2, rt.f(0), rt.swizzle(texelSize, 'y')), 2, 'float'))), 'r')
-    _Uy_minus = rt.swizzle(rt.texture(_u_fieldTex, rt.component_wise('fract', rt.binary('-', uv, rt.construct(2, rt.f(0), rt.swizzle(texelSize, 'y')), 2, 'float'))), 'r')
+    texelSize = rt.construct(2, ((rt.f(1)) / (fieldSize[0])), ((rt.f(1)) / (fieldSize[1])))
+    _Ux_plus = rt.swizzle(rt.texture(_u_fieldTex, rt.component_wise('fract', rt.construct(2, ((uv[0]) + ((rt.swizzle(texelSize, 'x')))), ((uv[1]) + ((rt.f(0))))))), 'r')
+    _Ux_minus = rt.swizzle(rt.texture(_u_fieldTex, rt.component_wise('fract', rt.construct(2, ((uv[0]) - ((rt.swizzle(texelSize, 'x')))), ((uv[1]) - ((rt.f(0))))))), 'r')
+    _Uy_plus = rt.swizzle(rt.texture(_u_fieldTex, rt.component_wise('fract', rt.construct(2, ((uv[0]) + ((rt.f(0)))), ((uv[1]) + ((rt.swizzle(texelSize, 'y'))))))), 'r')
+    _Uy_minus = rt.swizzle(rt.texture(_u_fieldTex, rt.component_wise('fract', rt.construct(2, ((uv[0]) - ((rt.f(0)))), ((uv[1]) - ((rt.swizzle(texelSize, 'y'))))))), 'r')
     gradU = rt.construct(2, rt.construct(2, rt.binary('/', rt.binary('-', _Ux_plus, _Ux_minus, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texelSize, 'x'), 1, 'float'), 1, 'float'), rt.binary('/', rt.binary('-', _Uy_plus, _Uy_minus, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texelSize, 'y'), 1, 'float'), 1, 'float')))
-    worldScale = rt.binary('*', rt.component_wise('min', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y')), rt.f(0.050000000000000003), 1, 'float')
-    gradU.replace((rt.binary('/', gradU, worldScale, 2, 'float')).map { |c| rt.f32(c) })
+    worldScale = rt.binary('*', rt.component_wise('min', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y')), rt.f(0.05000000074505806), 1, 'float')
+    __sc1640 = worldScale; gradU[0] = rt.f32(rt.binary('/', gradU[0], __sc1640, 1, 'float')); gradU[1] = rt.f32(rt.binary('/', gradU[1], __sc1640, 1, 'float'))
     dGdU = growthDerivative__float_float_float.call(_U, _u_muG, _u_sigmaG)
-    gradG = rt.construct(2, rt.binary('*', dGdU, gradU, 2, 'float'))
-    gradR = rt.construct(2, rt.binary('*', _u_repulsion, gradU, 2, 'float'))
-    force = rt.construct(2, rt.binary('-', gradG, gradR, 2, 'float'))
+    gradG = rt.construct(2, ((dGdU) * (gradU[0])), ((dGdU) * (gradU[1])))
+    gradR = rt.construct(2, ((_u_repulsion) * (gradU[0])), ((_u_repulsion) * (gradU[1])))
+    force = rt.construct(2, ((gradG[0]) - (gradR[0])), ((gradG[1]) - (gradR[1])))
     forceMag = rt.length(force)
     if rt.bool(rt.binary('>', forceMag, rt.f(10)))
       force.replace((rt.binary('*', rt.binary('/', force, forceMag, 2, 'float'), rt.f(10), 2, 'float')).map { |c| rt.f32(c) })
     end
-    newPos = rt.construct(2, rt.binary('+', uv, rt.binary('*', rt.binary('*', force, _u_dt, 2, 'float'), rt.f(0.01), 2, 'float'), 2, 'float'))
-    newPos.replace((rt.component_wise('fract', rt.binary('+', newPos, rt.f(1), 2, 'float'))).map { |c| rt.f32(c) })
-    velocity = rt.construct(2, rt.binary('*', rt.binary('*', force, _u_dt, 2, 'float'), rt.f(0.01), 2, 'float'))
-    age = rt.binary('+', rt.swizzle(vel, 'z'), rt.f(0.016), 1, 'float')
+    newPos = rt.construct(2, ((uv[0]) + (((((force[0]) * (_u_dt))) * (rt.f(0.0099999997764825821))))), ((uv[1]) + (((((force[1]) * (_u_dt))) * (rt.f(0.0099999997764825821))))))
+    newPos.replace((rt.component_wise('fract', rt.construct(2, ((newPos[0]) + (rt.f(1))), ((newPos[1]) + (rt.f(1)))))).map { |c| rt.f32(c) })
+    velocity = rt.construct(2, ((((force[0]) * (_u_dt))) * (rt.f(0.0099999997764825821))), ((((force[1]) * (_u_dt))) * (rt.f(0.0099999997764825821))))
+    age = rt.binary('+', rt.swizzle(vel, 'z'), rt.f(0.016000000759959221), 1, 'float')
     g['outXYZ'].replace((rt.construct(4, newPos, rt.swizzle(xyz, 'z'), rt.f(1))).map { |c| rt.f32(c) })
     g['outVel'].replace((rt.construct(4, velocity, age, rt.swizzle(vel, 'w'))).map { |c| rt.f32(c) })
     g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })

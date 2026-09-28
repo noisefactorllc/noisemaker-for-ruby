@@ -141,8 +141,97 @@ module NoisemakerCpu
 
       # single-quoted Ruby string literal
       def self.rq(s)
-        "'#{s.to_s.gsub(/(['\\])/, '\\\\\\1')}'"
+        "'#{s.to_s.gsub(/(['\\])/, '\\\\\\\1')}'"
       end
+
+            # Split a generated argument list at top-level commas (parens/brackets
+                  # and single-quoted strings respected) -- used to turn a construct call
+                  # back into sequential component assignments for JS comma-assign
+                  # aliasing semantics.
+                  def self.split_top_args(s)
+                    out = []
+                    depth = 0
+                    cur = +""
+                    in_str = false
+                    s.each_char do |ch|
+                      if in_str
+                        cur << ch
+                        in_str = false if ch == "'"
+                      elsif ch == "'"
+                        in_str = true
+                        cur << ch
+                      elsif ch == "(" || ch == "["
+                        depth += 1
+                        cur << ch
+                      elsif ch == ")" || ch == "]"
+                        depth -= 1
+                        cur << ch
+                      elsif ch == "," && depth.zero?
+                        out << cur.strip
+                        cur = +""
+                      else
+                        cur << ch
+                      end
+                    end
+                    out << cur.strip unless cur.strip.empty?
+                    out
+                  end
+
+                  # JS comma-assign semantics for `dst = <construct-shaped rhs>`: the
+                  # compiled kernel stores components sequentially, so a later element
+                  # may read target components already overwritten (e.g. sdfTriangle's
+                  # `p = vec2((p.x - k*p.y)/2, (-k*p.x - p.y)/2)` compiles to
+                  # `p[0] = (p[0] - k*p[1])/2, p[1] = (-k*p[0] - p[1])/2` where p[1]
+                  # reads the NEW p[0]). Returns sequential store code, or nil when the
+                  # rhs is not a plain (or scalar-wrapped elementwise) construct.
+                  def self._scalar_code?(s)
+                    !s.include?(",") && (s.match?(/\Art\.[fi]\(/) || s.match?(/\A-?[\d.]+(e[+-]?\d+)?\z/i))
+                  end
+
+                  def self._construct_elems(rhs)
+                    m = /\Art\.construct\((\d+), (.*)\)\z/m.match(rhs)
+                    return nil unless m
+
+                    w = m[1].to_i
+                    elems = split_top_args(m[2])
+                    w >= 1 && elems.length == w ? [w, elems] : nil
+                  end
+
+                  def self._sequential_assign(tcode, rhs)
+                    base = _construct_elems(rhs)
+                    if base
+                      w, elems = base
+                      return nil if w <= 1
+
+                      # The generator's preserveVectorAssignmentReads temps
+                      # ONLY single-line constructor self-assigns (mirrored in
+                      # build.rb); every other whole-assign lowers to the JS
+                      # comma-assign where later components read the
+                      # ALREADY-STORED earlier components (mandelbrot's
+                      # dz.y reads the new dz.x). So self-references here are
+                      # resolved SEQUENTIALLY, not snapshot.
+                      return elems.each_with_index.map { |e, i| "#{tcode}[#{i}] = rt.f32(#{e})" }.join("; ")
+                    end
+                    m = /\Art\.binary\((.*)\)\z/m.match(rhs)
+                    return nil unless m
+
+                    parts = split_top_args(m[1])
+                    return nil unless parts.length == 5 && parts[4] == "'float'" && parts[3].match?(/\A\d+\z/)
+
+                    op, lhs, rhs2 = parts[0], parts[1], parts[2]
+                    [[lhs, rhs2], [rhs2, lhs]].each do |operand, other|
+                      base = _construct_elems(operand)
+                      next if base.nil?
+
+                      w, elems = base
+                      next unless w == parts[3].to_i && w > 1 && _scalar_code?(other)
+
+                      return elems.each_with_index.map do |e, i|
+                        "#{tcode}[#{i}] = rt.f32(rt.binary(#{op}, #{e}, #{other}, 1, 'float'))"
+                      end.join("; ")
+                    end
+                    nil
+                  end
 
       def self._fmt_num(raw)
         # Ruby's format("%.17g", ...) matches Perl's sprintf("%.17g", ...)
@@ -224,6 +313,9 @@ module NoisemakerCpu
         @cur_out = [] # out/inout param rbnames of the function being emitted
         @declared = nil # per-function set of hoisted local names
         @unused_n = 0
+        @in_vec_assign = false # see _e_binary's scalar-vec raw-coercion note
+        @in_vec_whole_assign = false # whole-vector (not per-slot) assign ctx
+        @vec_assign_root = false # top-level rhs of the current assign
       end
 
       # ---- collect ----
@@ -433,7 +525,25 @@ module NoisemakerCpu
             e = scope.define(dc["name"], t)
             _local(e["py"])
             if !init_code.nil?
-              if Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"] && dc["init"]["k"] != "id"
+              # A float-vector declaration whose initializer is arithmetic
+              # compiles in the oracle to a pooled-array CONSTRUCTOR of RAW
+              # scalar-slot JS expressions: `var u = new PooledFloat32Array(
+              # [(f[0]*f[0])*(3-2*f[0]), (f[1]*f[1])*(3-2*f[1])])` — f64
+              # arithmetic with a SINGLE f32 round at the store (vnoise's u).
+              # Routing the whole rhs through one rt.binary would f32-round
+              # every intermediate (1-ulp drift amplified by hash math:
+              # craquelure seed-7/size-16). Project per-component like the
+              # comma-assign path; fall back to the once-eval construct when
+              # any slot needs a whole-vector call result (runtime calls/
+              # textures are hoisted, never re-inlined per slot).
+              if Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"] && dc["init"]["k"] != "id" && dc["init"]["k"] != "construct"
+                slots = (0...Codegen.width_of(t)).map { |ci| _vec_comp(dc["init"], scope, ci) }
+                if slots.all? { |sc, st| Codegen.width_of(st) == 1 && !sc.start_with?("(begin ") && !sc.match?(/\bcall\(/) && !sc.start_with?("rt.texture") && !sc.match?(/\Art\.(?!binary\b|f\b|i\b|swizzle\b|construct\b|component_wise\b)/) }
+                  init_code = "rt.construct(#{t["width"]}, #{slots.map { |sc, _| sc }.join(", ")})"
+                else
+                  init_code = "rt.construct(#{t["width"]}, #{init_code})"
+                end
+              elsif Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"] && dc["init"]["k"] != "id"
                 init_code = "rt.construct(#{t["width"]}, #{init_code})"
               end
               out << "#{pad}#{e["py"]} = #{init_code}"
@@ -493,7 +603,20 @@ module NoisemakerCpu
           elsif val_node.nil?
             out << "#{pad}return"
           else
-            code, = expr(val_node, scope)
+            code, vt = expr(val_node, scope)
+            # A float-vector RETURN of arithmetic compiles in the oracle to
+            # `return new PooledFloat32Array([raw scalar slots...])` — f64
+            # math per component with ONE f32 round at the array store
+            # (taylorInvSqrt: 1.79284291400159 - 0.8537347208*r[k] — the
+            # product stays unrounded). Emitting the whole-expression
+            # rt.binary vector chain f32-rounds every intermediate. Project
+            # per-component like the decl-initializer path above.
+            if Codegen.base_of(vt) == "float" && Codegen.width_of(vt) > 1 && !vt["mat"] &&
+               (val_node["k"] == "binary" || val_node["k"] == "unary" || val_node["k"] == "cond")
+              slots = (0...Codegen.width_of(vt)).map { |ci| _vec_comp(val_node, scope, ci) }
+              ok = slots.all? { |sc, st| Codegen.width_of(st) == 1 && !sc.start_with?("(begin ") && !sc.match?(/\bcall\(/) && !sc.start_with?("rt.texture") && !sc.match?(/\Art\.(?!binary\b|f\b|i\b|swizzle\b|construct\b|component_wise\b|unary\b)/) }
+              code = "rt.construct(#{vt["width"]}, #{slots.map(&:first).join(", ")})" if ok
+            end
             out << "#{pad}return #{code}"
           end
         when "break"
@@ -594,7 +717,8 @@ module NoisemakerCpu
         m = "_e_#{k}"
         raise "codegen: no handler for expr kind #{k}\n" unless respond_to?(m, true)
 
-        send(m, node, scope)
+        code, typ = send(m, node, scope)
+        [code, typ]
       end
 
       def _e_num(node, _scope)
@@ -610,7 +734,14 @@ module NoisemakerCpu
         end
         if raw.include?(".") || low.include?("e") || low.end_with?("f")
           body = raw.sub(/[fF]\z/, "")
-          return ["rt.f(#{Codegen._fmt_num(body)})", FLOAT]
+          # GLSL float literals are rounded to f32 AT PARSE TIME in the oracle
+          # (csl Literal -> Math.fround(value)): the JS kernel then adds/muls
+          # the f64 double of that f32 value. Emitting the raw f64 decimal
+          # (33.329999999999998 for "33.33") would add a DIFFERENT f64 and
+          # skew every f32-rounded sum by 1 ulp (craquelure hash12's
+          # p3.yzx + 33.33). Snap now: rt.f(f32(33.33)) = rt.f(33.33000183105469).
+          f = [body.to_f].pack("e").unpack1("e")
+          return ["rt.f(#{Codegen._fmt_num(f)})", FLOAT]
         end
         ["rt.i(#{raw.to_i})", TYPE["int"]]
       end
@@ -660,9 +791,11 @@ module NoisemakerCpu
           return ["rt.mat_col(#{obj_code}, #{idx_code}, #{n})", { "base" => "float", "width" => n }]
         end
         if obj_t["array"]
-          return ["#{obj_code}[(#{idx_code}).to_i]", { "base" => Codegen.base_of(obj_t), "width" => obj_t["width"] }]
+          # JS array read: fractional indices (possible because the compiled
+          # kernels keep `/` as float division) read as undefined.
+          return ["rt.array_index(#{obj_code}, #{idx_code})", { "base" => Codegen.base_of(obj_t), "width" => obj_t["width"] }]
         end
-        ["#{obj_code}[(#{idx_code}).to_i]", { "base" => Codegen.base_of(obj_t), "width" => 1 }]
+        [ "#{obj_code}[(#{idx_code}).to_i]", { "base" => Codegen.base_of(obj_t), "width" => 1 }]
       end
 
       def _e_unary(node, scope)
@@ -680,6 +813,16 @@ module NoisemakerCpu
       end
 
       def _incdec(target, op, scope)
+        if target["k"] == "index"
+          # Array-element ++/-- stays a direct lvalue read-modify-write.
+          obj_code, obj_t = expr(target["obj"], scope)
+          idx_code, = expr(target["idx"], scope)
+          t = { "base" => Codegen.base_of(obj_t), "width" => obj_t["width"], "array" => 1 }
+          base = op == "++" ? "+" : "-"
+          b = Codegen.base_of(t) == "uint" ? "uint" : (Codegen.base_of(t) == "int" ? "int" : "float")
+          cur = "#{obj_code}[(#{idx_code}).to_i]"
+          return ["#{cur} = rt.binary(#{Codegen.rq(base)}, #{cur}, rt.i(1), #{Codegen.width_of(t)}, #{Codegen.rq(b)})", t]
+        end
         code, t = expr(target, scope)
         base = op == "++" ? "+" : "-"
         b = Codegen.base_of(t) == "uint" ? "uint" : (Codegen.base_of(t) == "int" ? "int" : "float")
@@ -697,10 +840,55 @@ module NoisemakerCpu
       COMPARE_LOGIC_OPS = %w[== != < > <= >= && ||].each_with_object({}) { |o, h| h[o] = true }.freeze
       INT_FORCING_OPS = %w[& | ^ << >> %].each_with_object({}) { |o, h| h[o] = true }.freeze
 
+      # Scalar float literal/literal ops the oracle folds to f32 constants.
+      FOLD_OPS = {
+        "+" => ->(a, b) { a + b },
+        "-" => ->(a, b) { a - b },
+        "*" => ->(a, b) { a * b },
+        "/" => ->(a, b) { b.zero? ? Float::NAN : a / b },
+      }.freeze
+      FOLDABLE_OPS = FOLD_OPS.keys.freeze
+      LITERAL_F_RE = /\Art\.f\((-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\)\z/.freeze
+
+      def literal_float_of(code)
+        m = LITERAL_F_RE.match(code.strip)
+        return nil unless m
+
+        m[1].to_f
+      end
+
+      def base_unknown_fold_candidate?(op, l_code, r_code)
+        return false unless FOLDABLE_OPS.include?(op)
+        return false if l_code.nil? || r_code.nil?
+
+        literal_float_of(l_code) && literal_float_of(r_code) ? true : false
+      end
+
       def _e_binary(node, scope)
         op = node["op"]
+        was_root = @vec_assign_root
+        saved_root = @vec_assign_root
+        @vec_assign_root = false
         l_code, l_t = expr(node["l"], scope)
         r_code, r_t = expr(node["r"], scope)
+        @vec_assign_root = saved_root
+        # The oracle's compile pipeline folds scalar float arithmetic of two
+        # LITERAL operands to an f32 compile-time constant (GLSL const-float
+        # semantics): `x * (1.0/289.0)` bakes 0.0034602077212184668 into the
+        # kernel source. Ruby's runtime rt.binary('/') would compute the raw
+        # f64 quotient (0.0034602076124567475) — a different double — and
+        # f32-rounding the PRODUCT afterwards does not recover the folded
+        # constant (208 * f32(1/289) != f32(208 * f64(1/289)); crt mod289 /
+        # simplex scanline noise, 1-ulp everywhere). Fold literal/literal
+        # float ops at codegen time, f32-rounded.
+        if base_unknown_fold_candidate?(op, l_code, r_code)
+          lv = literal_float_of(l_code)
+          rv = literal_float_of(r_code)
+          if lv && rv
+            v = FOLD_OPS[op].call(lv, rv)
+            return ["rt.f(#{Codegen._fmt_num([v].pack("e").unpack1("e"))})", FLOAT]
+          end
+        end
         if COMPARE_LOGIC_OPS[op]
           return ["(#{_bool(l_code)} && #{_bool(r_code)} ? 1 : 0)", BOOL] if op == "&&"
           return ["(#{_bool(l_code)} || #{_bool(r_code)} ? 1 : 0)", BOOL] if op == "||"
@@ -724,14 +912,108 @@ module NoisemakerCpu
           else
             "float"
           end
+        # Whole-vector reassignment decomposes in the oracle to a JS comma-
+        # assign of RAW scalar-slot expressions, where a scalar OP a vector
+        # CALL-result coerces the Float32Array via toString and NaNs for
+        # length>1 (cubes: `p[0] - s * (round(vec3))` -> NaN). The same
+        # source shape inside a NEW-var declaration compiles to the vec3
+        # helpers / .map chains (elementwise, no coercion -- shapes'
+        # `vec3.multiply([], b, cos(vec))`). The discriminator is the
+        # ASSIGNMENT CONTEXT, which _e_assign marks via @in_vec_assign.
+        # Whole-vector assigns lower per-component too, but a DIRECT
+        # scalar-op-call rhs (curl's `color = 1.0 - abs(curl)`) compiles as
+        # an elementwise map-chain (`abs(p).map(_ => 1 - _)`, no coercion);
+        # only a NESTED scalar-op-call deeper in the expression (cubes'
+        # `p = p - s * round(p/s)`) keeps the raw string-coercion NaN.
+        nested = !was_root
+        if @in_vec_assign && (!@in_vec_whole_assign || nested) && base == "float" &&
+           %w[* / + -].include?(op) &&
+           Codegen.width_of(l_t) == 1 && width > 1 &&
+           r_code.match?(/\Art\.(component_wise|unary|normalize|cross|reflect|refract|pcg3d|matrix_mult|array_index|texture)\b|\Art\.[a-z_0-9]+__\w+\.call\b/)
+          return ["rt.scalar_vec_coerce(#{Codegen.rq(op)}, #{l_code}, #{r_code}, #{width})", { "base" => "float", "width" => width }]
+        end
+        # A whole-assign rhs that mixes scalar-op-call subtrees elementwise
+        # (simplex `h = 1.0 - abs(x) - abs(y)` lowers to
+        # vec4.subtract(abs(x).map(_ => 1 - _), abs(y))): the map fn stays
+        # RAW (no per-element f32) and only the vec4 store rounds once.
+        if @in_vec_whole_assign && was_root && base == "float" && width > 1 &&
+           %w[* / + -].include?(op) && Codegen.width_of(l_t) == width &&
+           Codegen.width_of(r_t) == width && _raw_elem_shape?(node)
+          parts = (0...width).map do |i|
+            "rt.f32(#{_raw_elem_code(node, scope, i)})"
+          end
+          return ["rt.construct(#{width}, #{parts.join(', ')})", { "base" => "float", "width" => width }]
+        end
         ["rt.binary(#{Codegen.rq(op)}, #{l_code}, #{r_code}, #{width}, #{Codegen.rq(base)})", { "base" => base, "width" => width }]
+      end
+
+      RAW_ELEM_OPS = { "+" => "+", "-" => "-", "*" => "*", "/" => "/" }.freeze
+
+      # True for elementwise trees of numeric literals, +-/* binaries and
+      # single-argument component-wise calls (the scalar-op-call map form).
+      def _raw_elem_shape?(node)
+        case node["k"]
+        when "num"
+          true
+        when "binary"
+          RAW_ELEM_OPS.key?(node["op"]) && _raw_elem_shape?(node["l"]) && _raw_elem_shape?(node["r"])
+        when "call"
+          node["name"] == "abs" && node["args"].size == 1 && _raw_elem_shape?(node["args"][0])
+        else
+          false
+        end
+      end
+
+      # Per-component RAW (f64) code for a raw-element-shape tree; component
+      # i of a call arg is projected before the component-wise call.
+      def _raw_elem_code(node, scope, i)
+        case node["k"]
+        when "num"
+          raw = node["value"]
+          f = raw.include?(".") || raw.include?("e") || raw.downcase.include?("f") ? [raw.sub(/[fF]\z/, "").to_f].pack("e").unpack1("e") : raw.to_i
+          "rt.f(#{Codegen._fmt_num(f)})"
+        when "binary"
+          "(#{_raw_elem_code(node['l'], scope, i)}) #{RAW_ELEM_OPS[node['op']]} (#{_raw_elem_code(node['r'], scope, i)})"
+        else # call abs
+          a, = expr(node["args"][0], scope)
+          "rt.component_wise('abs', rt.construct(1, (#{a})[#{i}]))[0]"
+        end
       end
 
       def _e_assign(node, scope)
         op = node["op"]
         target = node["target"]
-        v_code, = expr(node["value"], scope)
+        # Reassignment of an existing width>1 id target compiles in the oracle
+        # as a raw JS comma-assign of scalar-slot expressions -- inner scalar
+        # OP vector-call arithmetic runs raw (see _e_binary's NaN coercion).
+        # Mark the rhs evaluation so _e_binary can apply the raw semantics.
+        saved_vec_assign = @in_vec_assign
+        saved_vec_whole = @in_vec_whole_assign
+        saved_vec_root = @vec_assign_root
+        @in_vec_assign = true
+        tcode0, tt0 = target["k"] == "id" ? expr(target, scope) : [nil, nil]
+        @in_vec_whole_assign = !tt0.nil? && Codegen.width_of(tt0) > 1
+        @vec_assign_root = true
+        v_code, v_t = expr(node["value"], scope)
+        @in_vec_assign = saved_vec_assign
+        @in_vec_whole_assign = saved_vec_whole
+        @vec_assign_root = saved_vec_root
         base_op = op == "=" ? nil : op[0..-2]
+        if target["k"] == "index"
+          # Array-element stores stay a direct lvalue index (JS element
+          # assignment); only READS go through rt.array_index.
+          obj_code, obj_t = expr(target["obj"], scope)
+          idx_code, = expr(target["idx"], scope)
+          tt = { "base" => Codegen.base_of(obj_t), "width" => obj_t["width"], "array" => 1 }
+          rhs =
+            if base_op
+              b = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
+              "rt.binary(#{Codegen.rq(base_op)}, #{obj_code}[(#{idx_code}).to_i], #{v_code}, #{Codegen.width_of(tt)}, #{Codegen.rq(b)})"
+            else
+              v_code
+            end
+          return ["#{obj_code}[(#{idx_code}).to_i] = #{rhs}", tt]
+        end
         tcode, tt = expr(target, scope)
         if target["k"] == "id" || target["k"] == "index"
           rhs =
@@ -750,8 +1032,144 @@ module NoisemakerCpu
             if Codegen.base_of(tt) == "int" || Codegen.base_of(tt) == "uint"
               return ["#{tcode}.replace(#{rhs})", tt]
             end
+            if (seq = Codegen._sequential_assign(tcode, rhs))
+              return [seq, tt]
+            end
+            # Mat*vec (and mat*mat) assignment: the oracle compiles the whole-
+            # vector store as a component-sequential comma-assign over the
+            # product expression, so an ALIASED source (rotatedCentered =
+            # centered, then rotatedCentered = mat * centered) reads the
+            # ALREADY-STORED earlier components (gradient's 1-ULP rc[1] drift).
+            # matrix_mult_assign stores component-by-component with exactly
+            # that visibility; for the non-aliased case it reduces to the
+            # same f32-per-component result as matrix_mult.
+            if (mm = /\Art\.matrix_mult\((.*), (.*), (\d+)\)\z/m.match(rhs))
+              return ["rt.matrix_mult_assign(#{tcode}, #{mm[1]}, #{mm[2]}, #{mm[3]})", tt]
+            end
+            # Compound vector op-assign (`p -= 2.0*max(dot(k1,p),0)*k1`,
+            # shapeMask's sdfStar5): the oracle decomposes to
+            # `p[0] -= <comp0>, p[1] -= <comp1>` where each component's rhs
+            # is a RAW SCALAR-slot expression re-evaluated against the
+            # CURRENT p (p[1]'s dot(k1, p) sees the new p[0]). Emit
+            # component-wise scalar projections re-evaluated per store; the
+            # scalar binary path keeps raw f64 arithmetic with a single f32
+            # round at the store, exactly like the compiled kernel.
+            if base_op && Codegen.base_of(tt) == "float"
+              # `p += <scalar expr>` (craquelure hash22 `p3 += dot(p3, v)`):
+              # the oracle rewrites the compound store as
+              # `p3 = new PooledFloat32Array([p3[0] + d, p3[1] + d, p3[2] + d])`
+              # — the JS array literal evaluates d ONCE against the
+              # pre-assignment p3 (mutation happens only at the assignment's
+              # end), then adds the SAME d to every element. Evaluating the
+              # rhs per component would feed dot() an already-mutated p3
+              # (376.5 vs 11.18) and corrupt every hash. Hoist scalar rhs;
+              # a width>1 rhs keeps the per-component re-evaluation below
+              # (shapes3d's `p -= 2*max(dot(k1,p),0)*k1` — a genuine
+              # comma-assign where later slots see earlier stores).
+              if Codegen.width_of(v_t) == 1
+                hv = _local("__sc#{node.object_id.abs % 100_000}")
+                stores = "#{hv} = #{v_code}; " +
+                         (0...Codegen.width_of(tt)).map do |i|
+                           b2 = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
+                           "#{tcode}[#{i}] = rt.f32(rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{hv}, 1, #{Codegen.rq(b2)}))"
+                         end.join("; ")
+                return [stores, tt]
+              end
+              stores = (0...Codegen.width_of(tt)).map do |i|
+                cc, cc_t = _vec_comp(node["value"], scope, i)
+                [cc, cc_t]
+              end
+              # The oracle hoists a side-effecting rhs (a runtime call, e.g.
+              # dla's `stepDir += randomDirection(seed)*0.3` compiles to
+              # `(randomDirection(seed), [seed]=__out__, __ret__).reduce(
+              # (res,el,i)=>(res[i]+=el,res), stepDir)`) EXACTLY ONCE, then
+              # does the per-element in-place op against the frozen result.
+              # Re-invoking the call per component would advance the callee's
+              # RNG/out-param chain once per component (dla walkers: rd2
+              # consumed twice, seed 0.5534 vs 0.1607). Only re-evaluate per
+              # component when a projection actually references the target
+              # (shapeMask's `p -= 2*max(dot(k1,p),0)*k1`: later slots see
+              # earlier stores) or stays a raw scalar with no call.
+              calls = stores.any? { |cc, _| cc.match?(/\bcall\(|\(begin |\b_A?[0-9a-f_]+\.call\b/) || cc.match?(/rt\.(?!binary\b|f\b|i\b|swizzle\b|construct\b|f32\b)/) }
+              refs_target = stores.any? { |cc, _| cc.match?(/\b#{Regexp.escape(tcode)}\b/) }
+              full, full_t = expr(node["value"], scope)
+              if calls && !refs_target && Codegen.base_of(full_t) == "float" &&
+                 Codegen.width_of(full_t) == Codegen.width_of(tt)
+                h = _local("__hoist#{node.object_id.abs % 100_000}")
+                joined = stores.each_with_index.map do |(cc, _), i|
+                  b = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
+                  "#{tcode}[#{i}] = rt.f32(rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{h}[#{i}], 1, #{Codegen.rq(b)}))"
+                end.join("; ")
+                return ["#{h} = #{full}; #{joined}", tt]
+              end
+              stores = stores.each_with_index.map do |(cc, cc_t), i|
+                b = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
+                if Codegen.width_of(cc_t) > 1
+                  # The oracle hoists runtime-call results (clamp(p,-s,s) in
+                  # shapes3d) ONCE against the pre-assignment p, then does the
+                  # per-element in-place subtract against that frozen result --
+                  # never a raw scalar-OP-vector coercion (shapes3d SHAPE_B==10:
+                  # `clamp(p,-s,s).reduce((res,el,i)=>(res[i] -= el, res), p)`).
+                  # Evaluate the whole rhs once into a temp, index it per store.
+                  h = _local("__hoist#{i}")
+                  "#{h} = #{cc}; #{tcode}[#{i}] = rt.f32(rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{h}[#{i}], 1, #{Codegen.rq(b)}))"
+                else
+                  "#{tcode}[#{i}] = rt.f32(rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{cc}, 1, #{Codegen.rq(b)}))"
+                end
+              end.join("; ")
+              return [stores, tt]
+            end
+            # Plain `=` whose rhs references the target itself (but is not a
+            # call result -- the oracle hoists call results once, see
+            # rotate2D(p, rad).reduce in shapeMask and mod289_2(i).reduce in
+            # kaleido; the out-param call form "(begin _retc, ... = x.call(...);
+            # _retc end)" is likewise a hoisted call result): the compiled
+            # comma-assign re-inlines the rhs text per component, so a later
+            # component reads already-stored ones.
+            if base_op.nil? && Codegen.base_of(tt) == "float" &&
+               rhs.match?(/\b#{Regexp.escape(tcode)}\b/) &&
+               !rhs.match?(/\Art\.[a-z_0-9]+__\w+\.call\b|\Art\.texture\b|\bcall\(|\(begin /)
+              # JS evaluates the whole array literal against the OLD target
+              # (cpu_vector_assignment_N), then stores element-wise — a slot
+              # referencing the target must see pre-assignment values
+              # (polygon's `st = vec2(st.y, -st.x)` swap: sequential stores
+              # make st[1] = -new_st[0]). If any projected slot still reads
+              # the target, fall back to the once-eval replace below.
+              slots_ref = (0...Codegen.width_of(tt)).any? do |i|
+                cc, = _vec_comp(node["value"], scope, i)
+                cc.match?(/\b#{Regexp.escape(tcode)}\b/)
+              end
+              unless slots_ref
+              stores = (0...Codegen.width_of(tt)).map do |i|
+                cc, = _vec_comp(node["value"], scope, i)
+                # A projection that stays a whole vector or still contains a
+                # runtime CALL (the oracle hoists every call result once --
+                # fract(st).reduce(...) in kaleido -- rather than re-invoking
+                # per component) cannot feed a per-component raw store; fall
+                # back to the generic once-eval form.
+                if cc.match?(/\bcall\(/) || cc.match?(/\Art\.(?!binary\b|f\b|i\b|swizzle\b|construct\b)/) || cc.start_with?("(begin ")
+                  return ["#{tcode}.replace((#{rhs}).map { |c| rt.f32(c) })", tt]
+                end
+
+                "#{tcode}[#{i}] = rt.f32(#{cc})"
+              end.join("; ")
+              return [stores, tt]
+              end
+            end
+            # Generic whole-vector rhs: the oracle evaluates the rhs ONCE
+            # (the emitted expression reads the rhs's own operands, which are
+            # distinct pooled arrays from the target in every observed
+            # kernel), so a plain in-place replace of f32-snapped components
+            # is exact. Components that the transpiler already applied
+            # f32-rounding to via rt.f32 inside the rhs are not double-
+            # rounded (f32 is idempotent).
             return ["#{tcode}.replace((#{rhs}).map { |c| rt.f32(c) })", tt]
           end
+        end
+        if target["k"] == "id"
+          # Scalar (width==1) identifier assignment: plain rebinding, like
+          # JS. Note width>1 id targets ALWAYS returned above, so reaching
+          # here means width 1.
           return ["#{tcode} = #{rhs}", tt]
         end
         if target["k"] == "member"
@@ -798,6 +1216,257 @@ module NoisemakerCpu
         raise "codegen: bad assignment target #{target["k"]}\n"
       end
 
+      # Scalar projection of a float-vector expression for the oracle's
+      # comma-assign decomposition (`p[1] -= (2*(max(dot(k1, p), 0)))*k1[1]`):
+      # returns [code, type] for component i with every level kept SCALAR so
+      # the arithmetic runs raw f64 (no intermediate vector f32 rounding),
+      # matching the compiled raw scalar-slot JS. Bare vector identifiers
+      # become element reads (which see the CURRENT target state when the
+      # projection is the target itself -- the aliasing semantics). Call
+      # results and unhandled nodes fall back to evaluating the whole vector
+      # and indexing it (pure in every observed kernel).
+      def _vec_comp(node, scope, i)
+        k = node["k"]
+        case k
+        when "num", "bool"
+          expr(node, scope)
+        when "id"
+          code, t = expr(node, scope)
+          if Codegen.width_of(t) > 1
+            ["#{code}[#{i}]", { "base" => Codegen.base_of(t), "width" => 1 }]
+          else
+            [code, t]
+          end
+        when "member"
+          code, t = expr(node["obj"], scope)
+          field = node["field"]
+          if Codegen.base_of(t) == "struct"
+            whole, wt = expr(node, scope)
+            # The struct result of a call (voxelTrace hit) is modeled as a
+            # flat array; `hit.dist` is `hit[0]` — the MEMBER's own value.
+            # Indexing it again wraps a float scalar and crashes.
+            return ["(#{whole})[#{i}]", { "base" => "float", "width" => 1 }] unless whole.match?(/[A-Za-z0-9_)\]]\[\d+\]\z/)
+
+            return [whole, wt]
+          end
+          if field.length > 1
+            ["rt.swizzle(#{code}, #{Codegen.rq(field[i])})", { "base" => Codegen.base_of(t), "width" => 1 }]
+          else
+            ["rt.swizzle(#{code}, #{Codegen.rq(field)})", { "base" => Codegen.base_of(t), "width" => 1 }]
+          end
+        when "unary"
+          code, t = expr(node["x"], scope)
+          if Codegen.width_of(t) > 1
+            ["rt.unary(#{Codegen.rq(node["op"])}, #{code}[#{i}])", { "base" => Codegen.base_of(t), "width" => 1 }]
+          else
+            ["rt.unary(#{Codegen.rq(node["op"])}, #{code})", t]
+          end
+        when "binary"
+          op = node["op"]
+          # A matrix operand cannot be projected to a scalar slot: the flat
+          # pooled layout of a mat3 has no meaningful single element for
+          # component i, and the oracle keeps the whole matrix product
+          # (shapes3d's `lms = invB * c` compiled to a hoisted
+          # matrix_mult(lms slots) — NOT per-component invB[0]*c[0]).
+          # Fall back to whole-expression evaluation indexed per component.
+          wl, wr = expr(node["l"], scope)[1], expr(node["r"], scope)[1]
+          if wl["mat"] || wr["mat"]
+            whole, wt = expr(node, scope)
+            return ["(#{whole})[#{i}]", { "base" => Codegen.base_of(wt), "width" => 1 }]
+          end
+          l_code, l_t = _vec_comp(node["l"], scope, i)
+          r_code, r_t = _vec_comp(node["r"], scope, i)
+          # A projected operand may still be WHOLE-VECTOR (routed calls
+          # like pcg3d return their full code); indexing it raw would
+          # divide an IVec object. Index the whole value per component
+          # instead (re-evaluating a deterministic call per slot is
+          # value-identical).
+          l_code, l_t = ["(#{l_code})[#{i}]", { "base" => Codegen.base_of(l_t), "width" => 1 }] if Codegen.width_of(l_t) > 1
+          r_code, r_t = ["(#{r_code})[#{i}]", { "base" => Codegen.base_of(r_t), "width" => 1 }] if Codegen.width_of(r_t) > 1
+          # folds const float arithmetic to an f32 literal. Without this,
+          # raw scalar slots multiply by the f64 quotient (mod289's
+          # 1.0/289.0 → 0.653979238754 vs the oracle's folded-constant
+          # product 0.653979241848).
+          if Codegen.base_of(l_t) == "float" && Codegen.base_of(r_t) == "float" &&
+             %w[* / + -].include?(op)
+            lv = literal_float_of(l_code)
+            rv = literal_float_of(r_code)
+            if lv && rv
+              v = FOLD_OPS[op].call(lv, rv)
+              return ["rt.f(#{Codegen._fmt_num([v].pack("e").unpack1("e"))})", { "base" => "float", "width" => 1 }]
+            end
+          end
+          if COMPARE_LOGIC_OPS[op]
+            return ["(#{_bool(l_code)} && #{_bool(r_code)} ? 1 : 0)", BOOL] if op == "&&"
+            return ["(#{_bool(l_code)} || #{_bool(r_code)} ? 1 : 0)", BOOL] if op == "||"
+
+            return ["rt.binary(#{Codegen.rq(op)}, #{l_code}, #{r_code})", BOOL]
+          end
+          width = 1
+          lb = Codegen.base_of(l_t)
+          rb = Codegen.base_of(r_t)
+          base =
+            if lb == "uint" || rb == "uint"
+              "uint"
+            elsif (lb == "int" && rb == "int") || INT_FORCING_OPS[op]
+              "int"
+            else
+              "float"
+            end
+          # Scalar-OP-vector-call inside the comma-assign projection keeps the
+          # oracle's raw JS operator semantics: NaN (see _e_binary's note).
+          if base == "float" && %w[* / + -].include?(op) &&
+             (l_t["callvec"] || r_t["callvec"])
+            return ["rt.scalar_vec_coerce(#{Codegen.rq(op)}, #{l_code}, #{r_code}, 1)", { "base" => "float", "width" => 1 }]
+          end
+          if base == "float" && %w[* / + -].include?(op)
+            # The oracle's per-component comma-assign arithmetic is RAW JS:
+            # f64 adds/muls/divides over the pooled f32 reads with a SINGLE
+            # f32 round at the element store. rt.binary rounds every
+            # intermediate to f32 (bitEffects bitMask:
+            # `st[0] -= (0.5*fullResolution[0])/fullResolution[1]` needs the
+            # raw form to match), so emit raw operators here.
+            return ["((#{l_code}) #{op} (#{r_code}))", { "base" => "float", "width" => 1 }]
+          end
+          ["rt.binary(#{Codegen.rq(op)}, #{l_code}, #{r_code}, #{width}, #{Codegen.rq(base)})", { "base" => base, "width" => 1 }]
+        when "cond"
+          c_code, = expr(node["c"], scope)
+          a_code, a_t = _vec_comp(node["a"], scope, i)
+          b_code, b_t = _vec_comp(node["b"], scope, i)
+          # A whole-vector branch (callvec: normalize(pcg3d(...)) etc.)
+          # must be INDEXED per component — returning the vector code as a
+          # scalar slot feeds an Array into rt.f32 (heightmap3d's
+          # `normal[k] = dot > 0 ? normalize(normal)[k] : c[k]`).
+          a_code, a_t = ["(#{a_code})[#{i}]", { "base" => Codegen.base_of(a_t), "width" => 1 }] if Codegen.width_of(a_t) > 1
+          b_code, = ["(#{b_code})[#{i}]"] if Codegen.width_of(b_t) > 1
+          ["(#{_bool(c_code)} ? (#{a_code}) : (#{b_code}))", a_t]
+        when "construct"
+          code, t = expr(node, scope)
+          w = Codegen.width_of(t)
+          if w == 1
+            # rt.construct(1, x) is a 1-element pooled ARRAY; projected to a
+            # scalar slot it must become the bare element (bitEffects:
+            # `st[0] += vec1(seed)[0] + 1000` -- an Array in raw scalar
+            # arithmetic would raise). Only float/int/uint constructs of one
+            # element appear here.
+            return [code, t] unless code.start_with?("rt.construct(1,")
+
+            inner = code.sub(/\Art\.construct\(1, /m, "").sub(/\)\z/m, "")
+            return ["(#{inner})", t]
+          end
+
+          # A constructor of pure expressions is inlined component-by-component
+          # in the oracle's comma-assign (st[0] - (0.5*res.x)/res.y, st[1] - 0.5)
+          # -- never a raw vector operator. Flatten GLSL construct args
+          # (scalars fill one slot; a vec arg fills its width) and project.
+          # Slots go through _vec_comp so nested float arithmetic stays raw
+          # (rt.binary would f32-round intermediates; the oracle rounds once
+          # at the element store).
+          flat = []
+          node["args"].each do |a|
+            ac, at = expr(a, scope)
+            aw = Codegen.width_of(at)
+            if aw > 1 && Codegen.base_of(at) == "float" && !at["mat"]
+              (0...aw).each { |j| flat << ["rt.swizzle(#{ac}, #{Codegen.rq((%w[x y z w])[j])})", 1] }
+            else
+              flat << _vec_comp(a, scope, i)
+            end
+          end
+          slot = flat[i] || flat[-1]
+          slot_w = slot[1].is_a?(Hash) ? Codegen.width_of(slot[1]) : 1
+          if slot_w > 1
+            # A whole-vector element (routed calls like pcg3d) surviving in
+            # the flat list: index it per component or the projected slot
+            # divides an IVec (warp's prng: pcg3d(...)/4294967296).
+            ["(#{slot[0]})[#{i}]", { "base" => Codegen.base_of(slot[1]), "width" => 1 }]
+          else
+            ["(#{slot[0]})", { "base" => "float", "width" => 1 }]
+          end
+        when "call"
+          # A component-wise builtin call (stdlib unary/binary/ternary:
+          # abs/tanh/round/clamp/...) applied to a vector is ELEMENTWISE in
+          # the oracle (#unary/#binary loop per component), so the compiled
+          # comma-assign decomposes the call ITSELF per component --
+          # curl's rewritten `tanh(curl.x * intensity) * 0.5 + 0.5` emits
+          # `(tanh(curl[0] * intensity)) * 0.5 + 0.5` (scalar Math.tanh), and
+          # ridges' `1 - abs(color*2-1)` emits
+          # `abs(vec).map(_ => 1 - _)` elementwise. Project the ARGS through
+          # _vec_comp and re-emit the call with scalar args: rt.component_wise
+          # with all-scalar args returns a scalar (the #unary scalar path),
+          # keeping the arithmetic scalar and NaN-free. USER functions and
+          # runtime-routed calls (pcg3d, texture, ...) are NOT elementwise
+          # decomposable this way -- they keep the whole-vector callvec form
+          # (scalar OP such a result IS the NaN coercion, cubes' round case).
+          if !@overloads.key?(node["name"]) && !ROUTED.key?(node["name"]) && !DERIV_FUNCS[node["name"]] &&
+             !TYPE.key?(node["name"]) && !node["args"].empty?
+            # The oracle compiles a VECTOR builtin call as
+            # fn(new PooledFloat32Array([scalar slots...])): each slot's
+            # arithmetic is f32-ROUNDED at the array store BEFORE the call
+            # reads it (mod289's floor(x[0]*(1/289)): f32(0.65397925931) =
+            # 0.653979241848 — flooring the raw f64 instead reads the
+            # unrounded double). A genuinely SCALAR call site keeps raw f64
+            # (Math.floor), so only original-width>1 float args wrap.
+            projected = node["args"].map do |a|
+              c, t = _vec_comp(a, scope, i)
+              _, at = expr(a, scope)
+              if Codegen.base_of(t) == "float" && Codegen.width_of(at) > 1 &&
+                 a["k"] == "binary"
+                ["rt.f32(#{c})", t]
+              else
+                [c, t]
+              end
+            end
+            scalars = projected.map { |c, _| c }
+            w = 1
+            projected.each { |_, t| w = Codegen.width_of(t) if Codegen.width_of(t) > w }
+            return ["rt.component_wise(#{Codegen.rq(node["name"])}#{scalars.empty? ? "" : ", #{scalars.join(", ")}"})", { "base" => "float", "width" => 1 }]
+          end
+          code, t = expr(node, scope)
+          if Codegen.width_of(t) > 1
+            # Sampler reads (rt.texture) return pooled f32 vectors; the oracle
+            # combines them ELEMENTWISE via .map (blurH:
+            # `texture(...).map(_ => _ * weight).reduce((res,el,i)=>...)`) --
+            # never a raw scalar-OP-vector coercion. Project as a pure whole-
+            # vec evaluation indexed per component.
+            return ["(#{code})[#{i}]", { "base" => Codegen.base_of(t), "width" => 1 }] if code.start_with?("rt.texture")
+
+            # Keep the WHOLE vector call: under the oracle's raw comma-assign a
+            # scalar OP this vec-call result is a raw JS operator (NaN), so the
+            # projection must not pre-index it. The binary case below turns
+            # scalar/call products into the NaN coercion. (A width-1 construct
+            # like vec1(seed) is a scalar and returns as-is below.)
+            [code, { "base" => Codegen.base_of(t), "width" => Codegen.width_of(t), "callvec" => true }]
+          else
+            [code, t]
+          end
+        when "index"
+          code, t = expr(node, scope)
+          if Codegen.width_of(t) > 1
+            return ["(#{code})[#{i}]", { "base" => Codegen.base_of(t), "width" => 1 }] if code.start_with?("rt.texture")
+
+            # An INDEX of an already-indexed scalar member (hit[0] is the
+            # float dist member of voxelTrace's [dist, normal, voxel]
+            # result; ro[0], hit[0] etc.) is NOT a whole vector — wrapping
+            # it in another (...)[i] indexes the FLOAT and crashes
+            # (render3d's FILTERING==1 branch: `(hit[0])[0]`).
+            return [code, t] if code.match?(/\)\[\d+\]\z|[A-Za-z_][A-Za-z0-9_]*\[\d+\]\z/)
+
+            [code, { "base" => Codegen.base_of(t), "width" => Codegen.width_of(t), "callvec" => true }]
+          else
+            [code, t]
+          end
+        else
+          whole, wt = expr(node, scope)
+          return [whole, wt] if Codegen.width_of(wt) == 1
+          # Member/index extractions of a callvec result are the MEMBER's
+          # own type, not the whole vector — don't index a scalar float
+          # (render3d voxelTrace hit.dist → `(hit[0])[i]` crash).
+          return [whole, wt] if whole.match?(/\)\[\d+\]\z|[A-Za-z_][A-Za-z0-9_]*\[\d+\]\z/)
+
+          ["(#{whole})[#{i}]", { "base" => Codegen.base_of(wt), "width" => 1 }]
+        end
+      end
+
       def _e_construct(node, scope)
         tname = node["type"]
         args = node["args"].map { |a| expr(a, scope) }
@@ -814,6 +1483,36 @@ module NoisemakerCpu
           w = 1
           args.each { |a| w = Codegen.width_of(a[1]) if Codegen.width_of(a[1]) > w }
           t = { "base" => "float", "width" => w }
+        end
+        # float(<uint scalar>) parses as a float CONSTRUCT of a uint value: a
+        # uint-to-float VALUE conversion, so f32 rounds 4294967295 up to
+        # 4294967296.0 (bitEffects/cellNoise/cell/noise hash denominators; the
+        # oracle emits cpu_float(4294967296) for every
+        # float(uint(0xffffffff))/float(0xffffffffu) spelling -- 79 occurrences,
+        # never 4294967295). A bare rt.i(...) would keep the pre-rounding
+        # integer. Covers BOTH the literal form (args[0].k == "num" with a
+        # uint literal) and the uint(0xffffffff) call form (a width-1 uint
+        # construct / cast of a uint literal).
+        if args.length == 1 && t["base"] == "float" && t["width"] == 1 &&
+           Codegen.base_of(args[0][1]) == "uint" && Codegen.width_of(args[0][1]) == 1
+          arg = node["args"][0]
+          # String#match? does NOT set Regexp.last_match -- use .match.
+          m = (arg["k"] || "") == "num" ? nil : /\Art\.construct\(1, rt\.i\((\d+)\)(?:, '(?:int|uint)')?\)/.match(args[0][0])
+          raw =
+            if (arg["k"] || "") == "num"
+              arg["value"].to_s.sub(/[uU]\z/, "")
+            elsif m
+              m[1]
+            end
+          unless raw
+            return ["rt.construct(#{t["width"]}#{elems == "" ? "" : ", #{elems}"}#{Codegen._construct_base(t)})", t]
+          end
+
+          v = raw =~ /\A0[xX]/ ? raw.to_i(16) : raw.to_i
+          # f32 round-trip: 4294967295 -> 4294967296.0 (JS Math.fround),
+          # matching the oracle's cpu_float(4294967296) emission.
+          f32 = [v.to_f].pack("e").unpack1("e")
+          return ["rt.f(#{Codegen._fmt_num(f32)})", FLOAT]
         end
         if Codegen.base_of(t) == "int" || Codegen.base_of(t) == "uint"
           elems = args.map do |code, arg_t|
@@ -868,10 +1567,61 @@ module NoisemakerCpu
           return ["rt.#{name}(#{codes[0]})", args[0][1]]
         end
         r = ROUTED[name]
+        # cpu_float(0xffffffffu): the hash-boundary rewrite turns
+        # `float(0xffffffffu)` into cpu_float(<uint literal>); the value is a
+        # uint-to-float VALUE conversion, so f32 rounds 4294967295 up to
+        # 4294967296.0 (bitEffects/cellNoise hash denominators). Emit the
+        # rounded float literal, not the raw integer.
+        if name == "cpu_float" && args.length == 1 &&
+           Codegen.base_of(args[0][1]) == "uint" && Codegen.width_of(args[0][1]) == 1
+          mcf = (node["args"][0]["k"] || "") == "num" ? nil : /\Art\.construct\(1, rt\.i\((\d+)\)(?:, '(?:int|uint)')?\)/.match(codes[0])
+          raw =
+            if (node["args"][0]["k"] || "") == "num"
+              node["args"][0]["value"].to_s.sub(/[uU]\z/, "")
+            elsif mcf
+              mcf[1]
+            end
+          if raw
+            v = raw =~ /\A0[xX]/ ? raw.to_i(16) : raw.to_i
+            f32 = [v.to_f].pack("e").unpack1("e")
+            return ["rt.f(#{Codegen._fmt_num(f32)})", FLOAT]
+          end
+        end
         return r.call(self, codes, args) if r
+
+        # A user-defined `uvec3 pcg(uvec3)` is the PCG3D hash: the oracle's
+        # compiler recognizes the body and emits stdlib.pcg3d for every call
+        # (all 35 `function pcg` sites in the compiled kernels are
+        # `return $runtime.stdlib.pcg3d(value);`). stdlib.pcg3d wraps each
+        # op mod 2^32 (Math.imul); inlining the GLSL body as raw uint
+        # rt.binary ops would keep unwrapped f64 products and corrupt every
+        # hash (cellNoise/cell/noise/bitEffects prng).
+        if name == "pcg" && args.length == 1 &&
+           Codegen.base_of(args[0][1]) == "uint" && Codegen.width_of(args[0][1]) == 3
+          return ["rt.pcg3d(#{codes[0]})", TYPE["uvec3"]]
+        end
 
         if @overloads[name]
           fn = _resolve_overload(name, args.map { |a| a[1] })
+          # A vecN(...) argument of a USER function call: the oracle compiles
+          # it as fn(new PooledFloat32Array([raw scalar slots...])) — each
+          # slot's arithmetic is RAW f64 JS with ONE f32 at the pooled store
+          # (noise3d's snoise(new PF32A([p[0]*scaleN + seed, ...])): the
+          # intermediate p[0]*scaleN stays unrounded). Emitting the slots as
+          # vector rt.binary ops f32-rounds every intermediate (two rounds —
+          # the 1-ulp noise3d time-0 divergence). Project the slots through
+          # _vec_comp exactly like the decl path (same filter: float width>1,
+          # non-id, non-construct init) and keep ONE f32 at the construct
+          # store. Literal/id/call-result components are already f32-stored
+          # pooled values and are unaffected.
+          codes = codes.each_with_index.map do |c, ai|
+            a = node["args"][ai]
+            a_t = args[ai][1]
+            next c unless ((a["k"] || "") == "construct" || a["k"] == "binary") &&
+                          Codegen.base_of(a_t) == "float" && Codegen.width_of(a_t) > 1 && !a_t["mat"]
+            slots = (0...Codegen.width_of(a_t)).map { |ci| _vec_comp(a, scope, ci) }
+            "rt.construct(#{Codegen.width_of(a_t)}, #{slots.map(&:first).join(", ")})"
+          end
           out_idxs = fn["out_idxs"] || []
           unless out_idxs.empty?
             targets = out_idxs.map { |i| expr(node["args"][i], scope)[0] }
@@ -882,11 +1632,63 @@ module NoisemakerCpu
         end
         if TYPE[name] # scalar cast: int(x), float(x), uint(x)
           t = TYPE[name]
+          # float(<uint scalar>): a uint-to-float VALUE conversion -- f32
+          # rounds 4294967295 up to 4294967296.0 (the port contract's
+          # `float(0xffffffff) -> 4294967296.0` row; the oracle emits
+          # cpu_float(4294967296) for EVERY spelling -- 79 occurrences in the
+          # compiled kernels, never 4294967295). Covers BOTH the literal form
+          # (`float(0xffffffffu)`) and the `float(uint(0xffffffff))` call
+          # form (cellNoise/cell/noise prng denominators): the inner uint
+          # cast is a width-1 uint-typed construct/call of a uint literal,
+          # whose emitted code embeds the integer via rt.i(N). A bare
+          # rt.i(4294967295) would keep the pre-rounding integer and skew
+          # every hash denominator by 1 ULP.
+          if name == "float" && args.length == 1 &&
+             Codegen.base_of(args[0][1]) == "uint" && Codegen.width_of(args[0][1]) == 1
+            mcast = (node["args"][0]["k"] || "") == "num" ? nil : /\Art\.construct\(1, rt\.i\((\d+)\)(?:, '(?:int|uint)')?\)/.match(codes[0])
+            raw =
+              if (node["args"][0]["k"] || "") == "num"
+                node["args"][0]["value"].to_s.sub(/[uU]\z/, "")
+              elsif mcast
+                mcast[1]
+              end
+            if raw
+              v = raw =~ /\A0[xX]/ ? raw.to_i(16) : raw.to_i
+              f32 = [v.to_f].pack("e").unpack1("e")
+              return ["rt.f(#{Codegen._fmt_num(f32)})", FLOAT]
+            end
+          end
           return ["rt.construct(#{t["width"]}#{codes.empty? ? "" : ", #{codes.join(", ")}"}#{Codegen._construct_base(t)})", t]
         end
         # component-wise builtin
         width = 1
         args.each { |a| width = Codegen.width_of(a[1]) if Codegen.width_of(a[1]) > width }
+        # The oracle compiles `floor(<vec arithmetic>)` as
+        # floor(new PooledFloat32Array([raw scalar slots...])): each slot's
+        # arithmetic is RAW f64 JS with a SINGLE f32 round at the array
+        # store (crt simplex: floor(p * ns.z * ns.z) slots
+        # (p[0]*ns[2])*ns[2] — the intermediate p[0]*ns[2] = 40.0000017881
+        # stays unrounded). Routing the argument through rt.binary vector
+        # ops f32-rounds every intermediate (fround(fround(280*n)*n) =
+        # 5.71428585052 vs the oracle's 5.71428632736 — 1 ulp, amplified by
+        # every downstream gradient). Project vector ARITHMETIC args
+        # per-component through _vec_comp (raw operators, one round at
+        # construct); id/swizzle/call-result args are already f32-stored
+        # pooled values and keep the whole-vector form.
+        codes = codes.each_with_index.map do |c, ai|
+          a_t = args[ai][1]
+          if Codegen.base_of(a_t) == "float" && Codegen.width_of(a_t) > 1 &&
+             node["args"][ai]["k"] == "binary"
+            slots = (0...Codegen.width_of(a_t)).map { |ci| _vec_comp(node["args"][ai], scope, ci) }
+            "rt.construct(#{Codegen.width_of(a_t)}, #{slots.map(&:first).join(", ")})"
+          else
+            # Scalar args stay RAW: the oracle's #unary/#binary call a
+            # scalar fn directly (F32 rounds the RESULT, not the arg).
+            # Wrapping in rt.f32 broke hash3's fract(sin(dot)*C) — the
+            # raw f64 product must reach fract.
+            c
+          end
+        end
         base = (!args.empty? && args.none? { |a| Codegen.base_of(a[1]) != "int" && Codegen.base_of(a[1]) != "uint" }) ? "int" : "float"
         ["rt.component_wise(#{Codegen.rq(name)}#{codes.empty? ? "" : ", #{codes.join(", ")}"})", { "base" => base, "width" => width }]
       end

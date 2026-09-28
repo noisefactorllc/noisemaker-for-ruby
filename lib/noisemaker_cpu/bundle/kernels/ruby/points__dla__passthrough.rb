@@ -12,13 +12,13 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     alpha = nil; color = nil; grid = nil; gridColor = nil; gridStrength = nil; inputCol = nil; matteAlpha = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    inputCol = rt.construct(4, rt.texture(_u_inputTex, uv))
-    grid = rt.construct(4, rt.texture(_u_gridTex, uv))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
+    inputCol = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    grid = rt.construct(4, (rt.texture(_u_gridTex, uv))[0], (rt.texture(_u_gridTex, uv))[1], (rt.texture(_u_gridTex, uv))[2], (rt.texture(_u_gridTex, uv))[3])
     gridStrength = rt.component_wise('clamp', rt.swizzle(grid, 'a'), rt.f(0), rt.f(1))
-    gridColor = rt.construct(3, rt.swizzle(grid, 'rgb'))
+    gridColor = rt.construct(3, rt.swizzle(grid, 'r'), rt.swizzle(grid, 'g'), rt.swizzle(grid, 'b'))
     matteAlpha = _u_matteOpacity
-    color = rt.construct(3, rt.component_wise('mix', rt.binary('*', rt.swizzle(inputCol, 'rgb'), matteAlpha, 3, 'float'), gridColor, gridStrength))
+    color = rt.construct(3, rt.component_wise('mix', rt.f32(((rt.swizzle(inputCol, 'r')) * (matteAlpha))), gridColor[0], gridStrength), rt.component_wise('mix', rt.f32(((rt.swizzle(inputCol, 'g')) * (matteAlpha))), gridColor[1], gridStrength), rt.component_wise('mix', rt.f32(((rt.swizzle(inputCol, 'b')) * (matteAlpha))), gridColor[2], gridStrength))
     alpha = rt.component_wise('max', gridStrength, matteAlpha)
     g['fragColor'].replace((rt.construct(4, color, alpha)).map { |c| rt.f32(c) })
   end

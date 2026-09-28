@@ -23,45 +23,45 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967295), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
   end
   lorenz__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     beta = nil; rho = nil; sigma = nil
     sigma = rt.f(10)
     rho = rt.f(28)
-    beta = rt.binary('/', rt.f(8), rt.f(3), 1, 'float')
+    beta = rt.f(2.6666667461395264)
     return rt.construct(3, rt.binary('*', sigma, rt.binary('-', rt.swizzle(p, 'y'), rt.swizzle(p, 'x'), 1, 'float'), 1, 'float'), rt.binary('-', rt.binary('*', rt.swizzle(p, 'x'), rt.binary('-', rho, rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'), rt.swizzle(p, 'y'), 1, 'float'), rt.binary('-', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.binary('*', beta, rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'))
   end
   rossler__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     a = nil; b = nil; c = nil
-    a = rt.f(0.20000000000000001)
-    b = rt.f(0.20000000000000001)
-    c = rt.f(5.7000000000000002)
+    a = rt.f(0.20000000298023224)
+    b = rt.f(0.20000000298023224)
+    c = rt.f(5.6999998092651367)
     return rt.construct(3, rt.binary('-', rt.unary('-', rt.swizzle(p, 'y')), rt.swizzle(p, 'z'), 1, 'float'), rt.binary('+', rt.swizzle(p, 'x'), rt.binary('*', a, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.binary('+', b, rt.binary('*', rt.swizzle(p, 'z'), rt.binary('-', rt.swizzle(p, 'x'), c, 1, 'float'), 1, 'float'), 1, 'float'))
   end
   aizawa__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     a = nil; b = nil; c = nil; d = nil; e = nil; f = nil
-    a = rt.f(0.94999999999999996)
-    b = rt.f(0.69999999999999996)
-    c = rt.f(0.59999999999999998)
+    a = rt.f(0.94999998807907104)
+    b = rt.f(0.69999998807907104)
+    c = rt.f(0.60000002384185791)
     d = rt.f(3.5)
     e = rt.f(0.25)
-    f = rt.f(0.10000000000000001)
+    f = rt.f(0.10000000149011612)
     return rt.construct(3, rt.binary('-', rt.binary('*', rt.binary('-', rt.swizzle(p, 'z'), b, 1, 'float'), rt.swizzle(p, 'x'), 1, 'float'), rt.binary('*', d, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', d, rt.swizzle(p, 'x'), 1, 'float'), rt.binary('*', rt.binary('-', rt.swizzle(p, 'z'), b, 1, 'float'), rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('-', rt.binary('-', rt.binary('+', c, rt.binary('*', a, rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'), rt.binary('/', rt.binary('*', rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(p, 'z'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'), rt.f(3), 1, 'float'), 1, 'float'), rt.binary('*', rt.binary('+', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(p, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.binary('+', rt.f(1), rt.binary('*', e, rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'), rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', f, rt.swizzle(p, 'z'), 1, 'float'), rt.swizzle(p, 'x'), 1, 'float'), rt.swizzle(p, 'x'), 1, 'float'), rt.swizzle(p, 'x'), 1, 'float'), 1, 'float'))
   end
   thomas__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     b = nil
-    b = rt.f(0.20818600000000001)
+    b = rt.f(0.20818600058555603)
     return rt.construct(3, rt.binary('-', rt.component_wise('sin', rt.swizzle(p, 'y')), rt.binary('*', b, rt.swizzle(p, 'x'), 1, 'float'), 1, 'float'), rt.binary('-', rt.component_wise('sin', rt.swizzle(p, 'z')), rt.binary('*', b, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.binary('-', rt.component_wise('sin', rt.swizzle(p, 'x')), rt.binary('*', b, rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'))
   end
   halvorsen__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     a = nil
-    a = rt.f(1.8899999999999999)
+    a = rt.f(1.8899999856948853)
     return rt.construct(3, rt.binary('-', rt.binary('-', rt.binary('-', rt.binary('*', rt.unary('-', a), rt.swizzle(p, 'x'), 1, 'float'), rt.binary('*', rt.f(4), rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(4), rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.binary('-', rt.binary('-', rt.binary('-', rt.binary('*', rt.unary('-', a), rt.swizzle(p, 'y'), 1, 'float'), rt.binary('*', rt.f(4), rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(4), rt.swizzle(p, 'x'), 1, 'float'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'), rt.binary('-', rt.binary('-', rt.binary('-', rt.binary('*', rt.unary('-', a), rt.swizzle(p, 'z'), 1, 'float'), rt.binary('*', rt.f(4), rt.swizzle(p, 'x'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(4), rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(p, 'x'), 1, 'float'), 1, 'float'))
   end
   chen__vec3 = lambda do |p|
@@ -76,8 +76,8 @@ run_pixel = lambda do |ctx, out|
     p = rt.copy(p, 'float')
     a = nil; b = nil; c = nil; d = nil; e = nil
     a = rt.f(3)
-    b = rt.f(2.7000000000000002)
-    c = rt.f(1.7)
+    b = rt.f(2.7000000476837158)
+    c = rt.f(1.7000000476837158)
     d = rt.f(2)
     e = rt.f(9)
     return rt.construct(3, rt.binary('+', rt.binary('-', rt.swizzle(p, 'y'), rt.binary('*', a, rt.swizzle(p, 'x'), 1, 'float'), 1, 'float'), rt.binary('*', rt.binary('*', b, rt.swizzle(p, 'y'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('-', rt.binary('*', c, rt.swizzle(p, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'), rt.binary('-', rt.binary('*', rt.binary('*', d, rt.swizzle(p, 'x'), 1, 'float'), rt.swizzle(p, 'y'), 1, 'float'), rt.binary('*', e, rt.swizzle(p, 'z'), 1, 'float'), 1, 'float'))
@@ -111,7 +111,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    return rt.binary('+', p, rt.binary('*', dp, dt, 3, 'float'), 3, 'float')
+    return rt.construct(3, ((p[0]) + (((dp[0]) * (dt)))), ((p[1]) + (((dp[1]) * (dt)))), ((p[2]) + (((dp[2]) * (dt)))))
   end
   main__void = lambda do
     agentSeed = nil; col = nil; coord = nil; dt = nil; initSeed = nil; needs3DInit = nil; newPos = nil; pos = nil; respawnSeed = nil; stateSize = nil; texSize = nil; vel = nil
@@ -140,7 +140,7 @@ run_pixel = lambda do |ctx, out|
       g['outRGBA'].replace((col).map { |c| rt.f32(c) })
       return
     end
-    dt = rt.binary('*', _u_speed, rt.f(0.01), 1, 'float')
+    dt = rt.binary('*', _u_speed, rt.f(0.0099999997764825821), 1, 'float')
     newPos = rt.construct(3, stepAttractor__vec3_int_float.call(rt.swizzle(pos, 'xyz'), _u_attractor, dt))
     respawnSeed = 0
     if rt.bool((rt.bool(rt.component_wise('any', rt.component_wise('isnan', newPos))) || rt.bool(rt.binary('>', rt.length(newPos), rt.f(1000))) ? 1 : 0))

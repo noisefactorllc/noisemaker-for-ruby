@@ -28,7 +28,7 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967295), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
   end
   rand__float = lambda do |seed|
     bits = nil
@@ -42,7 +42,7 @@ run_pixel = lambda do |ctx, out|
   end
   randomDirection__float = lambda do |seed|
     theta = nil
-    theta = rt.binary('*', (begin _retc, seed = rand__float.call(seed); _retc end), rt.f(6.2831853071800001), 1, 'float')
+    theta = rt.binary('*', (begin _retc, seed = rand__float.call(seed); _retc end), rt.f(6.2831854820251465), 1, 'float')
     return [rt.construct(2, rt.component_wise('cos', theta), rt.component_wise('sin', theta)), seed]
     return [nil, seed]
   end
@@ -61,42 +61,42 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     accum = nil; gridDims = nil; texel = nil
     gridDims = rt.construct(2, rt.construct(2, rt.texture_size(_u_gridTex)))
-    texel = rt.construct(2, rt.binary('/', radius, gridDims, 2, 'float'))
+    texel = rt.construct(2, ((radius) / (gridDims[0])), ((radius) / (gridDims[1])))
     accum = rt.f(0)
     accum = rt.binary('+', accum, sampleGrid__vec2.call(uv), 1, 'float')
-    accum = rt.binary('+', accum, sampleGrid__vec2.call(rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 1, 'float')
-    accum = rt.binary('+', accum, sampleGrid__vec2.call(rt.binary('-', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 1, 'float')
-    accum = rt.binary('+', accum, sampleGrid__vec2.call(rt.binary('+', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 1, 'float')
-    accum = rt.binary('+', accum, sampleGrid__vec2.call(rt.binary('-', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 1, 'float')
-    return rt.binary('*', accum, rt.f(0.20000000000000001), 1, 'float')
+    accum = rt.binary('+', accum, sampleGrid__vec2.call(rt.construct(2, ((uv[0]) + ((rt.swizzle(texel, 'x')))), ((uv[1]) + ((rt.f(0)))))), 1, 'float')
+    accum = rt.binary('+', accum, sampleGrid__vec2.call(rt.construct(2, ((uv[0]) - ((rt.swizzle(texel, 'x')))), ((uv[1]) - ((rt.f(0)))))), 1, 'float')
+    accum = rt.binary('+', accum, sampleGrid__vec2.call(rt.construct(2, ((uv[0]) + ((rt.f(0)))), ((uv[1]) + ((rt.swizzle(texel, 'y')))))), 1, 'float')
+    accum = rt.binary('+', accum, sampleGrid__vec2.call(rt.construct(2, ((uv[0]) - ((rt.f(0)))), ((uv[1]) - ((rt.swizzle(texel, 'y')))))), 1, 'float')
+    return rt.binary('*', accum, rt.f(0.20000000298023224), 1, 'float')
   end
   main__void = lambda do
-    agentId = nil; agentRand = nil; alive = nil; attritionRate = nil; candidate = nil; coord = nil; frameSeed = nil; gridDims = nil; here = nil; inputCoord = nil; inputDims = nil; inputDir = nil; inputVal = nil; inputW = nil; local = nil; nearby = nil; needsRespawn = nil; pos = nil; proximity = nil; randomDir = nil; rgba = nil; seed = nil; stateDims = nil; stepDir = nil; stepSize = nil; stuck = nil; texel = nil; vel = nil; xyz = nil
+    __hoist1624 = nil; agentId = nil; agentRand = nil; alive = nil; attritionRate = nil; candidate = nil; coord = nil; frameSeed = nil; gridDims = nil; here = nil; inputCoord = nil; inputDims = nil; inputDir = nil; inputVal = nil; inputW = nil; local = nil; nearby = nil; needsRespawn = nil; pos = nil; proximity = nil; randomDir = nil; rgba = nil; seed = nil; stateDims = nil; stepDir = nil; stepSize = nil; stuck = nil; texel = nil; vel = nil; xyz = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateDims = rt.texture_size(_u_xyzTex)
     xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
     vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
     rgba = rt.construct(4, rt.texel_fetch(_u_rgbaTex, coord, rt.i(0)))
-    pos = rt.construct(2, rt.swizzle(xyz, 'xy'))
+    pos = rt.construct(2, rt.swizzle(xyz, 'x'), rt.swizzle(xyz, 'y'))
     alive = rt.swizzle(xyz, 'w')
     seed = rt.swizzle(vel, 'x')
     agentRand = rt.swizzle(vel, 'w')
     agentId = rt.construct(1, rt.binary('+', rt.swizzle(coord, 'x'), rt.binary('*', rt.swizzle(coord, 'y'), rt.swizzle(stateDims, 'x'), 1, 'int'), 1, 'int'), 'uint')
     if rt.bool(rt.binary('<=', seed, rt.f(0)))
-      seed = rt.binary('+', hash__uint.call(agentId), rt.f(0.001), 1, 'float')
+      seed = rt.binary('+', hash__uint.call(agentId), rt.f(0.0010000000474974513), 1, 'float')
     end
     frameSeed = rt.hash_uint(rt.binary('+', rt.binary('*', agentId, rt.i(31), 1, 'uint'), rt.float_bits_to_uint(seed), 1, 'uint'))
     seed = rt.binary('-', rt.uint_bits_to_float(rt.binary('|', rt.binary('&', frameSeed, rt.i(8388607), 1, 'uint'), rt.i(1065353216), 1, 'uint')), rt.f(1), 1, 'float')
     if rt.bool(rt.binary('<', alive, rt.f(0.5)))
       g['outXYZ'].replace((xyz).map { |c| rt.f32(c) })
-      g['outVel'].replace((rt.construct(4, seed, rt.f(0), rt.f(0), agentRand)).map { |c| rt.f32(c) })
+      g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand)
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
       return
     end
     gridDims = rt.construct(2, rt.construct(2, rt.texture_size(_u_gridTex)))
     texel = rt.binary('/', rt.f(1), rt.component_wise('max', rt.swizzle(gridDims, 'x'), rt.swizzle(gridDims, 'y')), 1, 'float')
     local = neighborhood__vec2_float.call(pos, rt.f(2))
-    proximity = rt.component_wise('smoothstep', rt.f(0.014999999999999999), rt.f(0.12), local)
+    proximity = rt.component_wise('smoothstep', rt.f(0.014999999664723873), rt.f(0.11999999731779099), local)
     randomDir = rt.construct(2, (begin _retc, seed = randomDirection__float.call(seed); _retc end))
     inputW = rt.binary('/', _u_inputWeight, rt.f(100), 1, 'float')
     stepDir = randomDir
@@ -108,39 +108,39 @@ run_pixel = lambda do |ctx, out|
       inputDims = rt.texture_size(_u_inputTex)
       inputCoord = rt.construct(2, rt.construct(2, rt.binary('*', wrap01__vec2.call(pos), rt.construct(2, inputDims), 2, 'float')), 'int')
       inputVal = rt.construct(4, rt.texel_fetch(_u_inputTex, inputCoord, rt.i(0)))
-      inputDir = rt.construct(2, rt.binary('-', rt.binary('*', rt.swizzle(inputVal, 'xy'), rt.f(2), 2, 'float'), rt.f(1), 2, 'float'))
-      if rt.bool(rt.binary('>', rt.length(inputDir), rt.f(0.01)))
+      inputDir = rt.construct(2, ((((rt.swizzle(inputVal, 'x')) * (rt.f(2)))) - (rt.f(1))), ((((rt.swizzle(inputVal, 'y')) * (rt.f(2)))) - (rt.f(1))))
+      if rt.bool(rt.binary('>', rt.length(inputDir), rt.f(0.0099999997764825821)))
         inputDir.replace((rt.normalize(inputDir)).map { |c| rt.f32(c) })
         stepDir.replace((rt.normalize(rt.component_wise('mix', randomDir, inputDir, inputW))).map { |c| rt.f32(c) })
       end
     end
     stepSize = rt.binary('*', rt.binary('*', rt.binary('/', _u_stride, rt.f(10), 1, 'float'), texel, 1, 'float'), rt.component_wise('mix', rt.f(3), rt.f(0.5), proximity), 1, 'float')
-    stepDir.replace((rt.binary('+', stepDir, rt.binary('*', (begin _retc, seed = randomDirection__float.call(seed); _retc end), rt.f(0.29999999999999999), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
+    __hoist1624 = rt.binary('*', (begin _retc, seed = randomDirection__float.call(seed); _retc end), rt.f(0.30000001192092896), 2, 'float'); stepDir[0] = rt.f32(rt.binary('+', stepDir[0], __hoist1624[0], 1, 'float')); stepDir[1] = rt.f32(rt.binary('+', stepDir[1], __hoist1624[1], 1, 'float'))
     stepDir.replace((rt.normalize(stepDir)).map { |c| rt.f32(c) })
-    candidate = rt.construct(2, wrap01__vec2.call(rt.binary('+', pos, rt.binary('*', stepDir, stepSize, 2, 'float'), 2, 'float')))
+    candidate = rt.construct(2, wrap01__vec2.call(rt.construct(2, ((pos[0]) + (((stepDir[0]) * (stepSize)))), ((pos[1]) + (((stepDir[1]) * (stepSize)))))))
     here = sampleGrid__vec2.call(candidate)
     nearby = neighborhood__vec2_float.call(candidate, rt.f(1))
-    stuck = (rt.bool(rt.binary('>', nearby, rt.f(0.29999999999999999))) && rt.bool(rt.binary('<', here, rt.f(0.5))) ? 1 : 0)
+    stuck = (rt.bool(rt.binary('>', nearby, rt.f(0.30000001192092896))) && rt.bool(rt.binary('<', here, rt.f(0.5))) ? 1 : 0)
     needsRespawn = 0
     attritionRate = rt.f(0.0)
     if rt.bool(rt.binary('>', _u_attrition, rt.f(0)))
-      attritionRate = rt.binary('*', _u_attrition, rt.f(0.01), 1, 'float')
+      attritionRate = rt.binary('*', _u_attrition, rt.f(0.0099999997764825821), 1, 'float')
       if rt.bool(rt.binary('<', (begin _retc, seed = rand__float.call(seed); _retc end), attritionRate))
         needsRespawn = 1
       end
     end
     if rt.bool(stuck)
       g['outXYZ'].replace((rt.construct(4, candidate, rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
-      g['outVel'].replace((rt.construct(4, seed, rt.f(1), rt.f(0), agentRand)).map { |c| rt.f32(c) })
+      g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(1)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand)
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
     else
       if rt.bool(needsRespawn)
         g['outXYZ'].replace((rt.construct(4, candidate, rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
-        g['outVel'].replace((rt.construct(4, seed, rt.f(0), rt.f(0), agentRand)).map { |c| rt.f32(c) })
+        g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand)
         g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
       else
         g['outXYZ'].replace((rt.construct(4, candidate, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
-        g['outVel'].replace((rt.construct(4, seed, rt.f(0), rt.f(0), agentRand)).map { |c| rt.f32(c) })
+        g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand)
         g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
       end
     end

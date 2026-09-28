@@ -26,7 +26,7 @@ run_pixel = lambda do |ctx, out|
     state = rt.binary('+', rt.binary('*', x_bits, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
     word = rt.binary('*', rt.binary('^', rt.binary('>>', state, rt.binary('+', rt.binary('>>', state, rt.i(28), 1, 'uint'), rt.i(4), 1, 'uint'), 1, 'uint'), state, 1, 'uint'), rt.i(277803737), 1, 'uint')
     y_bits = rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
-    return rt.construct(2, rt.binary('/', rt.construct(1, x_bits), rt.f(4294967295), 1, 'float'), rt.binary('/', rt.construct(1, y_bits), rt.f(4294967295), 1, 'float'))
+    return rt.construct(2, rt.binary('/', rt.construct(1, x_bits), rt.f(4294967296), 1, 'float'), rt.binary('/', rt.construct(1, y_bits), rt.f(4294967296), 1, 'float'))
   end
   wrap_float__float_float = lambda do |value, size|
     scaled = nil; wrapped = nil
@@ -52,10 +52,10 @@ run_pixel = lambda do |ctx, out|
     return result
   end
   srgb_to_linear__float = lambda do |value|
-    if rt.bool(rt.binary('<=', value, rt.f(0.04045)))
-      return rt.binary('/', value, rt.f(12.92), 1, 'float')
+    if rt.bool(rt.binary('<=', value, rt.f(0.040449999272823334)))
+      return rt.binary('/', value, rt.f(12.920000076293945), 1, 'float')
     end
-    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.055), 1, 'float'), rt.f(1.0549999999999999), 1, 'float'), rt.f(2.3999999999999999))
+    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
   end
   cube_root__float = lambda do |value|
     sign_value = nil
@@ -63,7 +63,7 @@ run_pixel = lambda do |ctx, out|
       return rt.f(0)
     end
     sign_value = (rt.bool(rt.binary('>=', value, rt.f(0))) ? (rt.f(1)) : (rt.unary('-', rt.f(1))))
-    return rt.binary('*', sign_value, rt.component_wise('pow', rt.component_wise('abs', value), rt.binary('/', rt.f(1), rt.f(3), 1, 'float')), 1, 'float')
+    return rt.binary('*', sign_value, rt.component_wise('pow', rt.component_wise('abs', value), rt.f(0.3333333432674408)), 1, 'float')
   end
   oklab_l__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
@@ -71,10 +71,10 @@ run_pixel = lambda do |ctx, out|
     r_lin = srgb_to_linear__float.call(rt.component_wise('clamp', rt.swizzle(rgb, 'x'), rt.f(0), rt.f(1)))
     g_lin = srgb_to_linear__float.call(rt.component_wise('clamp', rt.swizzle(rgb, 'y'), rt.f(0), rt.f(1)))
     b_lin = srgb_to_linear__float.call(rt.component_wise('clamp', rt.swizzle(rgb, 'z'), rt.f(0), rt.f(1)))
-    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561200000001), r_lin, 1, 'float'), rt.binary('*', rt.f(0.53627520799999995), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565300000001), b_lin, 1, 'float'), 1, 'float')
-    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910699999999), r_lin, 1, 'float'), rt.binary('*', rt.f(0.68071895839999996), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.107406579), b_lin, 1, 'float'), 1, 'float')
-    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794699999999), r_lin, 1, 'float'), rt.binary('*', rt.f(0.28184741740000002), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136160000001), b_lin, 1, 'float'), 1, 'float')
-    return rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.2104542553), cube_root__float.call(l), 1, 'float'), rt.binary('*', rt.f(0.79361778500000002), cube_root__float.call(m), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720467999999996), cube_root__float.call(s), 1, 'float'), 1, 'float')
+    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561198234558), r_lin, 1, 'float'), rt.binary('*', rt.f(0.53627520799636841), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565277814865), b_lin, 1, 'float'), 1, 'float')
+    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910701751709), r_lin, 1, 'float'), rt.binary('*', rt.f(0.68071895837783813), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.10740657895803452), b_lin, 1, 'float'), 1, 'float')
+    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794664382935), r_lin, 1, 'float'), rt.binary('*', rt.f(0.28184741735458374), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136159896851), b_lin, 1, 'float'), 1, 'float')
+    return rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.21045425534248352), cube_root__float.call(l), 1, 'float'), rt.binary('*', rt.f(0.79361778497695923), cube_root__float.call(m), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720468387007713), cube_root__float.call(s), 1, 'float'), 1, 'float')
   end
   fetch_texel__int_int_int_int = lambda do |x, y, width, height|
     wrapped_x = nil; wrapped_y = nil
@@ -115,7 +115,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', seed_f, rt.f(0)))
       seed_f = rt.swizzle(hash2__uint.call(rt.binary('+', agent_id, rt.i(99999), 1, 'uint')), 'x')
     end
-    inertia = rt.binary('+', rt.f(0.69999999999999996), rt.binary('*', seed_f, rt.f(0.29999999999999999), 1, 'float'), 1, 'float')
+    inertia = rt.binary('+', rt.f(0.69999998807907104), rt.binary('*', seed_f, rt.f(0.30000001192092896), 1, 'float'), 1, 'float')
     xi = wrap_int__int_int.call(rt.construct(1, rt.component_wise('floor', x), 'int'), width)
     yi = wrap_int__int_int.call(rt.construct(1, rt.component_wise('floor', y), 'int'), height)
     x1i = wrap_int__int_int.call(rt.binary('+', xi, rt.i(1), 1, 'int'), width)
@@ -140,12 +140,12 @@ run_pixel = lambda do |ctx, out|
     targetVx = rt.f(0)
     targetVy = rt.f(0)
     scale = rt.f(0.0)
-    if rt.bool(rt.binary('>', glen, rt.f(9.9999999999999995e-07)))
-      scale = rt.binary('/', rt.binary('*', _u_stride, rt.f(0.10000000000000001), 1, 'float'), glen, 1, 'float')
+    if rt.bool(rt.binary('>', glen, rt.f(9.9999999747524271e-07)))
+      scale = rt.binary('/', rt.binary('*', _u_stride, rt.f(0.10000000149011612), 1, 'float'), glen, 1, 'float')
       targetVx = rt.binary('*', gx, scale, 1, 'float')
       targetVy = rt.binary('*', gy, scale, 1, 'float')
     end
-    weightBlend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.01), 1, 'float'), rt.f(0), rt.f(1))
+    weightBlend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.0099999997764825821), 1, 'float'), rt.f(0), rt.f(1))
     blendFactor = rt.binary('*', inertia, weightBlend, 1, 'float')
     vx = rt.component_wise('mix', vx, targetVx, blendFactor)
     vy = rt.component_wise('mix', vy, targetVy, blendFactor)
@@ -155,8 +155,8 @@ run_pixel = lambda do |ctx, out|
     newPy = rt.binary('/', y, rt.swizzle(_u_resolution, 'y'), 1, 'float')
     normVx = rt.binary('/', vx, rt.swizzle(_u_resolution, 'x'), 1, 'float')
     normVy = rt.binary('/', vy, rt.swizzle(_u_resolution, 'y'), 1, 'float')
-    g['outXYZ'].replace((rt.construct(4, newPx, newPy, rt.swizzle(xyz, 'z'), alive)).map { |c| rt.f32(c) })
-    g['outVel'].replace((rt.construct(4, normVx, normVy, vz, seed_f)).map { |c| rt.f32(c) })
+    g['outXYZ'][0] = rt.f32(newPx); g['outXYZ'][1] = rt.f32(newPy); g['outXYZ'][2] = rt.f32(rt.swizzle(xyz, 'z')); g['outXYZ'][3] = rt.f32(alive)
+    g['outVel'][0] = rt.f32(normVx); g['outVel'][1] = rt.f32(normVy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f)
     g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
   end
   main__void.call

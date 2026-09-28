@@ -20,7 +20,7 @@ run_pixel = lambda do |ctx, out|
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
-  g['TAU'] = rt.f(6.2831853071800001)
+  g['TAU'] = rt.f(6.2831854820251465)
   hash_uint__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
@@ -28,18 +28,18 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967295), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
   end
   hash_f__float = lambda do |n|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(rt.float_bits_to_uint(n))), rt.f(4294967295), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint(rt.float_bits_to_uint(n))), rt.f(4294967296), 1, 'float')
   end
   wrapPosition__vec2 = lambda do |pos|
     pos = rt.copy(pos, 'float')
-    return rt.component_wise('fract', rt.binary('+', pos, rt.f(1), 2, 'float'))
+    return rt.component_wise('fract', rt.construct(2, ((pos[0]) + (rt.f(1))), ((pos[1]) + (rt.f(1)))))
   end
   luminance__vec3 = lambda do |color|
     color = rt.copy(color, 'float')
-    return rt.dot(color, rt.construct(3, rt.f(0.21260000000000001), rt.f(0.71519999999999995), rt.f(0.0722)))
+    return rt.dot(color, rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
   end
   sampleTrail__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
@@ -51,8 +51,8 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('<=', weight, rt.f(0)))
       return rt.f(0)
     end
-    blend = rt.component_wise('clamp', rt.binary('*', weight, rt.f(0.01), 1, 'float'), rt.f(0), rt.f(1))
-    return rt.binary('*', rt.binary('*', luminance__vec3.call(rt.swizzle(rt.texture(_u_inputTex, uv), 'rgb')), blend, 1, 'float'), rt.f(0.050000000000000003), 1, 'float')
+    blend = rt.component_wise('clamp', rt.binary('*', weight, rt.f(0.0099999997764825821), 1, 'float'), rt.f(0), rt.f(1))
+    return rt.binary('*', rt.binary('*', luminance__vec3.call(rt.swizzle(rt.texture(_u_inputTex, uv), 'rgb')), blend, 1, 'float'), rt.f(0.05000000074505806), 1, 'float')
   end
   main__void = lambda do
     age = nil; alive = nil; blend = nil; coord = nil; forwardDir = nil; heading = nil; leftDir = nil; localInput = nil; moveDir = nil; newAge = nil; newHeading = nil; newPos = nil; normalizedSpeed = nil; pos = nil; rgba = nil; rightDir = nil; seed = nil; sensorPosF = nil; sensorPosL = nil; sensorPosR = nil; speedScale = nil; stateSize = nil; valF = nil; valL = nil; valR = nil; vel = nil; xyz = nil
@@ -61,7 +61,7 @@ run_pixel = lambda do |ctx, out|
     xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
     vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
     rgba = rt.construct(4, rt.texel_fetch(_u_rgbaTex, coord, rt.i(0)))
-    pos = rt.construct(2, rt.swizzle(xyz, 'xy'))
+    pos = rt.construct(2, rt.swizzle(xyz, 'x'), rt.swizzle(xyz, 'y'))
     heading = rt.swizzle(xyz, 'z')
     alive = rt.swizzle(xyz, 'w')
     age = rt.swizzle(vel, 'z')
@@ -75,9 +75,9 @@ run_pixel = lambda do |ctx, out|
     forwardDir = rt.construct(2, rt.construct(2, rt.component_wise('cos', heading), rt.component_wise('sin', heading)))
     leftDir = rt.construct(2, rt.construct(2, rt.component_wise('cos', rt.binary('-', heading, _u_sensorAngle, 1, 'float')), rt.component_wise('sin', rt.binary('-', heading, _u_sensorAngle, 1, 'float'))))
     rightDir = rt.construct(2, rt.construct(2, rt.component_wise('cos', rt.binary('+', heading, _u_sensorAngle, 1, 'float')), rt.component_wise('sin', rt.binary('+', heading, _u_sensorAngle, 1, 'float'))))
-    sensorPosF = rt.construct(2, wrapPosition__vec2.call(rt.binary('+', pos, rt.binary('*', forwardDir, _u_sensorDistance, 2, 'float'), 2, 'float')))
-    sensorPosL = rt.construct(2, wrapPosition__vec2.call(rt.binary('+', pos, rt.binary('*', leftDir, _u_sensorDistance, 2, 'float'), 2, 'float')))
-    sensorPosR = rt.construct(2, wrapPosition__vec2.call(rt.binary('+', pos, rt.binary('*', rightDir, _u_sensorDistance, 2, 'float'), 2, 'float')))
+    sensorPosF = rt.construct(2, wrapPosition__vec2.call(rt.construct(2, ((pos[0]) + (((forwardDir[0]) * (_u_sensorDistance)))), ((pos[1]) + (((forwardDir[1]) * (_u_sensorDistance)))))))
+    sensorPosL = rt.construct(2, wrapPosition__vec2.call(rt.construct(2, ((pos[0]) + (((leftDir[0]) * (_u_sensorDistance)))), ((pos[1]) + (((leftDir[1]) * (_u_sensorDistance)))))))
+    sensorPosR = rt.construct(2, wrapPosition__vec2.call(rt.construct(2, ((pos[0]) + (((rightDir[0]) * (_u_sensorDistance)))), ((pos[1]) + (((rightDir[1]) * (_u_sensorDistance)))))))
     valF = rt.binary('+', sampleTrail__vec2.call(sensorPosF), sampleExternalField__vec2_float.call(sensorPosF, _u_inputWeight), 1, 'float')
     valL = rt.binary('+', sampleTrail__vec2.call(sensorPosL), sampleExternalField__vec2_float.call(sensorPosL, _u_inputWeight), 1, 'float')
     valR = rt.binary('+', sampleTrail__vec2.call(sensorPosR), sampleExternalField__vec2_float.call(sensorPosR, _u_inputWeight), 1, 'float')
@@ -98,17 +98,17 @@ run_pixel = lambda do |ctx, out|
     end
     moveDir = rt.construct(2, rt.construct(2, rt.component_wise('cos', newHeading), rt.component_wise('sin', newHeading)))
     speedScale = rt.f(1)
-    blend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.01), 1, 'float'), rt.f(0), rt.f(1))
+    blend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.0099999997764825821), 1, 'float'), rt.f(0), rt.f(1))
     localInput = rt.f(0.0)
     if rt.bool(rt.binary('>', blend, rt.f(0)))
       localInput = luminance__vec3.call(rt.swizzle(rt.texture(_u_inputTex, pos), 'rgb'))
-      speedScale = rt.component_wise('mix', rt.f(1), rt.component_wise('mix', rt.f(1.8), rt.f(0.34999999999999998), localInput), blend)
+      speedScale = rt.component_wise('mix', rt.f(1), rt.component_wise('mix', rt.f(1.7999999523162842), rt.f(0.34999999403953552), localInput), blend)
     end
-    normalizedSpeed = rt.binary('*', rt.binary('*', _u_moveSpeed, rt.f(0.001), 1, 'float'), speedScale, 1, 'float')
-    newPos = rt.construct(2, wrapPosition__vec2.call(rt.binary('+', pos, rt.binary('*', moveDir, normalizedSpeed, 2, 'float'), 2, 'float')))
-    newAge = rt.binary('+', age, rt.f(0.016), 1, 'float')
+    normalizedSpeed = rt.binary('*', rt.binary('*', _u_moveSpeed, rt.f(0.0010000000474974513), 1, 'float'), speedScale, 1, 'float')
+    newPos = rt.construct(2, wrapPosition__vec2.call(rt.construct(2, ((pos[0]) + (((moveDir[0]) * (normalizedSpeed)))), ((pos[1]) + (((moveDir[1]) * (normalizedSpeed)))))))
+    newAge = rt.binary('+', age, rt.f(0.016000000759959221), 1, 'float')
     g['outXYZ'].replace((rt.construct(4, newPos, newHeading, rt.f(1))).map { |c| rt.f32(c) })
-    g['outVel'].replace((rt.construct(4, rt.f(0), rt.f(0), newAge, seed)).map { |c| rt.f32(c) })
+    g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(newAge); g['outVel'][3] = rt.f32(seed)
     g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
   end
   main__void.call

@@ -15,7 +15,7 @@ run_pixel = lambda do |ctx, out|
   _u_mode = u.key?('mode') ? u['mode'] : rt.f(0.0)
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
   _u_renderScale = u.key?('renderScale') ? u['renderScale'] : rt.f(0.0)
-  g['TAU'] = rt.f(6.2831853071795862)
+  g['TAU'] = rt.f(6.2831854820251465)
   g['fragColor'] = rt.construct(4, 0.0)
   g['BASE_SEED_LINE'] = rt.construct(3, rt.f(37), rt.f(91), rt.f(53))
   g['TIME_SEED_LINE'] = rt.construct(3, rt.binary('+', rt.swizzle(g['BASE_SEED_LINE'], 'x'), rt.f(97), 1, 'float'), rt.binary('+', rt.swizzle(g['BASE_SEED_LINE'], 'y'), rt.f(59), 1, 'float'), rt.binary('+', rt.swizzle(g['BASE_SEED_LINE'], 'z'), rt.f(131), 1, 'float'))
@@ -28,64 +28,64 @@ run_pixel = lambda do |ctx, out|
   end
   mod289_vec3__vec3 = lambda do |x|
     x = rt.copy(x, 'float')
-    return rt.binary('-', x, rt.binary('*', rt.component_wise('floor', rt.binary('*', x, rt.binary('/', rt.f(1), rt.f(289), 1, 'float'), 3, 'float')), rt.f(289), 3, 'float'), 3, 'float')
+    return rt.construct(3, ((x[0]) - (((rt.component_wise('floor', rt.f32(((x[0]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))), ((x[1]) - (((rt.component_wise('floor', rt.f32(((x[1]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))), ((x[2]) - (((rt.component_wise('floor', rt.f32(((x[2]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))))
   end
   mod289_vec4__vec4 = lambda do |x|
     x = rt.copy(x, 'float')
-    return rt.binary('-', x, rt.binary('*', rt.component_wise('floor', rt.binary('*', x, rt.binary('/', rt.f(1), rt.f(289), 1, 'float'), 4, 'float')), rt.f(289), 4, 'float'), 4, 'float')
+    return rt.construct(4, ((x[0]) - (((rt.component_wise('floor', rt.f32(((x[0]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))), ((x[1]) - (((rt.component_wise('floor', rt.f32(((x[1]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))), ((x[2]) - (((rt.component_wise('floor', rt.f32(((x[2]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))), ((x[3]) - (((rt.component_wise('floor', rt.f32(((x[3]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))))
   end
   permute__vec4 = lambda do |x|
     x = rt.copy(x, 'float')
-    return mod289_vec4__vec4.call(rt.binary('*', rt.binary('+', rt.binary('*', x, rt.f(34), 4, 'float'), rt.f(1), 4, 'float'), x, 4, 'float'))
+    return mod289_vec4__vec4.call(rt.construct(4, ((((((x[0]) * (rt.f(34)))) + (rt.f(1)))) * (x[0])), ((((((x[1]) * (rt.f(34)))) + (rt.f(1)))) * (x[1])), ((((((x[2]) * (rt.f(34)))) + (rt.f(1)))) * (x[2])), ((((((x[3]) * (rt.f(34)))) + (rt.f(1)))) * (x[3]))))
   end
   taylor_inv_sqrt__vec4 = lambda do |r|
     r = rt.copy(r, 'float')
-    return rt.binary('-', rt.f(1.79284291400159), rt.binary('*', rt.f(0.85373472095313996), r, 4, 'float'), 4, 'float')
+    return rt.construct(4, ((rt.f(1.7928428649902344)) - (((rt.f(0.85373473167419434)) * (r[0])))), ((rt.f(1.7928428649902344)) - (((rt.f(0.85373473167419434)) * (r[1])))), ((rt.f(1.7928428649902344)) - (((rt.f(0.85373473167419434)) * (r[2])))), ((rt.f(1.7928428649902344)) - (((rt.f(0.85373473167419434)) * (r[3])))))
   end
   simplex_noise__vec3 = lambda do |v|
     v = rt.copy(v, 'float')
     a0 = nil; a1 = nil; b0 = nil; b1 = nil; c = nil; d = nil; g0 = nil; g0n = nil; g1 = nil; g1n = nil; g2 = nil; g2n = nil; g3 = nil; g3n = nil; h = nil; i = nil; i0 = nil; i1 = nil; i2 = nil; j = nil; l = nil; m0 = nil; m0sq = nil; m1 = nil; m1sq = nil; m2 = nil; m2sq = nil; m3 = nil; m3sq = nil; n_ = nil; norm = nil; ns = nil; p = nil; s0 = nil; s1 = nil; sh = nil; step1 = nil; x = nil; x0 = nil; x1 = nil; x2 = nil; x3 = nil; x_ = nil; y = nil; y_ = nil
-    c = rt.construct(2, rt.construct(2, rt.binary('/', rt.f(1), rt.f(6), 1, 'float'), rt.binary('/', rt.f(1), rt.f(3), 1, 'float')))
+    c = rt.construct(2, rt.construct(2, rt.f(0.1666666716337204), rt.f(0.3333333432674408)))
     d = rt.construct(4, rt.construct(4, rt.f(0), rt.f(0.5), rt.f(1), rt.f(2)))
-    i0 = rt.construct(3, rt.component_wise('floor', rt.binary('+', v, rt.dot(v, rt.construct(3, rt.swizzle(c, 'y'))), 3, 'float')))
-    x0 = rt.construct(3, rt.binary('+', rt.binary('-', v, i0, 3, 'float'), rt.dot(i0, rt.construct(3, rt.swizzle(c, 'x'))), 3, 'float'))
-    step1 = rt.construct(3, rt.component_wise('step', rt.construct(3, rt.swizzle(x0, 'y'), rt.swizzle(x0, 'z'), rt.swizzle(x0, 'x')), x0))
-    l = rt.construct(3, rt.binary('-', rt.construct(3, rt.f(1)), step1, 3, 'float'))
-    i1 = rt.construct(3, rt.component_wise('min', step1, rt.construct(3, rt.swizzle(l, 'z'), rt.swizzle(l, 'x'), rt.swizzle(l, 'y'))))
-    i2 = rt.construct(3, rt.component_wise('max', step1, rt.construct(3, rt.swizzle(l, 'z'), rt.swizzle(l, 'x'), rt.swizzle(l, 'y'))))
-    x1 = rt.construct(3, rt.binary('+', rt.binary('-', x0, i1, 3, 'float'), rt.construct(3, rt.swizzle(c, 'x')), 3, 'float'))
-    x2 = rt.construct(3, rt.binary('+', rt.binary('-', x0, i2, 3, 'float'), rt.construct(3, rt.swizzle(c, 'y')), 3, 'float'))
-    x3 = rt.construct(3, rt.binary('-', x0, rt.construct(3, rt.swizzle(d, 'y')), 3, 'float'))
+    i0 = rt.construct(3, rt.component_wise('floor', rt.f32(((v[0]) + (rt.dot(v, rt.construct(3, rt.swizzle(c, 'y'))))))), rt.component_wise('floor', rt.f32(((v[1]) + (rt.dot(v, rt.construct(3, rt.swizzle(c, 'y'))))))), rt.component_wise('floor', rt.f32(((v[2]) + (rt.dot(v, rt.construct(3, rt.swizzle(c, 'y'))))))))
+    x0 = rt.construct(3, ((((v[0]) - (i0[0]))) + (rt.dot(i0, rt.construct(3, rt.swizzle(c, 'x'))))), ((((v[1]) - (i0[1]))) + (rt.dot(i0, rt.construct(3, rt.swizzle(c, 'x'))))), ((((v[2]) - (i0[2]))) + (rt.dot(i0, rt.construct(3, rt.swizzle(c, 'x'))))))
+    step1 = rt.construct(3, rt.component_wise('step', (rt.swizzle(x0, 'y')), x0[0]), rt.component_wise('step', (rt.swizzle(x0, 'z')), x0[1]), rt.component_wise('step', (rt.swizzle(x0, 'x')), x0[2]))
+    l = rt.construct(3, (((rt.f(1))) - (step1[0])), (((rt.f(1))) - (step1[1])), (((rt.f(1))) - (step1[2])))
+    i1 = rt.construct(3, rt.component_wise('min', step1[0], (rt.swizzle(l, 'z'))), rt.component_wise('min', step1[1], (rt.swizzle(l, 'x'))), rt.component_wise('min', step1[2], (rt.swizzle(l, 'y'))))
+    i2 = rt.construct(3, rt.component_wise('max', step1[0], (rt.swizzle(l, 'z'))), rt.component_wise('max', step1[1], (rt.swizzle(l, 'x'))), rt.component_wise('max', step1[2], (rt.swizzle(l, 'y'))))
+    x1 = rt.construct(3, ((((x0[0]) - (i1[0]))) + ((rt.swizzle(c, 'x')))), ((((x0[1]) - (i1[1]))) + ((rt.swizzle(c, 'x')))), ((((x0[2]) - (i1[2]))) + ((rt.swizzle(c, 'x')))))
+    x2 = rt.construct(3, ((((x0[0]) - (i2[0]))) + ((rt.swizzle(c, 'y')))), ((((x0[1]) - (i2[1]))) + ((rt.swizzle(c, 'y')))), ((((x0[2]) - (i2[2]))) + ((rt.swizzle(c, 'y')))))
+    x3 = rt.construct(3, ((x0[0]) - ((rt.swizzle(d, 'y')))), ((x0[1]) - ((rt.swizzle(d, 'y')))), ((x0[2]) - ((rt.swizzle(d, 'y')))))
     i = rt.construct(3, mod289_vec3__vec3.call(i0))
-    p = rt.construct(4, permute__vec4.call(rt.binary('+', rt.binary('+', permute__vec4.call(rt.binary('+', rt.binary('+', permute__vec4.call(rt.binary('+', rt.swizzle(i, 'z'), rt.construct(4, rt.f(0), rt.swizzle(i1, 'z'), rt.swizzle(i2, 'z'), rt.f(1)), 4, 'float')), rt.swizzle(i, 'y'), 4, 'float'), rt.construct(4, rt.f(0), rt.swizzle(i1, 'y'), rt.swizzle(i2, 'y'), rt.f(1)), 4, 'float')), rt.swizzle(i, 'x'), 4, 'float'), rt.construct(4, rt.f(0), rt.swizzle(i1, 'x'), rt.swizzle(i2, 'x'), rt.f(1)), 4, 'float')))
-    n_ = rt.f(0.14285714285714285)
-    ns = rt.construct(3, rt.binary('-', rt.binary('*', n_, rt.construct(3, rt.swizzle(d, 'w'), rt.swizzle(d, 'y'), rt.swizzle(d, 'z')), 3, 'float'), rt.construct(3, rt.swizzle(d, 'x'), rt.swizzle(d, 'z'), rt.swizzle(d, 'x')), 3, 'float'))
-    j = rt.construct(4, rt.binary('-', p, rt.binary('*', rt.f(49), rt.component_wise('floor', rt.binary('*', rt.binary('*', p, rt.swizzle(ns, 'z'), 4, 'float'), rt.swizzle(ns, 'z'), 4, 'float')), 4, 'float'), 4, 'float'))
-    x_ = rt.construct(4, rt.component_wise('floor', rt.binary('*', j, rt.swizzle(ns, 'z'), 4, 'float')))
-    y_ = rt.construct(4, rt.component_wise('floor', rt.binary('-', j, rt.binary('*', rt.f(7), x_, 4, 'float'), 4, 'float')))
-    x = rt.construct(4, rt.binary('+', rt.binary('*', x_, rt.swizzle(ns, 'x'), 4, 'float'), rt.swizzle(ns, 'y'), 4, 'float'))
-    y = rt.construct(4, rt.binary('+', rt.binary('*', y_, rt.swizzle(ns, 'x'), 4, 'float'), rt.swizzle(ns, 'y'), 4, 'float'))
-    h = rt.construct(4, rt.binary('-', rt.binary('-', rt.f(1), rt.component_wise('abs', x), 4, 'float'), rt.component_wise('abs', y), 4, 'float'))
+    p = rt.construct(4, permute__vec4.call(rt.construct(4, (((((permute__vec4.call(rt.construct(4, (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[0]) + (rt.swizzle(i, 'y')))) + ((rt.f(0)))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[1]) + (rt.swizzle(i, 'y')))) + ((rt.swizzle(i1, 'y')))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[2]) + (rt.swizzle(i, 'y')))) + ((rt.swizzle(i2, 'y')))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[3]) + (rt.swizzle(i, 'y')))) + ((rt.f(1)))))))[0]) + (rt.swizzle(i, 'x')))) + ((rt.f(0)))), (((((permute__vec4.call(rt.construct(4, (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[0]) + (rt.swizzle(i, 'y')))) + ((rt.f(0)))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[1]) + (rt.swizzle(i, 'y')))) + ((rt.swizzle(i1, 'y')))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[2]) + (rt.swizzle(i, 'y')))) + ((rt.swizzle(i2, 'y')))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[3]) + (rt.swizzle(i, 'y')))) + ((rt.f(1)))))))[1]) + (rt.swizzle(i, 'x')))) + ((rt.swizzle(i1, 'x')))), (((((permute__vec4.call(rt.construct(4, (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[0]) + (rt.swizzle(i, 'y')))) + ((rt.f(0)))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[1]) + (rt.swizzle(i, 'y')))) + ((rt.swizzle(i1, 'y')))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[2]) + (rt.swizzle(i, 'y')))) + ((rt.swizzle(i2, 'y')))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[3]) + (rt.swizzle(i, 'y')))) + ((rt.f(1)))))))[2]) + (rt.swizzle(i, 'x')))) + ((rt.swizzle(i2, 'x')))), (((((permute__vec4.call(rt.construct(4, (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[0]) + (rt.swizzle(i, 'y')))) + ((rt.f(0)))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[1]) + (rt.swizzle(i, 'y')))) + ((rt.swizzle(i1, 'y')))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[2]) + (rt.swizzle(i, 'y')))) + ((rt.swizzle(i2, 'y')))), (((((permute__vec4.call(rt.construct(4, ((rt.swizzle(i, 'z')) + ((rt.f(0)))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i1, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.swizzle(i2, 'z')))), ((rt.swizzle(i, 'z')) + ((rt.f(1)))))))[3]) + (rt.swizzle(i, 'y')))) + ((rt.f(1)))))))[3]) + (rt.swizzle(i, 'x')))) + ((rt.f(1)))))))
+    n_ = rt.f(0.1428571492433548)
+    ns = rt.construct(3, ((((n_) * ((rt.swizzle(d, 'w'))))) - ((rt.swizzle(d, 'x')))), ((((n_) * ((rt.swizzle(d, 'y'))))) - ((rt.swizzle(d, 'z')))), ((((n_) * ((rt.swizzle(d, 'z'))))) - ((rt.swizzle(d, 'x')))))
+    j = rt.construct(4, ((p[0]) - (((rt.f(49)) * (rt.component_wise('floor', rt.f32(((((p[0]) * (rt.swizzle(ns, 'z')))) * (rt.swizzle(ns, 'z'))))))))), ((p[1]) - (((rt.f(49)) * (rt.component_wise('floor', rt.f32(((((p[1]) * (rt.swizzle(ns, 'z')))) * (rt.swizzle(ns, 'z'))))))))), ((p[2]) - (((rt.f(49)) * (rt.component_wise('floor', rt.f32(((((p[2]) * (rt.swizzle(ns, 'z')))) * (rt.swizzle(ns, 'z'))))))))), ((p[3]) - (((rt.f(49)) * (rt.component_wise('floor', rt.f32(((((p[3]) * (rt.swizzle(ns, 'z')))) * (rt.swizzle(ns, 'z'))))))))))
+    x_ = rt.construct(4, rt.component_wise('floor', rt.f32(((j[0]) * (rt.swizzle(ns, 'z'))))), rt.component_wise('floor', rt.f32(((j[1]) * (rt.swizzle(ns, 'z'))))), rt.component_wise('floor', rt.f32(((j[2]) * (rt.swizzle(ns, 'z'))))), rt.component_wise('floor', rt.f32(((j[3]) * (rt.swizzle(ns, 'z'))))))
+    y_ = rt.construct(4, rt.component_wise('floor', rt.f32(((j[0]) - (((rt.f(7)) * (x_[0])))))), rt.component_wise('floor', rt.f32(((j[1]) - (((rt.f(7)) * (x_[1])))))), rt.component_wise('floor', rt.f32(((j[2]) - (((rt.f(7)) * (x_[2])))))), rt.component_wise('floor', rt.f32(((j[3]) - (((rt.f(7)) * (x_[3])))))))
+    x = rt.construct(4, ((((x_[0]) * (rt.swizzle(ns, 'x')))) + (rt.swizzle(ns, 'y'))), ((((x_[1]) * (rt.swizzle(ns, 'x')))) + (rt.swizzle(ns, 'y'))), ((((x_[2]) * (rt.swizzle(ns, 'x')))) + (rt.swizzle(ns, 'y'))), ((((x_[3]) * (rt.swizzle(ns, 'x')))) + (rt.swizzle(ns, 'y'))))
+    y = rt.construct(4, ((((y_[0]) * (rt.swizzle(ns, 'x')))) + (rt.swizzle(ns, 'y'))), ((((y_[1]) * (rt.swizzle(ns, 'x')))) + (rt.swizzle(ns, 'y'))), ((((y_[2]) * (rt.swizzle(ns, 'x')))) + (rt.swizzle(ns, 'y'))), ((((y_[3]) * (rt.swizzle(ns, 'x')))) + (rt.swizzle(ns, 'y'))))
+    h = rt.construct(4, ((((rt.f(1)) - (rt.component_wise('abs', x[0])))) - (rt.component_wise('abs', y[0]))), ((((rt.f(1)) - (rt.component_wise('abs', x[1])))) - (rt.component_wise('abs', y[1]))), ((((rt.f(1)) - (rt.component_wise('abs', x[2])))) - (rt.component_wise('abs', y[2]))), ((((rt.f(1)) - (rt.component_wise('abs', x[3])))) - (rt.component_wise('abs', y[3]))))
     b0 = rt.construct(4, rt.construct(4, rt.swizzle(x, 'x'), rt.swizzle(x, 'y'), rt.swizzle(y, 'x'), rt.swizzle(y, 'y')))
     b1 = rt.construct(4, rt.construct(4, rt.swizzle(x, 'z'), rt.swizzle(x, 'w'), rt.swizzle(y, 'z'), rt.swizzle(y, 'w')))
-    s0 = rt.construct(4, rt.binary('+', rt.binary('*', rt.component_wise('floor', b0), rt.f(2), 4, 'float'), rt.f(1), 4, 'float'))
-    s1 = rt.construct(4, rt.binary('+', rt.binary('*', rt.component_wise('floor', b1), rt.f(2), 4, 'float'), rt.f(1), 4, 'float'))
+    s0 = rt.construct(4, ((((rt.component_wise('floor', b0[0])) * (rt.f(2)))) + (rt.f(1))), ((((rt.component_wise('floor', b0[1])) * (rt.f(2)))) + (rt.f(1))), ((((rt.component_wise('floor', b0[2])) * (rt.f(2)))) + (rt.f(1))), ((((rt.component_wise('floor', b0[3])) * (rt.f(2)))) + (rt.f(1))))
+    s1 = rt.construct(4, ((((rt.component_wise('floor', b1[0])) * (rt.f(2)))) + (rt.f(1))), ((((rt.component_wise('floor', b1[1])) * (rt.f(2)))) + (rt.f(1))), ((((rt.component_wise('floor', b1[2])) * (rt.f(2)))) + (rt.f(1))), ((((rt.component_wise('floor', b1[3])) * (rt.f(2)))) + (rt.f(1))))
     sh = rt.construct(4, rt.unary('-', rt.component_wise('step', h, rt.construct(4, rt.f(0)))))
-    a0 = rt.construct(4, rt.binary('+', rt.construct(4, rt.swizzle(b0, 'x'), rt.swizzle(b0, 'z'), rt.swizzle(b0, 'y'), rt.swizzle(b0, 'w')), rt.binary('*', rt.construct(4, rt.swizzle(s0, 'x'), rt.swizzle(s0, 'z'), rt.swizzle(s0, 'y'), rt.swizzle(s0, 'w')), rt.construct(4, rt.swizzle(sh, 'x'), rt.swizzle(sh, 'x'), rt.swizzle(sh, 'y'), rt.swizzle(sh, 'y')), 4, 'float'), 4, 'float'))
-    a1 = rt.construct(4, rt.binary('+', rt.construct(4, rt.swizzle(b1, 'x'), rt.swizzle(b1, 'z'), rt.swizzle(b1, 'y'), rt.swizzle(b1, 'w')), rt.binary('*', rt.construct(4, rt.swizzle(s1, 'x'), rt.swizzle(s1, 'z'), rt.swizzle(s1, 'y'), rt.swizzle(s1, 'w')), rt.construct(4, rt.swizzle(sh, 'z'), rt.swizzle(sh, 'z'), rt.swizzle(sh, 'w'), rt.swizzle(sh, 'w')), 4, 'float'), 4, 'float'))
+    a0 = rt.construct(4, (((rt.swizzle(b0, 'x'))) + ((((rt.swizzle(s0, 'x'))) * ((rt.swizzle(sh, 'x')))))), (((rt.swizzle(b0, 'z'))) + ((((rt.swizzle(s0, 'z'))) * ((rt.swizzle(sh, 'x')))))), (((rt.swizzle(b0, 'y'))) + ((((rt.swizzle(s0, 'y'))) * ((rt.swizzle(sh, 'y')))))), (((rt.swizzle(b0, 'w'))) + ((((rt.swizzle(s0, 'w'))) * ((rt.swizzle(sh, 'y')))))))
+    a1 = rt.construct(4, (((rt.swizzle(b1, 'x'))) + ((((rt.swizzle(s1, 'x'))) * ((rt.swizzle(sh, 'z')))))), (((rt.swizzle(b1, 'z'))) + ((((rt.swizzle(s1, 'z'))) * ((rt.swizzle(sh, 'z')))))), (((rt.swizzle(b1, 'y'))) + ((((rt.swizzle(s1, 'y'))) * ((rt.swizzle(sh, 'w')))))), (((rt.swizzle(b1, 'w'))) + ((((rt.swizzle(s1, 'w'))) * ((rt.swizzle(sh, 'w')))))))
     g0 = rt.construct(3, rt.construct(3, rt.swizzle(a0, 'x'), rt.swizzle(a0, 'y'), rt.swizzle(h, 'x')))
     g1 = rt.construct(3, rt.construct(3, rt.swizzle(a0, 'z'), rt.swizzle(a0, 'w'), rt.swizzle(h, 'y')))
     g2 = rt.construct(3, rt.construct(3, rt.swizzle(a1, 'x'), rt.swizzle(a1, 'y'), rt.swizzle(h, 'z')))
     g3 = rt.construct(3, rt.construct(3, rt.swizzle(a1, 'z'), rt.swizzle(a1, 'w'), rt.swizzle(h, 'w')))
-    norm = rt.construct(4, taylor_inv_sqrt__vec4.call(rt.construct(4, rt.dot(g0, g0), rt.dot(g1, g1), rt.dot(g2, g2), rt.dot(g3, g3))))
-    g0n = rt.construct(3, rt.binary('*', g0, rt.swizzle(norm, 'x'), 3, 'float'))
-    g1n = rt.construct(3, rt.binary('*', g1, rt.swizzle(norm, 'y'), 3, 'float'))
-    g2n = rt.construct(3, rt.binary('*', g2, rt.swizzle(norm, 'z'), 3, 'float'))
-    g3n = rt.construct(3, rt.binary('*', g3, rt.swizzle(norm, 'w'), 3, 'float'))
-    m0 = rt.component_wise('max', rt.binary('-', rt.f(0.59999999999999998), rt.dot(x0, x0), 1, 'float'), rt.f(0))
-    m1 = rt.component_wise('max', rt.binary('-', rt.f(0.59999999999999998), rt.dot(x1, x1), 1, 'float'), rt.f(0))
-    m2 = rt.component_wise('max', rt.binary('-', rt.f(0.59999999999999998), rt.dot(x2, x2), 1, 'float'), rt.f(0))
-    m3 = rt.component_wise('max', rt.binary('-', rt.f(0.59999999999999998), rt.dot(x3, x3), 1, 'float'), rt.f(0))
+    norm = rt.construct(4, taylor_inv_sqrt__vec4.call(rt.construct(4, (rt.dot(g0, g0)), (rt.dot(g1, g1)), (rt.dot(g2, g2)), (rt.dot(g3, g3)))))
+    g0n = rt.construct(3, ((g0[0]) * (rt.swizzle(norm, 'x'))), ((g0[1]) * (rt.swizzle(norm, 'x'))), ((g0[2]) * (rt.swizzle(norm, 'x'))))
+    g1n = rt.construct(3, ((g1[0]) * (rt.swizzle(norm, 'y'))), ((g1[1]) * (rt.swizzle(norm, 'y'))), ((g1[2]) * (rt.swizzle(norm, 'y'))))
+    g2n = rt.construct(3, ((g2[0]) * (rt.swizzle(norm, 'z'))), ((g2[1]) * (rt.swizzle(norm, 'z'))), ((g2[2]) * (rt.swizzle(norm, 'z'))))
+    g3n = rt.construct(3, ((g3[0]) * (rt.swizzle(norm, 'w'))), ((g3[1]) * (rt.swizzle(norm, 'w'))), ((g3[2]) * (rt.swizzle(norm, 'w'))))
+    m0 = rt.component_wise('max', rt.binary('-', rt.f(0.60000002384185791), rt.dot(x0, x0), 1, 'float'), rt.f(0))
+    m1 = rt.component_wise('max', rt.binary('-', rt.f(0.60000002384185791), rt.dot(x1, x1), 1, 'float'), rt.f(0))
+    m2 = rt.component_wise('max', rt.binary('-', rt.f(0.60000002384185791), rt.dot(x2, x2), 1, 'float'), rt.f(0))
+    m3 = rt.component_wise('max', rt.binary('-', rt.f(0.60000002384185791), rt.dot(x3, x3), 1, 'float'), rt.f(0))
     m0sq = rt.binary('*', m0, m0, 1, 'float')
     m1sq = rt.binary('*', m1, m1, 1, 'float')
     m2sq = rt.binary('*', m2, m2, 1, 'float')
@@ -153,38 +153,30 @@ run_pixel = lambda do |ctx, out|
     end
     return wrapped
   end
-  pcg__uvec3 = lambda do |v|
-    v = rt.copy(v, 'uint')
-    v.replace(rt.binary('+', rt.binary('*', v, rt.i(1664525), 3, 'uint'), rt.i(1013904223), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    v.replace(rt.binary('^', v, rt.binary('>>', v, rt.i(16), 3, 'uint'), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    return v
+  pcg__uvec3 = lambda do |value|
+    value = rt.copy(value, 'uint')
+    return rt.pcg3d(value)
   end
   hashNoise__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     seed = nil
     seed = rt.construct(3, rt.float_bits_to_uint(rt.swizzle(p, 'x')), rt.float_bits_to_uint(rt.swizzle(p, 'y')), rt.float_bits_to_uint(rt.swizzle(p, 'z')), 'uint')
-    return rt.binary('/', rt.construct(1, rt.swizzle(pcg__uvec3.call(seed), 'x')), rt.construct(1, rt.i(4294967295)), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.swizzle(rt.pcg3d(seed), 'x')), rt.f(4294967296), 1, 'float')
   end
   valueNoise__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     _u = nil; c000 = nil; c001 = nil; c010 = nil; c011 = nil; c100 = nil; c101 = nil; c110 = nil; c111 = nil; f = nil; i = nil
-    i = rt.construct(3, rt.component_wise('floor', p))
-    f = rt.construct(3, rt.component_wise('fract', p))
-    _u = rt.construct(3, rt.binary('*', rt.binary('*', f, f, 3, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 3, 'float'), 3, 'float'), 3, 'float'))
+    i = rt.construct(3, rt.component_wise('floor', p[0]), rt.component_wise('floor', p[1]), rt.component_wise('floor', p[2]))
+    f = rt.construct(3, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]), rt.component_wise('fract', p[2]))
+    _u = rt.construct(3, ((((f[0]) * (f[0]))) * (((rt.f(3)) - (((rt.f(2)) * (f[0])))))), ((((f[1]) * (f[1]))) * (((rt.f(3)) - (((rt.f(2)) * (f[1])))))), ((((f[2]) * (f[2]))) * (((rt.f(3)) - (((rt.f(2)) * (f[2])))))))
     c000 = hashNoise__vec3.call(i)
-    c100 = hashNoise__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(1), rt.f(0), rt.f(0)), 3, 'float'))
-    c010 = hashNoise__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(0), rt.f(1), rt.f(0)), 3, 'float'))
-    c110 = hashNoise__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(1), rt.f(1), rt.f(0)), 3, 'float'))
-    c001 = hashNoise__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(0), rt.f(0), rt.f(1)), 3, 'float'))
-    c101 = hashNoise__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), 3, 'float'))
-    c011 = hashNoise__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(0), rt.f(1), rt.f(1)), 3, 'float'))
-    c111 = hashNoise__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(1), rt.f(1), rt.f(1)), 3, 'float'))
+    c100 = hashNoise__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(0)))), ((i[2]) + ((rt.f(0))))))
+    c010 = hashNoise__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(0)))), ((i[1]) + ((rt.f(1)))), ((i[2]) + ((rt.f(0))))))
+    c110 = hashNoise__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(1)))), ((i[2]) + ((rt.f(0))))))
+    c001 = hashNoise__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(0)))), ((i[1]) + ((rt.f(0)))), ((i[2]) + ((rt.f(1))))))
+    c101 = hashNoise__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(0)))), ((i[2]) + ((rt.f(1))))))
+    c011 = hashNoise__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(0)))), ((i[1]) + ((rt.f(1)))), ((i[2]) + ((rt.f(1))))))
+    c111 = hashNoise__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(1)))), ((i[2]) + ((rt.f(1))))))
     return rt.component_wise('mix', rt.component_wise('mix', rt.component_wise('mix', c000, c100, rt.swizzle(_u, 'x')), rt.component_wise('mix', c010, c110, rt.swizzle(_u, 'x')), rt.swizzle(_u, 'y')), rt.component_wise('mix', rt.component_wise('mix', c001, c101, rt.swizzle(_u, 'x')), rt.component_wise('mix', c011, c111, rt.swizzle(_u, 'x')), rt.swizzle(_u, 'y')), rt.swizzle(_u, 'z'))
   end
   vhs_computeNoise__vec2_vec2_float_float_vec3_vec3 = lambda do |coord, freq, _t, spd, baseOff, timeOff|
@@ -208,14 +200,14 @@ run_pixel = lambda do |ctx, out|
   end
   vhs_gradValue__float_float_float_float = lambda do |yNorm, freqY, _t, spd|
     _g = nil; base = nil
-    base = vhs_computeNoise__vec2_vec2_float_float_vec3_vec3.call(rt.construct(2, rt.f(0), yNorm), rt.construct(2, rt.f(1), freqY), _t, spd, rt.construct(3, rt.f(17), rt.f(29), rt.f(47)), rt.construct(3, rt.f(71), rt.f(113), rt.f(191)))
+    base = vhs_computeNoise__vec2_vec2_float_float_vec3_vec3.call(rt.construct(2, (rt.f(0)), (yNorm)), rt.construct(2, (rt.f(1)), (freqY)), _t, spd, rt.construct(3, (rt.f(17)), (rt.f(29)), (rt.f(47))), rt.construct(3, (rt.f(71)), (rt.f(113)), (rt.f(191))))
     _g = rt.component_wise('max', rt.binary('-', base, rt.f(0.5), 1, 'float'), rt.f(0))
     return rt.component_wise('min', rt.binary('*', _g, rt.f(2), 1, 'float'), rt.f(1))
   end
   vhs_scanNoise__vec2_vec2_float_float = lambda do |coord, freq, _t, spd|
     coord = rt.copy(coord, 'float')
     freq = rt.copy(freq, 'float')
-    return vhs_computeNoise__vec2_vec2_float_float_vec3_vec3.call(coord, freq, _t, spd, rt.construct(3, rt.f(37), rt.f(59), rt.f(83)), rt.construct(3, rt.f(131), rt.f(173), rt.f(211)))
+    return vhs_computeNoise__vec2_vec2_float_float_vec3_vec3.call(coord, freq, _t, spd, rt.construct(3, (rt.f(37)), (rt.f(59)), (rt.f(83))), rt.construct(3, (rt.f(131)), (rt.f(173)), (rt.f(211))))
   end
   main__void = lambda do
     additive = nil; base_coord = nil; blended = nil; boosted = nil; combined_error = nil; coord_norm = nil; destCoord = nil; dims = nil; freq_line = nil; freq_swerve = nil; fullRes = nil; fullWidth = nil; gid = nil; globalGid = nil; globalGid_f = nil; globalSampleX = nil; gradDest = nil; gradSource = nil; height_f = nil; input_size = nil; input_texel = nil; line_noise = nil; line_weighted = nil; localSampleX = nil; m = nil; noiseColor = nil; scanBase = nil; scanDest = nil; scanFreq = nil; scanSource = nil; shiftAmount = nil; shift_amount = nil; shift_pixels = nil; speed_value = nil; srcTexel = nil; srcXNorm = nil; swerve_coord = nil; swerve_height = nil; swerve_noise = nil; swerve_weight = nil; texel = nil; tile_height = nil; tile_width = nil; time_value = nil; white_base = nil; white_weighted = nil; width_f = nil; wrappedGlobalX = nil; xNorm = nil; yNorm = nil
@@ -227,7 +219,7 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (rt.binary('/', _u_fullResolution, _u_renderScale, 2, 'float')) : (rt.construct(2, input_size))))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (((_u_fullResolution[0]) / (_u_renderScale))) : ((input_size[0]))), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (((_u_fullResolution[1]) / (_u_renderScale))) : ((input_size[1]))))
     width_f = rt.swizzle(fullRes, 'x')
     height_f = rt.swizzle(fullRes, 'y')
     dims = rt.construct(2, rt.construct(2, width_f, height_f))
@@ -281,9 +273,9 @@ run_pixel = lambda do |ctx, out|
       scanBase = rt.binary('+', rt.component_wise('floor', rt.binary('*', height_f, rt.f(0.5), 1, 'float')), rt.f(1), 1, 'float')
       scanFreq = rt.construct(2, 0.0)
       if rt.bool(rt.binary('<', height_f, width_f))
-        scanFreq.replace((rt.construct(2, rt.binary('*', scanBase, rt.binary('/', height_f, width_f, 1, 'float'), 1, 'float'), scanBase)).map { |c| rt.f32(c) })
+        scanFreq[0] = rt.f32(rt.binary('*', scanBase, rt.binary('/', height_f, width_f, 1, 'float'), 1, 'float')); scanFreq[1] = rt.f32(scanBase)
       else
-        scanFreq.replace((rt.construct(2, scanBase, rt.binary('*', scanBase, rt.binary('/', width_f, height_f, 1, 'float'), 1, 'float'))).map { |c| rt.f32(c) })
+        scanFreq[0] = rt.f32(scanBase); scanFreq[1] = rt.f32(rt.binary('*', scanBase, rt.binary('/', width_f, height_f, 1, 'float'), 1, 'float'))
       end
       scanDest = vhs_scanNoise__vec2_vec2_float_float.call(destCoord, scanFreq, time_value, rt.binary('*', speed_value, rt.f(100), 1, 'float'))
       fullWidth = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (rt.swizzle(_u_fullResolution, 'x')) : (width_f))
@@ -297,17 +289,17 @@ run_pixel = lambda do |ctx, out|
       localSampleX = rt.component_wise('clamp', localSampleX, rt.i(0), rt.binary('-', rt.construct(1, tile_width, 'int'), rt.i(1), 1, 'int'))
       srcTexel = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, localSampleX, rt.construct(1, rt.swizzle(gid, 'y'), 'int'), 'int'), rt.i(0)))
       srcXNorm = rt.binary('/', rt.binary('+', rt.construct(1, wrappedGlobalX), rt.f(0.5), 1, 'float'), rt.swizzle(_u_fullResolution, 'x'), 1, 'float')
-      scanSource = vhs_scanNoise__vec2_vec2_float_float.call(rt.construct(2, srcXNorm, yNorm), scanFreq, time_value, rt.binary('*', speed_value, rt.f(100), 1, 'float'))
+      scanSource = vhs_scanNoise__vec2_vec2_float_float.call(rt.construct(2, (srcXNorm), (yNorm)), scanFreq, time_value, rt.binary('*', speed_value, rt.f(100), 1, 'float'))
       gradSource = vhs_gradValue__float_float_float_float.call(yNorm, rt.f(5), time_value, speed_value)
       noiseColor = rt.construct(3, rt.construct(3, scanSource))
-      blended = rt.construct(3, rt.component_wise('mix', rt.swizzle(srcTexel, 'rgb'), noiseColor, rt.binary('*', gradSource, _u_noise, 1, 'float')))
+      blended = rt.construct(3, rt.component_wise('mix', rt.swizzle(srcTexel, 'r'), noiseColor[0], ((gradSource) * (_u_noise))), rt.component_wise('mix', rt.swizzle(srcTexel, 'g'), noiseColor[1], ((gradSource) * (_u_noise))), rt.component_wise('mix', rt.swizzle(srcTexel, 'b'), noiseColor[2], ((gradSource) * (_u_noise))))
       g['fragColor'].replace((rt.construct(4, blended, rt.swizzle(srcTexel, 'a'))).map { |c| rt.f32(c) })
     else
       base_coord = rt.construct(2, rt.construct(1, rt.swizzle(gid, 'x'), 'int'), rt.construct(1, rt.swizzle(gid, 'y'), 'int'), 'int')
       input_texel = rt.construct(4, rt.texel_fetch(_u_inputTex, base_coord, rt.i(0)))
       coord_norm = rt.construct(2, normalized_coord__uvec2_vec2.call(globalGid, dims))
       freq_line = rt.construct(2, rt.construct(2, rt.component_wise('max', rt.component_wise('floor', rt.binary('*', width_f, rt.f(0.5), 1, 'float')), rt.f(1)), rt.component_wise('max', rt.component_wise('floor', rt.binary('*', height_f, rt.f(0.5), 1, 'float')), rt.f(1))))
-      swerve_height = rt.component_wise('max', rt.component_wise('floor', rt.binary('*', height_f, rt.f(0.01), 1, 'float')), rt.f(1))
+      swerve_height = rt.component_wise('max', rt.component_wise('floor', rt.binary('*', height_f, rt.f(0.0099999997764825821), 1, 'float')), rt.f(1))
       freq_swerve = rt.construct(2, rt.construct(2, rt.f(1), swerve_height))
       swerve_coord = rt.construct(2, rt.construct(2, rt.f(0), rt.swizzle(coord_norm, 'y')))
       line_noise = compute_exponential_noise__vec2_vec2_float_float_vec3_vec3.call(coord_norm, freq_line, time_value, rt.binary('*', speed_value, rt.f(10), 1, 'float'), g['BASE_SEED_LINE'], g['TIME_SEED_LINE'])
@@ -320,7 +312,7 @@ run_pixel = lambda do |ctx, out|
       white_weighted = rt.binary('*', white_base, swerve_weight, 1, 'float')
       combined_error = clamp01__float.call(rt.binary('+', line_weighted, white_weighted, 1, 'float'))
       fullWidth = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (rt.swizzle(_u_fullResolution, 'x')) : (width_f))
-      shift_amount = rt.binary('*', rt.binary('*', rt.binary('*', combined_error, fullWidth, 1, 'float'), rt.f(0.025000000000000001), 1, 'float'), _u_distortion, 1, 'float')
+      shift_amount = rt.binary('*', rt.binary('*', rt.binary('*', combined_error, fullWidth, 1, 'float'), rt.f(0.02500000037252903), 1, 'float'), _u_distortion, 1, 'float')
       shift_pixels = rt.construct(1, rt.component_wise('floor', shift_amount), 'int')
       globalSampleX = rt.binary('-', rt.construct(1, rt.swizzle(globalGid, 'x')), rt.construct(1, shift_pixels), 1, 'float')
       wrappedGlobalX = wrap_coord__int_int.call(rt.construct(1, globalSampleX, 'int'), rt.construct(1, fullWidth, 'int'))
@@ -331,7 +323,7 @@ run_pixel = lambda do |ctx, out|
       localSampleX = rt.component_wise('clamp', localSampleX, rt.i(0), rt.binary('-', rt.construct(1, tile_width, 'int'), rt.i(1), 1, 'int'))
       texel = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, localSampleX, rt.construct(1, rt.swizzle(gid, 'y'), 'int'), 'int'), rt.i(0)))
       additive = rt.component_wise('clamp', rt.binary('*', rt.binary('*', rt.binary('*', line_weighted, white_weighted, 1, 'float'), rt.f(4), 1, 'float'), _u_noise, 1, 'float'), rt.f(0), rt.f(4))
-      boosted = rt.construct(3, rt.component_wise('clamp', rt.binary('+', rt.swizzle(texel, 'rgb'), rt.construct(3, additive), 3, 'float'), rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))))
+      boosted = rt.construct(3, rt.component_wise('clamp', rt.f32(((rt.swizzle(texel, 'r')) + ((additive)))), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.f32(((rt.swizzle(texel, 'g')) + ((additive)))), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.f32(((rt.swizzle(texel, 'b')) + ((additive)))), (rt.f(0)), (rt.f(1))))
       g['fragColor'].replace((rt.construct(4, boosted, rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
     end
   end

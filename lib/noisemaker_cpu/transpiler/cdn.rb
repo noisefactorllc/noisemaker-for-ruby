@@ -546,6 +546,7 @@ module NoisemakerCpu
             result["paramOrder"] = params_key_order(text)
           end
           _add_cpu_iteration_metadata(effect_id, result)
+          _apply_pinned_glsl_root(effect_id, result)
           return result
         end
 
@@ -588,10 +589,33 @@ module NoisemakerCpu
             }
           end
         _add_cpu_iteration_metadata(effect_id, result)
+        _apply_pinned_glsl_root(effect_id, result)
         # The cache is written as JSON, so paramOrder is stored explicitly --
         # a raw-text key scan on re-read would see whatever order JSON.parse
         # happened to preserve, not necessarily the CDN bundle's own order.
         _write_file(cache, JSON.generate(result))
+        result
+      end
+
+      # When NM_GLSL_ROOT points at a pinned upstream noisemaker checkout,
+      # program GLSL is taken from shaders/effects/<id>/glsl/<program>.glsl
+      # instead of the rolling CDN tag, so the transpiled bundle is tied to
+      # the exact upstream sources the oracle compiled (the CDN tag may have
+      # drifted past the pinned revision).
+      def self.glsl_root
+        @glsl_root = ENV["NM_GLSL_ROOT"] if @glsl_root.nil?
+        @glsl_root.nil? || @glsl_root.empty? ? nil : @glsl_root
+      end
+
+      def self._apply_pinned_glsl_root(effect_id, result)
+        return result if glsl_root.nil?
+        return result if result["programs"].nil?
+
+        result["programs"] = result["programs"].each_with_object({}) do |(program, _current), out|
+          path = File.join(glsl_root, "shaders", "effects", *effect_id.split("/"), "glsl", "#{program}.glsl")
+          out[program] = File.read(path)
+        end
+        result["glslRoot"] = glsl_root
         result
       end
 

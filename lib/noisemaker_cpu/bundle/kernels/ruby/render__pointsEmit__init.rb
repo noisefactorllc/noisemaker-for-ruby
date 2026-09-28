@@ -26,7 +26,7 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967295), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
   end
   hash2__uint = lambda do |seed|
     return rt.construct(2, hash__uint.call(seed), hash__uint.call(rt.binary('+', seed, rt.i(1), 1, 'uint')))
@@ -34,12 +34,12 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _t = nil; a = nil; agentSeed = nil; angle = nil; attritionRate = nil; center = nil; centerSeed = nil; check_seed = nil; clusterId = nil; clusterSeed = nil; needsRespawn = nil; newCol = nil; newPos = nil; pCol = nil; pPos = nil; pVel = nil; r = nil; radius = nil; respawnRand = nil; rnd = nil; rotRand = nil; sampledCol = nil; stateCoord = nil; strideRand = nil; texCoord = nil; texDims = nil; timeBits = nil; uv = nil
     stateCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(1, _u_stateSize), 2, 'float'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((_u_stateSize))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((_u_stateSize))))
     agentSeed = rt.binary('+', rt.construct(1, rt.binary('+', rt.swizzle(stateCoord, 'x'), rt.binary('*', rt.swizzle(stateCoord, 'y'), _u_stateSize, 1, 'int'), 1, 'int'), 'uint'), rt.construct(1, _u_seed, 'uint'), 1, 'uint')
     pPos = rt.construct(4, rt.texel_fetch(_u_xyzTex, stateCoord, rt.i(0)))
     pVel = rt.construct(4, rt.texel_fetch(_u_velTex, stateCoord, rt.i(0)))
     pCol = rt.construct(4, rt.texel_fetch(_u_rgbaTex, stateCoord, rt.i(0)))
-    needsRespawn = (rt.bool((rt.bool(_u_resetState) || rt.bool(rt.binary('<', rt.swizzle(pPos, 'w'), rt.f(0.5))) ? 1 : 0)) || rt.bool((rt.bool(rt.binary('<', _u_time, rt.f(0.01))) && rt.bool(rt.binary('==', rt.swizzle(pPos, 'w'), rt.f(0))) ? 1 : 0)) ? 1 : 0)
+    needsRespawn = (rt.bool((rt.bool(_u_resetState) || rt.bool(rt.binary('<', rt.swizzle(pPos, 'w'), rt.f(0.5))) ? 1 : 0)) || rt.bool((rt.bool(rt.binary('<', _u_time, rt.f(0.0099999997764825821))) && rt.bool(rt.binary('==', rt.swizzle(pPos, 'w'), rt.f(0))) ? 1 : 0)) ? 1 : 0)
     attritionRate = rt.f(0.0)
     check_seed = 0
     respawnRand = rt.f(0.0)
@@ -48,8 +48,8 @@ run_pixel = lambda do |ctx, out|
       timeBits = rt.float_bits_to_uint(_u_time)
       check_seed = rt.binary('+', rt.binary('*', agentSeed, rt.i(1664525), 1, 'uint'), timeBits, 1, 'uint')
       check_seed = rt.hash_uint(check_seed)
-      respawnRand = rt.binary('/', rt.construct(1, check_seed), rt.f(4294967295), 1, 'float')
-      attritionRate = rt.binary('*', _u_attrition, rt.f(0.01), 1, 'float')
+      respawnRand = rt.binary('/', rt.construct(1, check_seed), rt.f(4294967296), 1, 'float')
+      attritionRate = rt.binary('*', _u_attrition, rt.f(0.0099999997764825821), 1, 'float')
       if rt.bool(rt.binary('<', respawnRand, attritionRate))
         needsRespawn = 1
       end
@@ -72,11 +72,11 @@ run_pixel = lambda do |ctx, out|
         newPos.replace((rt.construct(3, uv, rt.f(0))).map { |c| rt.f32(c) })
       else
         if rt.bool(rt.binary('==', _u_layoutMode, rt.i(2)))
-          newPos.replace((rt.construct(3, rt.binary('+', rt.f(0.5), rt.binary('*', rt.binary('-', rnd, rt.f(0.5), 2, 'float'), rt.f(0.10000000000000001), 2, 'float'), 2, 'float'), rt.f(0))).map { |c| rt.f32(c) })
+          newPos.replace((rt.construct(3, rt.binary('+', rt.f(0.5), rt.binary('*', rt.binary('-', rnd, rt.f(0.5), 2, 'float'), rt.f(0.10000000149011612), 2, 'float'), 2, 'float'), rt.f(0))).map { |c| rt.f32(c) })
         else
           if rt.bool(rt.binary('==', _u_layoutMode, rt.i(3)))
-            angle = rt.binary('*', rt.swizzle(rnd, 'x'), rt.f(6.2831799999999998), 1, 'float')
-            radius = rt.binary('+', rt.f(0.29999999999999999), rt.binary('*', rt.swizzle(rnd, 'y'), rt.f(0.10000000000000001), 1, 'float'), 1, 'float')
+            angle = rt.binary('*', rt.swizzle(rnd, 'x'), rt.f(6.2831802368164062), 1, 'float')
+            radius = rt.binary('+', rt.f(0.30000001192092896), rt.binary('*', rt.swizzle(rnd, 'y'), rt.f(0.10000000149011612), 1, 'float'), 1, 'float')
             newPos.replace((rt.construct(3, rt.binary('+', rt.f(0.5), rt.binary('*', rt.construct(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle)), radius, 2, 'float'), 2, 'float'), rt.f(0))).map { |c| rt.f32(c) })
           else
             if rt.bool(rt.binary('==', _u_layoutMode, rt.i(4)))
@@ -84,15 +84,15 @@ run_pixel = lambda do |ctx, out|
               clusterId = rt.component_wise('floor', rt.binary('*', rt.swizzle(rnd, 'x'), rt.f(5), 1, 'float'))
               centerSeed = rt.binary('+', clusterSeed, rt.binary('*', rt.construct(1, clusterId, 'uint'), rt.i(31), 1, 'uint'), 1, 'uint')
               center = rt.construct(2, rt.construct(2, hash__uint.call(centerSeed), hash__uint.call(rt.binary('+', centerSeed, rt.i(17), 1, 'uint'))))
-              r = rt.binary('*', hash__uint.call(rt.binary('+', agentSeed, rt.i(2), 1, 'uint')), rt.f(0.14999999999999999), 1, 'float')
-              a = rt.binary('*', hash__uint.call(rt.binary('+', agentSeed, rt.i(3), 1, 'uint')), rt.f(6.2831799999999998), 1, 'float')
+              r = rt.binary('*', hash__uint.call(rt.binary('+', agentSeed, rt.i(2), 1, 'uint')), rt.f(0.15000000596046448), 1, 'float')
+              a = rt.binary('*', hash__uint.call(rt.binary('+', agentSeed, rt.i(3), 1, 'uint')), rt.f(6.2831802368164062), 1, 'float')
               newPos.replace((rt.construct(3, rt.binary('+', center, rt.binary('*', rt.construct(2, rt.component_wise('cos', a), rt.component_wise('sin', a)), r, 2, 'float'), 2, 'float'), rt.f(0))).map { |c| rt.f32(c) })
               newPos = rt.assign_swizzle(newPos, 'xy', rt.component_wise('fract', rt.swizzle(newPos, 'xy')))
             else
               if rt.bool(rt.binary('==', _u_layoutMode, rt.i(5)))
                 _t = rt.binary('*', rt.swizzle(rnd, 'x'), rt.f(20), 1, 'float')
-                r = rt.binary('*', _t, rt.f(0.02), 1, 'float')
-                a = rt.binary('*', _t, rt.f(6.2831799999999998), 1, 'float')
+                r = rt.binary('*', _t, rt.f(0.019999999552965164), 1, 'float')
+                a = rt.binary('*', _t, rt.f(6.2831802368164062), 1, 'float')
                 newPos.replace((rt.construct(3, rt.binary('+', rt.f(0.5), rt.binary('*', rt.construct(2, rt.component_wise('cos', a), rt.component_wise('sin', a)), r, 2, 'float'), 2, 'float'), rt.f(0))).map { |c| rt.f32(c) })
                 newPos = rt.assign_swizzle(newPos, 'xy', rt.component_wise('clamp', rt.swizzle(newPos, 'xy'), rt.f(0), rt.f(1)))
               end
@@ -104,14 +104,14 @@ run_pixel = lambda do |ctx, out|
     texDims = rt.texture_size(_u_inputTex)
     texCoord = rt.construct(2, rt.construct(2, rt.binary('*', rt.swizzle(newPos, 'xy'), rt.construct(2, texDims), 2, 'float')), 'int')
     sampledCol = rt.construct(4, rt.texel_fetch(_u_inputTex, texCoord, rt.i(0)))
-    newCol = rt.construct(4, (rt.bool(rt.binary('>', rt.swizzle(sampledCol, 'a'), rt.f(0))) ? (sampledCol) : (rt.construct(4, rt.f(1)))))
+    newCol = rt.construct(4, (rt.bool(rt.binary('>', rt.swizzle(sampledCol, 'a'), rt.f(0))) ? (sampledCol[0]) : ((rt.f(1)))), (rt.bool(rt.binary('>', rt.swizzle(sampledCol, 'a'), rt.f(0))) ? (sampledCol[1]) : ((rt.f(1)))), (rt.bool(rt.binary('>', rt.swizzle(sampledCol, 'a'), rt.f(0))) ? (sampledCol[2]) : ((rt.f(1)))), (rt.bool(rt.binary('>', rt.swizzle(sampledCol, 'a'), rt.f(0))) ? (sampledCol[3]) : ((rt.f(1)))))
     rotRand = rt.f(0.0)
     strideRand = rt.f(0.0)
     if rt.bool(needsRespawn)
       rotRand = hash__uint.call(rt.binary('+', agentSeed, rt.i(100), 1, 'uint'))
       strideRand = rt.binary('-', hash__uint.call(rt.binary('+', agentSeed, rt.i(101), 1, 'uint')), rt.f(0.5), 1, 'float')
       g['outXYZ'].replace((rt.construct(4, newPos, rt.f(1))).map { |c| rt.f32(c) })
-      g['outVel'].replace((rt.construct(4, rt.f(0), rt.f(0), rotRand, strideRand)).map { |c| rt.f32(c) })
+      g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rotRand); g['outVel'][3] = rt.f32(strideRand)
       g['outRGBA'].replace((newCol).map { |c| rt.f32(c) })
     else
       g['outXYZ'].replace((pPos).map { |c| rt.f32(c) })

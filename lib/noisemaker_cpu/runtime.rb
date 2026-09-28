@@ -276,7 +276,11 @@ module NoisemakerCpu
     # unlike Perl, so a bare `if glsl_bool_value` would be wrong wherever
     # the value happens to be 0.
     def bool(x)
-      x != 0
+      # JS semantics: Boolean(NaN) is false (render3d's voxelTrace bounds
+      # check runs on a NaN voxel[0] after the upstream generator's
+      # `voxel[0] += step` string-concat quirk — `NaN >= 0` is false, and
+      # the bare `NaN` must not be truthy either).
+      x != 0 && x == x
     end
 
     # ---- screen-space derivatives (2x2-quad record/replay) ----
@@ -393,10 +397,21 @@ module NoisemakerCpu
         # Perl's IV_MAX-saturating int() -- see uint_math.rb); _s32 restores
         # the sign for int.
         wrap = if base == "uint"
-                 ->(v) { NoisemakerCpu::UintMath.u32(v) }
+                 # The oracle compiles uint() casts as ToInt32 (|0), NOT a
+                 # u32 wrap: spookyTicker's `uint(rowSeed)` becomes
+                 # (rowSeed|0), so a negative rowSeed stays SIGNED
+                 # (-731041560), and (rowSeed|0) * 997 multiplies the signed
+                 # value. Matching the oracle exactly.
+                 ->(v) { _s32(NoisemakerCpu::UintMath.u32(v)) }
                else
                  ->(v) { _s32(NoisemakerCpu::UintMath.u32(v)) }
                end
+        # GLSL array initializer mis-emitted by the transpiler as
+        # construct(width, array(...)): a sole vector-of-vectors argument is
+        # an array-typed initializer list, not a vector construct.
+        if supplied.length == 1 && _is_vec(supplied[0]) && _is_vec(supplied[0][0])
+          return supplied[0].dup
+        end
         if supplied.length == 1 && !_is_vec(supplied[0]) && width > 1
           iv = wrap.call(supplied[0])
           return IVec.new(Array.new(width, iv))
@@ -418,6 +433,10 @@ module NoisemakerCpu
         raise "construct(1) requires a component" if c.nil?
 
         return f32(_is_vec(c) ? c[0] : c)
+      end
+      # Float twin of the int-path array-initializer guard above.
+      if supplied.length == 1 && _is_vec(supplied[0]) && _is_vec(supplied[0][0])
+        return supplied[0].dup
       end
       if supplied.length == 1 && !_is_vec(supplied[0])
         v = f32(supplied[0])
@@ -454,7 +473,10 @@ module NoisemakerCpu
     def swizzle(vec, sw)
       idx = SWIZZLE_INDEX[sw]
       if _is_ivec(vec)
-        return vec[idx[0]].to_i if idx.length == 1
+        # JS arrays hold plain numbers: a NaN element (render3d's
+        # `voxel[0] += step` string-concat quirk) reads back as NaN, not
+        # FloatDomainError.
+        return vec[idx[0]].is_a?(Float) && !vec[idx[0]].finite? ? vec[idx[0]] : vec[idx[0]].to_i if idx.length == 1
 
         return IVec.new(idx.map { |j| vec[j] })
       end
@@ -501,10 +523,34 @@ module NoisemakerCpu
       if base == "int" || base == "uint" || BITWISE_OPS.include?(op)
         return _int_binary(op, a, b, base == "uint" ? "uint" : "int")
       end
-      # Float path: compute raw f64 and DEFER the f32 rounding to the
-      # consumption boundaries (see module header).
+      # Float path. JS semantics: SCALAR float arithmetic is raw f64 in the
+      # compiled kernels (deferred rounding until a store), but VECTOR ops
+      # go through the runtime's #binary, which F32-rounds each component
+      # (out[index] = F32(operation(...))). Only round vector results.
       fn = BINARY_FLOAT_OPS[op] or raise "unsupported binary op '#{op}'"
-      _bc2(fn, a, b)
+      r = _bc2(fn, a, b)
+      return r if !_is_vec(a) && !_is_vec(b)
+
+      r.map { |c| f32(c) }
+    end
+
+    # Raw-JS scalar-OP-vector coercion inside whole-vector reassignment (the
+    # codegen emits this only in that context -- see its _e_assign note).
+    # The oracle's compiled comma-assign keeps such arithmetic as a raw JS
+    # operator; JS coerces a Float32Array through toString, and
+    # Number("a,b,c") is NaN for length>1 (observed live: the oracle's
+    # noise3d type=50 cubes raymarch is all NaN and quantizes to black).
+    def scalar_vec_coerce(op, a, b, width)
+      vec_a = _is_vec(a) && a.length > 1
+      vec_b = _is_vec(b) && b.length > 1
+      if (vec_a || vec_b) && %w[* / + -].include?(op)
+        nan = f32(Float::NAN)
+        return nan if width.nil? || width == 1
+
+        return Array.new(width, nan)
+      end
+
+      binary(op, a, b, width, "float")
     end
 
     def unary(op, a, width = nil)
@@ -555,6 +601,14 @@ module NoisemakerCpu
       fn = COMPONENT[name]
       raise "unsupported builtin '#{name}'" if fn.nil?
 
+      if name == "fract"
+        # JS fract(sin(dot)*const) sees the f64 product — the f32 truncation
+        # happens only at storage. Snapping the scalar ARG to f32 here lost
+        # ~2^-12 relative precision (hash3's fract(2203.1862...) → wrong
+        # hash bit). fract the raw value, then round the RESULT.
+        r = _bcn(fn, *args)
+        return _is_vec(r) ? r.map { |c| f32(c) } : f32(r)
+      end
       snapped = args.any? { |x| _is_vec(x) } ? args.map { |x| _is_vec(x) ? _snap32(x) : x } : args
       r = _bcn(fn, *snapped)
       _is_vec(r) ? r.map { |c| f32(c) } : f32(r)
@@ -669,12 +723,24 @@ module NoisemakerCpu
     # vec3(uint) cast would round the integers first and changes the hash.
     def cpu_cell3d_hash_result(q)
       denominator = f32(4_294_967_295.0)
-      q.map { |value| f32(value.to_f.fdiv(denominator)) }
+      # The oracle's cell3d hash feeds pcg results (hashUint32 ends with
+      # >>>0 — UNSIGNED, glsl-runtime.js) into `cpu_float(_)/cpu_float(den)`.
+      # The runtime's uint model stores ToInt32-signed values (the oracle's
+      # |0 emission for uint arithmetic), so reinterpret the bits as
+      # unsigned before the divide — the JS `_` was the unsigned number.
+      q.map { |value| f32((value.to_i & 0xFFFFFFFF).to_f.fdiv(denominator)) }
     end
 
     # ---- vector geometry (snap args to f32, accumulate float64, round once) ----
 
     def dot(a, b)
+      # JS stdlib dot (glsl-runtime.js:253-257) accumulates the f64 product
+      # sum and returns F32(sum) — ONE f32 round at the end. The components
+      # are pooled f32 reads. crt/simplex feeds this dot into further RAW f64
+      # slot arithmetic (m0 = max(0.6 - dot(x0, x0), 0) → m0^4 * 42): the
+      # oracle's dot result is the F32(sum) — our old extra behavior matched
+      # that. dotraw.mjs established the sum stays f64 UNTIL that single
+      # return-round, so f32(_dot_raw(snap32)) is the exact port.
       f32(_dot_raw(_snap32(a), _snap32(b)))
     end
 
@@ -763,6 +829,33 @@ module NoisemakerCpu
       mat[(c * n)...((c + 1) * n)].map { |x| f32(x) }
     end
 
+    # JS `dst = mat * src` where dst may ALIAS src: the compiled kernel
+    # assigns components one at a time into the pooled Float32Array, and the
+    # next component's dot product reads the already-overwritten element
+    # (observed in gradient's `rotatedCentered = mat2(c,-s,s,c) * centered`
+    # with rotatedCentered === centered). Compute sequentially with live
+    # reads to reproduce that aliasing exactly.
+    def matrix_mult_assign(dst, mat, src, dim)
+      n = dim.to_i
+      vec = dst.length == n
+      if vec
+        (0...n).each do |mj|
+          s = 0
+          (0...n).each { |k| s += src[k] * mat[(k * n) + mj] }
+          dst[mj] = f32(s)
+        end
+        return dst
+      end
+      (0...n).each do |mi|
+        (0...n).each do |mj|
+          s = 0
+          (0...n).each { |k| s += src[(mi * n) + k] * mat[(k * n) + mj] }
+          dst[(mi * n) + mj] = f32(s)
+        end
+      end
+      dst
+    end
+
     # ---- arrays (GLSL fixed-size arrays -> Ruby Arrays) ----
 
     def new_array(n, width = nil)
@@ -771,6 +864,19 @@ module NoisemakerCpu
       return Array.new(n, 0.0) if width <= 1
 
       Array.new(n) { Array.new(width, 0.0) }
+    end
+
+    # JS `array[index]`: integer-valued indices within range select the
+    # element; fractional, NaN or out-of-range indices read as undefined
+    # (nil here, treated as 0 by the int/bitwise ops).
+    def array_index(arr, idx)
+      return nil unless arr.is_a?(Array)
+      return nil if idx.nil? || (idx.is_a?(Float) && (idx.nan? || idx.infinite?))
+
+      i = idx.is_a?(Integer) ? idx : (idx.to_i == idx ? idx.to_i : nil)
+      return nil if i.nil? || i.negative? || i >= arr.length
+
+      arr[i]
     end
 
     def array(elems)
@@ -870,6 +976,70 @@ module NoisemakerCpu
     end
 
     def _int_binary(op, a, b, base)
+      # The oracle's compiled kernels are JavaScript: `/` is float division
+      # and `%` is the JS f64 remainder even where the GLSL declared int
+      # (e.g. testPattern's `digits[i] = temp % 10; temp /= 10;` keeps
+      # fractional digits, which then index arrays as NaN/undefined). Ruby
+      # must reproduce that instead of GLSL's truncating int division.
+      if base == "int" && %w[/ %].include?(op)
+        # (f64 semantics; also applies to uint below)
+      end
+      if base == "uint" && %w[+ - * & | ^ << >>].include?(op)
+        # The oracle's compiled kernels use RAW JavaScript operators on
+        # uint-typed locals: + - * run in f64 with NO u32 wrap, and & | ^
+        # << >> apply ToInt32 (signed). Uint wraps happen only at explicit
+        # uint() casts / uint-typed stores (spookyTicker's hash_mix relies
+        # on the unwrapped f64 product feeding ToInt32 shifts).
+        js = lambda do |x, y|
+          x = 0 if x.nil?
+          y = 0 if y.nil?
+          case op
+          when "+" then x + y
+          when "-" then x - y
+          when "*" then x * y
+          when "&" then _s32(_s32(x) & _s32(y))
+          when "|" then _s32(_s32(x) | _s32(y))
+          when "^" then _s32(_s32(x) ^ _s32(y))
+          when "<<" then _s32(_s32(x) << (_s32(y) & 31))
+          else _s32(_s32(x) >> (_s32(y) & 31))
+          end
+        end
+        r = _bc2(js, a, b)
+        return _is_vec(a) || _is_vec(b) ? IVec.new(r) : r
+      end
+      if (base == "int" || base == "uint") && (op == "/" || op == "%")
+        js = if op == "/"
+               ->(x, y) do
+                 x = 0 if x.nil?
+                 y = 0 if y.nil?
+                 return x.fdiv(y) unless y.zero?
+                 return Float::NAN if x.zero? || x.nan?
+                 x.positive? ? Float::INFINITY : -Float::INFINITY
+               end
+             else
+               ->(x, y) do
+                 x = 0 if x.nil?
+                 y = 0 if y.nil?
+                 return Float::NAN if y.zero?
+                 x - x.fdiv(y).truncate * y
+               end
+             end
+        r = _bc2(js, a, b)
+        return _is_vec(a) || _is_vec(b) ? IVec.new(r) : r
+      end
+      # JS + - * on int-typed values also run in f64 (e.g. spookyTicker's
+      # `localX = sx - cellX * CELL_W` keeps cellX fractional).
+      if base == "int" && %w[+ - *].include?(op)
+        js = ->(x, y) do
+          x = 0 if x.nil?
+          y = 0 if y.nil?
+          op == "+" ? x + y : (op == "-" ? x - y : x * y)
+        end
+        r = _bc2(js, a, b)
+        return _is_vec(a) || _is_vec(b) ? IVec.new(r) : r
+      end
+      a = 0 if a.nil?
+      b = 0 if b.nil?
       return _int_scalar(op, a.to_i, b.to_i, base) unless _is_vec(a) || _is_vec(b)
 
       r = _bc2(->(x, y) { _int_scalar(op, x.to_i, y.to_i, base) }, a, b)

@@ -115,8 +115,48 @@ module NoisemakerCpu
       end
 
       def self._adapt_source(effect_id, program, source)
+        # The generator's preserveVectorAssignmentReads (compile-glsl.js
+        # ~199-207) rewrites ONLY single-line `target = vecN(...)` statements
+        # whose expression references `target.`: `vec2 temp = expr; target =
+        # temp;` (a snapshot). Multi-line constructors (mandelbrot's
+        # `dz = vec2(\n ..., ...);`) do NOT match and lower to the JS
+        # comma-assign where later components read the ALREADY-STORED earlier
+        # components (dz.y reads the new dz.x).
+        vtemp_n = 0
+        source = source.gsub(
+          /^([ \t]*)([A-Za-z_]\w*)\s*=\s*((?:[biu]?vec[234])\s*\([^;\n]*\))[ \t]*;$/m
+        ) do
+          full = Regexp.last_match(0)
+          indent = Regexp.last_match(1)
+          target = Regexp.last_match(2)
+          expr_src = Regexp.last_match(3)
+          type = expr_src.match(/^([biu]?vec[234])\s*\(/)&.[](1)
+          if type && expr_src.match?(/\b#{Regexp.escape(target)}\.[xyzwrgba]\b/)
+            vtemp_n += 1
+            temp = "cpu_vector_assignment_#{vtemp_n}"
+            "#{indent}#{type} #{temp} = #{expr_src};\n#{indent}#{target} = #{temp};"
+          else
+            full
+          end
+        end
+        # The generator's CPU lowering (compile-glsl.js) replaces ANY user
+        # `uvec3 pcg|pcg3|pcg3d(uvec3 ...)` function with a direct
+        # stdlib.pcg3d call: the GLSL body's per-component uint ops would
+        # otherwise run as raw scalars (spatter's hashf produced 1e18-scale
+        # values instead of [0,1]). Warp stays byte-identical either way
+        # (its vector uint ops already wrap).
+        %w[pcg pcg3 pcg3d].each do |fname|
+          source = source.gsub(
+            /uvec3\s+#{fname}\s*\(\s*uvec3\s+\w+\s*\)\s*\{[^}]*\}/m,
+            "uvec3 #{fname}(uvec3 value) { return pcg3d(value); }"
+          )
+        end
         # Match canonical CPU float32 hash and pigment storage boundaries.
-        if %w[filter/mosaicTiles filter/stipple filter/strokes].include?(effect_id)
+        # The oracle's adaptCanonicalSource applies the float32 hash
+        # boundary patch to EVERY effect except filter/scatter; restricting
+        # it to a hand-picked list left craquelure's hash12/hash22 with
+        # deferred-f64 rounding (2-ulp hash drift).
+        if effect_id != "filter/scatter"
           source = source.gsub(
             "return fract((p3.x + p3.y) * p3.z);",
             "return fract(float(float(p3.x + p3.y) * p3.z));"
@@ -165,6 +205,48 @@ module NoisemakerCpu
           raise "cannot locate synth3d/noise3d hash4 for CPU lowering\n" if adapted == source
 
           return adapted
+        end
+        if effect_id == "synth/curl"
+          # The oracle's adaptCanonicalSource rewrites this line so the
+          # whole-vector reassign decomposes into per-component scalar tanh
+          # calls (stdlib.tanh = unary(Math.tanh)) instead of a
+          # scalar-OP-vector raw operator (NaN for width>1).
+          adapted = source.sub(
+            "curl = tanh(curl * intensity) * 0.5 + 0.5;",
+            "curl = vec3(tanh(curl.x * intensity) * 0.5 + 0.5, " \
+            "tanh(curl.y * intensity) * 0.5 + 0.5, tanh(curl.z * intensity) * 0.5 + 0.5);"
+          )
+          raise "cannot locate synth/curl tanh line for CPU lowering\n" if adapted == source
+
+          source = adapted
+        end
+        if effect_id == "synth/polygon"
+          # The oracle's adaptCanonicalSource special-cases smoothing == 0
+          # (smoothstep with equal edges is a division by zero): the m
+          # test becomes a hard threshold.
+          adapted = source.sub(
+            "float m = smoothstep(radius, radius - smoothing, d);",
+            "float m = smoothing == 0.0 ? (d <= radius ? 1.0 : 0.0) : smoothstep(radius, radius - smoothing, d);"
+          )
+          raise "cannot locate synth/polygon smoothstep line for CPU lowering\n" if adapted == source
+
+          source = adapted
+        end
+        if effect_id == "filter/dither" && program == "dither"
+          # The oracle's compiled kernel truncates the int cell/FS_BLOCK
+          # division with |0 at the '/' (the canonical form is
+          # `(cpu_float(cell[..]) / cpu_float(FS_BLOCK)|0) * FS_BLOCK|0`):
+          # floor(7.5/2)=3 → 3/4|0 = 0, so blockOrigin is the block floor
+          # (0), not the raw cell (3). The port's int '/' keeps the f64
+          # quotient (testPattern's `temp /= 10` semantics), so reproduce
+          # the truncation by rewriting the GLSL to an explicit int floor.
+          adapted = source.sub(
+            "ivec2 blockOrigin = (cell / FS_BLOCK) * FS_BLOCK;",
+            "ivec2 blockOrigin = ivec2(int(floor(float(cell.x) / float(FS_BLOCK))), int(floor(float(cell.y) / float(FS_BLOCK)))) * FS_BLOCK;"
+          )
+          raise "cannot locate filter/dither blockOrigin for CPU lowering\n" if adapted == source
+
+          source = adapted
         end
         if effect_id == "filter/temporalAberration" && program == "temporalAberration"
           return source.gsub(
@@ -228,7 +310,11 @@ module NoisemakerCpu
             "source" => "shaders.noisedeck.app CDN",
             "version" => NoisemakerCpu::Transpiler::CDN::CDN_VERSION,
             "base" => NoisemakerCpu::Transpiler::CDN::CDN_BASE,
-          },
+          }.merge!(if NoisemakerCpu::Transpiler::CDN.glsl_root.nil?
+                    {}
+                  else
+                    { "glslRoot" => NoisemakerCpu::Transpiler::CDN.glsl_root }
+                  end),
           "effects" => {},
         }
         n_ok = 0
@@ -277,7 +363,76 @@ module NoisemakerCpu
                 adapted = _adapt_source(eid, p["program"], glsl)
                 norm = NoisemakerCpu::Transpiler::Preprocess.normalize(adapted, defines)
                 ast = NoisemakerCpu::Transpiler::Parser.parse(norm["source"])
-                NoisemakerCpu::Transpiler::Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"])
+                ruby_src = NoisemakerCpu::Transpiler::Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"])
+                # The upstream JS generator mis-compiles render3d's voxel
+                # DDA (canonical-kernels.js 28046/28074/28075): the initial
+                # `voxelToWorld(voxel + max(step, ivec3(0)))` unwinds to
+                # `voxel[k] + max(step, cpu_ivec3(0))` — number + ivec3
+                # ARRAY, JS string-concats then ToNumber → NaN for every
+                # component — so tMaxVec starts all-NaN, the stepping chain
+                # always takes the z-branch with tStart=NaN (NaN>x
+                # comparisons false), and only initial-voxel solid tests
+                # ever produce real hits (NaN dist hits fail `dist > 0`).
+                # Mirror each component via scalar_vec_coerce (number +
+                # int-array → NaN), which already implements the JS rule.
+                if eid == "render/render3d" || eid == "render/renderCubemap3d"
+                  q0 = "voxelBounds = rt.construct(3, voxelToWorld__ivec3.call(rt.binary('+', voxel, rt.component_wise('max', step, rt.construct(3, rt.i(0), 'int')), 3, 'int')))"
+                  q1 = "voxel = rt.assign_swizzle(voxel, 'x', rt.binary('+', rt.swizzle(voxel, 'x'), rt.swizzle(step, 'x'), 1, 'int'))"
+                  q2 = "lastNormal[0] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'x'))))"
+                  raise "render3d voxel-step quirk site not found in generated #{key}" unless ruby_src.include?(q0)
+
+                  # voxelToWorld is pure, so emitting its NaN result directly
+                  # (as floats) is value-exact and avoids the ruby IVec's
+                  # ToInt32(NaN)=0, which the JS oracle's number-typed arrays
+                  # never apply.
+                  maxc = "rt.component_wise('max', step, rt.construct(3, rt.i(0), 'int'))"
+                  ruby_src = ruby_src.gsub(q0, "voxelBounds = rt.construct(3, rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'x'), #{maxc}, 1), rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'y'), #{maxc}, 1), rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'z'), #{maxc}, 1))")
+                  # Dead in the oracle (both chain comparisons are
+                  # NaN-vs-NaN → false), kept scalar-exact.
+                  ruby_src = ruby_src.gsub(q1, "voxel = rt.assign_swizzle(voxel, 'x', rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'x'), step, 1))") if ruby_src.include?(q1)
+                  ruby_src = ruby_src.gsub(q2, "lastNormal[0] = rt.scalar_vec_coerce('-', rt.f(0), step, 1)") if ruby_src.include?(q2)
+                end
+                if eid == "render/pointsBillboardRender" && p["program"] == "blend"
+                  # The oracle generator drops the assignment in
+                  # `outRGB = outAlpha > 0.0 ? outRGB_pre / outAlpha : vec3(0.0);`
+                  # (canonical-kernels.js 27406): the ternary is emitted as a
+                  # bare statement — the true branch computes the divide into
+                  # a discarded array, the false branch reduce-writes
+                  # vec3(0) into outRGB. Net: outRGB stays [0,0,0] under
+                  # blendMode 1.
+                  qb = "outRGB.replace(((rt.bool(rt.binary('>', outAlpha, rt.f(0))) ? (rt.binary('/', outRGB_pre, outAlpha, 3, 'float')) : (rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })"
+                  raise "pointsBillboardRender blend ternary site not found in generated #{key}" unless ruby_src.include?(qb)
+
+                  ruby_src = ruby_src.gsub(qb, "if rt.bool(rt.binary('>', outAlpha, rt.f(0)))\n        rt.binary('/', outRGB_pre, outAlpha, 3, 'float')\n      else\n        outRGB.replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })\n      end")
+                end
+                if eid == "filter/dither" && p["program"] == "dither"
+                  # The oracle's error-diffusion block stores back into the
+                  # pooled errRow rows (PooledFloat32Array writes f32-round
+                  # each component, canonical-kernels.js 10963-10968), while
+                  # rightErr is a plain JS array produced by `.map` (raw f64
+                  # stores, 10957/10966). The transpiler can't see pooled vs
+                  # plain backing, so mirror the oracle's five stores
+                  # explicitly: f32 per component for errRow, raw for
+                  # rightErr. Without this the accumulated error drifts by
+                  # ulps and errorDiffusion quantization flips (the pinned
+                  # dither digest regresses).
+                  d0 = "errRow[(i).to_i] = rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, i), stepScale, 3, 'float')"
+                  raise "dither errRow seed store not found in generated #{key}" unless ruby_src.include?(d0)
+                  ruby_src = ruby_src.gsub(d0, "errRow[(i).to_i] = (rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, i), stepScale, 3, 'float')).map { |c| rt.f32(c) }")
+                  d1 = "rightErr = rt.construct(3, rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, rt.binary('+', rt.binary('+', g['FS_ERR_W'], g['FS_APRON_MAX'], 1, 'int'), r, 1, 'int')), stepScale, 3, 'float'))"
+                  raise "dither rightErr init not found in generated #{key}" unless ruby_src.include?(d1)
+                  ruby_src = ruby_src.gsub(d1, "rightErr = rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, rt.binary('+', rt.binary('+', g['FS_ERR_W'], g['FS_APRON_MAX'], 1, 'int'), r, 1, 'int')), stepScale, 3, 'float')")
+                  d2 = "rightErr.replace((rt.binary('*', err, rt.f(0.4375), 3, 'float')).map { |c| rt.f32(c) })"
+                  raise "dither rightErr store not found in generated #{key}" unless ruby_src.include?(d2)
+                  ruby_src = ruby_src.gsub(d2, "rightErr.replace(rt.binary('*', err, rt.f(0.4375), 3, 'float'))")
+                  d3 = "errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i] = rt.binary('+', errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i], rt.binary('*', err, rt.f(0.1875), 3, 'float'), 3, 'float')"
+                  raise "dither errRow plus store not found in generated #{key}" unless ruby_src.include?(d3)
+                  ruby_src = ruby_src.gsub(d3, "errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i] = (rt.binary('+', errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i], rt.binary('*', err, rt.f(0.1875), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) }")
+                  d4 = "errRow[(rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')).to_i] = rt.binary('+', diag, rt.binary('*', err, rt.f(0.3125), 3, 'float'), 3, 'float')"
+                  raise "dither errRow diag store not found in generated #{key}" unless ruby_src.include?(d4)
+                  ruby_src = ruby_src.gsub(d4, "errRow[(rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')).to_i] = (rt.binary('+', diag, rt.binary('*', err, rt.f(0.3125), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) }")
+                end
+                ruby_src
               rescue StandardError => e
                 raise "cannot compile #{key}: #{e.message}"
               end

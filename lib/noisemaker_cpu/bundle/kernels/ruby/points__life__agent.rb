@@ -36,7 +36,7 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967295), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
   end
   hash2__uint = lambda do |seed|
     return rt.construct(2, hash__uint.call(seed), hash__uint.call(rt.binary('+', seed, rt.i(1), 1, 'uint')))
@@ -49,21 +49,21 @@ run_pixel = lambda do |ctx, out|
     x = rt.binary('*', c, rt.binary('-', rt.f(1), rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', h, rt.f(2)), rt.f(1), 1, 'float')), 1, 'float'), 1, 'float')
     rgb = rt.construct(3, 0.0)
     if rt.bool(rt.binary('<', h, rt.f(1)))
-      rgb.replace((rt.construct(3, c, x, rt.f(0))).map { |c| rt.f32(c) })
+      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
     else
       if rt.bool(rt.binary('<', h, rt.f(2)))
-        rgb.replace((rt.construct(3, x, c, rt.f(0))).map { |c| rt.f32(c) })
+        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
       else
         if rt.bool(rt.binary('<', h, rt.f(3)))
-          rgb.replace((rt.construct(3, rt.f(0), c, x)).map { |c| rt.f32(c) })
+          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
         else
           if rt.bool(rt.binary('<', h, rt.f(4)))
-            rgb.replace((rt.construct(3, rt.f(0), x, c)).map { |c| rt.f32(c) })
+            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
           else
             if rt.bool(rt.binary('<', h, rt.f(5)))
-              rgb.replace((rt.construct(3, x, rt.f(0), c)).map { |c| rt.f32(c) })
+              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
             else
-              rgb.replace((rt.construct(3, c, rt.f(0), x)).map { |c| rt.f32(c) })
+              rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
             end
           end
         end
@@ -74,8 +74,8 @@ run_pixel = lambda do |ctx, out|
   getGridCell__vec2 = lambda do |pos|
     pos = rt.copy(pos, 'float')
     cellSize = nil
-    cellSize = rt.construct(2, rt.binary('/', rt.construct(2, rt.f(1)), rt.construct(1, g['GRID_SIZE']), 2, 'float'))
-    return rt.construct(2, rt.construct(2, rt.component_wise('clamp', rt.binary('/', pos, cellSize, 2, 'float'), rt.construct(2, rt.f(0)), rt.construct(2, rt.construct(1, rt.binary('-', g['GRID_SIZE'], rt.i(1), 1, 'int'))))), 'int')
+    cellSize = rt.construct(2, (((rt.f(1))) / ((g['GRID_SIZE']))), (((rt.f(1))) / ((g['GRID_SIZE']))))
+    return rt.construct(2, rt.construct(2, rt.component_wise('clamp', rt.construct(2, ((pos[0]) / (cellSize[0])), ((pos[1]) / (cellSize[1]))), rt.construct(2, rt.f(0)), rt.construct(2, rt.construct(1, rt.binary('-', g['GRID_SIZE'], rt.i(1), 1, 'int'))))), 'int')
   end
   radialForce__float_float_float_float = lambda do |dist, strength, prefDist, curveShape|
     force = nil; forceScale = nil; normDist = nil; shaped = nil
@@ -102,19 +102,19 @@ run_pixel = lambda do |ctx, out|
   end
   wrapPosition__vec2 = lambda do |pos|
     pos = rt.copy(pos, 'float')
-    return rt.component_wise('mod', rt.binary('+', pos, rt.f(1), 2, 'float'), rt.f(1))
+    return rt.component_wise('mod', rt.construct(2, ((pos[0]) + (rt.f(1))), ((pos[1]) + (rt.f(1)))), rt.f(1))
   end
   limitVec__vec2_float = lambda do |v, maxLen|
     v = rt.copy(v, 'float')
     len = nil
     len = rt.length(v)
     if rt.bool((rt.bool(rt.binary('>', len, maxLen)) && rt.bool(rt.binary('>', len, rt.f(0))) ? 1 : 0))
-      return rt.binary('*', v, rt.binary('/', maxLen, len, 1, 'float'), 2, 'float')
+      return rt.construct(2, ((v[0]) * (((maxLen) / (len)))), ((v[1]) * (((maxLen) / (len)))))
     end
     return v
   end
   main__void = lambda do
-    _for0_first = nil; _for1_first = nil; _for2_first = nil; age = nil; alive = nil; angle = nil; cellSeed = nil; checkCell = nil; coord = nil; curveShape = nil; data = nil; diff = nil; dist = nil; dx = nil; dy = nil; forceDir = nil; forceMag = nil; forceParams = nil; initSeed = nil; mass = nil; myCell = nil; myType = nil; neighborCount = nil; otherAlive = nil; otherData = nil; otherPos = nil; otherType = nil; otherXyz = nil; particleId = nil; pos = nil; prefDist = nil; px = nil; py = nil; rgba = nil; s = nil; sampleIdx = nil; sampleSeed = nil; seed = nil; speed = nil; stateSize = nil; strength = nil; sx = nil; sy = nil; totalForce = nil; totalParticles = nil; typeId = nil; vel = nil; velocity = nil; vx = nil; vy = nil; xyz = nil
+    __sc1648 = nil; __sc1656 = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; age = nil; alive = nil; angle = nil; cellSeed = nil; checkCell = nil; coord = nil; curveShape = nil; data = nil; diff = nil; dist = nil; dx = nil; dy = nil; forceDir = nil; forceMag = nil; forceParams = nil; initSeed = nil; mass = nil; myCell = nil; myType = nil; neighborCount = nil; otherAlive = nil; otherData = nil; otherPos = nil; otherType = nil; otherXyz = nil; particleId = nil; pos = nil; prefDist = nil; px = nil; py = nil; rgba = nil; s = nil; sampleIdx = nil; sampleSeed = nil; seed = nil; speed = nil; stateSize = nil; strength = nil; sx = nil; sy = nil; totalForce = nil; totalParticles = nil; typeId = nil; vel = nil; velocity = nil; vx = nil; vy = nil; xyz = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
     xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
@@ -144,16 +144,16 @@ run_pixel = lambda do |ctx, out|
     if rt.bool((rt.bool(rt.binary('==', typeId, rt.f(0))) && rt.bool(rt.binary('==', mass, rt.f(0))) ? 1 : 0))
       initSeed = rt.binary('+', particleId, rt.construct(1, rt.binary('*', _u_time, rt.f(1000), 1, 'float'), 'uint'), 1, 'uint')
       typeId = rt.component_wise('floor', rt.binary('*', hash__uint.call(rt.binary('+', initSeed, rt.i(4), 1, 'uint')), rt.construct(1, _u_typeCount), 1, 'float'))
-      mass = rt.binary('+', rt.f(0.80000000000000004), rt.binary('*', hash__uint.call(rt.binary('+', initSeed, rt.i(5), 1, 'uint')), rt.f(0.40000000000000002), 1, 'float'), 1, 'float')
+      mass = rt.binary('+', rt.f(0.80000001192092896), rt.binary('*', hash__uint.call(rt.binary('+', initSeed, rt.i(5), 1, 'uint')), rt.f(0.40000000596046448), 1, 'float'), 1, 'float')
       angle = rt.f(0.0)
       speed = rt.f(0.0)
       if rt.bool(rt.binary('==', rt.length(velocity), rt.f(0)))
-        angle = rt.binary('*', hash__uint.call(rt.binary('+', initSeed, rt.i(2), 1, 'uint')), rt.f(6.2831853071800001), 1, 'float')
-        speed = rt.binary('*', rt.binary('*', hash__uint.call(rt.binary('+', initSeed, rt.i(3), 1, 'uint')), _u_maxSpeed, 1, 'float'), rt.f(0.29999999999999999), 1, 'float')
+        angle = rt.binary('*', hash__uint.call(rt.binary('+', initSeed, rt.i(2), 1, 'uint')), rt.f(6.2831854820251465), 1, 'float')
+        speed = rt.binary('*', rt.binary('*', hash__uint.call(rt.binary('+', initSeed, rt.i(3), 1, 'uint')), _u_maxSpeed, 1, 'float'), rt.f(0.30000001192092896), 1, 'float')
         velocity.replace((rt.binary('*', rt.construct(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle)), speed, 2, 'float')).map { |c| rt.f32(c) })
       end
     end
-    mass = rt.component_wise('max', mass, rt.f(0.10000000000000001))
+    mass = rt.component_wise('max', mass, rt.f(0.10000000149011612))
     totalForce = rt.construct(2, rt.construct(2, rt.f(0)))
     neighborCount = rt.i(0)
     myType = rt.construct(1, typeId, 'int')
@@ -201,13 +201,13 @@ run_pixel = lambda do |ctx, out|
           end
           otherXyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, rt.construct(2, sx, sy, 'int'), rt.i(0)))
           otherData = rt.construct(4, rt.texel_fetch(_u_dataTex, rt.construct(2, sx, sy, 'int'), rt.i(0)))
-          otherPos = rt.construct(2, rt.swizzle(otherXyz, 'xy'))
+          otherPos = rt.construct(2, rt.swizzle(otherXyz, 'x'), rt.swizzle(otherXyz, 'y'))
           otherAlive = rt.swizzle(otherXyz, 'w')
           otherType = rt.construct(1, rt.swizzle(otherData, 'x'), 'int')
           if rt.bool(rt.binary('<', otherAlive, rt.f(0.5)))
             next
           end
-          diff = rt.construct(2, rt.binary('-', otherPos, pos, 2, 'float'))
+          diff = rt.construct(2, ((otherPos[0]) - (pos[0])), ((otherPos[1]) - (pos[1])))
           if rt.bool(rt.binary('>', rt.swizzle(diff, 'x'), rt.f(0.5)))
             diff = rt.assign_swizzle(diff, 'x', rt.binary('-', rt.swizzle(diff, 'x'), rt.f(1), 1, 'float'))
           end
@@ -221,7 +221,7 @@ run_pixel = lambda do |ctx, out|
             diff = rt.assign_swizzle(diff, 'y', rt.binary('+', rt.swizzle(diff, 'y'), rt.f(1), 1, 'float'))
           end
           dist = rt.length(diff)
-          if rt.bool((rt.bool(rt.binary('<', dist, rt.f(0.0001))) || rt.bool(rt.binary('>', dist, _u_maxRadius)) ? 1 : 0))
+          if rt.bool((rt.bool(rt.binary('<', dist, rt.f(9.9999997473787516e-05))) || rt.bool(rt.binary('>', dist, _u_maxRadius)) ? 1 : 0))
             next
           end
           forceParams = rt.construct(4, rt.texel_fetch(_u_forceMatrix, rt.construct(2, myType, otherType, 'int'), rt.i(0)))
@@ -229,17 +229,17 @@ run_pixel = lambda do |ctx, out|
           prefDist = rt.swizzle(forceParams, 'y')
           curveShape = rt.swizzle(forceParams, 'z')
           forceMag = radialForce__float_float_float_float.call(dist, strength, prefDist, curveShape)
-          forceDir = rt.construct(2, rt.binary('/', diff, dist, 2, 'float'))
-          totalForce.replace((rt.binary('+', totalForce, rt.binary('*', forceDir, forceMag, 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
+          forceDir = rt.construct(2, ((diff[0]) / (dist)), ((diff[1]) / (dist)))
+          totalForce[0] = rt.f32(rt.binary('+', totalForce[0], ((forceDir[0]) * (forceMag)), 1, 'float')); totalForce[1] = rt.f32(rt.binary('+', totalForce[1], ((forceDir[1]) * (forceMag)), 1, 'float'))
           neighborCount = rt.binary('+', neighborCount, rt.i(1), 1, 'int')
         end
       end
     end
-    totalForce.replace((rt.binary('/', totalForce, mass, 2, 'float')).map { |c| rt.f32(c) })
-    velocity.replace((rt.binary('+', velocity, totalForce, 2, 'float')).map { |c| rt.f32(c) })
-    velocity.replace((rt.binary('*', velocity, rt.binary('-', rt.f(1), _u_friction, 1, 'float'), 2, 'float')).map { |c| rt.f32(c) })
+    __sc1648 = mass; totalForce[0] = rt.f32(rt.binary('/', totalForce[0], __sc1648, 1, 'float')); totalForce[1] = rt.f32(rt.binary('/', totalForce[1], __sc1648, 1, 'float'))
+    velocity[0] = rt.f32(rt.binary('+', velocity[0], totalForce[0], 1, 'float')); velocity[1] = rt.f32(rt.binary('+', velocity[1], totalForce[1], 1, 'float'))
+    __sc1656 = rt.binary('-', rt.f(1), _u_friction, 1, 'float'); velocity[0] = rt.f32(rt.binary('*', velocity[0], __sc1656, 1, 'float')); velocity[1] = rt.f32(rt.binary('*', velocity[1], __sc1656, 1, 'float'))
     velocity.replace((limitVec__vec2_float.call(velocity, _u_maxSpeed)).map { |c| rt.f32(c) })
-    pos.replace((rt.binary('+', pos, velocity, 2, 'float')).map { |c| rt.f32(c) })
+    pos[0] = rt.f32(rt.binary('+', pos[0], velocity[0], 1, 'float')); pos[1] = rt.f32(rt.binary('+', pos[1], velocity[1], 1, 'float'))
     if rt.bool(rt.binary('==', _u_boundaryMode, rt.i(0)))
       pos.replace((wrapPosition__vec2.call(pos)).map { |c| rt.f32(c) })
     else
@@ -259,9 +259,9 @@ run_pixel = lambda do |ctx, out|
         pos = rt.assign_swizzle(pos, 'y', rt.binary('-', rt.f(2), rt.swizzle(pos, 'y'), 1, 'float'))
         velocity = rt.assign_swizzle(velocity, 'y', rt.unary('-', rt.swizzle(velocity, 'y')))
       end
-      pos.replace((rt.component_wise('clamp', pos, rt.construct(2, rt.f(0.001)), rt.construct(2, rt.f(0.999)))).map { |c| rt.f32(c) })
+      pos.replace((rt.component_wise('clamp', pos, rt.construct(2, rt.f(0.0010000000474974513)), rt.construct(2, rt.f(0.99900001287460327)))).map { |c| rt.f32(c) })
     end
-    age = rt.binary('+', age, rt.f(0.016), 1, 'float')
+    age = rt.binary('+', age, rt.f(0.016000000759959221), 1, 'float')
     g['outXYZ'].replace((rt.construct(4, pos, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     g['outVel'].replace((rt.construct(4, velocity, age, seed)).map { |c| rt.f32(c) })
     if rt.bool(_u_useTypeColor)
@@ -269,7 +269,7 @@ run_pixel = lambda do |ctx, out|
     else
       g['outRGBA'].replace((rt.texture(_u_inputTex, pos)).map { |c| rt.f32(c) })
     end
-    g['outData'].replace((rt.construct(4, typeId, mass, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+    g['outData'][0] = rt.f32(typeId); g['outData'][1] = rt.f32(mass); g['outData'][2] = rt.f32(rt.f(0)); g['outData'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c0 = g['outXYZ']

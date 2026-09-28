@@ -17,7 +17,7 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967295), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
   end
   main__void = lambda do
     coord = nil; curveShape = nil; prefDist = nil; seed = nil; strength = nil; typeA = nil; typeB = nil
@@ -34,13 +34,13 @@ run_pixel = lambda do |ctx, out|
     end
     strength = rt.f(0.0)
     if rt.bool(rt.binary('==', typeA, typeB))
-      strength = rt.binary('-', rt.unary('-', rt.f(0.29999999999999999)), rt.binary('*', hash__uint.call(seed), rt.f(0.40000000000000002), 1, 'float'), 1, 'float')
+      strength = rt.binary('-', rt.unary('-', rt.f(0.30000001192092896)), rt.binary('*', hash__uint.call(seed), rt.f(0.40000000596046448), 1, 'float'), 1, 'float')
     else
       strength = rt.binary('-', rt.binary('*', hash__uint.call(seed), rt.f(2), 1, 'float'), rt.f(1), 1, 'float')
     end
-    prefDist = rt.binary('+', rt.f(0.29999999999999999), rt.binary('*', hash__uint.call(rt.binary('+', seed, rt.i(1), 1, 'uint')), rt.f(0.5), 1, 'float'), 1, 'float')
+    prefDist = rt.binary('+', rt.f(0.30000001192092896), rt.binary('*', hash__uint.call(rt.binary('+', seed, rt.i(1), 1, 'uint')), rt.f(0.5), 1, 'float'), 1, 'float')
     curveShape = hash__uint.call(rt.binary('+', seed, rt.i(2), 1, 'uint'))
-    g['fragColor'].replace((rt.construct(4, strength, prefDist, curveShape, rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(strength); g['fragColor'][1] = rt.f32(prefDist); g['fragColor'][2] = rt.f32(curveShape); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']
