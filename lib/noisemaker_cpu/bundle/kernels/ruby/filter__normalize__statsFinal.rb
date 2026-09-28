@@ -37,7 +37,7 @@ run_pixel = lambda do |ctx, out|
         maxVal = rt.component_wise('max', maxVal, rt.swizzle(color, 'g'))
       end
     end
-    g['fragColor'].replace((rt.construct(4, minVal, maxVal, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(minVal); g['fragColor'][1] = rt.f32(maxVal); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

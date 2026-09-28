@@ -13,7 +13,7 @@ run_pixel = lambda do |ctx, out|
   _u_wheelHighlights = u.key?('wheelHighlights') ? u['wheelHighlights'] : rt.construct(3, 0.0)
   _u_wheelBalance = u.key?('wheelBalance') ? u['wheelBalance'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
-  g['LUMA_WEIGHTS'] = rt.construct(3, rt.f(0.21260000000000001), rt.f(0.71519999999999995), rt.f(0.0722))
+  g['LUMA_WEIGHTS'] = rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295))
   srgbToLinear__vec3 = lambda do |srgb|
     srgb = rt.copy(srgb, 'float')
     _for0_first = nil; i = nil; linear = nil
@@ -28,10 +28,10 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(3)))
         break
       end
-      if rt.bool(rt.binary('<=', srgb[(i).to_i], rt.f(0.04045)))
-        linear[(i).to_i] = rt.binary('/', srgb[(i).to_i], rt.f(12.92), 1, 'float')
+      if rt.bool(rt.binary('<=', srgb[(i).to_i], rt.f(0.040449999272823334)))
+        linear[(i).to_i] = rt.binary('/', srgb[(i).to_i], rt.f(12.920000076293945), 1, 'float')
       else
-        linear[(i).to_i] = rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.055), 1, 'float'), rt.f(1.0549999999999999), 1, 'float'), rt.f(2.3999999999999999))
+        linear[(i).to_i] = rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
       end
     end
     return linear
@@ -50,64 +50,64 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(3)))
         break
       end
-      if rt.bool(rt.binary('<=', linear[(i).to_i], rt.f(0.0031308)))
-        srgb[(i).to_i] = rt.binary('*', linear[(i).to_i], rt.f(12.92), 1, 'float')
+      if rt.bool(rt.binary('<=', linear[(i).to_i], rt.f(0.0031308000907301903)))
+        srgb[(i).to_i] = rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float')
       else
-        srgb[(i).to_i] = rt.binary('-', rt.binary('*', rt.f(1.0549999999999999), rt.component_wise('pow', linear[(i).to_i], rt.binary('/', rt.f(1), rt.f(2.3999999999999999), 1, 'float')), 1, 'float'), rt.f(0.055), 1, 'float')
+        srgb[(i).to_i] = rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float')
       end
     end
     return srgb
   end
   shadowWeight__float_float = lambda do |luma, balance|
     boundary = nil
-    boundary = rt.binary('-', rt.f(0.33000000000000002), rt.binary('*', balance, rt.f(0.14999999999999999), 1, 'float'), 1, 'float')
+    boundary = rt.binary('-', rt.f(0.33000001311302185), rt.binary('*', balance, rt.f(0.15000000596046448), 1, 'float'), 1, 'float')
     return rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0), rt.binary('*', boundary, rt.f(2), 1, 'float'), luma), 1, 'float')
   end
   midtoneWeight__float_float = lambda do |luma, balance|
     center = nil; dist = nil; spread = nil
     center = rt.f(0.5)
-    spread = rt.binary('-', rt.f(0.40000000000000002), rt.binary('*', rt.component_wise('abs', balance), rt.f(0.10000000000000001), 1, 'float'), 1, 'float')
+    spread = rt.binary('-', rt.f(0.40000000596046448), rt.binary('*', rt.component_wise('abs', balance), rt.f(0.10000000149011612), 1, 'float'), 1, 'float')
     dist = rt.binary('/', rt.component_wise('abs', rt.binary('-', luma, center, 1, 'float')), spread, 1, 'float')
     return rt.component_wise('max', rt.f(0), rt.binary('-', rt.f(1), dist, 1, 'float'))
   end
   highlightWeight__float_float = lambda do |luma, balance|
     boundary = nil
-    boundary = rt.binary('+', rt.f(0.67000000000000004), rt.binary('*', balance, rt.f(0.14999999999999999), 1, 'float'), 1, 'float')
-    return rt.component_wise('smoothstep', rt.binary('-', boundary, rt.f(0.33000000000000002), 1, 'float'), rt.f(1), luma)
+    boundary = rt.binary('+', rt.f(0.67000001668930054), rt.binary('*', balance, rt.f(0.15000000596046448), 1, 'float'), 1, 'float')
+    return rt.component_wise('smoothstep', rt.binary('-', boundary, rt.f(0.33000001311302185), 1, 'float'), rt.f(1), luma)
   end
   applyWheels__vec3_vec3_vec3_vec3_float = lambda do |rgb, shadowWheel, midWheel, highWheel, balance|
     rgb = rt.copy(rgb, 'float')
     shadowWheel = rt.copy(shadowWheel, 'float')
     midWheel = rt.copy(midWheel, 'float')
     highWheel = rt.copy(highWheel, 'float')
-    colorShift = nil; hW = nil; highOffset = nil; luma = nil; lumaDiff = nil; mW = nil; midOffset = nil; newLuma = nil; result = nil; sW = nil; shadowOffset = nil; totalWeight = nil
-    shadowOffset = rt.construct(3, rt.binary('*', rt.binary('-', shadowWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
-    midOffset = rt.construct(3, rt.binary('*', rt.binary('-', midWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
-    highOffset = rt.construct(3, rt.binary('*', rt.binary('-', highWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
-    if rt.bool((rt.bool((rt.bool(rt.binary('<', rt.length(shadowOffset), rt.f(0.01))) && rt.bool(rt.binary('<', rt.length(midOffset), rt.f(0.01))) ? 1 : 0)) && rt.bool(rt.binary('<', rt.length(highOffset), rt.f(0.01))) ? 1 : 0))
+    __sc504 = nil; colorShift = nil; hW = nil; highOffset = nil; luma = nil; lumaDiff = nil; mW = nil; midOffset = nil; newLuma = nil; result = nil; sW = nil; shadowOffset = nil; totalWeight = nil
+    shadowOffset = rt.construct(3, ((((shadowWheel[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((shadowWheel[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((shadowWheel[2]) - (rt.f(0.5)))) * (rt.f(2))))
+    midOffset = rt.construct(3, ((((midWheel[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((midWheel[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((midWheel[2]) - (rt.f(0.5)))) * (rt.f(2))))
+    highOffset = rt.construct(3, ((((highWheel[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((highWheel[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((highWheel[2]) - (rt.f(0.5)))) * (rt.f(2))))
+    if rt.bool((rt.bool((rt.bool(rt.binary('<', rt.length(shadowOffset), rt.f(0.0099999997764825821))) && rt.bool(rt.binary('<', rt.length(midOffset), rt.f(0.0099999997764825821))) ? 1 : 0)) && rt.bool(rt.binary('<', rt.length(highOffset), rt.f(0.0099999997764825821))) ? 1 : 0))
       return rgb
     end
     luma = rt.dot(rgb, g['LUMA_WEIGHTS'])
     sW = shadowWeight__float_float.call(luma, balance)
     mW = midtoneWeight__float_float.call(luma, balance)
     hW = highlightWeight__float_float.call(luma, balance)
-    totalWeight = rt.binary('+', rt.binary('+', rt.binary('+', sW, mW, 1, 'float'), hW, 1, 'float'), rt.f(0.001), 1, 'float')
+    totalWeight = rt.binary('+', rt.binary('+', rt.binary('+', sW, mW, 1, 'float'), hW, 1, 'float'), rt.f(0.0010000000474974513), 1, 'float')
     sW = rt.binary('/', sW, totalWeight, 1, 'float')
     mW = rt.binary('/', mW, totalWeight, 1, 'float')
     hW = rt.binary('/', hW, totalWeight, 1, 'float')
     colorShift = rt.construct(3, rt.construct(3, rt.f(0)))
-    colorShift.replace((rt.binary('+', colorShift, rt.binary('*', rt.binary('*', shadowOffset, sW, 3, 'float'), rt.f(0.5), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-    colorShift.replace((rt.binary('+', colorShift, rt.binary('*', rt.binary('*', midOffset, mW, 3, 'float'), rt.f(0.5), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-    colorShift.replace((rt.binary('+', colorShift, rt.binary('*', rt.binary('*', highOffset, hW, 3, 'float'), rt.f(0.5), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-    result = rt.construct(3, rt.binary('+', rgb, colorShift, 3, 'float'))
+    colorShift[0] = rt.f32(rt.binary('+', colorShift[0], ((((shadowOffset[0]) * (sW))) * (rt.f(0.5))), 1, 'float')); colorShift[1] = rt.f32(rt.binary('+', colorShift[1], ((((shadowOffset[1]) * (sW))) * (rt.f(0.5))), 1, 'float')); colorShift[2] = rt.f32(rt.binary('+', colorShift[2], ((((shadowOffset[2]) * (sW))) * (rt.f(0.5))), 1, 'float'))
+    colorShift[0] = rt.f32(rt.binary('+', colorShift[0], ((((midOffset[0]) * (mW))) * (rt.f(0.5))), 1, 'float')); colorShift[1] = rt.f32(rt.binary('+', colorShift[1], ((((midOffset[1]) * (mW))) * (rt.f(0.5))), 1, 'float')); colorShift[2] = rt.f32(rt.binary('+', colorShift[2], ((((midOffset[2]) * (mW))) * (rt.f(0.5))), 1, 'float'))
+    colorShift[0] = rt.f32(rt.binary('+', colorShift[0], ((((highOffset[0]) * (hW))) * (rt.f(0.5))), 1, 'float')); colorShift[1] = rt.f32(rt.binary('+', colorShift[1], ((((highOffset[1]) * (hW))) * (rt.f(0.5))), 1, 'float')); colorShift[2] = rt.f32(rt.binary('+', colorShift[2], ((((highOffset[2]) * (hW))) * (rt.f(0.5))), 1, 'float'))
+    result = rt.construct(3, ((rgb[0]) + (colorShift[0])), ((rgb[1]) + (colorShift[1])), ((rgb[2]) + (colorShift[2])))
     newLuma = rt.dot(result, g['LUMA_WEIGHTS'])
     lumaDiff = rt.binary('-', luma, newLuma, 1, 'float')
-    result.replace((rt.binary('+', result, rt.binary('*', lumaDiff, rt.f(0.29999999999999999), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+    __sc504 = rt.binary('*', lumaDiff, rt.f(0.30000001192092896), 1, 'float'); result[0] = rt.f32(rt.binary('+', result[0], __sc504, 1, 'float')); result[1] = rt.f32(rt.binary('+', result[1], __sc504, 1, 'float')); result[2] = rt.f32(rt.binary('+', result[2], __sc504, 1, 'float'))
     return result
   end
   main__void = lambda do
     color = nil; coord = nil; globalCoord = nil; rgb = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))

@@ -19,7 +19,7 @@ run_pixel = lambda do |ctx, out|
       return
     end
     feedback = rt.construct(4, rt.texel_fetch(_u_feedbackTex, coord, rt.i(0)))
-    result = rt.construct(3, rt.component_wise('mix', rt.swizzle(inputColor, 'rgb'), rt.swizzle(feedback, 'rgb'), _u_intensity))
+    result = rt.construct(3, rt.component_wise('mix', rt.swizzle(inputColor, 'r'), rt.swizzle(feedback, 'r'), _u_intensity), rt.component_wise('mix', rt.swizzle(inputColor, 'g'), rt.swizzle(feedback, 'g'), _u_intensity), rt.component_wise('mix', rt.swizzle(inputColor, 'b'), rt.swizzle(feedback, 'b'), _u_intensity))
     g['fragColor'].replace((rt.construct(4, result, rt.swizzle(inputColor, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

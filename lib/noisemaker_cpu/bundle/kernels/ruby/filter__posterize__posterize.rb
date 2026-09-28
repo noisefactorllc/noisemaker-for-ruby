@@ -13,21 +13,21 @@ run_pixel = lambda do |ctx, out|
   _u_antialias = u.key?('antialias') ? u['antialias'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
   g['MIN_LEVELS'] = rt.f(1)
-  g['MIN_GAMMA'] = rt.f(0.001)
+  g['MIN_GAMMA'] = rt.f(0.0010000000474974513)
   clamp_01__float = lambda do |value|
     return rt.component_wise('clamp', value, rt.f(0), rt.f(1))
   end
   srgb_to_linear_component__float = lambda do |value|
-    if rt.bool(rt.binary('<=', value, rt.f(0.04045)))
-      return rt.binary('/', value, rt.f(12.92), 1, 'float')
+    if rt.bool(rt.binary('<=', value, rt.f(0.040449999272823334)))
+      return rt.binary('/', value, rt.f(12.920000076293945), 1, 'float')
     end
-    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.055), 1, 'float'), rt.f(1.0549999999999999), 1, 'float'), rt.f(2.3999999999999999))
+    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
   end
   linear_to_srgb_component__float = lambda do |value|
-    if rt.bool(rt.binary('<=', value, rt.f(0.0031308)))
-      return rt.binary('*', value, rt.f(12.92), 1, 'float')
+    if rt.bool(rt.binary('<=', value, rt.f(0.0031308000907301903)))
+      return rt.binary('*', value, rt.f(12.920000076293945), 1, 'float')
     end
-    return rt.binary('-', rt.binary('*', rt.f(1.0549999999999999), rt.component_wise('pow', value, rt.binary('/', rt.f(1), rt.f(2.3999999999999999), 1, 'float')), 1, 'float'), rt.f(0.055), 1, 'float')
+    return rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', value, rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float')
   end
   srgb_to_linear_rgb__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
@@ -43,9 +43,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     blend = nil; f = nil; fw = nil; gamma_value = nil; globalCoord = nil; half_step = nil; inv_factor = nil; inv_gamma = nil; level_factor = nil; levels_quantized = nil; levels_raw = nil; quantized_rgb = nil; scaled = nil; texel = nil; uv = nil; working_rgb = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    texel = rt.construct(4, rt.texture(_u_inputTex, uv))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (((rt.texture_size(_u_inputTex))[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / (((rt.texture_size(_u_inputTex))[1]))))
+    texel = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
     levels_raw = rt.component_wise('max', _u_levels, rt.f(0))
     levels_quantized = rt.component_wise('max', rt.component_wise('round', levels_raw), g['MIN_LEVELS'])
     if rt.bool(rt.binary('<=', levels_quantized, rt.f(1)))
@@ -59,22 +59,22 @@ run_pixel = lambda do |ctx, out|
     inv_gamma = rt.binary('/', rt.f(1), gamma_value, 1, 'float')
     working_rgb = rt.construct(3, srgb_to_linear_rgb__vec3.call(rt.swizzle(texel, 'xyz')))
     working_rgb.replace((pow_vec3__vec3_float.call(rt.component_wise('clamp', working_rgb, rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))), gamma_value)).map { |c| rt.f32(c) })
-    scaled = rt.construct(3, rt.binary('+', rt.binary('*', working_rgb, level_factor, 3, 'float'), rt.construct(3, half_step), 3, 'float'))
+    scaled = rt.construct(3, ((((working_rgb[0]) * (level_factor))) + ((half_step))), ((((working_rgb[1]) * (level_factor))) + ((half_step))), ((((working_rgb[2]) * (level_factor))) + ((half_step))))
     quantized_rgb = rt.construct(3, 0.0)
     blend = rt.construct(3, 0.0)
     f = rt.construct(3, 0.0)
     fw = rt.construct(3, 0.0)
     if rt.bool(_u_antialias)
-      f = rt.construct(3, rt.component_wise('fract', scaled))
+      f = rt.construct(3, rt.component_wise('fract', scaled[0]), rt.component_wise('fract', scaled[1]), rt.component_wise('fract', scaled[2]))
       fw = rt.construct(3, rt.fwidth(scaled))
-      blend = rt.construct(3, rt.component_wise('smoothstep', rt.binary('-', rt.f(0.5), rt.binary('*', fw, rt.f(0.5), 3, 'float'), 3, 'float'), rt.binary('+', rt.f(0.5), rt.binary('*', fw, rt.f(0.5), 3, 'float'), 3, 'float'), f))
+      blend = rt.construct(3, rt.component_wise('smoothstep', rt.f32(((rt.f(0.5)) - (((fw[0]) * (rt.f(0.5)))))), rt.f32(((rt.f(0.5)) + (((fw[0]) * (rt.f(0.5)))))), f[0]), rt.component_wise('smoothstep', rt.f32(((rt.f(0.5)) - (((fw[1]) * (rt.f(0.5)))))), rt.f32(((rt.f(0.5)) + (((fw[1]) * (rt.f(0.5)))))), f[1]), rt.component_wise('smoothstep', rt.f32(((rt.f(0.5)) - (((fw[2]) * (rt.f(0.5)))))), rt.f32(((rt.f(0.5)) + (((fw[2]) * (rt.f(0.5)))))), f[2]))
       quantized_rgb.replace((rt.binary('*', rt.binary('+', rt.component_wise('floor', scaled), blend, 3, 'float'), inv_factor, 3, 'float')).map { |c| rt.f32(c) })
     else
       quantized_rgb.replace((rt.binary('*', rt.component_wise('floor', scaled), inv_factor, 3, 'float')).map { |c| rt.f32(c) })
     end
     quantized_rgb.replace((pow_vec3__vec3_float.call(rt.component_wise('clamp', quantized_rgb, rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))), inv_gamma)).map { |c| rt.f32(c) })
     quantized_rgb.replace((linear_to_srgb_rgb__vec3.call(quantized_rgb)).map { |c| rt.f32(c) })
-    g['fragColor'].replace((rt.construct(4, clamp_01__float.call(rt.swizzle(quantized_rgb, 'x')), clamp_01__float.call(rt.swizzle(quantized_rgb, 'y')), clamp_01__float.call(rt.swizzle(quantized_rgb, 'z')), rt.swizzle(texel, 'w'))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(clamp_01__float.call(rt.swizzle(quantized_rgb, 'x'))); g['fragColor'][1] = rt.f32(clamp_01__float.call(rt.swizzle(quantized_rgb, 'y'))); g['fragColor'][2] = rt.f32(clamp_01__float.call(rt.swizzle(quantized_rgb, 'z'))); g['fragColor'][3] = rt.f32(rt.swizzle(texel, 'w'))
   end
   main__void.call
   c = g['fragColor']

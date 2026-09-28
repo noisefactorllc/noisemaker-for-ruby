@@ -10,44 +10,44 @@ run_pixel = lambda do |ctx, out|
   _u_inputTex = ctx.texture_binding('inputTex')
   g['fragColor'] = rt.construct(4, 0.0)
   srgbToLinear__float = lambda do |value|
-    return (rt.bool(rt.binary('<=', value, rt.f(0.04045))) ? (rt.binary('/', value, rt.f(12.92), 1, 'float')) : (rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.055), 1, 'float'), rt.f(1.0549999999999999), 1, 'float'), rt.f(2.3999999999999999))))
+    return (rt.bool(rt.binary('<=', value, rt.f(0.040449999272823334))) ? (rt.binary('/', value, rt.f(12.920000076293945), 1, 'float')) : (rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))))
   end
   srgbToLinear__vec3 = lambda do |value|
     value = rt.copy(value, 'float')
     return rt.construct(3, srgbToLinear__float.call(rt.swizzle(value, 'r')), srgbToLinear__float.call(rt.swizzle(value, 'g')), srgbToLinear__float.call(rt.swizzle(value, 'b')))
   end
   cubeRoot__float = lambda do |value|
-    return (rt.bool(rt.binary('<', value, rt.f(0))) ? (rt.unary('-', rt.component_wise('pow', rt.unary('-', value), rt.binary('/', rt.f(1), rt.f(3), 1, 'float')))) : (rt.component_wise('pow', value, rt.binary('/', rt.f(1), rt.f(3), 1, 'float'))))
+    return (rt.bool(rt.binary('<', value, rt.f(0))) ? (rt.unary('-', rt.component_wise('pow', rt.unary('-', value), rt.f(0.3333333432674408)))) : (rt.component_wise('pow', value, rt.f(0.3333333432674408))))
   end
   oklabLComponent__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
     l = nil; lC = nil; linear = nil; m = nil; mC = nil; s = nil; sC = nil
     linear = rt.construct(3, srgbToLinear__vec3.call(rt.component_wise('clamp', rgb, rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1)))))
-    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561200000001), rt.swizzle(linear, 'r'), 1, 'float'), rt.binary('*', rt.f(0.53627520799999995), rt.swizzle(linear, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565300000001), rt.swizzle(linear, 'b'), 1, 'float'), 1, 'float')
-    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910699999999), rt.swizzle(linear, 'r'), 1, 'float'), rt.binary('*', rt.f(0.68071895839999996), rt.swizzle(linear, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.107406579), rt.swizzle(linear, 'b'), 1, 'float'), 1, 'float')
-    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794699999999), rt.swizzle(linear, 'r'), 1, 'float'), rt.binary('*', rt.f(0.28184741740000002), rt.swizzle(linear, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136160000001), rt.swizzle(linear, 'b'), 1, 'float'), 1, 'float')
-    lC = cubeRoot__float.call(rt.component_wise('max', l, rt.f(1.0000000000000001e-09)))
-    mC = cubeRoot__float.call(rt.component_wise('max', m, rt.f(1.0000000000000001e-09)))
-    sC = cubeRoot__float.call(rt.component_wise('max', s, rt.f(1.0000000000000001e-09)))
-    return rt.component_wise('clamp', rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.2104542553), lC, 1, 'float'), rt.binary('*', rt.f(0.79361778500000002), mC, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720467999999996), sC, 1, 'float'), 1, 'float'), rt.f(0), rt.f(1))
+    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561198234558), rt.swizzle(linear, 'r'), 1, 'float'), rt.binary('*', rt.f(0.53627520799636841), rt.swizzle(linear, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565277814865), rt.swizzle(linear, 'b'), 1, 'float'), 1, 'float')
+    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910701751709), rt.swizzle(linear, 'r'), 1, 'float'), rt.binary('*', rt.f(0.68071895837783813), rt.swizzle(linear, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.10740657895803452), rt.swizzle(linear, 'b'), 1, 'float'), 1, 'float')
+    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794664382935), rt.swizzle(linear, 'r'), 1, 'float'), rt.binary('*', rt.f(0.28184741735458374), rt.swizzle(linear, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136159896851), rt.swizzle(linear, 'b'), 1, 'float'), 1, 'float')
+    lC = cubeRoot__float.call(rt.component_wise('max', l, rt.f(9.9999997171806854e-10)))
+    mC = cubeRoot__float.call(rt.component_wise('max', m, rt.f(9.9999997171806854e-10)))
+    sC = cubeRoot__float.call(rt.component_wise('max', s, rt.f(9.9999997171806854e-10)))
+    return rt.component_wise('clamp', rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.21045425534248352), lC, 1, 'float'), rt.binary('*', rt.f(0.79361778497695923), mC, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720468387007713), sC, 1, 'float'), 1, 'float'), rt.f(0), rt.f(1))
   end
   valueMapComponent__vec4 = lambda do |texel|
     texel = rt.copy(texel, 'float')
     spread = nil
     spread = rt.component_wise('max', rt.component_wise('abs', rt.binary('-', rt.swizzle(texel, 'r'), rt.swizzle(texel, 'g'), 1, 'float')), rt.component_wise('max', rt.component_wise('abs', rt.binary('-', rt.swizzle(texel, 'r'), rt.swizzle(texel, 'b'), 1, 'float')), rt.component_wise('abs', rt.binary('-', rt.swizzle(texel, 'g'), rt.swizzle(texel, 'b'), 1, 'float'))))
-    if rt.bool(rt.binary('<', spread, rt.f(1.0000000000000001e-05)))
+    if rt.bool(rt.binary('<', spread, rt.f(9.9999997473787516e-06)))
       return rt.component_wise('clamp', rt.swizzle(texel, 'r'), rt.f(0), rt.f(1))
     end
     return oklabLComponent__vec3.call(rt.swizzle(texel, 'rgb'))
   end
   main__void = lambda do
     dimensions = nil; globalCoord = nil; texel = nil; uv = nil; value = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     dimensions = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary('/', rt.binary('-', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.f(0.5)), 2, 'float'), rt.construct(2, rt.component_wise('max', rt.swizzle(dimensions, 'x'), rt.i(1)), rt.component_wise('max', rt.swizzle(dimensions, 'y'), rt.i(1))), 2, 'float'))
-    texel = rt.construct(4, rt.texture(_u_inputTex, uv))
+    uv = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) - ((rt.f(0.5))))) / ((rt.component_wise('max', rt.swizzle(dimensions, 'x'), rt.i(1))))), ((((rt.swizzle(ctx.frag_coord, 'y')) - ((rt.f(0.5))))) / ((rt.component_wise('max', rt.swizzle(dimensions, 'y'), rt.i(1))))))
+    texel = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
     value = valueMapComponent__vec4.call(texel)
-    g['fragColor'].replace((rt.construct(4, value, value, value, rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(value); g['fragColor'][1] = rt.f32(value); g['fragColor'][2] = rt.f32(value); g['fragColor'][3] = rt.f32(rt.swizzle(texel, 'a'))
   end
   main__void.call
   c = g['fragColor']

@@ -13,14 +13,14 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     current = nil; mixFactor = nil; previous = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
     if rt.bool(_u_resetState)
       g['fragColor'].replace((rt.texture(_u_inputTex, uv)).map { |c| rt.f32(c) })
       return
     end
-    current = rt.construct(4, rt.texture(_u_inputTex, uv))
-    previous = rt.construct(4, rt.texture(_u_selfTex, uv))
-    mixFactor = rt.component_wise('clamp', rt.binary('*', _u_amount, rt.f(0.0080000000000000002), 1, 'float'), rt.f(0), rt.f(0.97999999999999998))
+    current = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    previous = rt.construct(4, (rt.texture(_u_selfTex, uv))[0], (rt.texture(_u_selfTex, uv))[1], (rt.texture(_u_selfTex, uv))[2], (rt.texture(_u_selfTex, uv))[3])
+    mixFactor = rt.component_wise('clamp', rt.binary('*', _u_amount, rt.f(0.0080000003799796104), 1, 'float'), rt.f(0), rt.f(0.98000001907348633))
     g['fragColor'].replace((rt.component_wise('mix', current, previous, mixFactor)).map { |c| rt.f32(c) })
   end
   main__void.call

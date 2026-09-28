@@ -8,7 +8,7 @@ run_pixel = lambda do |ctx, out|
   _u_inputTex = ctx.texture_binding('inputTex')
   g['fragColor'] = rt.construct(4, 0.0)
   srgb_to_lin__float = lambda do |value|
-    return (rt.bool(rt.binary('<=', value, rt.f(0.04045))) ? (rt.binary('/', value, rt.f(12.92), 1, 'float')) : (rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.055), 1, 'float'), rt.f(1.0549999999999999), 1, 'float'), rt.f(2.3999999999999999))))
+    return (rt.bool(rt.binary('<=', value, rt.f(0.040449999272823334))) ? (rt.binary('/', value, rt.f(12.920000076293945), 1, 'float')) : (rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))))
   end
   oklab_l__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
@@ -16,13 +16,13 @@ run_pixel = lambda do |ctx, out|
     r = srgb_to_lin__float.call(rt.component_wise('clamp', rt.swizzle(rgb, 'r'), rt.f(0), rt.f(1)))
     _g = srgb_to_lin__float.call(rt.component_wise('clamp', rt.swizzle(rgb, 'g'), rt.f(0), rt.f(1)))
     b = srgb_to_lin__float.call(rt.component_wise('clamp', rt.swizzle(rgb, 'b'), rt.f(0), rt.f(1)))
-    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561200000001), r, 1, 'float'), rt.binary('*', rt.f(0.53627520799999995), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565300000001), b, 1, 'float'), 1, 'float')
-    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910699999999), r, 1, 'float'), rt.binary('*', rt.f(0.68071895839999996), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.107406579), b, 1, 'float'), 1, 'float')
-    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794699999999), r, 1, 'float'), rt.binary('*', rt.f(0.28184741740000002), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136160000001), b, 1, 'float'), 1, 'float')
-    l_c = rt.component_wise('pow', rt.component_wise('abs', l), rt.binary('/', rt.f(1), rt.f(3), 1, 'float'))
-    m_c = rt.component_wise('pow', rt.component_wise('abs', m), rt.binary('/', rt.f(1), rt.f(3), 1, 'float'))
-    s_c = rt.component_wise('pow', rt.component_wise('abs', s), rt.binary('/', rt.f(1), rt.f(3), 1, 'float'))
-    return rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.2104542553), l_c, 1, 'float'), rt.binary('*', rt.f(0.79361778500000002), m_c, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720467999999996), s_c, 1, 'float'), 1, 'float')
+    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561198234558), r, 1, 'float'), rt.binary('*', rt.f(0.53627520799636841), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565277814865), b, 1, 'float'), 1, 'float')
+    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910701751709), r, 1, 'float'), rt.binary('*', rt.f(0.68071895837783813), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.10740657895803452), b, 1, 'float'), 1, 'float')
+    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794664382935), r, 1, 'float'), rt.binary('*', rt.f(0.28184741735458374), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136159896851), b, 1, 'float'), 1, 'float')
+    l_c = rt.component_wise('pow', rt.component_wise('abs', l), rt.f(0.3333333432674408))
+    m_c = rt.component_wise('pow', rt.component_wise('abs', m), rt.f(0.3333333432674408))
+    s_c = rt.component_wise('pow', rt.component_wise('abs', s), rt.f(0.3333333432674408))
+    return rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.21045425534248352), l_c, 1, 'float'), rt.binary('*', rt.f(0.79361778497695923), m_c, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720468387007713), s_c, 1, 'float'), 1, 'float')
   end
   main__void = lambda do
     coord = nil; lum = nil; size = nil; texel = nil
@@ -30,7 +30,7 @@ run_pixel = lambda do |ctx, out|
     size = rt.texture_size(_u_inputTex)
     texel = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     lum = oklab_l__vec3.call(rt.swizzle(texel, 'rgb'))
-    g['fragColor'].replace((rt.construct(4, lum, rt.binary('/', rt.construct(1, rt.swizzle(coord, 'x')), rt.construct(1, rt.binary('-', rt.swizzle(size, 'x'), rt.i(1), 1, 'int')), 1, 'float'), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(lum); g['fragColor'][1] = rt.f32(rt.binary('/', rt.construct(1, rt.swizzle(coord, 'x')), rt.construct(1, rt.binary('-', rt.swizzle(size, 'x'), rt.i(1), 1, 'int')), 1, 'float')); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

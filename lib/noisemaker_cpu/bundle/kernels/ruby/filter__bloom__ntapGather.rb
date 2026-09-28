@@ -13,15 +13,15 @@ run_pixel = lambda do |ctx, out|
   _u_taps = u.key?('taps') ? u['taps'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
   g['MAX_TAPS'] = rt.i(64)
-  g['GOLDEN_ANGLE'] = rt.f(2.39996323)
-  g['PI'] = rt.f(3.1415926535900001)
+  g['GOLDEN_ANGLE'] = rt.f(2.3999631404876709)
+  g['PI'] = rt.f(3.1415927410125732)
   main__void = lambda do
-    _for0_first = nil; _t = nil; bloomAccum = nil; globalCoord = nil; i = nil; offset = nil; r = nil; radiusUV = nil; sampleColor = nil; sampleUV = nil; sigma = nil; tapCount = nil; texSize = nil; texelSize = nil; theta = nil; uv = nil; weight = nil; weightSum = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    __sc320 = nil; _for0_first = nil; _t = nil; bloomAccum = nil; globalCoord = nil; i = nil; offset = nil; r = nil; radiusUV = nil; sampleColor = nil; sampleUV = nil; sigma = nil; tapCount = nil; texSize = nil; texelSize = nil; theta = nil; uv = nil; weight = nil; weightSum = nil
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary('/', rt.f(1), texSize, 2, 'float'))
-    radiusUV = rt.construct(2, rt.binary('*', rt.binary('*', _u_radius, _u_renderScale, 1, 'float'), texelSize, 2, 'float'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (texSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (texSize[1])))
+    texelSize = rt.construct(2, ((rt.f(1)) / (texSize[0])), ((rt.f(1)) / (texSize[1])))
+    radiusUV = rt.construct(2, ((((_u_radius) * (_u_renderScale))) * (texelSize[0])), ((((_u_radius) * (_u_renderScale))) * (texelSize[1])))
     tapCount = rt.component_wise('clamp', _u_taps, rt.i(1), g['MAX_TAPS'])
     bloomAccum = rt.construct(3, rt.construct(3, rt.f(0)))
     weightSum = rt.f(0)
@@ -41,16 +41,16 @@ run_pixel = lambda do |ctx, out|
       _t = rt.binary('/', rt.construct(1, i), rt.construct(1, tapCount), 1, 'float')
       r = rt.component_wise('sqrt', _t)
       theta = rt.binary('*', rt.construct(1, i), g['GOLDEN_ANGLE'], 1, 'float')
-      offset = rt.construct(2, rt.binary('*', rt.construct(2, rt.component_wise('cos', theta), rt.component_wise('sin', theta)), r, 2, 'float'))
-      sigma = rt.f(0.40000000000000002)
+      offset = rt.construct(2, (((rt.component_wise('cos', theta))) * (r)), (((rt.component_wise('sin', theta))) * (r)))
+      sigma = rt.f(0.40000000596046448)
       weight = rt.component_wise('exp', rt.binary('/', rt.binary('*', rt.unary('-', rt.f(0.5)), rt.binary('*', r, r, 1, 'float'), 1, 'float'), rt.binary('*', sigma, sigma, 1, 'float'), 1, 'float'))
-      sampleUV = rt.construct(2, rt.component_wise('clamp', rt.binary('+', uv, rt.binary('*', offset, radiusUV, 2, 'float'), 2, 'float'), rt.construct(2, rt.f(0)), rt.construct(2, rt.f(1))))
-      sampleColor = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, sampleUV), 'rgb'))
-      bloomAccum.replace((rt.binary('+', bloomAccum, rt.binary('*', sampleColor, weight, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+      sampleUV = rt.construct(2, rt.component_wise('clamp', rt.f32(((uv[0]) + (((offset[0]) * (radiusUV[0]))))), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.f32(((uv[1]) + (((offset[1]) * (radiusUV[1]))))), (rt.f(0)), (rt.f(1))))
+      sampleColor = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, sampleUV), 'r'), rt.swizzle(rt.texture(_u_inputTex, sampleUV), 'g'), rt.swizzle(rt.texture(_u_inputTex, sampleUV), 'b'))
+      bloomAccum[0] = rt.f32(rt.binary('+', bloomAccum[0], ((sampleColor[0]) * (weight)), 1, 'float')); bloomAccum[1] = rt.f32(rt.binary('+', bloomAccum[1], ((sampleColor[1]) * (weight)), 1, 'float')); bloomAccum[2] = rt.f32(rt.binary('+', bloomAccum[2], ((sampleColor[2]) * (weight)), 1, 'float'))
       weightSum = rt.binary('+', weightSum, weight, 1, 'float')
     end
     if rt.bool(rt.binary('>', weightSum, rt.f(0)))
-      bloomAccum.replace((rt.binary('/', bloomAccum, weightSum, 3, 'float')).map { |c| rt.f32(c) })
+      __sc320 = weightSum; bloomAccum[0] = rt.f32(rt.binary('/', bloomAccum[0], __sc320, 1, 'float')); bloomAccum[1] = rt.f32(rt.binary('/', bloomAccum[1], __sc320, 1, 'float')); bloomAccum[2] = rt.f32(rt.binary('/', bloomAccum[2], __sc320, 1, 'float'))
     end
     g['fragColor'].replace((rt.construct(4, bloomAccum, rt.f(1))).map { |c| rt.f32(c) })
   end

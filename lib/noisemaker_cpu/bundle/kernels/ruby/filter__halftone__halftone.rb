@@ -22,12 +22,12 @@ run_pixel = lambda do |ctx, out|
   _u_paperColor = u.key?('paperColor') ? u['paperColor'] : rt.construct(3, 0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   g['DOT_AREA_CAP'] = rt.f(0.5)
-  g['PI'] = rt.f(3.1415926535897931)
-  g['MID_DOT_RADIUS'] = rt.f(0.39894227999999998)
-  g['MAX_DOT_RADIUS'] = rt.f(0.47999999999999998)
+  g['PI'] = rt.f(3.1415927410125732)
+  g['MID_DOT_RADIUS'] = rt.f(0.39894229173660278)
+  g['MAX_DOT_RADIUS'] = rt.f(0.47999998927116394)
   lum__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
-    return rt.dot(c, rt.construct(3, rt.f(0.21260000000000001), rt.f(0.71519999999999995), rt.f(0.0722)))
+    return rt.dot(c, rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
   end
   tonemap2__float_vec3_vec3 = lambda do |_t, ink, paper|
     ink = rt.copy(ink, 'float')
@@ -38,8 +38,8 @@ run_pixel = lambda do |ctx, out|
     rgb = rt.copy(rgb, 'float')
     cmy = nil; k = nil; scale = nil
     k = rt.binary('-', rt.f(1), rt.component_wise('max', rt.component_wise('max', rt.swizzle(rgb, 'r'), rt.swizzle(rgb, 'g')), rt.swizzle(rgb, 'b')), 1, 'float')
-    scale = rt.component_wise('max', rt.binary('-', rt.f(1), k, 1, 'float'), rt.f(1.0000000000000001e-05))
-    cmy = rt.construct(3, rt.component_wise('clamp', rt.binary('/', rt.binary('-', rt.binary('-', rt.f(1), rgb, 3, 'float'), rt.construct(3, k), 3, 'float'), scale, 3, 'float'), rt.f(0), rt.f(1)))
+    scale = rt.component_wise('max', rt.binary('-', rt.f(1), k, 1, 'float'), rt.f(9.9999997473787516e-06))
+    cmy = rt.construct(3, rt.component_wise('clamp', rt.f32(((((((rt.f(1)) - (rgb[0]))) - ((k)))) / (scale))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((((rt.f(1)) - (rgb[1]))) - ((k)))) / (scale))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((((rt.f(1)) - (rgb[2]))) - ((k)))) / (scale))), rt.f(0), rt.f(1)))
     return rt.construct(4, cmy, k)
   end
   rotate2D__vec2_float = lambda do |v, angleDeg|
@@ -48,12 +48,12 @@ run_pixel = lambda do |ctx, out|
     a = rt.component_wise('radians', angleDeg)
     co = rt.component_wise('cos', a)
     si = rt.component_wise('sin', a)
-    return rt.matrix_mult(rt.construct(4, co, rt.unary('-', si), si, co), v, 2)
+    return rt.construct(2, (rt.matrix_mult(rt.construct(4, co, rt.unary('-', si), si, co), v, 2))[0], (rt.matrix_mult(rt.construct(4, co, rt.unary('-', si), si, co), v, 2))[1])
   end
   boxBlur3__vec2_vec2 = lambda do |uv, texel|
     uv = rt.copy(uv, 'float')
     texel = rt.copy(texel, 'float')
-    _for0_first = nil; _for1_first = nil; o = nil; sum = nil; x = nil; y = nil
+    __hoist544 = nil; _for0_first = nil; _for1_first = nil; o = nil; sum = nil; x = nil; y = nil
     sum = rt.construct(3, rt.construct(3, rt.f(0)))
     y = rt.unary('-', rt.i(1))
     _for0_first = true
@@ -75,26 +75,26 @@ run_pixel = lambda do |ctx, out|
         unless rt.bool(rt.binary('<=', x, rt.i(1)))
           break
         end
-        o = rt.construct(2, rt.binary('*', rt.construct(2, rt.construct(1, x), rt.construct(1, y)), texel, 2, 'float'))
-        sum.replace((rt.binary('+', sum, rt.swizzle(rt.texture(_u_inputTex, rt.component_wise('clamp', rt.binary('+', uv, o, 2, 'float'), rt.f(0), rt.f(1))), 'rgb'), 3, 'float')).map { |c| rt.f32(c) })
+        o = rt.construct(2, ((((x))) * (texel[0])), ((((y))) * (texel[1])))
+        __hoist544 = rt.swizzle(rt.texture(_u_inputTex, rt.component_wise('clamp', rt.construct(2, ((uv[0]) + (o[0])), ((uv[1]) + (o[1]))), rt.f(0), rt.f(1))), 'rgb'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist544[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist544[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist544[2], 1, 'float'))
       end
     end
-    return rt.binary('/', sum, rt.f(9), 3, 'float')
+    return rt.construct(3, ((sum[0]) / (rt.f(9))), ((sum[1]) / (rt.f(9))), ((sum[2]) / (rt.f(9))))
   end
   cellSampleFromRuv__vec2_float_vec2 = lambda do |ruv, angleDeg, texel|
     ruv = rt.copy(ruv, 'float')
     texel = rt.copy(texel, 'float')
     cellCenterGc = nil; cellId = nil; cellUV = nil
-    cellId = rt.construct(2, rt.binary('+', rt.component_wise('floor', ruv), rt.f(0.5), 2, 'float'))
-    cellCenterGc = rt.construct(2, rotate2D__vec2_float.call(rt.binary('*', cellId, _u_frequency, 2, 'float'), rt.unary('-', angleDeg)))
-    cellUV = rt.construct(2, rt.component_wise('clamp', rt.binary('/', rt.binary('-', cellCenterGc, _u_tileOffset, 2, 'float'), _u_resolution, 2, 'float'), rt.f(0), rt.f(1)))
+    cellId = rt.construct(2, ((rt.component_wise('floor', ruv[0])) + (rt.f(0.5))), ((rt.component_wise('floor', ruv[1])) + (rt.f(0.5))))
+    cellCenterGc = rt.construct(2, rotate2D__vec2_float.call(rt.construct(2, ((cellId[0]) * (_u_frequency)), ((cellId[1]) * (_u_frequency))), rt.unary('-', angleDeg)))
+    cellUV = rt.construct(2, rt.component_wise('clamp', rt.f32(((((cellCenterGc[0]) - (_u_tileOffset[0]))) / (_u_resolution[0]))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((cellCenterGc[1]) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1)))
     return boxBlur3__vec2_vec2.call(cellUV, texel)
   end
   halftoneCoverage__float_float_float = lambda do |d, value, sharpnessPct|
     aa = nil; softness = nil; spot = nil
-    spot = rt.binary('*', rt.component_wise('sqrt', rt.component_wise('clamp', value, rt.f(0), rt.f(1))), rt.f(0.70709999999999995), 1, 'float')
+    spot = rt.binary('*', rt.component_wise('sqrt', rt.component_wise('clamp', value, rt.f(0), rt.f(1))), rt.f(0.70709997415542603), 1, 'float')
     softness = rt.binary('-', rt.f(1), rt.component_wise('clamp', rt.binary('/', sharpnessPct, rt.f(100), 1, 'float'), rt.f(0), rt.f(1)), 1, 'float')
-    aa = rt.component_wise('max', rt.component_wise('mix', rt.binary('*', rt.fwidth(d), rt.f(1.5), 1, 'float'), rt.f(0.34999999999999998), softness), rt.f(1.0000000000000001e-05))
+    aa = rt.component_wise('max', rt.component_wise('mix', rt.binary('*', rt.fwidth(d), rt.f(1.5), 1, 'float'), rt.f(0.34999999403953552), softness), rt.f(9.9999997473787516e-06))
     return rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.binary('-', spot, aa, 1, 'float'), rt.binary('+', spot, aa, 1, 'float'), d), 1, 'float')
   end
   roundDotCoverage__vec2_float_float = lambda do |offset, value, sharpnessPct|
@@ -107,15 +107,15 @@ run_pixel = lambda do |ctx, out|
       inkRadius = rt.component_wise('mix', g['MID_DOT_RADIUS'], g['MAX_DOT_RADIUS'], rt.binary('/', rt.binary('-', inkAmount, g['DOT_AREA_CAP'], 1, 'float'), rt.binary('-', rt.f(1), g['DOT_AREA_CAP'], 1, 'float'), 1, 'float'))
     end
     softness = rt.binary('-', rt.f(1), rt.component_wise('clamp', rt.binary('/', sharpnessPct, rt.f(100), 1, 'float'), rt.f(0), rt.f(1)), 1, 'float')
-    centerAA = rt.component_wise('max', rt.component_wise('mix', rt.binary('*', rt.fwidth(centerDistance), rt.f(1.5), 1, 'float'), rt.f(0.34999999999999998), softness), rt.f(1.0000000000000001e-05))
-    resolvedInk = rt.component_wise('smoothstep', rt.f(0), rt.binary('/', rt.f(1), rt.f(255), 1, 'float'), value)
+    centerAA = rt.component_wise('max', rt.component_wise('mix', rt.binary('*', rt.fwidth(centerDistance), rt.f(1.5), 1, 'float'), rt.f(0.34999999403953552), softness), rt.f(9.9999997473787516e-06))
+    resolvedInk = rt.component_wise('smoothstep', rt.f(0), rt.f(0.0039215688593685627), value)
     return rt.binary('*', rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.unary('-', centerAA), centerAA, rt.binary('-', centerDistance, inkRadius, 1, 'float')), 1, 'float'), resolvedInk, 1, 'float')
   end
   main__void = lambda do
     alpha = nil; center = nil; d = nil; dotOffset = nil; globalCoord = nil; ink = nil; inkC = nil; inkK = nil; inkM = nil; inkY = nil; off = nil; rd = nil; ruv = nil; ruvC = nil; ruvK = nil; ruvM = nil; ruvY = nil; screened = nil; texel = nil; uv = nil; valC = nil; valK = nil; valM = nil; valY = nil; value = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    texel = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
+    texel = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
     alpha = rt.swizzle(rt.texture(_u_inputTex, uv), 'a')
     d = rt.f(0.0)
     dotOffset = rt.construct(2, 0.0)
@@ -142,11 +142,11 @@ run_pixel = lambda do |ctx, out|
       valM = rt.swizzle(rgbToCmyk__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruvM, _u_magentaAngle, texel)), 'g')
       valY = rt.swizzle(rgbToCmyk__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruvY, _u_yellowAngle, texel)), 'b')
       valK = rt.swizzle(rgbToCmyk__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruvK, _u_blackAngle, texel)), 'a')
-      inkC = roundDotCoverage__vec2_float_float.call(rt.binary('-', rt.component_wise('fract', ruvC), rt.f(0.5), 2, 'float'), valC, _u_sharpness)
-      inkM = roundDotCoverage__vec2_float_float.call(rt.binary('-', rt.component_wise('fract', ruvM), rt.f(0.5), 2, 'float'), valM, _u_sharpness)
-      inkY = roundDotCoverage__vec2_float_float.call(rt.binary('-', rt.component_wise('fract', ruvY), rt.f(0.5), 2, 'float'), valY, _u_sharpness)
-      inkK = roundDotCoverage__vec2_float_float.call(rt.binary('-', rt.component_wise('fract', ruvK), rt.f(0.5), 2, 'float'), valK, _u_sharpness)
-      screened = rt.construct(3, rt.binary('*', rt.binary('-', rt.construct(3, rt.f(1)), rt.construct(3, inkC, inkM, inkY), 3, 'float'), rt.binary('-', rt.f(1), inkK, 1, 'float'), 3, 'float'))
+      inkC = roundDotCoverage__vec2_float_float.call(rt.construct(2, ((rt.component_wise('fract', ruvC[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruvC[1])) - (rt.f(0.5)))), valC, _u_sharpness)
+      inkM = roundDotCoverage__vec2_float_float.call(rt.construct(2, ((rt.component_wise('fract', ruvM[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruvM[1])) - (rt.f(0.5)))), valM, _u_sharpness)
+      inkY = roundDotCoverage__vec2_float_float.call(rt.construct(2, ((rt.component_wise('fract', ruvY[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruvY[1])) - (rt.f(0.5)))), valY, _u_sharpness)
+      inkK = roundDotCoverage__vec2_float_float.call(rt.construct(2, ((rt.component_wise('fract', ruvK[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruvK[1])) - (rt.f(0.5)))), valK, _u_sharpness)
+      screened = rt.construct(3, (((((rt.f(1))) - ((inkC)))) * (((rt.f(1)) - (inkK)))), (((((rt.f(1))) - ((inkM)))) * (((rt.f(1)) - (inkK)))), (((((rt.f(1))) - ((inkY)))) * (((rt.f(1)) - (inkK)))))
       g['fragColor'].replace((rt.construct(4, screened, alpha)).map { |c| rt.f32(c) })
       return
     else
@@ -158,14 +158,14 @@ run_pixel = lambda do |ctx, out|
       rd = rt.f(0.0)
       ruv = rt.construct(2, 0.0)
       if rt.bool(rt.binary('==', _u__PATTERN, rt.i(2)))
-        center = rt.construct(2, rt.binary('*', _u_fullResolution, rt.f(0.5), 2, 'float'))
+        center = rt.construct(2, ((_u_fullResolution[0]) * (rt.f(0.5))), ((_u_fullResolution[1]) * (rt.f(0.5))))
         value = rt.binary('-', rt.f(1), lum__vec3.call(boxBlur3__vec2_vec2.call(uv, texel)), 1, 'float')
         rd = rt.binary('/', rt.length(rt.binary('-', globalCoord, center, 2, 'float')), _u_frequency, 1, 'float')
         d = rt.component_wise('abs', rt.binary('-', rt.component_wise('fract', rd), rt.f(0.5), 1, 'float'))
       else
         ruv = rt.construct(2, rt.binary('/', rotate2D__vec2_float.call(globalCoord, _u_monoAngle), _u_frequency, 2, 'float'))
         value = rt.binary('-', rt.f(1), lum__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruv, _u_monoAngle, texel)), 1, 'float')
-        off = rt.construct(2, rt.binary('-', rt.component_wise('fract', ruv), rt.f(0.5), 2, 'float'))
+        off = rt.construct(2, ((rt.component_wise('fract', ruv[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruv[1])) - (rt.f(0.5))))
         dotOffset.replace((off).map { |c| rt.f32(c) })
         if rt.bool(rt.binary('==', _u__PATTERN, rt.i(1)))
           d = rt.component_wise('abs', rt.swizzle(off, 'y'))

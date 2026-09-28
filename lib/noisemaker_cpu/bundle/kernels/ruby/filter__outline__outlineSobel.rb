@@ -35,7 +35,7 @@ run_pixel = lambda do |ctx, out|
         return rt.component_wise('max', abs_gx, abs_gy)
       else
         if rt.bool(rt.binary('==', metric, rt.i(4)))
-          cross = rt.binary('/', rt.binary('+', abs_gx, abs_gy, 1, 'float'), rt.f(1.4139999999999999), 1, 'float')
+          cross = rt.binary('/', rt.binary('+', abs_gx, abs_gy, 1, 'float'), rt.f(1.4140000343322754), 1, 'float')
           return rt.component_wise('max', cross, rt.component_wise('max', abs_gx, abs_gy))
         else
           return rt.component_wise('sqrt', rt.binary('+', rt.binary('*', gx, gx, 1, 'float'), rt.binary('*', gy, gy, 1, 'float'), 1, 'float'))
@@ -45,7 +45,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; coord = nil; dimensions = nil; globalCoord = nil; gx = nil; gy = nil; idx = nil; kx = nil; ky = nil; magnitude = nil; metric = nil; normalized = nil; offset = nil; sampleX = nil; sampleY = nil; samples = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     dimensions = rt.texture_size(_u_valueTexture)
     if rt.bool((rt.bool(rt.binary('==', rt.swizzle(dimensions, 'x'), rt.i(0))) || rt.bool(rt.binary('==', rt.swizzle(dimensions, 'y'), rt.i(0))) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
@@ -82,11 +82,11 @@ run_pixel = lambda do |ctx, out|
         idx = rt.binary('+', idx, rt.i(1), 1, 'int')
       end
     end
-    gx = rt.binary('+', rt.binary('-', rt.binary('+', rt.binary('-', rt.binary('+', rt.unary('-', samples[(rt.i(0)).to_i]), samples[(rt.i(2)).to_i], 1, 'float'), rt.binary('*', rt.f(2), samples[(rt.i(3)).to_i], 1, 'float'), 1, 'float'), rt.binary('*', rt.f(2), samples[(rt.i(5)).to_i], 1, 'float'), 1, 'float'), samples[(rt.i(6)).to_i], 1, 'float'), samples[(rt.i(8)).to_i], 1, 'float')
-    gy = rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('-', rt.binary('-', rt.unary('-', samples[(rt.i(0)).to_i]), rt.binary('*', rt.f(2), samples[(rt.i(1)).to_i], 1, 'float'), 1, 'float'), samples[(rt.i(2)).to_i], 1, 'float'), samples[(rt.i(6)).to_i], 1, 'float'), rt.binary('*', rt.f(2), samples[(rt.i(7)).to_i], 1, 'float'), 1, 'float'), samples[(rt.i(8)).to_i], 1, 'float')
+    gx = rt.binary('+', rt.binary('-', rt.binary('+', rt.binary('-', rt.binary('+', rt.unary('-', rt.array_index(samples, rt.i(0))), rt.array_index(samples, rt.i(2)), 1, 'float'), rt.binary('*', rt.f(2), rt.array_index(samples, rt.i(3)), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(2), rt.array_index(samples, rt.i(5)), 1, 'float'), 1, 'float'), rt.array_index(samples, rt.i(6)), 1, 'float'), rt.array_index(samples, rt.i(8)), 1, 'float')
+    gy = rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('-', rt.binary('-', rt.unary('-', rt.array_index(samples, rt.i(0))), rt.binary('*', rt.f(2), rt.array_index(samples, rt.i(1)), 1, 'float'), 1, 'float'), rt.array_index(samples, rt.i(2)), 1, 'float'), rt.array_index(samples, rt.i(6)), 1, 'float'), rt.binary('*', rt.f(2), rt.array_index(samples, rt.i(7)), 1, 'float'), 1, 'float'), rt.array_index(samples, rt.i(8)), 1, 'float')
     magnitude = distanceMetric__float_float_int.call(gx, gy, metric)
     normalized = rt.component_wise('clamp', rt.binary('*', magnitude, rt.f(4), 1, 'float'), rt.f(0), rt.f(1))
-    g['fragColor'].replace((rt.construct(4, normalized, normalized, normalized, rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(normalized); g['fragColor'][1] = rt.f32(normalized); g['fragColor'][2] = rt.f32(normalized); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

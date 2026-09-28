@@ -14,9 +14,9 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     c = nil; globalCoord = nil; st = nil; v = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary('/', rt.binary('-', rt.swizzle(ctx.frag_coord, 'xy'), rt.f(0.5), 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    c = rt.construct(4, rt.texture(_u_inputTex, st))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    st = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) - (rt.f(0.5)))) / (((rt.texture_size(_u_inputTex))[0]))), ((((rt.swizzle(ctx.frag_coord, 'y')) - (rt.f(0.5)))) / (((rt.texture_size(_u_inputTex))[1]))))
+    c = rt.construct(4, (rt.texture(_u_inputTex, st))[0], (rt.texture(_u_inputTex, st))[1], (rt.texture(_u_inputTex, st))[2], (rt.texture(_u_inputTex, st))[3])
     v = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_channel, rt.i(0)))
       v = rt.swizzle(c, 'r')

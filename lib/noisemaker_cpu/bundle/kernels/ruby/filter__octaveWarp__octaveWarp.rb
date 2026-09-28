@@ -18,35 +18,27 @@ run_pixel = lambda do |ctx, out|
   _u_seed = u.key?('seed') ? u['seed'] : rt.f(0.0)
   _u_antialias = u.key?('antialias') ? u['antialias'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
-  g['TAU'] = rt.f(6.2831853071795898)
-  pcg__uvec3 = lambda do |v|
-    v = rt.copy(v, 'uint')
-    v.replace(rt.binary('+', rt.binary('*', v, rt.i(1664525), 3, 'uint'), rt.i(1013904223), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    v.replace(rt.binary('^', v, rt.binary('>>', v, rt.i(16), 3, 'uint'), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    return v
+  g['TAU'] = rt.f(6.2831854820251465)
+  pcg__uvec3 = lambda do |value|
+    value = rt.copy(value, 'uint')
+    return rt.pcg3d(value)
   end
   hash21__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     v = nil
     v = rt.construct(3, rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.construct(1, _u_seed, 'uint'), 'uint')
-    return rt.binary('/', rt.construct(1, rt.swizzle(pcg__uvec3.call(v), 'x')), rt.construct(1, rt.i(4294967295)), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.swizzle(rt.pcg3d(v), 'x')), rt.f(4294967296), 1, 'float')
   end
   noise__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     a = nil; b = nil; c = nil; d = nil; f = nil; i = nil
-    i = rt.construct(2, rt.component_wise('floor', p))
-    f = rt.construct(2, rt.component_wise('fract', p))
+    i = rt.construct(2, rt.component_wise('floor', p[0]), rt.component_wise('floor', p[1]))
+    f = rt.construct(2, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]))
     f.replace((rt.binary('*', rt.binary('*', f, f, 2, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 2, 'float'), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
     a = hash21__vec2.call(i)
-    b = hash21__vec2.call(rt.binary('+', i, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float'))
-    c = hash21__vec2.call(rt.binary('+', i, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float'))
-    d = hash21__vec2.call(rt.binary('+', i, rt.construct(2, rt.f(1), rt.f(1)), 2, 'float'))
+    b = hash21__vec2.call(rt.construct(2, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(0))))))
+    c = hash21__vec2.call(rt.construct(2, ((i[0]) + ((rt.f(0)))), ((i[1]) + ((rt.f(1))))))
+    d = hash21__vec2.call(rt.construct(2, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(1))))))
     return rt.component_wise('mix', rt.component_wise('mix', a, b, rt.swizzle(f, 'x')), rt.component_wise('mix', c, d, rt.swizzle(f, 'x')), rt.swizzle(f, 'y'))
   end
   simplexNoise__vec2_float_float_float = lambda do |p, _t, phase, radius|
@@ -55,9 +47,9 @@ run_pixel = lambda do |ctx, out|
     angle = rt.binary('+', rt.binary('*', _t, g['TAU'], 1, 'float'), phase, 1, 'float')
     cx = rt.binary('*', rt.component_wise('cos', angle), radius, 1, 'float')
     cy = rt.binary('*', rt.component_wise('sin', angle), radius, 1, 'float')
-    n = noise__vec2.call(rt.binary('+', p, rt.construct(2, cx, cy), 2, 'float'))
-    n = rt.binary('+', n, rt.binary('*', noise__vec2.call(rt.binary('+', rt.binary('*', p, rt.f(2), 2, 'float'), rt.binary('*', rt.construct(2, rt.unary('-', cy), cx), rt.f(0.75), 2, 'float'), 2, 'float')), rt.f(0.5), 1, 'float'), 1, 'float')
-    n = rt.binary('+', n, rt.binary('*', noise__vec2.call(rt.binary('+', rt.binary('*', p, rt.f(4), 2, 'float'), rt.binary('*', rt.construct(2, cx, rt.unary('-', cy)), rt.f(0.5), 2, 'float'), 2, 'float')), rt.f(0.25), 1, 'float'), 1, 'float')
+    n = noise__vec2.call(rt.construct(2, ((p[0]) + ((cx))), ((p[1]) + ((cy)))))
+    n = rt.binary('+', n, rt.binary('*', noise__vec2.call(rt.construct(2, ((((p[0]) * (rt.f(2)))) + ((((rt.unary('-', cy))) * (rt.f(0.75))))), ((((p[1]) * (rt.f(2)))) + ((((cx)) * (rt.f(0.75))))))), rt.f(0.5), 1, 'float'), 1, 'float')
+    n = rt.binary('+', n, rt.binary('*', noise__vec2.call(rt.construct(2, ((((p[0]) * (rt.f(4)))) + ((((cx)) * (rt.f(0.5))))), ((((p[1]) * (rt.f(4)))) + ((((rt.unary('-', cy))) * (rt.f(0.5))))))), rt.f(0.25), 1, 'float'), 1, 'float')
     return rt.binary('/', n, rt.f(1.75), 1, 'float')
   end
   wrapFloat__float_float_int = lambda do |value, limit, mode|
@@ -81,8 +73,8 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('*', norm, limit, 1, 'float')
   end
   main__void = lambda do
-    _for0_first = nil; aspect = nil; baseFreq = nil; col = nil; dims = nil; displaceBase = nil; displaceScale = nil; dx = nil; dy = nil; finalUV = nil; freq = nil; freqScaled = nil; fullRes = nil; height = nil; multiplier = nil; noiseCoord = nil; numOctaves = nil; octave = nil; offset = nil; phase = nil; radius = nil; refX = nil; refY = nil; sampleCoord = nil; uv = nil; width = nil
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
+    __hoist832 = nil; __hoist840 = nil; __hoist848 = nil; __hoist856 = nil; _for0_first = nil; aspect = nil; baseFreq = nil; col = nil; dims = nil; displaceBase = nil; displaceScale = nil; dx = nil; dy = nil; finalUV = nil; freq = nil; freqScaled = nil; fullRes = nil; height = nil; multiplier = nil; noiseCoord = nil; numOctaves = nil; octave = nil; offset = nil; phase = nil; radius = nil; refX = nil; refY = nil; sampleCoord = nil; uv = nil; width = nil
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (_u_resolution[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (_u_resolution[1])))
     dims = fullRes
     width = rt.swizzle(dims, 'x')
     height = rt.swizzle(dims, 'y')
@@ -94,8 +86,8 @@ run_pixel = lambda do |ctx, out|
     else
       freq = rt.assign_swizzle(freq, 'x', rt.binary('/', rt.swizzle(freq, 'x'), aspect, 1, 'float'))
     end
-    uv = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
-    sampleCoord = rt.construct(2, rt.binary('*', uv, dims, 2, 'float'))
+    uv = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
+    sampleCoord = rt.construct(2, ((uv[0]) * (dims[0])), ((uv[1]) * (dims[1])))
     numOctaves = rt.component_wise('max', rt.construct(1, _u_octaves, 'int'), rt.i(1))
     displaceBase = _u_displacement
     octave = rt.i(1)
@@ -112,21 +104,21 @@ run_pixel = lambda do |ctx, out|
         break
       end
       multiplier = rt.component_wise('pow', rt.f(2), rt.construct(1, octave))
-      freqScaled = rt.construct(2, rt.binary('*', rt.binary('*', freq, rt.f(0.5), 2, 'float'), multiplier, 2, 'float'))
+      freqScaled = rt.construct(2, ((((freq[0]) * (rt.f(0.5)))) * (multiplier)), ((((freq[1]) * (rt.f(0.5)))) * (multiplier)))
       if rt.bool((rt.bool(rt.binary('>=', rt.swizzle(freqScaled, 'x'), width)) || rt.bool(rt.binary('>=', rt.swizzle(freqScaled, 'y'), height)) ? 1 : 0))
         break
       end
-      phase = rt.binary('*', rt.construct(1, octave), rt.f(2.399), 1, 'float')
+      phase = rt.binary('*', rt.construct(1, octave), rt.f(2.3989999294281006), 1, 'float')
       radius = rt.binary('/', rt.f(0.5), rt.component_wise('sqrt', multiplier), 1, 'float')
-      noiseCoord = rt.construct(2, rt.binary('*', rt.binary('/', sampleCoord, dims, 2, 'float'), freqScaled, 2, 'float'))
-      refX = simplexNoise__vec2_float_float_float.call(rt.binary('+', noiseCoord, rt.construct(2, rt.f(17), rt.f(29)), 2, 'float'), rt.binary('*', _u_time, _u_speed, 1, 'float'), phase, radius)
-      refY = simplexNoise__vec2_float_float_float.call(rt.binary('+', noiseCoord, rt.construct(2, rt.f(23), rt.f(31)), 2, 'float'), rt.binary('*', _u_time, _u_speed, 1, 'float'), phase, radius)
+      noiseCoord = rt.construct(2, ((((sampleCoord[0]) / (dims[0]))) * (freqScaled[0])), ((((sampleCoord[1]) / (dims[1]))) * (freqScaled[1])))
+      refX = simplexNoise__vec2_float_float_float.call(rt.construct(2, ((noiseCoord[0]) + ((rt.f(17)))), ((noiseCoord[1]) + ((rt.f(29))))), rt.binary('*', _u_time, _u_speed, 1, 'float'), phase, radius)
+      refY = simplexNoise__vec2_float_float_float.call(rt.construct(2, ((noiseCoord[0]) + ((rt.f(23)))), ((noiseCoord[1]) + ((rt.f(31))))), rt.binary('*', _u_time, _u_speed, 1, 'float'), phase, radius)
       refX = rt.binary('-', rt.binary('*', refX, rt.f(2), 1, 'float'), rt.f(1), 1, 'float')
       refY = rt.binary('-', rt.binary('*', refY, rt.f(2), 1, 'float'), rt.f(1), 1, 'float')
       displaceScale = rt.binary('/', displaceBase, multiplier, 1, 'float')
       offset = rt.construct(2, rt.construct(2, rt.binary('*', rt.binary('*', refX, displaceScale, 1, 'float'), width, 1, 'float'), rt.binary('*', rt.binary('*', refY, displaceScale, 1, 'float'), height, 1, 'float')))
-      sampleCoord.replace((rt.binary('+', sampleCoord, offset, 2, 'float')).map { |c| rt.f32(c) })
-      sampleCoord.replace((rt.construct(2, wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'x'), width, rt.construct(1, _u_wrap, 'int')), wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'y'), height, rt.construct(1, _u_wrap, 'int')))).map { |c| rt.f32(c) })
+      sampleCoord[0] = rt.f32(rt.binary('+', sampleCoord[0], offset[0], 1, 'float')); sampleCoord[1] = rt.f32(rt.binary('+', sampleCoord[1], offset[1], 1, 'float'))
+      sampleCoord[0] = rt.f32(wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'x'), width, rt.construct(1, _u_wrap, 'int'))); sampleCoord[1] = rt.f32(wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'y'), height, rt.construct(1, _u_wrap, 'int')))
     end
     finalUV = rt.construct(2, rt.binary('/', rt.construct(2, wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'x'), width, rt.construct(1, _u_wrap, 'int')), wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'y'), height, rt.construct(1, _u_wrap, 'int'))), dims, 2, 'float'))
     col = rt.construct(4, 0.0)
@@ -136,10 +128,10 @@ run_pixel = lambda do |ctx, out|
       dx = rt.construct(2, rt.dFdx(finalUV))
       dy = rt.construct(2, rt.dFdy(finalUV))
       col = rt.construct(4, rt.construct(4, rt.f(0)))
-      col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', finalUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', finalUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', finalUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      col.replace((rt.binary('+', col, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', finalUV, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
+      __hoist832 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', finalUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist832[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist832[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist832[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist832[3], 1, 'float'))
+      __hoist840 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', finalUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist840[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist840[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist840[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist840[3], 1, 'float'))
+      __hoist848 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', finalUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist848[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist848[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist848[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist848[3], 1, 'float'))
+      __hoist856 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', finalUV, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist856[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist856[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist856[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist856[3], 1, 'float'))
       g['fragColor'].replace((rt.binary('*', col, rt.f(0.25), 4, 'float')).map { |c| rt.f32(c) })
     else
       g['fragColor'].replace((rt.texture(_u_inputTex, finalUV)).map { |c| rt.f32(c) })

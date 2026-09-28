@@ -13,8 +13,8 @@ run_pixel = lambda do |ctx, out|
   _u_sharpness = u.key?('sharpness') ? u['sharpness'] : rt.f(0.0)
   _u_threshold = u.key?('threshold') ? u['threshold'] : rt.f(0.0)
   g['CHANNEL_COUNT'] = rt.i(4)
-  g['EPSILON'] = rt.f(1e-10)
-  g['LUMA_WEIGHTS'] = rt.construct(3, rt.f(0.29899999999999999), rt.f(0.58699999999999997), rt.f(0.114))
+  g['EPSILON'] = rt.f(1.000000013351432e-10)
+  g['LUMA_WEIGHTS'] = rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464))
   g['fragColor'] = rt.construct(4, 0.0)
   as_u32__float = lambda do |value|
     return rt.construct(1, rt.component_wise('max', rt.component_wise('round', value), rt.f(0)), 'uint')
@@ -61,8 +61,8 @@ run_pixel = lambda do |ctx, out|
     return rt.component_wise('exp', rt.binary('*', rt.unary('-', _u_sharpness), rt.component_wise('abs', rt.binary('-', center_luma, neighbor_luma, 1, 'float')), 1, 'float'))
   end
   main__void = lambda do
-    blended_luma = nil; blended_rgb = nil; center_luma = nil; center_rgb = nil; center_texel = nil; channelCount = nil; east_luma = nil; east_rgb = nil; east_texel = nil; globalCoord = nil; global_id = nil; height_u = nil; image_size = nil; maxDiff = nil; north_luma = nil; north_rgb = nil; north_texel = nil; pixel_coord = nil; result_texel = nil; south_luma = nil; south_rgb = nil; south_texel = nil; weight_center = nil; weight_east = nil; weight_north = nil; weight_south = nil; weight_sum = nil; weight_west = nil; west_luma = nil; west_rgb = nil; west_texel = nil; width_u = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    blended_luma = nil; blended_rgb = nil; center_luma = nil; center_rgb = nil; center_texel = nil; channelCount = nil; cpu_vector_assignment_1 = nil; east_luma = nil; east_rgb = nil; east_texel = nil; globalCoord = nil; global_id = nil; height_u = nil; image_size = nil; maxDiff = nil; north_luma = nil; north_rgb = nil; north_texel = nil; pixel_coord = nil; result_texel = nil; south_luma = nil; south_rgb = nil; south_texel = nil; weight_center = nil; weight_east = nil; weight_north = nil; weight_south = nil; weight_sum = nil; weight_west = nil; west_luma = nil; west_rgb = nil; west_texel = nil; width_u = nil
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     global_id = rt.construct(3, rt.construct(1, rt.swizzle(ctx.frag_coord, 'x'), 'uint'), rt.construct(1, rt.swizzle(ctx.frag_coord, 'y'), 'uint'), rt.i(0), 'uint')
     width_u = rt.component_wise('max', as_u32__float.call(rt.swizzle(_u_resolution, 'x')), rt.i(1))
     height_u = rt.component_wise('max', as_u32__float.call(rt.swizzle(_u_resolution, 'y')), rt.i(1))
@@ -77,11 +77,11 @@ run_pixel = lambda do |ctx, out|
     south_texel = rt.construct(4, load_texel__ivec2_ivec2.call(rt.binary('+', pixel_coord, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), image_size))
     west_texel = rt.construct(4, load_texel__ivec2_ivec2.call(rt.binary('+', pixel_coord, rt.construct(2, rt.unary('-', rt.i(1)), rt.i(0), 'int'), 2, 'int'), image_size))
     east_texel = rt.construct(4, load_texel__ivec2_ivec2.call(rt.binary('+', pixel_coord, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), image_size))
-    center_rgb = rt.construct(3, rt.swizzle(center_texel, 'xyz'))
-    north_rgb = rt.construct(3, rt.swizzle(north_texel, 'xyz'))
-    south_rgb = rt.construct(3, rt.swizzle(south_texel, 'xyz'))
-    west_rgb = rt.construct(3, rt.swizzle(west_texel, 'xyz'))
-    east_rgb = rt.construct(3, rt.swizzle(east_texel, 'xyz'))
+    center_rgb = rt.construct(3, rt.swizzle(center_texel, 'x'), rt.swizzle(center_texel, 'y'), rt.swizzle(center_texel, 'z'))
+    north_rgb = rt.construct(3, rt.swizzle(north_texel, 'x'), rt.swizzle(north_texel, 'y'), rt.swizzle(north_texel, 'z'))
+    south_rgb = rt.construct(3, rt.swizzle(south_texel, 'x'), rt.swizzle(south_texel, 'y'), rt.swizzle(south_texel, 'z'))
+    west_rgb = rt.construct(3, rt.swizzle(west_texel, 'x'), rt.swizzle(west_texel, 'y'), rt.swizzle(west_texel, 'z'))
+    east_rgb = rt.construct(3, rt.swizzle(east_texel, 'x'), rt.swizzle(east_texel, 'y'), rt.swizzle(east_texel, 'z'))
     center_luma = rt.f(0.0)
     north_luma = rt.f(0.0)
     south_luma = rt.f(0.0)
@@ -114,6 +114,7 @@ run_pixel = lambda do |ctx, out|
     result_texel = center_texel
     blended_luma = rt.f(0.0)
     blended_rgb = rt.construct(3, 0.0)
+    cpu_vector_assignment_1 = rt.construct(4, 0.0)
     if rt.bool(rt.binary('<=', channelCount, rt.i(2)))
       blended_luma = rt.binary('/', rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('*', rt.swizzle(center_texel, 'x'), weight_center, 1, 'float'), rt.binary('*', rt.swizzle(north_texel, 'x'), weight_north, 1, 'float'), 1, 'float'), rt.binary('*', rt.swizzle(south_texel, 'x'), weight_south, 1, 'float'), 1, 'float'), rt.binary('*', rt.swizzle(west_texel, 'x'), weight_west, 1, 'float'), 1, 'float'), rt.binary('*', rt.swizzle(east_texel, 'x'), weight_east, 1, 'float'), 1, 'float'), weight_sum, 1, 'float')
       result_texel = rt.assign_swizzle(result_texel, 'x', blended_luma)
@@ -122,8 +123,9 @@ run_pixel = lambda do |ctx, out|
         result_texel = rt.assign_swizzle(result_texel, 'z', rt.swizzle(center_texel, 'z'))
       end
     else
-      blended_rgb = rt.construct(3, rt.binary('/', rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('*', center_rgb, weight_center, 3, 'float'), rt.binary('*', north_rgb, weight_north, 3, 'float'), 3, 'float'), rt.binary('*', south_rgb, weight_south, 3, 'float'), 3, 'float'), rt.binary('*', west_rgb, weight_west, 3, 'float'), 3, 'float'), rt.binary('*', east_rgb, weight_east, 3, 'float'), 3, 'float'), weight_sum, 3, 'float'))
-      result_texel.replace((rt.construct(4, blended_rgb, rt.swizzle(result_texel, 'w'))).map { |c| rt.f32(c) })
+      blended_rgb = rt.construct(3, ((((((((((((center_rgb[0]) * (weight_center))) + (((north_rgb[0]) * (weight_north))))) + (((south_rgb[0]) * (weight_south))))) + (((west_rgb[0]) * (weight_west))))) + (((east_rgb[0]) * (weight_east))))) / (weight_sum)), ((((((((((((center_rgb[1]) * (weight_center))) + (((north_rgb[1]) * (weight_north))))) + (((south_rgb[1]) * (weight_south))))) + (((west_rgb[1]) * (weight_west))))) + (((east_rgb[1]) * (weight_east))))) / (weight_sum)), ((((((((((((center_rgb[2]) * (weight_center))) + (((north_rgb[2]) * (weight_north))))) + (((south_rgb[2]) * (weight_south))))) + (((west_rgb[2]) * (weight_west))))) + (((east_rgb[2]) * (weight_east))))) / (weight_sum)))
+      cpu_vector_assignment_1 = rt.construct(4, rt.construct(4, blended_rgb, rt.swizzle(result_texel, 'w')))
+      result_texel.replace((cpu_vector_assignment_1).map { |c| rt.f32(c) })
     end
     result_texel = rt.assign_swizzle(result_texel, 'w', rt.swizzle(center_texel, 'w'))
     g['fragColor'].replace((rt.component_wise('mix', center_texel, result_texel, _u_strength)).map { |c| rt.f32(c) })

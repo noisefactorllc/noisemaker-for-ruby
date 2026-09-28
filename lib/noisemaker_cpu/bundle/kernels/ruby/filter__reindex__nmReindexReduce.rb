@@ -6,8 +6,8 @@ run_pixel = lambda do |ctx, out|
   main__void = nil
   _retc = nil
   _u_statsTex = ctx.texture_binding('statsTex')
-  g['F32_MAX'] = rt.f(3.4028234660000002e+38)
-  g['F32_MIN'] = rt.unary('-', rt.f(3.4028234660000002e+38))
+  g['F32_MAX'] = rt.f(3.4028234663852886e+38)
+  g['F32_MIN'] = rt.unary('-', rt.f(3.4028234663852886e+38))
   g['TILE_SIZE'] = rt.i(8)
   g['MAX_TILE_DIM'] = rt.i(512)
   g['fragColor'] = rt.construct(4, 0.0)
@@ -48,12 +48,12 @@ run_pixel = lambda do |ctx, out|
           break
         end
         sampleCoord = rt.construct(2, rt.binary('*', tx, g['TILE_SIZE'], 1, 'int'), rt.binary('*', ty, g['TILE_SIZE'], 1, 'int'), 'int')
-        tileStats = rt.construct(2, rt.swizzle(rt.texel_fetch(_u_statsTex, sampleCoord, rt.i(0)), 'xy'))
+        tileStats = rt.construct(2, rt.swizzle(rt.texel_fetch(_u_statsTex, sampleCoord, rt.i(0)), 'x'), rt.swizzle(rt.texel_fetch(_u_statsTex, sampleCoord, rt.i(0)), 'y'))
         globalMin = rt.component_wise('min', globalMin, rt.swizzle(tileStats, 'x'))
         globalMax = rt.component_wise('max', globalMax, rt.swizzle(tileStats, 'y'))
       end
     end
-    g['fragColor'].replace((rt.construct(4, globalMin, globalMax, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(globalMin); g['fragColor'][1] = rt.f32(globalMax); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

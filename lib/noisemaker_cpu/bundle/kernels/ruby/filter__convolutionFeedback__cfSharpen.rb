@@ -49,12 +49,12 @@ run_pixel = lambda do |ctx, out|
         dist2 = rt.construct(1, rt.binary('+', rt.binary('*', kx, kx, 1, 'int'), rt.binary('*', ky, ky, 1, 'int'), 1, 'int'))
         weight = rt.component_wise('exp', rt.binary('/', rt.unary('-', dist2), rt.binary('*', rt.f(2), sigma2, 1, 'float'), 1, 'float'))
         texSample = rt.construct(4, rt.texel_fetch(_u_inputTex, samplePos, rt.i(0)))
-        blurSum.replace((rt.binary('+', blurSum, rt.binary('*', rt.swizzle(texSample, 'rgb'), weight, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+        blurSum[0] = rt.f32(rt.binary('+', blurSum[0], ((rt.swizzle(texSample, 'r')) * (weight)), 1, 'float')); blurSum[1] = rt.f32(rt.binary('+', blurSum[1], ((rt.swizzle(texSample, 'g')) * (weight)), 1, 'float')); blurSum[2] = rt.f32(rt.binary('+', blurSum[2], ((rt.swizzle(texSample, 'b')) * (weight)), 1, 'float'))
         weightSum = rt.binary('+', weightSum, weight, 1, 'float')
       end
     end
-    blurred = rt.construct(3, rt.binary('/', blurSum, weightSum, 3, 'float'))
-    sharpened = rt.construct(3, rt.binary('+', rt.swizzle(center, 'rgb'), rt.binary('*', _u_sharpenAmount, rt.binary('-', rt.swizzle(center, 'rgb'), blurred, 3, 'float'), 3, 'float'), 3, 'float'))
+    blurred = rt.construct(3, ((blurSum[0]) / (weightSum)), ((blurSum[1]) / (weightSum)), ((blurSum[2]) / (weightSum)))
+    sharpened = rt.construct(3, ((rt.swizzle(center, 'r')) + (((_u_sharpenAmount) * (((rt.swizzle(center, 'r')) - (blurred[0])))))), ((rt.swizzle(center, 'g')) + (((_u_sharpenAmount) * (((rt.swizzle(center, 'g')) - (blurred[1])))))), ((rt.swizzle(center, 'b')) + (((_u_sharpenAmount) * (((rt.swizzle(center, 'b')) - (blurred[2])))))))
     sharpened.replace((rt.component_wise('clamp', sharpened, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     g['fragColor'].replace((rt.construct(4, sharpened, rt.swizzle(center, 'a'))).map { |c| rt.f32(c) })
   end

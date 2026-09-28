@@ -24,20 +24,20 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   getLuminosity__vec3 = lambda do |color|
     color = rt.copy(color, 'float')
-    return rt.dot(color, rt.construct(3, rt.f(0.29899999999999999), rt.f(0.58699999999999997), rt.f(0.114)))
+    return rt.dot(color, rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
   end
   getHeight__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     localUV = nil; mapSize = nil
     mapSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_heightMap)))
-    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), mapSize, 2, 'float'))
+    localUV = rt.construct(2, ((((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (mapSize[0])), ((((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (mapSize[1])))
     return getLuminosity__vec3.call(rt.swizzle(rt.texture(_u_heightMap, localUV), 'rgb'))
   end
   calculateNormal__vec2_vec2 = lambda do |uv, texelSize|
     uv = rt.copy(uv, 'float')
     texelSize = rt.copy(texelSize, 'float')
     _for0_first = nil; dx = nil; dy = nil; height = nil; i = nil; normal = nil; offsets = nil; sampleSize = nil; sobel_x = nil; sobel_y = nil
-    sampleSize = rt.construct(2, rt.binary('*', rt.binary('*', texelSize, _u_smoothing, 2, 'float'), _u_renderScale, 2, 'float'))
+    sampleSize = rt.construct(2, ((((texelSize[0]) * (_u_smoothing))) * (_u_renderScale)), ((((texelSize[1]) * (_u_smoothing))) * (_u_renderScale)))
     sobel_x = rt.new_array(rt.i(9), 1)
     sobel_x[(rt.i(0)).to_i] = rt.unary('-', rt.f(1))
     sobel_x[(rt.i(1)).to_i] = rt.f(0)
@@ -80,9 +80,9 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      height = getHeight__vec2.call(rt.binary('+', uv, offsets[(i).to_i], 2, 'float'))
-      dx = rt.binary('+', dx, rt.binary('*', height, sobel_x[(i).to_i], 1, 'float'), 1, 'float')
-      dy = rt.binary('+', dy, rt.binary('*', height, sobel_y[(i).to_i], 1, 'float'), 1, 'float')
+      height = getHeight__vec2.call(rt.construct(2, ((uv[0]) + ((rt.array_index(offsets, i))[0])), ((uv[1]) + ((rt.array_index(offsets, i))[1]))))
+      dx = rt.binary('+', dx, rt.binary('*', height, rt.array_index(sobel_x, i), 1, 'float'), 1, 'float')
+      dy = rt.binary('+', dy, rt.binary('*', height, rt.array_index(sobel_y, i), 1, 'float'), 1, 'float')
     end
     dx = rt.binary('*', dx, _u_normalStrength, 1, 'float')
     dy = rt.binary('*', dy, _u_normalStrength, 1, 'float')
@@ -93,7 +93,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     normal = rt.copy(normal, 'float')
     refractionOffset = nil
-    refractionOffset = rt.construct(2, rt.binary('*', rt.swizzle(normal, 'xy'), rt.binary('*', _u_refraction, rt.f(0.012500000000000001), 1, 'float'), 2, 'float'))
+    refractionOffset = rt.construct(2, ((rt.swizzle(normal, 'x')) * (((_u_refraction) * (rt.f(0.012500000186264515))))), ((rt.swizzle(normal, 'y')) * (((_u_refraction) * (rt.f(0.012500000186264515))))))
     return rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, refractionOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
   end
   applyReflection__vec2_vec2_vec3 = lambda do |uv, globalUV, normal|
@@ -103,10 +103,10 @@ run_pixel = lambda do |ctx, out|
     alphaChannel = nil; blueChannel = nil; blueOffset = nil; greenChannel = nil; greenOffset = nil; incident = nil; redChannel = nil; redOffset = nil; reflectionOffset = nil; reflectionVec = nil
     incident = rt.construct(3, rt.construct(3, rt.normalize(rt.binary('-', globalUV, rt.f(0.5), 2, 'float')), rt.f(100)))
     reflectionVec = rt.construct(3, rt.reflect(incident, normal))
-    reflectionOffset = rt.construct(2, rt.binary('*', rt.swizzle(reflectionVec, 'xy'), rt.binary('*', _u_reflection, rt.f(5.0000000000000002e-05), 1, 'float'), 2, 'float'))
-    redOffset = rt.construct(2, rt.binary('*', reflectionOffset, rt.binary('+', rt.f(1), rt.binary('*', _u_aberration, rt.f(0.0074999999999999997), 1, 'float'), 1, 'float'), 2, 'float'))
+    reflectionOffset = rt.construct(2, ((rt.swizzle(reflectionVec, 'x')) * (((_u_reflection) * (rt.f(4.9999998736893758e-05))))), ((rt.swizzle(reflectionVec, 'y')) * (((_u_reflection) * (rt.f(4.9999998736893758e-05))))))
+    redOffset = rt.construct(2, ((reflectionOffset[0]) * (((rt.f(1)) + (((_u_aberration) * (rt.f(0.0074999998323619366))))))), ((reflectionOffset[1]) * (((rt.f(1)) + (((_u_aberration) * (rt.f(0.0074999998323619366))))))))
     greenOffset = reflectionOffset
-    blueOffset = rt.construct(2, rt.binary('*', reflectionOffset, rt.binary('-', rt.f(1), rt.binary('*', _u_aberration, rt.f(0.0074999999999999997), 1, 'float'), 1, 'float'), 2, 'float'))
+    blueOffset = rt.construct(2, ((reflectionOffset[0]) * (((rt.f(1)) - (((_u_aberration) * (rt.f(0.0074999998323619366))))))), ((reflectionOffset[1]) * (((rt.f(1)) - (((_u_aberration) * (rt.f(0.0074999998323619366))))))))
     redChannel = rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, redOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'r')
     greenChannel = rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, greenOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'g')
     blueChannel = rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, blueOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'b')
@@ -115,25 +115,25 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     ambient = nil; diffuse = nil; diffuseFactor = nil; fullRes = nil; globalCoord = nil; globalUV = nil; halfDir = nil; lightDir = nil; litColor = nil; normal = nil; origColor = nil; reflectedColor = nil; refractedColor = nil; resolution = nil; specAngle = nil; specular = nil; specularFactor = nil; texSize = nil; texelSize = nil; uv = nil; viewDir = nil; workingColor = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.texture_size(_u_inputTex)
     resolution = rt.construct(2, rt.construct(2, texSize))
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (resolution)))
-    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary('/', rt.f(1), resolution, 2, 'float'))
-    origColor = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (resolution[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (resolution[1])))
+    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
+    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
+    texelSize = rt.construct(2, ((rt.f(1)) / (resolution[0])), ((rt.f(1)) / (resolution[1])))
+    origColor = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[3])
     normal = rt.construct(3, calculateNormal__vec2_vec2.call(uv, texelSize))
     lightDir = rt.construct(3, rt.normalize(_u_lightDirection))
     viewDir = rt.construct(3, rt.construct(3, rt.f(0), rt.f(0), rt.f(1)))
-    ambient = rt.construct(3, rt.binary('*', _u_ambientColor, rt.swizzle(origColor, 'rgb'), 3, 'float'))
+    ambient = rt.construct(3, ((_u_ambientColor[0]) * (rt.swizzle(origColor, 'r'))), ((_u_ambientColor[1]) * (rt.swizzle(origColor, 'g'))), ((_u_ambientColor[2]) * (rt.swizzle(origColor, 'b'))))
     diffuseFactor = rt.component_wise('max', rt.dot(normal, lightDir), rt.f(0))
-    diffuse = rt.construct(3, rt.binary('*', rt.binary('*', _u_diffuseColor, diffuseFactor, 3, 'float'), rt.swizzle(origColor, 'rgb'), 3, 'float'))
+    diffuse = rt.construct(3, ((((_u_diffuseColor[0]) * (diffuseFactor))) * (rt.swizzle(origColor, 'r'))), ((((_u_diffuseColor[1]) * (diffuseFactor))) * (rt.swizzle(origColor, 'g'))), ((((_u_diffuseColor[2]) * (diffuseFactor))) * (rt.swizzle(origColor, 'b'))))
     halfDir = rt.construct(3, rt.normalize(rt.binary('+', lightDir, viewDir, 3, 'float')))
     specAngle = rt.component_wise('max', rt.dot(halfDir, normal), rt.f(0))
     specularFactor = rt.component_wise('pow', specAngle, _u_shininess)
-    specular = rt.construct(3, rt.binary('*', rt.binary('*', _u_specularColor, specularFactor, 3, 'float'), _u_specularIntensity, 3, 'float'))
-    litColor = rt.construct(3, rt.binary('+', rt.binary('+', ambient, diffuse, 3, 'float'), specular, 3, 'float'))
+    specular = rt.construct(3, ((((_u_specularColor[0]) * (specularFactor))) * (_u_specularIntensity)), ((((_u_specularColor[1]) * (specularFactor))) * (_u_specularIntensity)), ((((_u_specularColor[2]) * (specularFactor))) * (_u_specularIntensity)))
+    litColor = rt.construct(3, ((((ambient[0]) + (diffuse[0]))) + (specular[0])), ((((ambient[1]) + (diffuse[1]))) + (specular[1])), ((((ambient[2]) + (diffuse[2]))) + (specular[2])))
     workingColor = rt.construct(4, rt.construct(4, litColor, rt.swizzle(origColor, 'a')))
     refractedColor = rt.construct(4, 0.0)
     if rt.bool(rt.binary('>', _u_refraction, rt.f(0)))

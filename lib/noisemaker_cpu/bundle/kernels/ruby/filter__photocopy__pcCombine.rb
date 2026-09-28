@@ -14,7 +14,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   lum__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
-    return rt.dot(c, rt.construct(3, rt.f(0.21260000000000001), rt.f(0.71519999999999995), rt.f(0.0722)))
+    return rt.dot(c, rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
   end
   tonemap2__float_vec3_vec3 = lambda do |_t, ink, paper|
     ink = rt.copy(ink, 'float')
@@ -23,16 +23,16 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     band = nil; blur = nil; edgeGain = nil; edgeInk = nil; ink = nil; lumBlur = nil; lumSrc = nil; outColor = nil; src = nil; toneHi = nil; toneInk = nil; toneLo = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    src = rt.construct(4, rt.texture(_u_inputTex, uv))
-    blur = rt.construct(4, rt.texture(_u_blurTex, uv))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
+    src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    blur = rt.construct(4, (rt.texture(_u_blurTex, uv))[0], (rt.texture(_u_blurTex, uv))[1], (rt.texture(_u_blurTex, uv))[2], (rt.texture(_u_blurTex, uv))[3])
     lumSrc = lum__vec3.call(rt.swizzle(src, 'rgb'))
     lumBlur = lum__vec3.call(rt.swizzle(blur, 'rgb'))
     band = rt.binary('-', lumSrc, lumBlur, 1, 'float')
     edgeGain = rt.component_wise('mix', rt.f(4), rt.f(18), rt.binary('/', _u_darkness, rt.f(100), 1, 'float'))
     edgeInk = rt.component_wise('clamp', rt.binary('*', rt.component_wise('abs', band), edgeGain, 1, 'float'), rt.f(0), rt.f(1))
-    toneHi = rt.component_wise('mix', rt.f(0.34999999999999998), rt.f(0.68000000000000005), rt.binary('/', _u_darkness, rt.f(100), 1, 'float'))
-    toneLo = rt.binary('-', toneHi, rt.f(0.26000000000000001), 1, 'float')
+    toneHi = rt.component_wise('mix', rt.f(0.34999999403953552), rt.f(0.68000000715255737), rt.binary('/', _u_darkness, rt.f(100), 1, 'float'))
+    toneLo = rt.binary('-', toneHi, rt.f(0.25999999046325684), 1, 'float')
     toneInk = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', toneLo, toneHi, lumSrc), 1, 'float')
     ink = rt.component_wise('clamp', rt.component_wise('max', edgeInk, toneInk), rt.f(0), rt.f(1))
     outColor = rt.construct(3, tonemap2__float_vec3_vec3.call(rt.binary('-', rt.f(1), ink, 1, 'float'), _u_inkColor, _u_paperColor))

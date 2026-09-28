@@ -40,7 +40,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool((rt.bool((rt.bool((rt.bool(rt.binary('<', gx, rt.i(0))) || rt.bool(rt.binary('>=', gx, g['GLYPH_W'])) ? 1 : 0)) || rt.bool(rt.binary('<', gy, rt.i(0))) ? 1 : 0)) || rt.bool(rt.binary('>=', gy, g['GLYPH_H'])) ? 1 : 0))
       return rt.f(0)
     end
-    row = g['GLYPHS'][(rt.binary('+', rt.binary('*', digit, rt.i(8), 1, 'int'), gy, 1, 'int')).to_i]
+    row = rt.array_index(g['GLYPHS'], rt.binary('+', rt.binary('*', digit, rt.i(8), 1, 'int'), gy, 1, 'int'))
     return rt.construct(1, rt.binary('&', rt.binary('>>', row, rt.binary('-', rt.i(6), gx, 1, 'int'), 1, 'int'), rt.i(1), 1, 'int'))
   end
   main__void = lambda do
@@ -52,15 +52,15 @@ run_pixel = lambda do |ctx, out|
     _PADDING = rt.construct(1, rt.binary('*', rt.construct(1, g['BASE_PADDING']), _u_renderScale, 1, 'float'), 'int')
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     texDims = rt.texture_size(_u_inputTex)
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (rt.construct(2, texDims))))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : ((texDims[0]))), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : ((texDims[1]))))
     width = rt.component_wise('max', rt.construct(1, rt.swizzle(fullRes, 'x'), 'int'), rt.i(1))
     height = rt.component_wise('max', rt.construct(1, rt.swizzle(fullRes, 'y'), 'int'), rt.i(1))
     globalCoord = rt.binary('+', coord, rt.construct(2, rt.construct(2, _u_tileOffset), 'int'), 2, 'int')
     texel = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     blend_alpha = rt.component_wise('clamp', _u_alpha, rt.f(0), rt.f(1))
     scanlineStep = rt.component_wise('max', rt.binary('/', iScale, g['BASE_SCALE'], 1, 'int'), rt.i(1))
-    scanline = rt.binary('-', rt.f(1), rt.binary('*', rt.binary('*', rt.f(0.029999999999999999), blend_alpha, 1, 'float'), rt.construct(1, rt.binary('&', rt.binary('/', rt.swizzle(globalCoord, 'y'), scanlineStep, 1, 'int'), rt.i(1), 1, 'int')), 1, 'float'), 1, 'float')
-    base_rgb = rt.construct(3, rt.binary('*', rt.swizzle(texel, 'rgb'), scanline, 3, 'float'))
+    scanline = rt.binary('-', rt.f(1), rt.binary('*', rt.binary('*', rt.f(0.029999999329447746), blend_alpha, 1, 'float'), rt.construct(1, rt.binary('&', rt.binary('/', rt.swizzle(globalCoord, 'y'), scanlineStep, 1, 'int'), rt.i(1), 1, 'int')), 1, 'float'), 1, 'float')
+    base_rgb = rt.construct(3, ((rt.swizzle(texel, 'r')) * (scanline)), ((rt.swizzle(texel, 'g')) * (scanline)), ((rt.swizzle(texel, 'b')) * (scanline)))
     if rt.bool(rt.binary('<=', blend_alpha, rt.f(0)))
       g['fragColor'].replace((rt.construct(4, base_rgb, rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
       return
@@ -119,20 +119,20 @@ run_pixel = lambda do |ctx, out|
       time_cell = 0
       if rt.bool((rt.bool(rt.binary('<', within_glyph_x, _CELL_W)) && rt.bool(rt.binary('<', glyph_idx, glyph_count)) ? 1 : 0))
         local_y = rt.binary('-', rt.binary('-', _CELL_H, rt.i(1), 1, 'int'), ly, 1, 'int')
-        time_cell = rt.construct(1, rt.component_wise('floor', rt.binary('*', _u_time, rt.component_wise('max', _u_speed, rt.f(0.001)), 1, 'float')), 'int')
+        time_cell = rt.construct(1, rt.component_wise('floor', rt.binary('*', _u_time, rt.component_wise('max', _u_speed, rt.f(0.0010000000474974513)), 1, 'float')), 'int')
         digit_hash = hash3__uint_uint_uint.call(base_seed, rt.construct(1, glyph_idx, 'uint'), rt.construct(1, time_cell, 'uint'))
         digit = rt.construct(1, rt.binary('%', digit_hash, rt.i(10), 1, 'uint'), 'int')
         mask = sample_glyph__int_int_int_int.call(digit, within_glyph_x, local_y, iScale)
       end
     end
-    panel_bg = rt.construct(3, rt.binary('*', base_rgb, rt.binary('-', rt.f(1), rt.binary('*', rt.f(0.5), blend_alpha, 1, 'float'), 1, 'float'), 3, 'float'))
+    panel_bg = rt.construct(3, ((base_rgb[0]) * (((rt.f(1)) - (((rt.f(0.5)) * (blend_alpha)))))), ((base_rgb[1]) * (((rt.f(1)) - (((rt.f(0.5)) * (blend_alpha)))))), ((base_rgb[2]) * (((rt.f(1)) - (((rt.f(0.5)) * (blend_alpha)))))))
     if rt.bool(rt.binary('<', mask, rt.f(0.5)))
       g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', panel_bg, rt.f(0), rt.f(1)), rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
       return
     end
-    osd_color = rt.construct(3, rt.construct(3, rt.f(0.69999999999999996), rt.f(1), rt.f(0.75)))
-    highlight = rt.construct(3, rt.component_wise('max', panel_bg, rt.binary('*', osd_color, mask, 3, 'float')))
-    blended = rt.construct(3, rt.component_wise('mix', panel_bg, highlight, blend_alpha))
+    osd_color = rt.construct(3, rt.construct(3, rt.f(0.69999998807907104), rt.f(1), rt.f(0.75)))
+    highlight = rt.construct(3, rt.component_wise('max', panel_bg[0], rt.f32(((osd_color[0]) * (mask)))), rt.component_wise('max', panel_bg[1], rt.f32(((osd_color[1]) * (mask)))), rt.component_wise('max', panel_bg[2], rt.f32(((osd_color[2]) * (mask)))))
+    blended = rt.construct(3, rt.component_wise('mix', panel_bg[0], highlight[0], blend_alpha), rt.component_wise('mix', panel_bg[1], highlight[1], blend_alpha), rt.component_wise('mix', panel_bg[2], highlight[2], blend_alpha))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', blended, rt.f(0), rt.f(1)), rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

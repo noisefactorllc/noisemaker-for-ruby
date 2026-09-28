@@ -23,8 +23,8 @@ run_pixel = lambda do |ctx, out|
   convolve__vec2_float_bool = lambda do |uv, _kernel, divide|
     uv = rt.copy(uv, 'float')
     _for0_first = nil; color = nil; conv = nil; i = nil; kernelWeight = nil; localUV = nil; offset = nil; steps = nil
-    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    steps = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    localUV = rt.construct(2, ((((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
+    steps = rt.construct(2, ((rt.f(1)) / (((rt.texture_size(_u_inputTex))[0]))), ((rt.f(1)) / (((rt.texture_size(_u_inputTex))[1]))))
     offset = rt.new_array(rt.i(9), 2)
     offset[(rt.i(0)).to_i] = rt.construct(2, rt.unary('-', rt.swizzle(steps, 'x')), rt.unary('-', rt.swizzle(steps, 'y')))
     offset[(rt.i(1)).to_i] = rt.construct(2, rt.f(0), rt.unary('-', rt.swizzle(steps, 'y')))
@@ -47,8 +47,8 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      color = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', localUV, rt.binary('*', offset[(i).to_i], rt.component_wise('floor', map__float_float_float_float_float.call(_u_amount, rt.f(0), rt.f(100), rt.f(0), rt.f(20))), 2, 'float'), 2, 'float')), 'rgb'))
-      conv.replace((rt.binary('+', conv, rt.binary('*', color, _kernel[(i).to_i], 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+      color = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', localUV, rt.binary('*', rt.array_index(offset, i), rt.component_wise('floor', map__float_float_float_float_float.call(_u_amount, rt.f(0), rt.f(100), rt.f(0), rt.f(20))), 2, 'float'), 2, 'float')), 'rgb'))
+      conv[0] = rt.f32(rt.binary('+', conv[0], ((color[0]) * (_kernel[(i).to_i])), 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], ((color[1]) * (_kernel[(i).to_i])), 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], ((color[2]) * (_kernel[(i).to_i])), 1, 'float'))
       kernelWeight = rt.binary('+', kernelWeight, _kernel[(i).to_i], 1, 'float')
     end
     if rt.bool(divide)
@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
   end
   desaturate__vec3 = lambda do |color|
     color = rt.copy(color, 'float')
-    return rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21260000000000001), rt.swizzle(color, 'r'), 1, 'float'), rt.binary('*', rt.f(0.71519999999999995), rt.swizzle(color, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0722), rt.swizzle(color, 'b'), 1, 'float'), 1, 'float')
+    return rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.2125999927520752), rt.swizzle(color, 'r'), 1, 'float'), rt.binary('*', rt.f(0.71520000696182251), rt.swizzle(color, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.072200000286102295), rt.swizzle(color, 'b'), 1, 'float'), 1, 'float')
   end
   derivX__vec3_vec2_bool = lambda do |color, uv, divide|
     color = rt.copy(color, 'float')
@@ -97,7 +97,7 @@ run_pixel = lambda do |ctx, out|
     return s2
   end
   periodicFunction__float = lambda do |p|
-    return map__float_float_float_float_float.call(rt.component_wise('sin', rt.binary('*', p, rt.f(6.2831853071800001), 1, 'float')), rt.unary('-', rt.f(1)), rt.f(1), rt.f(0), rt.f(1))
+    return map__float_float_float_float_float.call(rt.component_wise('sin', rt.binary('*', p, rt.f(6.2831854820251465), 1, 'float')), rt.unary('-', rt.f(1)), rt.f(1), rt.f(0), rt.f(1))
   end
   blendOverlay__float_float = lambda do |a, b|
     return (rt.bool(rt.binary('<', a, rt.f(0.5))) ? (rt.binary('*', rt.binary('*', rt.f(2), a, 1, 'float'), b, 1, 'float')) : (rt.binary('-', rt.f(1), rt.binary('*', rt.binary('*', rt.f(2), rt.binary('-', rt.f(1), a, 1, 'float'), 1, 'float'), rt.binary('-', rt.f(1), b, 1, 'float'), 1, 'float'), 1, 'float')))
@@ -113,28 +113,28 @@ run_pixel = lambda do |ctx, out|
     middle = rt.construct(4, 0.0)
     amt = map__float_float_float_float_float.call(_u_mixAmt, rt.f(0), rt.f(100), rt.f(0), rt.f(1))
     if rt.bool(rt.binary('==', _u_blendMode, rt.i(0)))
-      middle.replace((rt.component_wise('min', rt.binary('+', color1, color2, 4, 'float'), rt.f(1))).map { |c| rt.f32(c) })
+      middle.replace((rt.component_wise('min', rt.construct(4, ((color1[0]) + (color2[0])), ((color1[1]) + (color2[1])), ((color1[2]) + (color2[2])), ((color1[3]) + (color2[3]))), rt.f(1))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_blendMode, rt.i(2)))
-        middle.replace(((rt.bool(rt.binary('==', color2, rt.construct(4, rt.f(0)))) ? (color2) : (rt.component_wise('max', rt.binary('-', rt.f(1), rt.binary('/', rt.binary('-', rt.f(1), color1, 4, 'float'), color2, 4, 'float'), 4, 'float'), rt.construct(4, rt.f(0)))))).map { |c| rt.f32(c) })
+        middle.replace(((rt.bool(rt.binary('==', color2, rt.construct(4, rt.f(0)))) ? (color2) : (rt.component_wise('max', rt.construct(4, ((rt.f(1)) - (((((rt.f(1)) - (color1[0]))) / (color2[0])))), ((rt.f(1)) - (((((rt.f(1)) - (color1[1]))) / (color2[1])))), ((rt.f(1)) - (((((rt.f(1)) - (color1[2]))) / (color2[2])))), ((rt.f(1)) - (((((rt.f(1)) - (color1[3]))) / (color2[3]))))), rt.construct(4, rt.f(0)))))).map { |c| rt.f32(c) })
       else
         if rt.bool(rt.binary('==', _u_blendMode, rt.i(3)))
-          middle.replace(((rt.bool(rt.binary('==', color2, rt.construct(4, rt.f(1)))) ? (color2) : (rt.component_wise('min', rt.binary('/', color1, rt.binary('-', rt.f(1), color2, 4, 'float'), 4, 'float'), rt.construct(4, rt.f(1)))))).map { |c| rt.f32(c) })
+          middle.replace(((rt.bool(rt.binary('==', color2, rt.construct(4, rt.f(1)))) ? (color2) : (rt.component_wise('min', rt.construct(4, ((color1[0]) / (((rt.f(1)) - (color2[0])))), ((color1[1]) / (((rt.f(1)) - (color2[1])))), ((color1[2]) / (((rt.f(1)) - (color2[2])))), ((color1[3]) / (((rt.f(1)) - (color2[3]))))), rt.construct(4, rt.f(1)))))).map { |c| rt.f32(c) })
         else
           if rt.bool(rt.binary('==', _u_blendMode, rt.i(4)))
             middle.replace((rt.component_wise('min', color1, color2)).map { |c| rt.f32(c) })
           else
             if rt.bool(rt.binary('==', _u_blendMode, rt.i(5)))
-              middle.replace((rt.component_wise('abs', rt.binary('-', color1, color2, 4, 'float'))).map { |c| rt.f32(c) })
+              middle.replace((rt.component_wise('abs', rt.construct(4, ((color1[0]) - (color2[0])), ((color1[1]) - (color2[1])), ((color1[2]) - (color2[2])), ((color1[3]) - (color2[3]))))).map { |c| rt.f32(c) })
             else
               if rt.bool(rt.binary('==', _u_blendMode, rt.i(6)))
                 middle.replace((rt.binary('-', rt.binary('+', color1, color2, 4, 'float'), rt.binary('*', rt.binary('*', rt.f(2), color1, 4, 'float'), color2, 4, 'float'), 4, 'float')).map { |c| rt.f32(c) })
               else
                 if rt.bool(rt.binary('==', _u_blendMode, rt.i(7)))
-                  middle.replace(((rt.bool(rt.binary('==', color2, rt.construct(4, rt.f(1)))) ? (color2) : (rt.component_wise('min', rt.binary('/', rt.binary('*', color1, color1, 4, 'float'), rt.binary('-', rt.f(1), color2, 4, 'float'), 4, 'float'), rt.construct(4, rt.f(1)))))).map { |c| rt.f32(c) })
+                  middle.replace(((rt.bool(rt.binary('==', color2, rt.construct(4, rt.f(1)))) ? (color2) : (rt.component_wise('min', rt.construct(4, ((((color1[0]) * (color1[0]))) / (((rt.f(1)) - (color2[0])))), ((((color1[1]) * (color1[1]))) / (((rt.f(1)) - (color2[1])))), ((((color1[2]) * (color1[2]))) / (((rt.f(1)) - (color2[2])))), ((((color1[3]) * (color1[3]))) / (((rt.f(1)) - (color2[3]))))), rt.construct(4, rt.f(1)))))).map { |c| rt.f32(c) })
                 else
                   if rt.bool(rt.binary('==', _u_blendMode, rt.i(8)))
-                    middle.replace((rt.construct(4, blendOverlay__float_float.call(rt.swizzle(color2, 'r'), rt.swizzle(color1, 'r')), blendOverlay__float_float.call(rt.swizzle(color2, 'g'), rt.swizzle(color1, 'g')), blendOverlay__float_float.call(rt.swizzle(color2, 'b'), rt.swizzle(color1, 'b')), rt.component_wise('mix', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a'), rt.f(0.5)))).map { |c| rt.f32(c) })
+                    middle[0] = rt.f32(blendOverlay__float_float.call(rt.swizzle(color2, 'r'), rt.swizzle(color1, 'r'))); middle[1] = rt.f32(blendOverlay__float_float.call(rt.swizzle(color2, 'g'), rt.swizzle(color1, 'g'))); middle[2] = rt.f32(blendOverlay__float_float.call(rt.swizzle(color2, 'b'), rt.swizzle(color1, 'b'))); middle[3] = rt.f32(rt.component_wise('mix', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a'), rt.f(0.5)))
                   else
                     if rt.bool(rt.binary('==', _u_blendMode, rt.i(9)))
                       middle.replace((rt.component_wise('max', color1, color2)).map { |c| rt.f32(c) })
@@ -146,25 +146,25 @@ run_pixel = lambda do |ctx, out|
                           middle.replace((rt.binary('*', color1, color2, 4, 'float')).map { |c| rt.f32(c) })
                         else
                           if rt.bool(rt.binary('==', _u_blendMode, rt.i(12)))
-                            middle.replace((rt.binary('-', rt.construct(4, rt.f(1)), rt.component_wise('abs', rt.binary('-', rt.binary('-', rt.construct(4, rt.f(1)), color1, 4, 'float'), color2, 4, 'float')), 4, 'float')).map { |c| rt.f32(c) })
+                            middle.replace((rt.binary('-', rt.construct(4, rt.f(1)), rt.component_wise('abs', rt.construct(4, (((((rt.f(1))) - (color1[0]))) - (color2[0])), (((((rt.f(1))) - (color1[1]))) - (color2[1])), (((((rt.f(1))) - (color1[2]))) - (color2[2])), (((((rt.f(1))) - (color1[3]))) - (color2[3])))), 4, 'float')).map { |c| rt.f32(c) })
                           else
                             if rt.bool(rt.binary('==', _u_blendMode, rt.i(13)))
-                              middle.replace((rt.construct(4, blendOverlay__float_float.call(rt.swizzle(color1, 'r'), rt.swizzle(color2, 'r')), blendOverlay__float_float.call(rt.swizzle(color1, 'g'), rt.swizzle(color2, 'g')), blendOverlay__float_float.call(rt.swizzle(color1, 'b'), rt.swizzle(color2, 'b')), rt.component_wise('mix', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a'), rt.f(0.5)))).map { |c| rt.f32(c) })
+                              middle[0] = rt.f32(blendOverlay__float_float.call(rt.swizzle(color1, 'r'), rt.swizzle(color2, 'r'))); middle[1] = rt.f32(blendOverlay__float_float.call(rt.swizzle(color1, 'g'), rt.swizzle(color2, 'g'))); middle[2] = rt.f32(blendOverlay__float_float.call(rt.swizzle(color1, 'b'), rt.swizzle(color2, 'b'))); middle[3] = rt.f32(rt.component_wise('mix', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a'), rt.f(0.5)))
                             else
                               if rt.bool(rt.binary('==', _u_blendMode, rt.i(14)))
                                 middle.replace((rt.binary('+', rt.binary('-', rt.component_wise('min', color1, color2), rt.component_wise('max', color1, color2), 4, 'float'), rt.construct(4, rt.f(1)), 4, 'float')).map { |c| rt.f32(c) })
                               else
                                 if rt.bool(rt.binary('==', _u_blendMode, rt.i(15)))
-                                  middle.replace(((rt.bool(rt.binary('==', color1, rt.construct(4, rt.f(1)))) ? (color1) : (rt.component_wise('min', rt.binary('/', rt.binary('*', color2, color2, 4, 'float'), rt.binary('-', rt.f(1), color1, 4, 'float'), 4, 'float'), rt.construct(4, rt.f(1)))))).map { |c| rt.f32(c) })
+                                  middle.replace(((rt.bool(rt.binary('==', color1, rt.construct(4, rt.f(1)))) ? (color1) : (rt.component_wise('min', rt.construct(4, ((((color2[0]) * (color2[0]))) / (((rt.f(1)) - (color1[0])))), ((((color2[1]) * (color2[1]))) / (((rt.f(1)) - (color1[1])))), ((((color2[2]) * (color2[2]))) / (((rt.f(1)) - (color1[2])))), ((((color2[3]) * (color2[3]))) / (((rt.f(1)) - (color1[3]))))), rt.construct(4, rt.f(1)))))).map { |c| rt.f32(c) })
                                 else
                                   if rt.bool(rt.binary('==', _u_blendMode, rt.i(16)))
                                     middle.replace((rt.binary('-', rt.f(1), rt.binary('*', rt.binary('-', rt.f(1), color1, 4, 'float'), rt.binary('-', rt.f(1), color2, 4, 'float'), 4, 'float'), 4, 'float')).map { |c| rt.f32(c) })
                                   else
                                     if rt.bool(rt.binary('==', _u_blendMode, rt.i(17)))
-                                      middle.replace((rt.construct(4, blendSoftLight__float_float.call(rt.swizzle(color1, 'r'), rt.swizzle(color2, 'r')), blendSoftLight__float_float.call(rt.swizzle(color1, 'g'), rt.swizzle(color2, 'g')), blendSoftLight__float_float.call(rt.swizzle(color1, 'b'), rt.swizzle(color2, 'b')), rt.component_wise('mix', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a'), rt.f(0.5)))).map { |c| rt.f32(c) })
+                                      middle[0] = rt.f32(blendSoftLight__float_float.call(rt.swizzle(color1, 'r'), rt.swizzle(color2, 'r'))); middle[1] = rt.f32(blendSoftLight__float_float.call(rt.swizzle(color1, 'g'), rt.swizzle(color2, 'g'))); middle[2] = rt.f32(blendSoftLight__float_float.call(rt.swizzle(color1, 'b'), rt.swizzle(color2, 'b'))); middle[3] = rt.f32(rt.component_wise('mix', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a'), rt.f(0.5)))
                                     else
                                       if rt.bool(rt.binary('==', _u_blendMode, rt.i(18)))
-                                        middle.replace((rt.component_wise('max', rt.binary('-', rt.binary('+', color1, color2, 4, 'float'), rt.f(1), 4, 'float'), rt.f(0))).map { |c| rt.f32(c) })
+                                        middle.replace((rt.component_wise('max', rt.construct(4, ((((color1[0]) + (color2[0]))) - (rt.f(1))), ((((color1[1]) + (color2[1]))) - (rt.f(1))), ((((color1[2]) + (color2[2]))) - (rt.f(1))), ((((color1[3]) + (color2[3]))) - (rt.f(1)))), rt.f(0))).map { |c| rt.f32(c) })
                                       end
                                     end
                                   end
@@ -200,21 +200,21 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     brightness = nil; color = nil; displacement = nil; globalCoord = nil; inputColor = nil; localUV = nil; maxDisplacement = nil; uv = nil; warpedLocalUV = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     color = rt.construct(4, rt.construct(4, rt.f(0)))
-    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    inputColor = rt.construct(4, rt.texture(_u_inputTex, localUV))
+    localUV = rt.construct(2, ((((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
+    inputColor = rt.construct(4, (rt.texture(_u_inputTex, localUV))[0], (rt.texture(_u_inputTex, localUV))[1], (rt.texture(_u_inputTex, localUV))[2], (rt.texture(_u_inputTex, localUV))[3])
     brightness = rt.binary('+', desaturate__vec3.call(rt.swizzle(inputColor, 'rgb')), rt.binary('/', _u_direction, rt.f(360), 1, 'float'), 1, 'float')
-    displacement = rt.binary('*', _u_amount, rt.f(0.01), 1, 'float')
+    displacement = rt.binary('*', _u_amount, rt.f(0.0099999997764825821), 1, 'float')
     maxDisplacement = rt.f(0.0)
     if rt.bool((rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_resolution, 'x'))) || rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(_u_resolution, 'y'))) ? 1 : 0))
       maxDisplacement = rt.binary('/', rt.f(256), rt.component_wise('max', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 1, 'float')
       displacement = rt.component_wise('min', displacement, maxDisplacement)
     end
     if rt.bool(rt.binary('==', _u_mode, rt.i(0)))
-      uv = rt.assign_swizzle(uv, 'x', rt.binary('+', rt.swizzle(uv, 'x'), rt.binary('*', rt.component_wise('cos', rt.binary('*', brightness, rt.f(6.2831853071800001), 1, 'float')), displacement, 1, 'float'), 1, 'float'))
-      uv = rt.assign_swizzle(uv, 'y', rt.binary('+', rt.swizzle(uv, 'y'), rt.binary('*', rt.component_wise('sin', rt.binary('*', brightness, rt.f(6.2831853071800001), 1, 'float')), displacement, 1, 'float'), 1, 'float'))
+      uv = rt.assign_swizzle(uv, 'x', rt.binary('+', rt.swizzle(uv, 'x'), rt.binary('*', rt.component_wise('cos', rt.binary('*', brightness, rt.f(6.2831854820251465), 1, 'float')), displacement, 1, 'float'), 1, 'float'))
+      uv = rt.assign_swizzle(uv, 'y', rt.binary('+', rt.swizzle(uv, 'y'), rt.binary('*', rt.component_wise('sin', rt.binary('*', brightness, rt.f(6.2831854820251465), 1, 'float')), displacement, 1, 'float'), 1, 'float'))
     else
       if rt.bool(rt.binary('==', _u_mode, rt.i(1)))
         uv = rt.assign_swizzle(uv, 'y', rt.binary('+', rt.swizzle(uv, 'y'), rt.binary('*', desaturate__vec3.call(derivX__vec3_vec2_bool.call(rt.swizzle(inputColor, 'rgb'), uv, 0)), displacement, 1, 'float'), 1, 'float'))
@@ -222,7 +222,7 @@ run_pixel = lambda do |ctx, out|
       end
     end
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      uv.replace((rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('+', uv, rt.f(1), 2, 'float'), rt.f(2)), rt.f(1), 2, 'float'))).map { |c| rt.f32(c) })
+      uv.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         uv.replace((rt.component_wise('mod', uv, rt.f(1))).map { |c| rt.f32(c) })
@@ -232,7 +232,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    warpedLocalUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    warpedLocalUV = rt.construct(2, ((((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
     color.replace((rt.texture(_u_inputTex, warpedLocalUV)).map { |c| rt.f32(c) })
     color = rt.assign_swizzle(color, 'rgb', blend__vec4_vec4.call(inputColor, color))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })

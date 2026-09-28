@@ -45,10 +45,10 @@ run_pixel = lambda do |ctx, out|
     return wrapped
   end
   srgb_to_linear__float = lambda do |value|
-    if rt.bool(rt.binary('<=', value, rt.f(0.04045)))
-      return rt.binary('/', value, rt.f(12.92), 1, 'float')
+    if rt.bool(rt.binary('<=', value, rt.f(0.040449999272823334)))
+      return rt.binary('/', value, rt.f(12.920000076293945), 1, 'float')
     end
-    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.055), 1, 'float'), rt.f(1.0549999999999999), 1, 'float'), rt.f(2.3999999999999999))
+    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
   end
   cbrt_safe__float = lambda do |value|
     sign_value = nil
@@ -56,7 +56,7 @@ run_pixel = lambda do |ctx, out|
       return rt.f(0)
     end
     sign_value = (rt.bool(rt.binary('>=', value, rt.f(0))) ? (rt.f(1)) : (rt.unary('-', rt.f(1))))
-    return rt.binary('*', sign_value, rt.component_wise('pow', rt.component_wise('abs', value), rt.binary('/', rt.f(1), rt.f(3), 1, 'float')), 1, 'float')
+    return rt.binary('*', sign_value, rt.component_wise('pow', rt.component_wise('abs', value), rt.f(0.3333333432674408)), 1, 'float')
   end
   oklab_l_component__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
@@ -64,13 +64,13 @@ run_pixel = lambda do |ctx, out|
     r = srgb_to_linear__float.call(clamp01__float.call(rt.swizzle(rgb, 'x')))
     _g = srgb_to_linear__float.call(clamp01__float.call(rt.swizzle(rgb, 'y')))
     b = srgb_to_linear__float.call(clamp01__float.call(rt.swizzle(rgb, 'z')))
-    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561200000001), r, 1, 'float'), rt.binary('*', rt.f(0.53627520799999995), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565300000001), b, 1, 'float'), 1, 'float')
-    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910699999999), r, 1, 'float'), rt.binary('*', rt.f(0.68071895839999996), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.107406579), b, 1, 'float'), 1, 'float')
-    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794699999999), r, 1, 'float'), rt.binary('*', rt.f(0.28184741740000002), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136160000001), b, 1, 'float'), 1, 'float')
+    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561198234558), r, 1, 'float'), rt.binary('*', rt.f(0.53627520799636841), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565277814865), b, 1, 'float'), 1, 'float')
+    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910701751709), r, 1, 'float'), rt.binary('*', rt.f(0.68071895837783813), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.10740657895803452), b, 1, 'float'), 1, 'float')
+    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794664382935), r, 1, 'float'), rt.binary('*', rt.f(0.28184741735458374), _g, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136159896851), b, 1, 'float'), 1, 'float')
     l_c = cbrt_safe__float.call(l)
     m_c = cbrt_safe__float.call(m)
     s_c = cbrt_safe__float.call(s)
-    return clamp01__float.call(rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.2104542553), l_c, 1, 'float'), rt.binary('*', rt.f(0.79361778500000002), m_c, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720467999999996), s_c, 1, 'float'), 1, 'float'))
+    return clamp01__float.call(rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.21045425534248352), l_c, 1, 'float'), rt.binary('*', rt.f(0.79361778497695923), m_c, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720468387007713), s_c, 1, 'float'), 1, 'float'))
   end
   value_map_component__vec4_uint = lambda do |texel, channelCount|
     texel = rt.copy(texel, 'float')
@@ -84,7 +84,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', channelCount, rt.i(3)))
       return oklab_l_component__vec3.call(rt.swizzle(texel, 'xyz'))
     end
-    clamped_rgb = rt.construct(3, rt.component_wise('clamp', rt.swizzle(texel, 'xyz'), rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))))
+    clamped_rgb = rt.construct(3, rt.component_wise('clamp', rt.swizzle(texel, 'x'), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.swizzle(texel, 'y'), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.swizzle(texel, 'z'), (rt.f(0)), (rt.f(1))))
     return oklab_l_component__vec3.call(clamped_rgb)
   end
   compute_reference_value__ivec2_uint = lambda do |coords, channelCount|
@@ -95,7 +95,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; channelCount = nil; dims = nil; dx = nil; dy = nil; globalCoord = nil; global_id = nil; height = nil; height_i = nil; i = nil; offset = nil; sample_coord = nil; texel = nil; value = nil; width = nil; width_i = nil; x_value = nil; y_value = nil; z_value = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     global_id = rt.construct(3, rt.construct(1, rt.swizzle(ctx.frag_coord, 'x'), 'uint'), rt.construct(1, rt.swizzle(ctx.frag_coord, 'y'), 'uint'), rt.i(0), 'uint')
     width = as_u32__float.call(rt.swizzle(_u_size, 'x'))
     height = as_u32__float.call(rt.swizzle(_u_size, 'y'))
@@ -124,17 +124,17 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      offset = g['SOBEL_OFFSETS'][(i).to_i]
+      offset = rt.array_index(g['SOBEL_OFFSETS'], i)
       sample_coord = rt.construct(2, wrap_coord__int_int.call(rt.binary('+', rt.construct(1, rt.swizzle(global_id, 'x'), 'int'), rt.swizzle(offset, 'x'), 1, 'int'), width_i), wrap_coord__int_int.call(rt.binary('+', rt.construct(1, rt.swizzle(global_id, 'y'), 'int'), rt.swizzle(offset, 'y'), 1, 'int'), height_i), 'int')
       value = compute_reference_value__ivec2_uint.call(sample_coord, channelCount)
-      dx = rt.binary('+', dx, rt.binary('*', value, g['SOBEL_X_KERNEL'][(i).to_i], 1, 'float'), 1, 'float')
-      dy = rt.binary('+', dy, rt.binary('*', value, g['SOBEL_Y_KERNEL'][(i).to_i], 1, 'float'), 1, 'float')
+      dx = rt.binary('+', dx, rt.binary('*', value, rt.array_index(g['SOBEL_X_KERNEL'], i), 1, 'float'), 1, 'float')
+      dy = rt.binary('+', dy, rt.binary('*', value, rt.array_index(g['SOBEL_Y_KERNEL'], i), 1, 'float'), 1, 'float')
     end
     x_value = rt.component_wise('clamp', rt.binary('+', rt.binary('*', dx, rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1))
     y_value = rt.component_wise('clamp', rt.binary('+', rt.binary('*', dy, rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1))
     z_value = rt.component_wise('clamp', rt.binary('-', rt.f(1), rt.binary('*', rt.binary('+', rt.component_wise('abs', dx), rt.component_wise('abs', dy), 1, 'float'), rt.f(0.5), 1, 'float'), 1, 'float'), rt.f(0), rt.f(1))
     texel = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, rt.swizzle(global_id, 'xy'), 'int'), rt.i(0)))
-    g['fragColor'].replace((rt.construct(4, x_value, y_value, z_value, rt.swizzle(texel, 'w'))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(x_value); g['fragColor'][1] = rt.f32(y_value); g['fragColor'][2] = rt.f32(z_value); g['fragColor'][3] = rt.f32(rt.swizzle(texel, 'w'))
   end
   main__void.call
   c = g['fragColor']

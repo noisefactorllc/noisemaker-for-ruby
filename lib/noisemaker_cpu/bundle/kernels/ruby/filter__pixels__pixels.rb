@@ -11,11 +11,11 @@ run_pixel = lambda do |ctx, out|
   _u_size = u.key?('size') ? u['size'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
-    centered = nil; coord = nil; dx = nil; dy = nil; globalCoord = nil; globalUV = nil; pixelSize = nil; resolution = nil; texSize = nil; tileDims = nil; uv = nil
+    __sc968 = nil; centered = nil; coord = nil; dx = nil; dy = nil; globalCoord = nil; globalUV = nil; pixelSize = nil; resolution = nil; texSize = nil; tileDims = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
     tileDims = rt.construct(2, rt.construct(2, texSize))
-    resolution = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), tileDims, 2, 'float'))
+    resolution = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (tileDims[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (tileDims[1])))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (tileDims[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (tileDims[1])))
     if rt.bool(rt.binary('<', _u_size, rt.f(1)))
       g['fragColor'].replace((rt.texture(_u_inputTex, uv)).map { |c| rt.f32(c) })
       return
@@ -23,11 +23,11 @@ run_pixel = lambda do |ctx, out|
     pixelSize = _u_size
     dx = rt.binary('/', pixelSize, rt.swizzle(resolution, 'x'), 1, 'float')
     dy = rt.binary('/', pixelSize, rt.swizzle(resolution, 'y'), 1, 'float')
-    globalUV = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), resolution, 2, 'float'))
-    centered = rt.construct(2, rt.binary('-', globalUV, rt.f(0.5), 2, 'float'))
+    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (resolution[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (resolution[1])))
+    centered = rt.construct(2, ((globalUV[0]) - (rt.f(0.5))), ((globalUV[1]) - (rt.f(0.5))))
     globalCoord = rt.construct(2, rt.construct(2, rt.binary('*', dx, rt.component_wise('floor', rt.binary('/', rt.swizzle(centered, 'x'), dx, 1, 'float')), 1, 'float'), rt.binary('*', dy, rt.component_wise('floor', rt.binary('/', rt.swizzle(centered, 'y'), dy, 1, 'float')), 1, 'float')))
-    globalCoord.replace((rt.binary('+', globalCoord, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
-    coord = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', globalCoord, resolution, 2, 'float'), _u_tileOffset, 2, 'float'), tileDims, 2, 'float'))
+    __sc968 = rt.f(0.5); globalCoord[0] = rt.f32(rt.binary('+', globalCoord[0], __sc968, 1, 'float')); globalCoord[1] = rt.f32(rt.binary('+', globalCoord[1], __sc968, 1, 'float'))
+    coord = rt.construct(2, ((((((globalCoord[0]) * (resolution[0]))) - (_u_tileOffset[0]))) / (tileDims[0])), ((((((globalCoord[1]) * (resolution[1]))) - (_u_tileOffset[1]))) / (tileDims[1])))
     g['fragColor'].replace((rt.texture(_u_inputTex, coord)).map { |c| rt.f32(c) })
   end
   main__void.call

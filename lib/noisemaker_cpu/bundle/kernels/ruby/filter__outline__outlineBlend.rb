@@ -13,18 +13,18 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     base = nil; dimensions = nil; edges = nil; globalCoord = nil; out_rgb = nil; outlineColor = nil; strength = nil; uv = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     dimensions = rt.texture_size(_u_inputTex)
     if rt.bool((rt.bool(rt.binary('==', rt.swizzle(dimensions, 'x'), rt.i(0))) || rt.bool(rt.binary('==', rt.swizzle(dimensions, 'y'), rt.i(0))) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, dimensions), 2, 'float'))
-    base = rt.construct(4, rt.texture(_u_inputTex, uv))
-    edges = rt.construct(4, rt.texture(_u_edgesTexture, uv))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((dimensions[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((dimensions[1]))))
+    base = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    edges = rt.construct(4, (rt.texture(_u_edgesTexture, uv))[0], (rt.texture(_u_edgesTexture, uv))[1], (rt.texture(_u_edgesTexture, uv))[2], (rt.texture(_u_edgesTexture, uv))[3])
     strength = rt.component_wise('clamp', rt.swizzle(edges, 'r'), rt.f(0), rt.f(1))
-    outlineColor = rt.construct(3, (rt.bool(rt.binary('>', _u_invert, rt.f(0.5))) ? (rt.construct(3, rt.f(1))) : (rt.construct(3, rt.f(0)))))
-    out_rgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(base, 'rgb'), outlineColor, strength))
+    outlineColor = rt.construct(3, (rt.bool(rt.binary('>', _u_invert, rt.f(0.5))) ? ((rt.f(1))) : ((rt.f(0)))), (rt.bool(rt.binary('>', _u_invert, rt.f(0.5))) ? ((rt.f(1))) : ((rt.f(0)))), (rt.bool(rt.binary('>', _u_invert, rt.f(0.5))) ? ((rt.f(1))) : ((rt.f(0)))))
+    out_rgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(base, 'r'), outlineColor[0], strength), rt.component_wise('mix', rt.swizzle(base, 'g'), outlineColor[1], strength), rt.component_wise('mix', rt.swizzle(base, 'b'), outlineColor[2], strength))
     g['fragColor'].replace((rt.construct(4, out_rgb, rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

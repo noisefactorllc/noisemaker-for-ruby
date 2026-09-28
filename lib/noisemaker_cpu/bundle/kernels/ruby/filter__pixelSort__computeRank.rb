@@ -37,7 +37,7 @@ run_pixel = lambda do |ctx, out|
       end
     end
     estimatedRank = rt.binary('/', rt.construct(1, brighterCount), rt.construct(1, _NUM_SAMPLES), 1, 'float')
-    g['fragColor'].replace((rt.construct(4, estimatedRank, myLum, rt.binary('/', rt.construct(1, x), rt.construct(1, rt.binary('-', width, rt.i(1), 1, 'int')), 1, 'float'), rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(estimatedRank); g['fragColor'][1] = rt.f32(myLum); g['fragColor'][2] = rt.f32(rt.binary('/', rt.construct(1, x), rt.construct(1, rt.binary('-', width, rt.i(1), 1, 'int')), 1, 'float')); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

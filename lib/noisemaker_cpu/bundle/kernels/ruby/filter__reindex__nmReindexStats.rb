@@ -6,18 +6,18 @@ run_pixel = lambda do |ctx, out|
   clamp01__float = srgb_to_linear__float = cube_root__float = oklab_l_component__vec3 = value_map_component__vec4 = main__void = nil
   _retc = nil
   _u_inputTex = ctx.texture_binding('inputTex')
-  g['F32_MAX'] = rt.f(3.4028234660000002e+38)
-  g['F32_MIN'] = rt.unary('-', rt.f(3.4028234660000002e+38))
+  g['F32_MAX'] = rt.f(3.4028234663852886e+38)
+  g['F32_MIN'] = rt.unary('-', rt.f(3.4028234663852886e+38))
   g['TILE_SIZE'] = rt.i(8)
   g['fragColor'] = rt.construct(4, 0.0)
   clamp01__float = lambda do |value|
     return rt.component_wise('clamp', value, rt.f(0), rt.f(1))
   end
   srgb_to_linear__float = lambda do |value|
-    if rt.bool(rt.binary('<=', value, rt.f(0.04045)))
-      return rt.binary('/', value, rt.f(12.92), 1, 'float')
+    if rt.bool(rt.binary('<=', value, rt.f(0.040449999272823334)))
+      return rt.binary('/', value, rt.f(12.920000076293945), 1, 'float')
     end
-    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.055), 1, 'float'), rt.f(1.0549999999999999), 1, 'float'), rt.f(2.3999999999999999))
+    return rt.component_wise('pow', rt.binary('/', rt.binary('+', value, rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
   end
   cube_root__float = lambda do |value|
     sign_value = nil
@@ -25,7 +25,7 @@ run_pixel = lambda do |ctx, out|
       return rt.f(0)
     end
     sign_value = (rt.bool(rt.binary('>=', value, rt.f(0))) ? (rt.f(1)) : (rt.unary('-', rt.f(1))))
-    return rt.binary('*', sign_value, rt.component_wise('pow', rt.component_wise('abs', value), rt.binary('/', rt.f(1), rt.f(3), 1, 'float')), 1, 'float')
+    return rt.binary('*', sign_value, rt.component_wise('pow', rt.component_wise('abs', value), rt.f(0.3333333432674408)), 1, 'float')
   end
   oklab_l_component__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
@@ -33,13 +33,13 @@ run_pixel = lambda do |ctx, out|
     r_lin = srgb_to_linear__float.call(clamp01__float.call(rt.swizzle(rgb, 'x')))
     g_lin = srgb_to_linear__float.call(clamp01__float.call(rt.swizzle(rgb, 'y')))
     b_lin = srgb_to_linear__float.call(clamp01__float.call(rt.swizzle(rgb, 'z')))
-    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561200000001), r_lin, 1, 'float'), rt.binary('*', rt.f(0.53627520799999995), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565300000001), b_lin, 1, 'float'), 1, 'float')
-    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910699999999), r_lin, 1, 'float'), rt.binary('*', rt.f(0.68071895839999996), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.107406579), b_lin, 1, 'float'), 1, 'float')
-    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794699999999), r_lin, 1, 'float'), rt.binary('*', rt.f(0.28184741740000002), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136160000001), b_lin, 1, 'float'), 1, 'float')
+    l = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.41216561198234558), r_lin, 1, 'float'), rt.binary('*', rt.f(0.53627520799636841), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.051457565277814865), b_lin, 1, 'float'), 1, 'float')
+    m = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21185910701751709), r_lin, 1, 'float'), rt.binary('*', rt.f(0.68071895837783813), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.10740657895803452), b_lin, 1, 'float'), 1, 'float')
+    s = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.088309794664382935), r_lin, 1, 'float'), rt.binary('*', rt.f(0.28184741735458374), g_lin, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.63026136159896851), b_lin, 1, 'float'), 1, 'float')
     l_c = cube_root__float.call(l)
     m_c = cube_root__float.call(m)
     s_c = cube_root__float.call(s)
-    lightness = rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.2104542553), l_c, 1, 'float'), rt.binary('*', rt.f(0.79361778500000002), m_c, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720467999999996), s_c, 1, 'float'), 1, 'float')
+    lightness = rt.binary('-', rt.binary('+', rt.binary('*', rt.f(0.21045425534248352), l_c, 1, 'float'), rt.binary('*', rt.f(0.79361778497695923), m_c, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0040720468387007713), s_c, 1, 'float'), 1, 'float')
     return clamp01__float.call(lightness)
   end
   value_map_component__vec4 = lambda do |texel|
@@ -93,7 +93,7 @@ run_pixel = lambda do |ctx, out|
         maxValue = rt.component_wise('max', maxValue, value)
       end
     end
-    g['fragColor'].replace((rt.construct(4, minValue, maxValue, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(minValue); g['fragColor'][1] = rt.f32(maxValue); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

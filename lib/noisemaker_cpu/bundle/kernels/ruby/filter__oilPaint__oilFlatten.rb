@@ -74,53 +74,53 @@ run_pixel = lambda do |ctx, out|
           next
         end
         sc = rt.component_wise('clamp', rt.binary('+', icenter, rt.construct(2, x, y, 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', dims, rt.construct(2, rt.i(1), 'int'), 2, 'int'))
-        c = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_inputTex, sc, rt.i(0)), 'rgb'))
-        cc = rt.construct(3, rt.binary('*', c, c, 3, 'float'))
+        c = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_inputTex, sc, rt.i(0)), 'r'), rt.swizzle(rt.texel_fetch(_u_inputTex, sc, rt.i(0)), 'g'), rt.swizzle(rt.texel_fetch(_u_inputTex, sc, rt.i(0)), 'b'))
+        cc = rt.construct(3, ((c[0]) * (c[0])), ((c[1]) * (c[1])), ((c[2]) * (c[2])))
         if rt.bool((rt.bool(rt.binary('==', x, rt.i(0))) && rt.bool(rt.binary('==', y, rt.i(0))) ? 1 : 0))
-          m4.replace((rt.binary('+', m4, c, 3, 'float')).map { |c| rt.f32(c) })
-          q4.replace((rt.binary('+', q4, cc, 3, 'float')).map { |c| rt.f32(c) })
+          m4[0] = rt.f32(rt.binary('+', m4[0], c[0], 1, 'float')); m4[1] = rt.f32(rt.binary('+', m4[1], c[1], 1, 'float')); m4[2] = rt.f32(rt.binary('+', m4[2], c[2], 1, 'float'))
+          q4[0] = rt.f32(rt.binary('+', q4[0], cc[0], 1, 'float')); q4[1] = rt.f32(rt.binary('+', q4[1], cc[1], 1, 'float')); q4[2] = rt.f32(rt.binary('+', q4[2], cc[2], 1, 'float'))
           n4 = rt.binary('+', n4, rt.f(1), 1, 'float')
         else
           if rt.bool((rt.bool(rt.binary('>', rt.swizzle(d, 'x'), rt.f(0))) && rt.bool(rt.binary('>=', rt.swizzle(d, 'y'), rt.f(0))) ? 1 : 0))
             if rt.bool(rt.binary('<=', rt.component_wise('abs', rt.swizzle(d, 'x')), rt.component_wise('abs', rt.swizzle(d, 'y'))))
-              m5.replace((rt.binary('+', m5, c, 3, 'float')).map { |c| rt.f32(c) })
-              q5.replace((rt.binary('+', q5, cc, 3, 'float')).map { |c| rt.f32(c) })
+              m5[0] = rt.f32(rt.binary('+', m5[0], c[0], 1, 'float')); m5[1] = rt.f32(rt.binary('+', m5[1], c[1], 1, 'float')); m5[2] = rt.f32(rt.binary('+', m5[2], c[2], 1, 'float'))
+              q5[0] = rt.f32(rt.binary('+', q5[0], cc[0], 1, 'float')); q5[1] = rt.f32(rt.binary('+', q5[1], cc[1], 1, 'float')); q5[2] = rt.f32(rt.binary('+', q5[2], cc[2], 1, 'float'))
               n5 = rt.binary('+', n5, rt.f(1), 1, 'float')
             else
-              m4.replace((rt.binary('+', m4, c, 3, 'float')).map { |c| rt.f32(c) })
-              q4.replace((rt.binary('+', q4, cc, 3, 'float')).map { |c| rt.f32(c) })
+              m4[0] = rt.f32(rt.binary('+', m4[0], c[0], 1, 'float')); m4[1] = rt.f32(rt.binary('+', m4[1], c[1], 1, 'float')); m4[2] = rt.f32(rt.binary('+', m4[2], c[2], 1, 'float'))
+              q4[0] = rt.f32(rt.binary('+', q4[0], cc[0], 1, 'float')); q4[1] = rt.f32(rt.binary('+', q4[1], cc[1], 1, 'float')); q4[2] = rt.f32(rt.binary('+', q4[2], cc[2], 1, 'float'))
               n4 = rt.binary('+', n4, rt.f(1), 1, 'float')
             end
           else
             if rt.bool((rt.bool(rt.binary('<=', rt.swizzle(d, 'x'), rt.f(0))) && rt.bool(rt.binary('>', rt.swizzle(d, 'y'), rt.f(0))) ? 1 : 0))
               if rt.bool(rt.binary('<', rt.component_wise('abs', rt.swizzle(d, 'x')), rt.component_wise('abs', rt.swizzle(d, 'y'))))
-                m6.replace((rt.binary('+', m6, c, 3, 'float')).map { |c| rt.f32(c) })
-                q6.replace((rt.binary('+', q6, cc, 3, 'float')).map { |c| rt.f32(c) })
+                m6[0] = rt.f32(rt.binary('+', m6[0], c[0], 1, 'float')); m6[1] = rt.f32(rt.binary('+', m6[1], c[1], 1, 'float')); m6[2] = rt.f32(rt.binary('+', m6[2], c[2], 1, 'float'))
+                q6[0] = rt.f32(rt.binary('+', q6[0], cc[0], 1, 'float')); q6[1] = rt.f32(rt.binary('+', q6[1], cc[1], 1, 'float')); q6[2] = rt.f32(rt.binary('+', q6[2], cc[2], 1, 'float'))
                 n6 = rt.binary('+', n6, rt.f(1), 1, 'float')
               else
-                m7.replace((rt.binary('+', m7, c, 3, 'float')).map { |c| rt.f32(c) })
-                q7.replace((rt.binary('+', q7, cc, 3, 'float')).map { |c| rt.f32(c) })
+                m7[0] = rt.f32(rt.binary('+', m7[0], c[0], 1, 'float')); m7[1] = rt.f32(rt.binary('+', m7[1], c[1], 1, 'float')); m7[2] = rt.f32(rt.binary('+', m7[2], c[2], 1, 'float'))
+                q7[0] = rt.f32(rt.binary('+', q7[0], cc[0], 1, 'float')); q7[1] = rt.f32(rt.binary('+', q7[1], cc[1], 1, 'float')); q7[2] = rt.f32(rt.binary('+', q7[2], cc[2], 1, 'float'))
                 n7 = rt.binary('+', n7, rt.f(1), 1, 'float')
               end
             else
               if rt.bool((rt.bool(rt.binary('<', rt.swizzle(d, 'x'), rt.f(0))) && rt.bool(rt.binary('<=', rt.swizzle(d, 'y'), rt.f(0))) ? 1 : 0))
                 if rt.bool(rt.binary('<=', rt.component_wise('abs', rt.swizzle(d, 'x')), rt.component_wise('abs', rt.swizzle(d, 'y'))))
-                  m1.replace((rt.binary('+', m1, c, 3, 'float')).map { |c| rt.f32(c) })
-                  q1.replace((rt.binary('+', q1, cc, 3, 'float')).map { |c| rt.f32(c) })
+                  m1[0] = rt.f32(rt.binary('+', m1[0], c[0], 1, 'float')); m1[1] = rt.f32(rt.binary('+', m1[1], c[1], 1, 'float')); m1[2] = rt.f32(rt.binary('+', m1[2], c[2], 1, 'float'))
+                  q1[0] = rt.f32(rt.binary('+', q1[0], cc[0], 1, 'float')); q1[1] = rt.f32(rt.binary('+', q1[1], cc[1], 1, 'float')); q1[2] = rt.f32(rt.binary('+', q1[2], cc[2], 1, 'float'))
                   n1 = rt.binary('+', n1, rt.f(1), 1, 'float')
                 else
-                  m0.replace((rt.binary('+', m0, c, 3, 'float')).map { |c| rt.f32(c) })
-                  q0.replace((rt.binary('+', q0, cc, 3, 'float')).map { |c| rt.f32(c) })
+                  m0[0] = rt.f32(rt.binary('+', m0[0], c[0], 1, 'float')); m0[1] = rt.f32(rt.binary('+', m0[1], c[1], 1, 'float')); m0[2] = rt.f32(rt.binary('+', m0[2], c[2], 1, 'float'))
+                  q0[0] = rt.f32(rt.binary('+', q0[0], cc[0], 1, 'float')); q0[1] = rt.f32(rt.binary('+', q0[1], cc[1], 1, 'float')); q0[2] = rt.f32(rt.binary('+', q0[2], cc[2], 1, 'float'))
                   n0 = rt.binary('+', n0, rt.f(1), 1, 'float')
                 end
               else
                 if rt.bool(rt.binary('<', rt.component_wise('abs', rt.swizzle(d, 'x')), rt.component_wise('abs', rt.swizzle(d, 'y'))))
-                  m2.replace((rt.binary('+', m2, c, 3, 'float')).map { |c| rt.f32(c) })
-                  q2.replace((rt.binary('+', q2, cc, 3, 'float')).map { |c| rt.f32(c) })
+                  m2[0] = rt.f32(rt.binary('+', m2[0], c[0], 1, 'float')); m2[1] = rt.f32(rt.binary('+', m2[1], c[1], 1, 'float')); m2[2] = rt.f32(rt.binary('+', m2[2], c[2], 1, 'float'))
+                  q2[0] = rt.f32(rt.binary('+', q2[0], cc[0], 1, 'float')); q2[1] = rt.f32(rt.binary('+', q2[1], cc[1], 1, 'float')); q2[2] = rt.f32(rt.binary('+', q2[2], cc[2], 1, 'float'))
                   n2 = rt.binary('+', n2, rt.f(1), 1, 'float')
                 else
-                  m3.replace((rt.binary('+', m3, c, 3, 'float')).map { |c| rt.f32(c) })
-                  q3.replace((rt.binary('+', q3, cc, 3, 'float')).map { |c| rt.f32(c) })
+                  m3[0] = rt.f32(rt.binary('+', m3[0], c[0], 1, 'float')); m3[1] = rt.f32(rt.binary('+', m3[1], c[1], 1, 'float')); m3[2] = rt.f32(rt.binary('+', m3[2], c[2], 1, 'float'))
+                  q3[0] = rt.f32(rt.binary('+', q3[0], cc[0], 1, 'float')); q3[1] = rt.f32(rt.binary('+', q3[1], cc[1], 1, 'float')); q3[2] = rt.f32(rt.binary('+', q3[2], cc[2], 1, 'float'))
                   n3 = rt.binary('+', n3, rt.f(1), 1, 'float')
                 end
               end
@@ -135,8 +135,8 @@ run_pixel = lambda do |ctx, out|
     tv = rt.f(0.0)
     v = rt.construct(3, 0.0)
     if rt.bool(rt.binary('>=', n0, rt.f(1)))
-      m = rt.construct(3, rt.binary('/', m0, n0, 3, 'float'))
-      v = rt.construct(3, rt.binary('-', rt.binary('/', q0, n0, 3, 'float'), rt.binary('*', m, m, 3, 'float'), 3, 'float'))
+      m = rt.construct(3, ((m0[0]) / (n0)), ((m0[1]) / (n0)), ((m0[2]) / (n0)))
+      v = rt.construct(3, ((((q0[0]) / (n0))) - (((m[0]) * (m[0])))), ((((q0[1]) / (n0))) - (((m[1]) * (m[1])))), ((((q0[2]) / (n0))) - (((m[2]) * (m[2])))))
       tv = rt.binary('+', rt.binary('+', rt.swizzle(v, 'r'), rt.swizzle(v, 'g'), 1, 'float'), rt.swizzle(v, 'b'), 1, 'float')
       if rt.bool(rt.binary('<', tv, bestV))
         bestV = tv
@@ -144,8 +144,8 @@ run_pixel = lambda do |ctx, out|
       end
     end
     if rt.bool(rt.binary('>=', n1, rt.f(1)))
-      m = rt.construct(3, rt.binary('/', m1, n1, 3, 'float'))
-      v = rt.construct(3, rt.binary('-', rt.binary('/', q1, n1, 3, 'float'), rt.binary('*', m, m, 3, 'float'), 3, 'float'))
+      m = rt.construct(3, ((m1[0]) / (n1)), ((m1[1]) / (n1)), ((m1[2]) / (n1)))
+      v = rt.construct(3, ((((q1[0]) / (n1))) - (((m[0]) * (m[0])))), ((((q1[1]) / (n1))) - (((m[1]) * (m[1])))), ((((q1[2]) / (n1))) - (((m[2]) * (m[2])))))
       tv = rt.binary('+', rt.binary('+', rt.swizzle(v, 'r'), rt.swizzle(v, 'g'), 1, 'float'), rt.swizzle(v, 'b'), 1, 'float')
       if rt.bool(rt.binary('<', tv, bestV))
         bestV = tv
@@ -153,8 +153,8 @@ run_pixel = lambda do |ctx, out|
       end
     end
     if rt.bool(rt.binary('>=', n2, rt.f(1)))
-      m = rt.construct(3, rt.binary('/', m2, n2, 3, 'float'))
-      v = rt.construct(3, rt.binary('-', rt.binary('/', q2, n2, 3, 'float'), rt.binary('*', m, m, 3, 'float'), 3, 'float'))
+      m = rt.construct(3, ((m2[0]) / (n2)), ((m2[1]) / (n2)), ((m2[2]) / (n2)))
+      v = rt.construct(3, ((((q2[0]) / (n2))) - (((m[0]) * (m[0])))), ((((q2[1]) / (n2))) - (((m[1]) * (m[1])))), ((((q2[2]) / (n2))) - (((m[2]) * (m[2])))))
       tv = rt.binary('+', rt.binary('+', rt.swizzle(v, 'r'), rt.swizzle(v, 'g'), 1, 'float'), rt.swizzle(v, 'b'), 1, 'float')
       if rt.bool(rt.binary('<', tv, bestV))
         bestV = tv
@@ -162,8 +162,8 @@ run_pixel = lambda do |ctx, out|
       end
     end
     if rt.bool(rt.binary('>=', n3, rt.f(1)))
-      m = rt.construct(3, rt.binary('/', m3, n3, 3, 'float'))
-      v = rt.construct(3, rt.binary('-', rt.binary('/', q3, n3, 3, 'float'), rt.binary('*', m, m, 3, 'float'), 3, 'float'))
+      m = rt.construct(3, ((m3[0]) / (n3)), ((m3[1]) / (n3)), ((m3[2]) / (n3)))
+      v = rt.construct(3, ((((q3[0]) / (n3))) - (((m[0]) * (m[0])))), ((((q3[1]) / (n3))) - (((m[1]) * (m[1])))), ((((q3[2]) / (n3))) - (((m[2]) * (m[2])))))
       tv = rt.binary('+', rt.binary('+', rt.swizzle(v, 'r'), rt.swizzle(v, 'g'), 1, 'float'), rt.swizzle(v, 'b'), 1, 'float')
       if rt.bool(rt.binary('<', tv, bestV))
         bestV = tv
@@ -171,8 +171,8 @@ run_pixel = lambda do |ctx, out|
       end
     end
     if rt.bool(rt.binary('>=', n4, rt.f(1)))
-      m = rt.construct(3, rt.binary('/', m4, n4, 3, 'float'))
-      v = rt.construct(3, rt.binary('-', rt.binary('/', q4, n4, 3, 'float'), rt.binary('*', m, m, 3, 'float'), 3, 'float'))
+      m = rt.construct(3, ((m4[0]) / (n4)), ((m4[1]) / (n4)), ((m4[2]) / (n4)))
+      v = rt.construct(3, ((((q4[0]) / (n4))) - (((m[0]) * (m[0])))), ((((q4[1]) / (n4))) - (((m[1]) * (m[1])))), ((((q4[2]) / (n4))) - (((m[2]) * (m[2])))))
       tv = rt.binary('+', rt.binary('+', rt.swizzle(v, 'r'), rt.swizzle(v, 'g'), 1, 'float'), rt.swizzle(v, 'b'), 1, 'float')
       if rt.bool(rt.binary('<', tv, bestV))
         bestV = tv
@@ -180,8 +180,8 @@ run_pixel = lambda do |ctx, out|
       end
     end
     if rt.bool(rt.binary('>=', n5, rt.f(1)))
-      m = rt.construct(3, rt.binary('/', m5, n5, 3, 'float'))
-      v = rt.construct(3, rt.binary('-', rt.binary('/', q5, n5, 3, 'float'), rt.binary('*', m, m, 3, 'float'), 3, 'float'))
+      m = rt.construct(3, ((m5[0]) / (n5)), ((m5[1]) / (n5)), ((m5[2]) / (n5)))
+      v = rt.construct(3, ((((q5[0]) / (n5))) - (((m[0]) * (m[0])))), ((((q5[1]) / (n5))) - (((m[1]) * (m[1])))), ((((q5[2]) / (n5))) - (((m[2]) * (m[2])))))
       tv = rt.binary('+', rt.binary('+', rt.swizzle(v, 'r'), rt.swizzle(v, 'g'), 1, 'float'), rt.swizzle(v, 'b'), 1, 'float')
       if rt.bool(rt.binary('<', tv, bestV))
         bestV = tv
@@ -189,8 +189,8 @@ run_pixel = lambda do |ctx, out|
       end
     end
     if rt.bool(rt.binary('>=', n6, rt.f(1)))
-      m = rt.construct(3, rt.binary('/', m6, n6, 3, 'float'))
-      v = rt.construct(3, rt.binary('-', rt.binary('/', q6, n6, 3, 'float'), rt.binary('*', m, m, 3, 'float'), 3, 'float'))
+      m = rt.construct(3, ((m6[0]) / (n6)), ((m6[1]) / (n6)), ((m6[2]) / (n6)))
+      v = rt.construct(3, ((((q6[0]) / (n6))) - (((m[0]) * (m[0])))), ((((q6[1]) / (n6))) - (((m[1]) * (m[1])))), ((((q6[2]) / (n6))) - (((m[2]) * (m[2])))))
       tv = rt.binary('+', rt.binary('+', rt.swizzle(v, 'r'), rt.swizzle(v, 'g'), 1, 'float'), rt.swizzle(v, 'b'), 1, 'float')
       if rt.bool(rt.binary('<', tv, bestV))
         bestV = tv
@@ -198,8 +198,8 @@ run_pixel = lambda do |ctx, out|
       end
     end
     if rt.bool(rt.binary('>=', n7, rt.f(1)))
-      m = rt.construct(3, rt.binary('/', m7, n7, 3, 'float'))
-      v = rt.construct(3, rt.binary('-', rt.binary('/', q7, n7, 3, 'float'), rt.binary('*', m, m, 3, 'float'), 3, 'float'))
+      m = rt.construct(3, ((m7[0]) / (n7)), ((m7[1]) / (n7)), ((m7[2]) / (n7)))
+      v = rt.construct(3, ((((q7[0]) / (n7))) - (((m[0]) * (m[0])))), ((((q7[1]) / (n7))) - (((m[1]) * (m[1])))), ((((q7[2]) / (n7))) - (((m[2]) * (m[2])))))
       tv = rt.binary('+', rt.binary('+', rt.swizzle(v, 'r'), rt.swizzle(v, 'g'), 1, 'float'), rt.swizzle(v, 'b'), 1, 'float')
       if rt.bool(rt.binary('<', tv, bestV))
         bestV = tv

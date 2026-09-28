@@ -33,7 +33,7 @@ run_pixel = lambda do |ctx, out|
         brightestX = sampleX
       end
     end
-    g['fragColor'].replace((rt.construct(4, rt.binary('/', rt.construct(1, brightestX), rt.construct(1, rt.binary('-', width, rt.i(1), 1, 'int')), 1, 'float'), maxLum, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(rt.binary('/', rt.construct(1, brightestX), rt.construct(1, rt.binary('-', width, rt.i(1), 1, 'int')), 1, 'float')); g['fragColor'][1] = rt.f32(maxLum); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

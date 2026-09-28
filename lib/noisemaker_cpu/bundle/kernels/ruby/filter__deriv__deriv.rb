@@ -14,24 +14,24 @@ run_pixel = lambda do |ctx, out|
   desaturate__vec3 = lambda do |color|
     color = rt.copy(color, 'float')
     avg = nil
-    avg = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21260000000000001), rt.swizzle(color, 'r'), 1, 'float'), rt.binary('*', rt.f(0.71519999999999995), rt.swizzle(color, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0722), rt.swizzle(color, 'b'), 1, 'float'), 1, 'float')
+    avg = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.2125999927520752), rt.swizzle(color, 'r'), 1, 'float'), rt.binary('*', rt.f(0.71520000696182251), rt.swizzle(color, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.072200000286102295), rt.swizzle(color, 'b'), 1, 'float'), 1, 'float')
     return rt.construct(3, avg)
   end
   main__void = lambda do
     bottom = nil; center = nil; color = nil; dist = nil; dx = nil; dy = nil; localUV = nil; radiusPixels = nil; right = nil; texSize = nil; texelSize = nil
     texSize = rt.texture_size(_u_inputTex)
-    texelSize = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float'))
-    localUV = rt.construct(2, rt.binary('*', rt.swizzle(ctx.frag_coord, 'xy'), texelSize, 2, 'float'))
+    texelSize = rt.construct(2, ((rt.f(1)) / ((texSize[0]))), ((rt.f(1)) / ((texSize[1]))))
+    localUV = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) * (texelSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) * (texelSize[1])))
     radiusPixels = rt.binary('*', _u_amount, _u_renderScale, 1, 'float')
     radiusPixels = rt.component_wise('min', radiusPixels, rt.f(256))
-    color = rt.construct(4, rt.texture(_u_inputTex, localUV))
+    color = rt.construct(4, (rt.texture(_u_inputTex, localUV))[0], (rt.texture(_u_inputTex, localUV))[1], (rt.texture(_u_inputTex, localUV))[2], (rt.texture(_u_inputTex, localUV))[3])
     center = rt.construct(3, desaturate__vec3.call(rt.swizzle(color, 'rgb')))
     right = rt.construct(3, desaturate__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', localUV, rt.binary('*', rt.construct(2, radiusPixels, rt.f(0)), texelSize, 2, 'float'), 2, 'float')), 'rgb')))
     bottom = rt.construct(3, desaturate__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary('+', localUV, rt.binary('*', rt.construct(2, rt.f(0), radiusPixels), texelSize, 2, 'float'), 2, 'float')), 'rgb')))
-    dx = rt.construct(3, rt.binary('-', center, right, 3, 'float'))
-    dy = rt.construct(3, rt.binary('-', center, bottom, 3, 'float'))
+    dx = rt.construct(3, ((center[0]) - (right[0])), ((center[1]) - (right[1])), ((center[2]) - (right[2])))
+    dy = rt.construct(3, ((center[0]) - (bottom[0])), ((center[1]) - (bottom[1])), ((center[2]) - (bottom[2])))
     dist = rt.binary('*', rt.distance(dx, dy), rt.f(2.5), 1, 'float')
-    g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', rt.binary('*', rt.swizzle(color, 'rgb'), dist, 3, 'float'), rt.f(0), rt.f(1)), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', rt.construct(3, ((rt.swizzle(color, 'r')) * (dist)), ((rt.swizzle(color, 'g')) * (dist)), ((rt.swizzle(color, 'b')) * (dist))), rt.f(0), rt.f(1)), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

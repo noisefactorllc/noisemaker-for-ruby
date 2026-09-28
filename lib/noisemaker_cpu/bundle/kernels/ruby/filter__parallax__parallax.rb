@@ -13,31 +13,31 @@ run_pixel = lambda do |ctx, out|
   _u_pivot = u.key?('pivot') ? u['pivot'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   g['MARCH_STEPS'] = rt.i(32)
-  g['SHIFT_SCALE'] = rt.f(0.14999999999999999)
+  g['SHIFT_SCALE'] = rt.f(0.15000000596046448)
   getLuminosity__vec3 = lambda do |color|
     color = rt.copy(color, 'float')
-    return rt.dot(color, rt.construct(3, rt.f(0.29899999999999999), rt.f(0.58699999999999997), rt.f(0.114)))
+    return rt.dot(color, rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
   end
   getHeight__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     localUV = nil; mapSize = nil
     mapSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_heightMap)))
-    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), mapSize, 2, 'float'))
+    localUV = rt.construct(2, ((((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (mapSize[0])), ((((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (mapSize[1])))
     return getLuminosity__vec3.call(rt.swizzle(rt.texture(_u_heightMap, localUV), 'rgb'))
   end
   getInput__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     localUV = nil; texSize = nil
     texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
-    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), texSize, 2, 'float'))
+    localUV = rt.construct(2, ((((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (texSize[0])), ((((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (texSize[1])))
     return rt.texture(_u_inputTex, localUV)
   end
   main__void = lambda do
-    _for0_first = nil; _t = nil; dispPixels = nil; f = nil; globalCoord = nil; i = nil; isTileRendering = nil; maxDispPixels = nil; prevF = nil; prevUV = nil; rayUV = nil; shift = nil; stepSize = nil; uv = nil; v = nil; w = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
-    v = rt.construct(3, (rt.bool(rt.binary('>', rt.length(_u_direction), rt.f(0))) ? (rt.normalize(_u_direction)) : (rt.construct(3, rt.f(0), rt.f(0), rt.f(1)))))
-    shift = rt.construct(2, rt.binary('*', rt.swizzle(v, 'xy'), g['SHIFT_SCALE'], 2, 'float'))
+    __sc888 = nil; _for0_first = nil; _t = nil; dispPixels = nil; f = nil; globalCoord = nil; i = nil; isTileRendering = nil; maxDispPixels = nil; prevF = nil; prevUV = nil; rayUV = nil; shift = nil; stepSize = nil; uv = nil; v = nil; w = nil
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
+    v = rt.construct(3, (rt.bool(rt.binary('>', rt.length(_u_direction), rt.f(0))) ? ((rt.normalize(_u_direction))[0]) : ((rt.f(0)))), (rt.bool(rt.binary('>', rt.length(_u_direction), rt.f(0))) ? ((rt.normalize(_u_direction))[1]) : ((rt.f(0)))), (rt.bool(rt.binary('>', rt.length(_u_direction), rt.f(0))) ? ((rt.normalize(_u_direction))[2]) : ((rt.f(1)))))
+    shift = rt.construct(2, ((rt.swizzle(v, 'x')) * (g['SHIFT_SCALE'])), ((rt.swizzle(v, 'y')) * (g['SHIFT_SCALE'])))
     isTileRendering = rt.binary('>', rt.length(_u_tileOffset), rt.f(0))
     dispPixels = rt.f(0.0)
     maxDispPixels = rt.f(0.0)
@@ -45,11 +45,11 @@ run_pixel = lambda do |ctx, out|
       maxDispPixels = rt.f(256)
       dispPixels = rt.length(rt.binary('*', shift, _u_fullResolution, 2, 'float'))
       if rt.bool(rt.binary('>', dispPixels, maxDispPixels))
-        shift.replace((rt.binary('*', shift, rt.binary('/', maxDispPixels, dispPixels, 1, 'float'), 2, 'float')).map { |c| rt.f32(c) })
+        __sc888 = rt.binary('/', maxDispPixels, dispPixels, 1, 'float'); shift[0] = rt.f32(rt.binary('*', shift[0], __sc888, 1, 'float')); shift[1] = rt.f32(rt.binary('*', shift[1], __sc888, 1, 'float'))
       end
     end
     _t = rt.f(1)
-    rayUV = rt.construct(2, rt.binary('+', uv, rt.binary('*', shift, rt.binary('-', rt.f(1), _u_pivot, 1, 'float'), 2, 'float'), 2, 'float'))
+    rayUV = rt.construct(2, ((uv[0]) + (((shift[0]) * (((rt.f(1)) - (_u_pivot)))))), ((uv[1]) + (((shift[1]) * (((rt.f(1)) - (_u_pivot)))))))
     f = rt.binary('-', _t, getHeight__vec2.call(rayUV), 1, 'float')
     stepSize = rt.f(0.0)
     if rt.bool(rt.binary('>', f, rt.f(0)))

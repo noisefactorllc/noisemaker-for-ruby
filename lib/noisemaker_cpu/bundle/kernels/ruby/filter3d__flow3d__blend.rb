@@ -13,12 +13,12 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     baseColor = nil; baseSample = nil; combinedRgb = nil; finalAlpha = nil; inputIntensityValue = nil; outputSize = nil; trailColor = nil; uv = nil
     outputSize = rt.texture_size(_u_trailTex)
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, outputSize), 2, 'float'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((outputSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((outputSize[1]))))
     inputIntensityValue = rt.binary('/', _u_inputIntensity, rt.f(100), 1, 'float')
-    baseSample = rt.construct(4, rt.texture(_u_mixerTex, uv))
+    baseSample = rt.construct(4, (rt.texture(_u_mixerTex, uv))[0], (rt.texture(_u_mixerTex, uv))[1], (rt.texture(_u_mixerTex, uv))[2], (rt.texture(_u_mixerTex, uv))[3])
     baseColor = rt.construct(4, rt.construct(4, rt.binary('*', rt.swizzle(baseSample, 'rgb'), inputIntensityValue, 3, 'float'), rt.swizzle(baseSample, 'a')))
-    trailColor = rt.construct(4, rt.texture(_u_trailTex, uv))
-    combinedRgb = rt.construct(3, rt.component_wise('clamp', rt.binary('+', rt.swizzle(baseColor, 'rgb'), rt.swizzle(trailColor, 'rgb'), 3, 'float'), rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))))
+    trailColor = rt.construct(4, (rt.texture(_u_trailTex, uv))[0], (rt.texture(_u_trailTex, uv))[1], (rt.texture(_u_trailTex, uv))[2], (rt.texture(_u_trailTex, uv))[3])
+    combinedRgb = rt.construct(3, rt.component_wise('clamp', rt.f32(((rt.swizzle(baseColor, 'r')) + (rt.swizzle(trailColor, 'r')))), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.f32(((rt.swizzle(baseColor, 'g')) + (rt.swizzle(trailColor, 'g')))), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.f32(((rt.swizzle(baseColor, 'b')) + (rt.swizzle(trailColor, 'b')))), (rt.f(0)), (rt.f(1))))
     finalAlpha = rt.component_wise('clamp', rt.component_wise('max', rt.swizzle(baseColor, 'a'), rt.swizzle(trailColor, 'a')), rt.f(0), rt.f(1))
     g['fragColor'].replace((rt.construct(4, combinedRgb, finalAlpha)).map { |c| rt.f32(c) })
   end

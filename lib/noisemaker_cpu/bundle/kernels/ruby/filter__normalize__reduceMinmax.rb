@@ -11,7 +11,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; baseCoord = nil; color = nil; dx = nil; dy = nil; globalCoord = nil; inSize = nil; maxVal = nil; minVal = nil; outCoord = nil; sampleCoord = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     outCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     inSize = rt.texture_size(_u_inputTex)
     baseCoord = rt.binary('*', outCoord, rt.i(16), 2, 'int')
@@ -46,7 +46,7 @@ run_pixel = lambda do |ctx, out|
         maxVal = rt.component_wise('max', maxVal, rt.swizzle(color, 'g'))
       end
     end
-    g['fragColor'].replace((rt.construct(4, minVal, maxVal, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(minVal); g['fragColor'][1] = rt.f32(maxVal); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

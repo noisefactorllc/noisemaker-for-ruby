@@ -49,12 +49,12 @@ run_pixel = lambda do |ctx, out|
         dist2 = rt.construct(1, rt.binary('+', rt.binary('*', kx, kx, 1, 'int'), rt.binary('*', ky, ky, 1, 'int'), 1, 'int'))
         weight = rt.component_wise('exp', rt.binary('/', rt.unary('-', dist2), rt.binary('*', rt.f(2), sigma2, 1, 'float'), 1, 'float'))
         texSample = rt.construct(4, rt.texel_fetch(_u_inputTex, samplePos, rt.i(0)))
-        sum.replace((rt.binary('+', sum, rt.binary('*', rt.swizzle(texSample, 'rgb'), weight, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+        sum[0] = rt.f32(rt.binary('+', sum[0], ((rt.swizzle(texSample, 'r')) * (weight)), 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], ((rt.swizzle(texSample, 'g')) * (weight)), 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], ((rt.swizzle(texSample, 'b')) * (weight)), 1, 'float'))
         weightSum = rt.binary('+', weightSum, weight, 1, 'float')
       end
     end
-    blurred = rt.construct(3, rt.binary('/', sum, weightSum, 3, 'float'))
-    result = rt.construct(3, rt.component_wise('mix', rt.swizzle(center, 'rgb'), blurred, _u_blurAmount))
+    blurred = rt.construct(3, ((sum[0]) / (weightSum)), ((sum[1]) / (weightSum)), ((sum[2]) / (weightSum)))
+    result = rt.construct(3, rt.component_wise('mix', rt.swizzle(center, 'r'), blurred[0], _u_blurAmount), rt.component_wise('mix', rt.swizzle(center, 'g'), blurred[1], _u_blurAmount), rt.component_wise('mix', rt.swizzle(center, 'b'), blurred[2], _u_blurAmount))
     g['fragColor'].replace((rt.construct(4, result, rt.swizzle(center, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

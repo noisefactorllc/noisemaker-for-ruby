@@ -26,32 +26,32 @@ run_pixel = lambda do |ctx, out|
     x = rt.binary('*', c, rt.binary('-', rt.f(1), rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('*', h, rt.f(6), 1, 'float'), rt.f(2)), rt.f(1), 1, 'float')), 1, 'float'), 1, 'float')
     m = rt.binary('-', v, c, 1, 'float')
     rgb = rt.construct(3, 0.0)
-    if rt.bool((rt.bool(rt.binary('<=', rt.f(0), h)) && rt.bool(rt.binary('<', h, rt.binary('/', rt.f(1), rt.f(6), 1, 'float'))) ? 1 : 0))
-      rgb.replace((rt.construct(3, c, x, rt.f(0))).map { |c| rt.f32(c) })
+    if rt.bool((rt.bool(rt.binary('<=', rt.f(0), h)) && rt.bool(rt.binary('<', h, rt.f(0.1666666716337204))) ? 1 : 0))
+      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
     else
-      if rt.bool((rt.bool(rt.binary('<=', rt.binary('/', rt.f(1), rt.f(6), 1, 'float'), h)) && rt.bool(rt.binary('<', h, rt.binary('/', rt.f(2), rt.f(6), 1, 'float'))) ? 1 : 0))
-        rgb.replace((rt.construct(3, x, c, rt.f(0))).map { |c| rt.f32(c) })
+      if rt.bool((rt.bool(rt.binary('<=', rt.f(0.1666666716337204), h)) && rt.bool(rt.binary('<', h, rt.f(0.3333333432674408))) ? 1 : 0))
+        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
       else
-        if rt.bool((rt.bool(rt.binary('<=', rt.binary('/', rt.f(2), rt.f(6), 1, 'float'), h)) && rt.bool(rt.binary('<', h, rt.binary('/', rt.f(3), rt.f(6), 1, 'float'))) ? 1 : 0))
-          rgb.replace((rt.construct(3, rt.f(0), c, x)).map { |c| rt.f32(c) })
+        if rt.bool((rt.bool(rt.binary('<=', rt.f(0.3333333432674408), h)) && rt.bool(rt.binary('<', h, rt.f(0.5))) ? 1 : 0))
+          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
         else
-          if rt.bool((rt.bool(rt.binary('<=', rt.binary('/', rt.f(3), rt.f(6), 1, 'float'), h)) && rt.bool(rt.binary('<', h, rt.binary('/', rt.f(4), rt.f(6), 1, 'float'))) ? 1 : 0))
-            rgb.replace((rt.construct(3, rt.f(0), x, c)).map { |c| rt.f32(c) })
+          if rt.bool((rt.bool(rt.binary('<=', rt.f(0.5), h)) && rt.bool(rt.binary('<', h, rt.f(0.66666668653488159))) ? 1 : 0))
+            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
           else
-            if rt.bool((rt.bool(rt.binary('<=', rt.binary('/', rt.f(4), rt.f(6), 1, 'float'), h)) && rt.bool(rt.binary('<', h, rt.binary('/', rt.f(5), rt.f(6), 1, 'float'))) ? 1 : 0))
-              rgb.replace((rt.construct(3, x, rt.f(0), c)).map { |c| rt.f32(c) })
+            if rt.bool((rt.bool(rt.binary('<=', rt.f(0.66666668653488159), h)) && rt.bool(rt.binary('<', h, rt.f(0.83333331346511841))) ? 1 : 0))
+              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
             else
-              if rt.bool((rt.bool(rt.binary('<=', rt.binary('/', rt.f(5), rt.f(6), 1, 'float'), h)) && rt.bool(rt.binary('<', h, rt.f(1))) ? 1 : 0))
-                rgb.replace((rt.construct(3, c, rt.f(0), x)).map { |c| rt.f32(c) })
+              if rt.bool((rt.bool(rt.binary('<=', rt.f(0.83333331346511841), h)) && rt.bool(rt.binary('<', h, rt.f(1))) ? 1 : 0))
+                rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
               else
-                rgb.replace((rt.construct(3, rt.f(0), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
+                rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0))
               end
             end
           end
         end
       end
     end
-    return rt.binary('+', rgb, rt.construct(3, m, m, m), 3, 'float')
+    return rt.construct(3, ((rgb[0]) + ((m))), ((rgb[1]) + ((m))), ((rgb[2]) + ((m))))
   end
   rgb2hsv__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
@@ -92,96 +92,96 @@ run_pixel = lambda do |ctx, out|
     color2 = rt.copy(color2, 'float')
     c = nil; c1 = nil; c2 = nil; color = nil; cut = nil
     color = rt.construct(3, rt.construct(3, rt.f(0)))
-    cut = rt.binary('*', _u_range, rt.f(0.01), 1, 'float')
+    cut = rt.binary('*', _u_range, rt.f(0.0099999997764825821), 1, 'float')
     c = rt.construct(3, 0.0)
     c1 = rt.construct(3, 0.0)
     c2 = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', _u_blendMode, rt.i(0)))
-      if rt.bool(rt.binary('>', rt.distance(_u_inputColor, color1), rt.binary('*', _u_range, rt.f(0.01), 1, 'float')))
+      if rt.bool(rt.binary('>', rt.distance(_u_inputColor, color1), rt.binary('*', _u_range, rt.f(0.0099999997764825821), 1, 'float')))
         color1.replace((desaturate__vec3.call(color1)).map { |c| rt.f32(c) })
       end
-      if rt.bool(rt.binary('>', rt.distance(_u_inputColor, color2), rt.binary('*', _u_range, rt.f(0.01), 1, 'float')))
+      if rt.bool(rt.binary('>', rt.distance(_u_inputColor, color2), rt.binary('*', _u_range, rt.f(0.0099999997764825821), 1, 'float')))
         color2.replace((desaturate__vec3.call(color2)).map { |c| rt.f32(c) })
       end
-      color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+      color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_blendMode, rt.i(1)))
-        if rt.bool(rt.binary('<=', rt.distance(_u_inputColor, color1), rt.binary('*', _u_range, rt.f(0.01), 1, 'float')))
+        if rt.bool(rt.binary('<=', rt.distance(_u_inputColor, color1), rt.binary('*', _u_range, rt.f(0.0099999997764825821), 1, 'float')))
           color.replace((color2).map { |c| rt.f32(c) })
         else
-          color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+          color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
         end
       else
         if rt.bool(rt.binary('==', _u_blendMode, rt.i(2)))
-          if rt.bool(rt.binary('<=', rt.distance(_u_inputColor, color2), rt.binary('*', _u_range, rt.f(0.01), 1, 'float')))
+          if rt.bool(rt.binary('<=', rt.distance(_u_inputColor, color2), rt.binary('*', _u_range, rt.f(0.0099999997764825821), 1, 'float')))
             color.replace((color1).map { |c| rt.f32(c) })
           else
-            color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+            color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
           end
         else
           if rt.bool(rt.binary('==', _u_blendMode, rt.i(3)))
             c = rt.binary('-', rt.f(1), rt.component_wise('step', cut, rt.swizzle(desaturate__vec3.call(color2), 'r')), 1, 'float')
             color2.replace((rt.component_wise('mix', color1, rt.construct(3, rt.f(0)), c)).map { |c| rt.f32(c) })
-            color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+            color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
           else
             if rt.bool(rt.binary('==', _u_blendMode, rt.i(4)))
-              c = rt.construct(3, rt.binary('-', rt.f(1), rt.component_wise('step', cut, color2), 3, 'float'))
+              c = rt.construct(3, ((rt.f(1)) - (rt.component_wise('step', cut, color2[0]))), ((rt.f(1)) - (rt.component_wise('step', cut, color2[1]))), ((rt.f(1)) - (rt.component_wise('step', cut, color2[2]))))
               color2.replace((rt.component_wise('mix', color1, rt.construct(3, rt.f(0)), c)).map { |c| rt.f32(c) })
-              color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+              color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
             else
               if rt.bool(rt.binary('==', _u_blendMode, rt.i(5)))
                 c = rt.swizzle(rgb2hsv__vec3.call(color2), 'r')
                 color2.replace((rt.component_wise('mix', color1, color2, rt.binary('*', c, cut, 1, 'float'))).map { |c| rt.f32(c) })
-                color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
               else
                 if rt.bool(rt.binary('==', _u_blendMode, rt.i(6)))
                   c = rt.swizzle(rgb2hsv__vec3.call(color2), 'g')
                   color2.replace((rt.component_wise('mix', color1, color2, rt.binary('*', c, cut, 1, 'float'))).map { |c| rt.f32(c) })
-                  color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                  color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                 else
                   if rt.bool(rt.binary('==', _u_blendMode, rt.i(7)))
                     c = rt.swizzle(rgb2hsv__vec3.call(color2), 'b')
                     color2.replace((rt.component_wise('mix', color1, color2, rt.binary('*', c, cut, 1, 'float'))).map { |c| rt.f32(c) })
-                    color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                    color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                   else
                     if rt.bool(rt.binary('==', _u_blendMode, rt.i(8)))
                       c = rt.binary('-', rt.f(1), rt.component_wise('step', cut, rt.swizzle(desaturate__vec3.call(color1), 'r')), 1, 'float')
                       color1.replace((rt.component_wise('mix', color2, rt.construct(3, rt.f(0)), c)).map { |c| rt.f32(c) })
-                      color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                      color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                     else
                       if rt.bool(rt.binary('==', _u_blendMode, rt.i(9)))
-                        c = rt.construct(3, rt.binary('-', rt.f(1), rt.component_wise('step', cut, color1), 3, 'float'))
+                        c = rt.construct(3, ((rt.f(1)) - (rt.component_wise('step', cut, color1[0]))), ((rt.f(1)) - (rt.component_wise('step', cut, color1[1]))), ((rt.f(1)) - (rt.component_wise('step', cut, color1[2]))))
                         color1.replace((rt.component_wise('mix', color2, rt.construct(3, rt.f(0)), c)).map { |c| rt.f32(c) })
-                        color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                        color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                       else
                         if rt.bool(rt.binary('==', _u_blendMode, rt.i(10)))
                           c = rt.swizzle(rgb2hsv__vec3.call(color1), 'r')
                           color1.replace((rt.component_wise('mix', color1, color2, rt.binary('*', c, cut, 1, 'float'))).map { |c| rt.f32(c) })
-                          color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                          color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                         else
                           if rt.bool(rt.binary('==', _u_blendMode, rt.i(11)))
                             c = rt.swizzle(rgb2hsv__vec3.call(color1), 'g')
                             color1.replace((rt.component_wise('mix', color1, color2, rt.binary('*', c, cut, 1, 'float'))).map { |c| rt.f32(c) })
-                            color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                            color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                           else
                             if rt.bool(rt.binary('==', _u_blendMode, rt.i(12)))
                               c = rt.swizzle(rgb2hsv__vec3.call(color1), 'b')
                               color1.replace((rt.component_wise('mix', color1, color2, rt.binary('*', c, cut, 1, 'float'))).map { |c| rt.f32(c) })
-                              color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                              color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                             else
                               if rt.bool(rt.binary('==', _u_blendMode, rt.i(13)))
                                 color2.replace((rt.component_wise('mix', color1, color2, cut)).map { |c| rt.f32(c) })
-                                color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                                color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                               else
                                 if rt.bool(rt.binary('==', _u_blendMode, rt.i(14)))
-                                  c = rt.construct(3, rt.component_wise('step', cut, rt.component_wise('mix', color1, color2, rt.f(0.5))))
+                                  c = rt.construct(3, rt.component_wise('step', cut, rt.component_wise('mix', color1[0], color2[0], rt.f(0.5))), rt.component_wise('step', cut, rt.component_wise('mix', color1[1], color2[1], rt.f(0.5))), rt.component_wise('step', cut, rt.component_wise('mix', color1[2], color2[2], rt.f(0.5))))
                                   color2.replace((rt.component_wise('mix', color1, color2, c)).map { |c| rt.f32(c) })
-                                  color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                                  color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                                 else
                                   if rt.bool(rt.binary('==', _u_blendMode, rt.i(15)))
-                                    c1 = rt.construct(3, rt.component_wise('smoothstep', color1, rt.construct(3, cut), color2))
-                                    c2 = rt.construct(3, rt.component_wise('smoothstep', color2, rt.construct(3, cut), color1))
-                                    color.replace((rt.component_wise('mix', rt.swizzle(c1, 'brg'), rt.swizzle(c2, 'gbr'), rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float'))).map { |c| rt.f32(c) })
+                                    c1 = rt.construct(3, rt.component_wise('smoothstep', color1[0], (cut), color2[0]), rt.component_wise('smoothstep', color1[1], (cut), color2[1]), rt.component_wise('smoothstep', color1[2], (cut), color2[2]))
+                                    c2 = rt.construct(3, rt.component_wise('smoothstep', color2[0], (cut), color1[0]), rt.component_wise('smoothstep', color2[1], (cut), color1[1]), rt.component_wise('smoothstep', color2[2], (cut), color1[2]))
+                                    color.replace((rt.component_wise('mix', rt.swizzle(c1, 'brg'), rt.swizzle(c2, 'gbr'), rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                                   end
                                 end
                               end
@@ -202,13 +202,13 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; color1 = nil; color2 = nil; globalCoord = nil; st = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     color = rt.construct(4, rt.construct(4, rt.f(0), rt.f(0), rt.f(1), rt.f(1)))
-    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
-    color1 = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
-    color2 = rt.construct(4, rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    st = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
+    color1 = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[3])
+    color2 = rt.construct(4, (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))[0], (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))[1], (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))[2], (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))[3])
     color = rt.assign_swizzle(color, 'rgb', blend__vec3_vec3.call(rt.swizzle(color1, 'rgb'), rt.swizzle(color2, 'rgb')))
-    color = rt.assign_swizzle(color, 'a', rt.component_wise('mix', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a'), rt.binary('*', _u_mixAmt, rt.f(0.01), 1, 'float')))
+    color = rt.assign_swizzle(color, 'a', rt.component_wise('mix', rt.swizzle(color1, 'a'), rt.swizzle(color2, 'a'), rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end
   main__void.call
