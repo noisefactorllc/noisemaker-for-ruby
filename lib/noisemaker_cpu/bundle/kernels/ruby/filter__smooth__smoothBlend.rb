@@ -16,7 +16,7 @@ run_pixel = lambda do |ctx, out|
   _u_samples = u.key?('samples') ? u['samples'] : 0
   _u_searchSteps = u.key?('searchSteps') ? u['searchSteps'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
-  g['LUMA_WEIGHTS'] = rt.construct(3, rt.f(0.29899999999999999), rt.f(0.58699999999999997), rt.f(0.114))
+  g['LUMA_WEIGHTS'] = rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464))
   luminance__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
     return rt.dot(rgb, g['LUMA_WEIGHTS'])
@@ -25,9 +25,9 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     texSize = rt.copy(texSize, 'int')
     base = nil; bl = nil; br = nil; f = nil; maxC = nil; texCoord = nil; tl = nil; tr = nil
-    texCoord = rt.construct(2, rt.binary('-', rt.binary('*', uv, rt.construct(2, texSize), 2, 'float'), rt.f(0.5), 2, 'float'))
+    texCoord = rt.construct(2, ((((uv[0]) * ((texSize[0])))) - (rt.f(0.5))), ((((uv[1]) * ((texSize[1])))) - (rt.f(0.5))))
     base = rt.construct(2, rt.construct(2, rt.component_wise('floor', texCoord)), 'int')
-    f = rt.construct(2, rt.binary('-', texCoord, rt.construct(2, base), 2, 'float'))
+    f = rt.construct(2, ((texCoord[0]) - ((base[0]))), ((texCoord[1]) - ((base[1]))))
     maxC = rt.binary('-', texSize, rt.i(1), 2, 'int')
     tl = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', base, rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)))
     tr = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', base, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)))
@@ -90,7 +90,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     texelSize = rt.copy(texelSize, 'float')
     texSize = rt.copy(texSize, 'int')
-    _L = nil; _Le = nil; _Ln = nil; _Ls = nil; _Lw = nil; _for0_first = nil; center = nil; coord = nil; count = nil; i = nil; maxC = nil; maxDiff = nil; offset = nil; sum = nil
+    _L = nil; _Le = nil; _Ln = nil; _Ls = nil; _Lw = nil; __hoist1152 = nil; _for0_first = nil; center = nil; coord = nil; count = nil; i = nil; maxC = nil; maxDiff = nil; offset = nil; sum = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     maxC = rt.binary('-', texSize, rt.i(1), 2, 'int')
     center = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
@@ -119,9 +119,9 @@ run_pixel = lambda do |ctx, out|
         break
       end
       offset = rt.construct(2, rt.binary('*', getSampleOffset__int_int.call(i, count), _u_radius, 2, 'float'))
-      sum.replace((rt.binary('+', sum, sampleBilinear__vec2_ivec2.call(rt.binary('+', uv, rt.binary('*', offset, texelSize, 2, 'float'), 2, 'float'), texSize), 4, 'float')).map { |c| rt.f32(c) })
+      __hoist1152 = sampleBilinear__vec2_ivec2.call(rt.construct(2, ((uv[0]) + (((offset[0]) * (texelSize[0])))), ((uv[1]) + (((offset[1]) * (texelSize[1]))))), texSize); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1152[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1152[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1152[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1152[3], 1, 'float'))
     end
-    return rt.binary('/', sum, rt.construct(1, count), 4, 'float')
+    return rt.construct(4, ((sum[0]) / ((count))), ((sum[1]) / ((count))), ((sum[2]) / ((count))), ((sum[3]) / ((count))))
   end
   searchEdge__ivec2_ivec2_ivec2_int = lambda do |coord, dir, maxC, component|
     coord = rt.copy(coord, 'int')
@@ -189,7 +189,7 @@ run_pixel = lambda do |ctx, out|
   end
   edgeBlur__ivec2 = lambda do |texSize|
     texSize = rt.copy(texSize, 'int')
-    _for2_first = nil; _for3_first = nil; center = nil; coord = nil; d = nil; dx = nil; dy = nil; edges = nil; maxC = nil; r = nil; sigma = nil; sigma2 = nil; sum = nil; totalWeight = nil; w = nil
+    __hoist1160 = nil; _for2_first = nil; _for3_first = nil; center = nil; coord = nil; d = nil; dx = nil; dy = nil; edges = nil; maxC = nil; r = nil; sigma = nil; sigma2 = nil; sum = nil; totalWeight = nil; w = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     maxC = rt.binary('-', texSize, rt.i(1), 2, 'int')
     edges = rt.construct(4, rt.texel_fetch(_u_edgeTex, coord, rt.i(0)))
@@ -230,18 +230,18 @@ run_pixel = lambda do |ctx, out|
         end
         d = rt.construct(1, rt.binary('+', rt.binary('*', dx, dx, 1, 'int'), rt.binary('*', dy, dy, 1, 'int'), 1, 'int'))
         w = rt.component_wise('exp', rt.binary('/', rt.unary('-', d), sigma2, 1, 'float'))
-        sum.replace((rt.binary('+', sum, rt.binary('*', rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, dx, dy, 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)), w, 4, 'float'), 4, 'float')).map { |c| rt.f32(c) })
+        __hoist1160 = rt.binary('*', rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, dx, dy, 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)), w, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1160[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1160[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1160[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1160[3], 1, 'float'))
         totalWeight = rt.binary('+', totalWeight, w, 1, 'float')
       end
     end
-    return rt.binary('/', sum, totalWeight, 4, 'float')
+    return rt.construct(4, ((sum[0]) / (totalWeight)), ((sum[1]) / (totalWeight)), ((sum[2]) / (totalWeight)), ((sum[3]) / (totalWeight)))
   end
   main__void = lambda do
     globalCoord = nil; original = nil; result = nil; texSize = nil; texelSize = nil; uv = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
-    texelSize = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, texSize), 2, 'float'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
+    texelSize = rt.construct(2, ((rt.f(1)) / ((texSize[0]))), ((rt.f(1)) / ((texSize[1]))))
     original = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int'), rt.i(0)))
     result = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', _u_smoothType, rt.i(0)))

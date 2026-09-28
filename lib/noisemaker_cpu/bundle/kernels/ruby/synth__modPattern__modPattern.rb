@@ -41,7 +41,7 @@ run_pixel = lambda do |ctx, out|
   smoothFract__float = lambda do |x|
     edgeWidth = nil; f = nil
     f = rt.component_wise('fract', x)
-    edgeWidth = rt.binary('*', _u_smoothing, rt.f(0.01), 1, 'float')
+    edgeWidth = rt.binary('*', _u_smoothing, rt.f(0.0099999997764825821), 1, 'float')
     if rt.bool(rt.binary('>', f, rt.binary('-', rt.f(1), edgeWidth, 1, 'float')))
       return rt.component_wise('smoothstep', rt.f(0), edgeWidth, rt.binary('-', rt.f(1), f, 1, 'float'))
     end
@@ -56,28 +56,28 @@ run_pixel = lambda do |ctx, out|
     return rt.construct(3, smoothFract__float.call(rt.swizzle(v, 'x')), smoothFract__float.call(rt.swizzle(v, 'y')), smoothFract__float.call(rt.swizzle(v, 'z')))
   end
   main__void = lambda do
-    anim = nil; color = nil; globalCoord = nil; n1 = nil; n2 = nil; n3 = nil; osc1 = nil; osc2 = nil; osc3 = nil; p = nil; phase1 = nil; phase2 = nil; phase3 = nil; s1 = nil; s2 = nil; s3 = nil; shift = nil; spd = nil; uv = nil; val = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary('/', rt.binary('-', globalCoord, rt.binary('*', _u_fullResolution, rt.f(0.5), 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
+    __hoist1768 = nil; anim = nil; color = nil; globalCoord = nil; n1 = nil; n2 = nil; n3 = nil; osc1 = nil; osc2 = nil; osc3 = nil; p = nil; phase1 = nil; phase2 = nil; phase3 = nil; s1 = nil; s2 = nil; s3 = nil; shift = nil; spd = nil; uv = nil; val = nil
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    uv = rt.construct(2, ((((globalCoord[0]) - (((_u_fullResolution[0]) * (rt.f(0.5)))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))), ((((globalCoord[1]) - (((_u_fullResolution[1]) * (rt.f(0.5)))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))))
     spd = rt.component_wise('floor', _u_speed)
     anim = rt.binary('*', _u_time, spd, 1, 'float')
-    s1 = rt.binary('-', rt.f(20.100000000000001), _u_scale1, 1, 'float')
-    p = rt.construct(2, rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('*', uv, s1, 2, 'float'), rt.f(2)), rt.f(1), 2, 'float')))
+    s1 = rt.binary('-', rt.f(20.100000381469727), _u_scale1, 1, 'float')
+    p = rt.construct(2, rt.component_wise('abs', rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) * (s1))), rt.f(2))) - (rt.f(1))))), rt.component_wise('abs', rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) * (s1))), rt.f(2))) - (rt.f(1))))))
     osc1 = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_animMode, rt.i(1)))
-      osc1 = rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), spd, 1, 'float')), rt.f(0.029999999999999999), 1, 'float')
-      p.replace((rt.binary('+', p, rt.construct(2, osc1, rt.f(0)), 2, 'float')).map { |c| rt.f32(c) })
+      osc1 = rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float')), rt.f(0.029999999329447746), 1, 'float')
+      p[0] = rt.f32(rt.binary('+', p[0], (osc1), 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], (rt.f(0)), 1, 'float'))
     end
     n1 = shape__int_vec2.call(_u_shape1, p)
     phase1 = (rt.bool(rt.binary('==', _u_animMode, rt.i(2))) ? (anim) : (rt.f(0)))
     phase2 = (rt.bool(rt.binary('==', _u_animMode, rt.i(2))) ? (anim) : (rt.f(0)))
     phase3 = (rt.bool(rt.binary('==', _u_animMode, rt.i(2))) ? (anim) : (rt.f(0)))
-    s2 = rt.binary('-', rt.f(10.1), _u_scale2, 1, 'float')
-    p.replace((rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('*', p, s2, 2, 'float'), rt.f(2)), rt.f(1), 2, 'float'))).map { |c| rt.f32(c) })
+    s2 = rt.binary('-', rt.f(10.100000381469727), _u_scale2, 1, 'float')
+    p.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((p[0]) * (s2))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((p[1]) * (s2))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
     osc2 = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_animMode, rt.i(1)))
-      osc2 = rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), spd, 1, 'float')), rt.f(0.070000000000000007), 1, 'float')
-      p.replace((rt.binary('+', p, rt.construct(2, rt.f(0), osc2), 2, 'float')).map { |c| rt.f32(c) })
+      osc2 = rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float')), rt.f(0.070000000298023224), 1, 'float')
+      p[0] = rt.f32(rt.binary('+', p[0], (rt.f(0)), 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], (osc2), 1, 'float'))
     end
     n2 = shape__int_vec2.call(_u_shape2, p)
     val = rt.f(0)
@@ -86,18 +86,18 @@ run_pixel = lambda do |ctx, out|
     else
       val = smoothFract__float.call(rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('*', n1, _u_repeat1, 1, 'float'), phase1, 1, 'float'), rt.binary('*', n2, _u_repeat2, 1, 'float'), 1, 'float'), phase2, 1, 'float'))
     end
-    s3 = rt.binary('-', rt.f(6.0999999999999996), _u_scale3, 1, 'float')
-    p.replace((rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('*', p, s3, 2, 'float'), rt.f(2)), rt.f(1), 2, 'float'))).map { |c| rt.f32(c) })
+    s3 = rt.binary('-', rt.f(6.0999999046325684), _u_scale3, 1, 'float')
+    p.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((p[0]) * (s3))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((p[1]) * (s3))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
     osc3 = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_animMode, rt.i(1)))
-      osc3 = rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), spd, 1, 'float')), rt.f(0.14999999999999999), 1, 'float')
-      p.replace((rt.binary('+', p, rt.construct(2, rt.unary('-', osc3), rt.f(0)), 2, 'float')).map { |c| rt.f32(c) })
+      osc3 = rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float')), rt.f(0.15000000596046448), 1, 'float')
+      __hoist1768 = rt.construct(2, rt.unary('-', osc3), rt.f(0)); p[0] = rt.f32(rt.binary('+', p[0], __hoist1768[0], 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __hoist1768[1], 1, 'float'))
     end
     n3 = shape__int_vec2.call(_u_shape3, p)
     shift = (rt.bool(rt.binary('==', _u_animMode, rt.i(0))) ? (anim) : (rt.f(0)))
     color = rt.construct(3, 0.0)
     if rt.bool(rt.binary('<', _u_blend, rt.i(1)))
-      color.replace((smoothFract__vec3.call(rt.construct(3, rt.component_wise('fract', rt.binary('+', rt.binary('+', rt.binary('+', val, rt.binary('*', n3, _u_repeat3, 1, 'float'), 1, 'float'), phase3, 1, 'float'), shift, 1, 'float'))))).map { |c| rt.f32(c) })
+      color.replace((smoothFract__vec3.call(rt.construct(3, (rt.component_wise('fract', ((((((val) + (((n3) * (_u_repeat3))))) + (phase3))) + (shift)))), (rt.component_wise('fract', ((((((val) + (((n3) * (_u_repeat3))))) + (phase3))) + (shift)))), (rt.component_wise('fract', ((((((val) + (((n3) * (_u_repeat3))))) + (phase3))) + (shift))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('<', _u_blend, rt.i(2)))
         color.replace((rt.construct(3, rt.component_wise('max', val, smoothFract__float.call(rt.binary('+', rt.binary('+', rt.binary('*', n3, _u_repeat3, 1, 'float'), phase3, 1, 'float'), shift, 1, 'float'))))).map { |c| rt.f32(c) })
@@ -105,7 +105,7 @@ run_pixel = lambda do |ctx, out|
         if rt.bool(rt.binary('<', _u_blend, rt.i(3)))
           color.replace((rt.construct(3, rt.component_wise('mix', val, smoothFract__float.call(rt.binary('+', rt.binary('+', rt.binary('*', n3, _u_repeat3, 1, 'float'), phase3, 1, 'float'), shift, 1, 'float')), rt.f(0.5)))).map { |c| rt.f32(c) })
         else
-          color.replace((smoothFract__vec3.call(rt.construct(3, rt.binary('+', rt.binary('*', n1, _u_repeat1, 1, 'float'), phase1, 1, 'float'), rt.binary('+', rt.binary('*', n2, _u_repeat2, 1, 'float'), phase2, 1, 'float'), rt.binary('+', rt.binary('+', rt.binary('*', n3, _u_repeat3, 1, 'float'), phase3, 1, 'float'), shift, 1, 'float')))).map { |c| rt.f32(c) })
+          color.replace((smoothFract__vec3.call(rt.construct(3, (((((n1) * (_u_repeat1))) + (phase1))), (((((n2) * (_u_repeat2))) + (phase2))), (((((((n3) * (_u_repeat3))) + (phase3))) + (shift)))))).map { |c| rt.f32(c) })
         end
       end
     end

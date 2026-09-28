@@ -20,7 +20,7 @@ run_pixel = lambda do |ctx, out|
     base = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', coord, rt.construct(2, rt.i(0), 'int'), rt.binary('-', baseSize, rt.i(1), 2, 'int')), rt.i(0)))
     overlay = rt.construct(4, rt.texel_fetch(_u_overlayTex, rt.component_wise('clamp', coord, rt.construct(2, rt.i(0), 'int'), rt.binary('-', overlaySize, rt.i(1), 2, 'int')), rt.i(0)))
     a = rt.binary('*', rt.swizzle(overlay, 'a'), _u_alpha, 1, 'float')
-    result = rt.construct(3, rt.binary('+', rt.binary('*', rt.swizzle(base, 'rgb'), rt.binary('-', rt.f(1), a, 1, 'float'), 3, 'float'), rt.binary('*', rt.swizzle(overlay, 'rgb'), a, 3, 'float'), 3, 'float'))
+    result = rt.construct(3, ((((rt.swizzle(base, 'r')) * (((rt.f(1)) - (a))))) + (((rt.swizzle(overlay, 'r')) * (a)))), ((((rt.swizzle(base, 'g')) * (((rt.f(1)) - (a))))) + (((rt.swizzle(overlay, 'g')) * (a)))), ((((rt.swizzle(base, 'b')) * (((rt.f(1)) - (a))))) + (((rt.swizzle(overlay, 'b')) * (a)))))
     g['fragColor'].replace((rt.construct(4, result, rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

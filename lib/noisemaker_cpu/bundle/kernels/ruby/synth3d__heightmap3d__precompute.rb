@@ -21,7 +21,7 @@ run_pixel = lambda do |ctx, out|
     column = rt.copy(column, 'int')
     luminance = nil; rgb = nil
     rgb = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_heightTex, imageTexel__ivec2_ivec2.call(column, rt.texture_size(_u_heightTex)), rt.i(0)), 'rgb'))
-    luminance = rt.dot(rgb, rt.construct(3, rt.f(0.21260000000000001), rt.f(0.71519999999999995), rt.f(0.0722)))
+    luminance = rt.dot(rgb, rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
     return rt.component_wise('floor', rt.binary('+', rt.binary('*', rt.component_wise('clamp', rt.binary('+', rt.binary('*', luminance, _u_heightScale, 1, 'float'), _u_baseHeight, 1, 'float'), rt.f(0), rt.f(1)), rt.construct(1, _u_volumeSize), 1, 'float'), rt.f(0.5), 1, 'float'))
   end
   density__ivec3 = lambda do |p|
@@ -37,7 +37,7 @@ run_pixel = lambda do |ctx, out|
     p = rt.construct(3, rt.swizzle(atlas, 'x'), rt.binary('%', rt.swizzle(atlas, 'y'), _u_volumeSize, 1, 'int'), rt.binary('/', rt.swizzle(atlas, 'y'), _u_volumeSize, 1, 'int'), 'int')
     occupied = density__ivec3.call(p)
     g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
-    g['geoOut'].replace((rt.construct(4, rt.f(0.5), rt.f(1), rt.f(0.5), rt.f(0))).map { |c| rt.f32(c) })
+    g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(1)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))
     if rt.bool(rt.binary('==', occupied, rt.f(0)))
       return
     end

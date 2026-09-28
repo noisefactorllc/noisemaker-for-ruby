@@ -18,8 +18,8 @@ run_pixel = lambda do |ctx, out|
   _u_renderScale = u.key?('renderScale') ? u['renderScale'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   g['geoOut'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.1415926535900001)
-  g['TAU'] = rt.f(6.2831853071800001)
+  g['PI'] = rt.f(3.1415927410125732)
+  g['TAU'] = rt.f(6.2831854820251465)
   map__float_float_float_float_float = lambda do |value, inMin, inMax, outMin, outMax|
     return rt.binary('+', outMin, rt.binary('/', rt.binary('*', rt.binary('-', outMax, outMin, 1, 'float'), rt.binary('-', value, inMin, 1, 'float'), 1, 'float'), rt.binary('-', inMax, inMin, 1, 'float'), 1, 'float'), 1, 'float')
   end
@@ -37,7 +37,7 @@ run_pixel = lambda do |ctx, out|
   cubeSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     d = nil
-    d = rt.construct(3, rt.binary('-', rt.component_wise('abs', p), rt.construct(3, rt.f(0.45000000000000001)), 3, 'float'))
+    d = rt.construct(3, ((rt.component_wise('abs', p[0])) - ((rt.f(0.44999998807907104)))), ((rt.component_wise('abs', p[1])) - ((rt.f(0.44999998807907104)))), ((rt.component_wise('abs', p[2])) - ((rt.f(0.44999998807907104)))))
     return rt.binary('+', rt.length(rt.component_wise('max', d, rt.f(0))), rt.component_wise('min', rt.component_wise('max', rt.swizzle(d, 'x'), rt.component_wise('max', rt.swizzle(d, 'y'), rt.swizzle(d, 'z'))), rt.f(0)), 1, 'float')
   end
   octahedronSDF__vec3 = lambda do |p|
@@ -45,7 +45,7 @@ run_pixel = lambda do |ctx, out|
     s = nil
     p.replace((rt.component_wise('abs', p)).map { |c| rt.f32(c) })
     s = rt.f(0.5)
-    return rt.binary('*', rt.binary('-', rt.binary('+', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'), s, 1, 'float'), rt.f(0.57735027000000005), 1, 'float')
+    return rt.binary('*', rt.binary('-', rt.binary('+', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'), s, 1, 'float'), rt.f(0.57735025882720947), 1, 'float')
   end
   dodecahedronSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
@@ -62,7 +62,7 @@ run_pixel = lambda do |ctx, out|
     d = rt.component_wise('max', d, rt.swizzle(p, 'x'))
     d = rt.component_wise('max', d, rt.swizzle(p, 'y'))
     d = rt.component_wise('max', d, rt.swizzle(p, 'z'))
-    return rt.binary('-', d, rt.f(0.45000000000000001), 1, 'float')
+    return rt.binary('-', d, rt.f(0.44999998807907104), 1, 'float')
   end
   icosahedronSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
@@ -77,7 +77,7 @@ run_pixel = lambda do |ctx, out|
     d = rt.component_wise('max', d, rt.dot(p, n2))
     d = rt.component_wise('max', d, rt.dot(p, n3))
     d = rt.component_wise('max', d, rt.dot(p, rt.normalize(rt.construct(3, rt.f(1), rt.f(1), rt.f(1)))))
-    return rt.binary('-', d, rt.f(0.41999999999999998), 1, 'float')
+    return rt.binary('-', d, rt.f(0.41999998688697815), 1, 'float')
   end
   sphereSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
@@ -86,21 +86,21 @@ run_pixel = lambda do |ctx, out|
   torusSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     _t = nil; q = nil
-    _t = rt.construct(2, rt.construct(2, rt.f(0.34999999999999998), rt.f(0.12)))
+    _t = rt.construct(2, rt.construct(2, rt.f(0.34999999403953552), rt.f(0.11999999731779099)))
     q = rt.construct(2, rt.construct(2, rt.binary('-', rt.length(rt.swizzle(p, 'xz')), rt.swizzle(_t, 'x'), 1, 'float'), rt.swizzle(p, 'y')))
     return rt.binary('-', rt.length(q), rt.swizzle(_t, 'y'), 1, 'float')
   end
   cylinderSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     d = nil
-    d = rt.construct(2, rt.binary('-', rt.component_wise('abs', rt.construct(2, rt.length(rt.swizzle(p, 'xz')), rt.swizzle(p, 'y'))), rt.construct(2, rt.f(0.34999999999999998), rt.f(0.45000000000000001)), 2, 'float'))
+    d = rt.construct(2, ((rt.component_wise('abs', (rt.length(rt.swizzle(p, 'xz'))))) - ((rt.f(0.34999999403953552)))), ((rt.component_wise('abs', (rt.swizzle(p, 'y')))) - ((rt.f(0.44999998807907104)))))
     return rt.binary('+', rt.component_wise('min', rt.component_wise('max', rt.swizzle(d, 'x'), rt.swizzle(d, 'y')), rt.f(0)), rt.length(rt.component_wise('max', d, rt.f(0))), 1, 'float')
   end
   coneSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     c = nil; h = nil; q = nil; r = nil
-    h = rt.f(0.59999999999999998)
-    r = rt.f(0.40000000000000002)
+    h = rt.f(0.60000002384185791)
+    r = rt.f(0.40000000596046448)
     c = rt.construct(2, rt.normalize(rt.construct(2, h, r)))
     q = rt.length(rt.swizzle(p, 'xz'))
     return rt.component_wise('max', rt.dot(rt.swizzle(c, 'xy'), rt.construct(2, q, rt.swizzle(p, 'y'))), rt.binary('-', rt.unary('-', rt.swizzle(p, 'y')), rt.binary('*', h, rt.f(0.5), 1, 'float'), 1, 'float'))
@@ -108,7 +108,7 @@ run_pixel = lambda do |ctx, out|
   capsuleSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     h = nil; r = nil
-    h = rt.f(0.29999999999999999)
+    h = rt.f(0.30000001192092896)
     r = rt.f(0.25)
     p = rt.assign_swizzle(p, 'y', rt.binary('-', rt.swizzle(p, 'y'), rt.component_wise('clamp', rt.swizzle(p, 'y'), rt.unary('-', h), h), 1, 'float'))
     return rt.binary('-', rt.length(p), r, 1, 'float')
@@ -150,7 +150,7 @@ run_pixel = lambda do |ctx, out|
   offset3D__vec3_float_int = lambda do |p, freq, loopOffset|
     p = rt.copy(p, 'float')
     cp = nil; sdf = nil
-    cp = rt.construct(3, rt.binary('-', p, rt.f(0.5), 3, 'float'))
+    cp = rt.construct(3, ((p[0]) - (rt.f(0.5))), ((p[1]) - (rt.f(0.5))), ((p[2]) - (rt.f(0.5))))
     sdf = shapeSDF__vec3_int.call(cp, loopOffset)
     return rt.binary('*', rt.binary('-', rt.f(0.5), sdf, 1, 'float'), freq, 1, 'float')
   end
@@ -173,17 +173,17 @@ run_pixel = lambda do |ctx, out|
     yAtlas = rt.construct(1, rt.swizzle(ctx.frag_coord, 'y'), 'int')
     y = rt.binary('%', yAtlas, volSize, 1, 'int')
     z = rt.binary('/', rt.construct(1, yAtlas), rt.construct(1, volSize), 1, 'float')
-    p = rt.construct(3, rt.binary('/', rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)), rt.binary('-', volSizeF, rt.f(1), 1, 'float'), 3, 'float'))
+    p = rt.construct(3, ((((x))) / (((volSizeF) - (rt.f(1))))), ((((y))) / (((volSizeF) - (rt.f(1))))), ((((z))) / (((volSizeF) - (rt.f(1))))))
     lf1 = map__float_float_float_float_float.call(_u_loopAScale, rt.f(1), rt.f(100), rt.f(6), rt.f(1))
     lf2 = map__float_float_float_float_float.call(_u_loopBScale, rt.f(1), rt.f(100), rt.f(6), rt.f(1))
     d = computeValue__vec3_float_float.call(p, lf1, lf2)
     eps = rt.binary('/', rt.f(1), volSizeF, 1, 'float')
-    dx = computeValue__vec3_float_float.call(rt.binary('+', p, rt.construct(3, eps, rt.f(0), rt.f(0)), 3, 'float'), lf1, lf2)
-    dy = computeValue__vec3_float_float.call(rt.binary('+', p, rt.construct(3, rt.f(0), eps, rt.f(0)), 3, 'float'), lf1, lf2)
-    dz = computeValue__vec3_float_float.call(rt.binary('+', p, rt.construct(3, rt.f(0), rt.f(0), eps), 3, 'float'), lf1, lf2)
-    gradient = rt.construct(3, rt.binary('/', rt.construct(3, rt.binary('-', dx, d, 1, 'float'), rt.binary('-', dy, d, 1, 'float'), rt.binary('-', dz, d, 1, 'float')), eps, 3, 'float'))
-    normal = rt.construct(3, rt.normalize(rt.binary('+', rt.unary('-', gradient), rt.construct(3, rt.f(9.9999999999999995e-07)), 3, 'float')))
-    g['fragColor'].replace((rt.construct(4, d, d, d, rt.f(1))).map { |c| rt.f32(c) })
+    dx = computeValue__vec3_float_float.call(rt.construct(3, ((p[0]) + ((eps))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((rt.f(0))))), lf1, lf2)
+    dy = computeValue__vec3_float_float.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((eps))), ((p[2]) + ((rt.f(0))))), lf1, lf2)
+    dz = computeValue__vec3_float_float.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((eps)))), lf1, lf2)
+    gradient = rt.construct(3, (((((dx) - (d)))) / (eps)), (((((dy) - (d)))) / (eps)), (((((dz) - (d)))) / (eps)))
+    normal = rt.construct(3, rt.normalize(rt.binary('+', rt.unary('-', gradient), rt.construct(3, rt.f(9.9999999747524271e-07)), 3, 'float')))
+    g['fragColor'][0] = rt.f32(d); g['fragColor'][1] = rt.f32(d); g['fragColor'][2] = rt.f32(d); g['fragColor'][3] = rt.f32(rt.f(1))
     g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), d)).map { |c| rt.f32(c) })
   end
   main__void.call

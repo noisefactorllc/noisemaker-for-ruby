@@ -19,14 +19,14 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _AoverB = nil; _BoverA = nil; background = nil; color = nil; color1 = nil; color2 = nil; maskVal = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
-    color1 = rt.construct(4, rt.texture(_u_inputTex, uv))
-    color2 = rt.construct(4, rt.texture(_u_tex, uv))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (((rt.texture_size(_u_inputTex))[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / (((rt.texture_size(_u_inputTex))[1]))))
+    color1 = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    color2 = rt.construct(4, (rt.texture(_u_tex, uv))[0], (rt.texture(_u_tex, uv))[1], (rt.texture(_u_tex, uv))[2], (rt.texture(_u_tex, uv))[3])
     background = rt.construct(4, 0.0)
     maskVal = rt.f(0.0)
     if rt.bool(_u_maskMode)
-      maskVal = rt.dot(rt.swizzle(color2, 'rgb'), rt.construct(3, rt.f(0.29899999999999999), rt.f(0.58699999999999997), rt.f(0.114)))
-      background = rt.construct(4, rt.texture(_u_baseTex, uv))
+      maskVal = rt.dot(rt.swizzle(color2, 'rgb'), rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
+      background = rt.construct(4, (rt.texture(_u_baseTex, uv))[0], (rt.texture(_u_baseTex, uv))[1], (rt.texture(_u_baseTex, uv))[2], (rt.texture(_u_baseTex, uv))[3])
       g['fragColor'].replace((rt.component_wise('mix', background, color1, maskVal)).map { |c| rt.f32(c) })
       return
     end
@@ -34,10 +34,10 @@ run_pixel = lambda do |ctx, out|
     _AoverB = rt.construct(4, 0.0)
     _BoverA = rt.construct(4, 0.0)
     if rt.bool(rt.binary('<', _u_mixAmt, rt.f(0)))
-      _AoverB = rt.construct(4, rt.binary('+', rt.binary('*', color2, rt.binary('-', rt.f(1), rt.swizzle(color1, 'a'), 1, 'float'), 4, 'float'), color1, 4, 'float'))
+      _AoverB = rt.construct(4, ((((color2[0]) * (((rt.f(1)) - (rt.swizzle(color1, 'a')))))) + (color1[0])), ((((color2[1]) * (((rt.f(1)) - (rt.swizzle(color1, 'a')))))) + (color1[1])), ((((color2[2]) * (((rt.f(1)) - (rt.swizzle(color1, 'a')))))) + (color1[2])), ((((color2[3]) * (((rt.f(1)) - (rt.swizzle(color1, 'a')))))) + (color1[3])))
       color.replace((rt.component_wise('mix', color1, _AoverB, map__float_float_float_float_float.call(_u_mixAmt, rt.unary('-', rt.f(100)), rt.f(0), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
     else
-      _BoverA = rt.construct(4, rt.binary('+', rt.binary('*', color1, rt.binary('-', rt.f(1), rt.swizzle(color2, 'a'), 1, 'float'), 4, 'float'), color2, 4, 'float'))
+      _BoverA = rt.construct(4, ((((color1[0]) * (((rt.f(1)) - (rt.swizzle(color2, 'a')))))) + (color2[0])), ((((color1[1]) * (((rt.f(1)) - (rt.swizzle(color2, 'a')))))) + (color2[1])), ((((color1[2]) * (((rt.f(1)) - (rt.swizzle(color2, 'a')))))) + (color2[2])), ((((color1[3]) * (((rt.f(1)) - (rt.swizzle(color2, 'a')))))) + (color2[3])))
       color.replace((rt.component_wise('mix', _BoverA, color2, map__float_float_float_float_float.call(_u_mixAmt, rt.f(0), rt.f(100), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
     end
     g['fragColor'].replace((color).map { |c| rt.f32(c) })

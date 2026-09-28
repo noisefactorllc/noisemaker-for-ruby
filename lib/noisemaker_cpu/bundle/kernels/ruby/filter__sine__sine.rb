@@ -16,10 +16,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; globalCoord = nil; lum = nil; result = nil; texSize = nil; use_rgb = nil; uv = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
-    color = rt.construct(4, rt.texture(_u_inputTex, uv))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
+    color = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
     use_rgb = rt.binary('>', _u_colorMode, rt.f(0.5))
     lum = rt.f(0.0)
     result = rt.f(0.0)
@@ -28,7 +28,7 @@ run_pixel = lambda do |ctx, out|
       color = rt.assign_swizzle(color, 'g', normalized_sine__float.call(rt.binary('*', rt.swizzle(color, 'g'), _u_amount, 1, 'float')))
       color = rt.assign_swizzle(color, 'b', normalized_sine__float.call(rt.binary('*', rt.swizzle(color, 'b'), _u_amount, 1, 'float')))
     else
-      lum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999999999999), rt.swizzle(color, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58699999999999997), rt.swizzle(color, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.114), rt.swizzle(color, 'b'), 1, 'float'), 1, 'float')
+      lum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(color, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(color, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(color, 'b'), 1, 'float'), 1, 'float')
       result = normalized_sine__float.call(rt.binary('*', lum, _u_amount, 1, 'float'))
       color = rt.assign_swizzle(color, 'rgb', rt.construct(3, result))
     end

@@ -28,9 +28,9 @@ run_pixel = lambda do |ctx, out|
   _u_outputMode = u.key?('outputMode') ? u['outputMode'] : rt.f(0.0)
   _u_invert = u.key?('invert') ? u['invert'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.1415926535900001)
-  g['TAU'] = rt.f(6.2831853071800001)
-  g['PHI'] = rt.f(1.6180339886999999)
+  g['PI'] = rt.f(3.1415927410125732)
+  g['TAU'] = rt.f(6.2831854820251465)
+  g['PHI'] = rt.f(1.6180340051651001)
   df64_quick_two_sum__float_float = lambda do |a, b|
     e = nil; s = nil
     s = rt.binary('+', a, b, 1, 'float')
@@ -67,7 +67,7 @@ run_pixel = lambda do |ctx, out|
   df64_sub__vec2_vec2 = lambda do |a, b|
     a = rt.copy(a, 'float')
     b = rt.copy(b, 'float')
-    return df64_add__vec2_vec2.call(a, rt.construct(2, rt.unary('-', rt.swizzle(b, 'x')), rt.unary('-', rt.swizzle(b, 'y'))))
+    return df64_add__vec2_vec2.call(a, rt.construct(2, (rt.unary('-', rt.swizzle(b, 'x'))), (rt.unary('-', rt.swizzle(b, 'y')))))
   end
   df64_mul__vec2_vec2 = lambda do |a, b|
     a = rt.copy(a, 'float')
@@ -109,11 +109,11 @@ run_pixel = lambda do |ctx, out|
     re_df = rt.copy(re_df, 'float')
     im_df = rt.copy(im_df, 'float')
     angle = nil; c = nil; s = nil; scale = nil; uv = nil; uv_im_df = nil; uv_re_df = nil
-    uv = rt.construct(2, rt.binary('/', rt.binary('-', fragCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
+    uv = rt.construct(2, ((((fragCoord[0]) - (((rt.f(0.5)) * (_u_fullResolution[0]))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))), ((((fragCoord[1]) - (((rt.f(0.5)) * (_u_fullResolution[1]))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', rot), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
-    uv.replace((rt.matrix_mult(rt.construct(4, c, rt.unary('-', s), s, c), uv, 2)).map { |c| rt.f32(c) })
+    rt.matrix_mult_assign(uv, rt.construct(4, c, rt.unary('-', s), s, c), uv, 2)
     scale = rt.binary('/', rt.f(2.5), z_zoom, 1, 'float')
     uv_re_df = rt.construct(2, df64_mul_f__vec2_float.call(df64_from__float.call(rt.swizzle(uv, 'x')), scale))
     uv_im_df = rt.construct(2, df64_mul_f__vec2_float.call(df64_from__float.call(rt.swizzle(uv, 'y')), scale))
@@ -126,13 +126,13 @@ run_pixel = lambda do |ctx, out|
       return [rt.construct(4, rt.f(0), rt.f(0), rt.f(0), rt.f(0)), rt.f(3), rt.f(7)]
     end
     if rt.bool(rt.binary('==', idx, rt.i(2)))
-      return [rt.construct(4, rt.f(0.25), rt.f(0.4330126941204071), rt.f(0), rt.f(7.7718000000000008e-09)), rt.f(3), rt.f(14)]
+      return [rt.construct(4, rt.f(0.25), rt.f(0.4330126941204071), rt.f(0), rt.f(7.7718000923709951e-09)), rt.f(3), rt.f(14)]
     end
     if rt.bool(rt.binary('==', idx, rt.i(3)))
       return [rt.construct(4, rt.f(0), rt.f(0), rt.f(0), rt.f(0)), rt.f(5), rt.f(7)]
     end
     if rt.bool(rt.binary('==', idx, rt.i(4)))
-      return [rt.construct(4, rt.f(0.65450847148895264), rt.f(0.47552827000617981), rt.f(2.5699000000000001e-08), rt.unary('-', rt.f(1.1859000000000001e-08))), rt.f(5), rt.f(14)]
+      return [rt.construct(4, rt.f(0.65450847148895264), rt.f(0.47552827000617981), rt.f(2.5699000261170113e-08), rt.unary('-', rt.f(1.1859000004221798e-08))), rt.f(5), rt.f(14)]
     end
     if rt.bool(rt.binary('==', idx, rt.i(5)))
       return [rt.construct(4, rt.f(0), rt.f(0), rt.f(0), rt.f(0)), rt.f(6), rt.f(7)]
@@ -144,7 +144,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; _for2_first = nil; _for3_first = nil; angle = nil; bailout = nil; cHi = nil; cLo = nil; convergeDist = nil; convergedRoot = nil; d = nil; denom = nil; di = nil; doInvert = nil; dr = nil; dx = nil; dy = nil; effDegree = nil; effRelax = nil; effZoomDepth = nil; fpzi = nil; fpzi_f = nil; fpzr = nil; fpzr_f = nil; fzi = nil; fzr = nil; globalCoord = nil; im_df = nil; intDeg = nil; inv_denom = nil; iter = nil; j = nil; k = nil; maxIter = nil; maxIterF = nil; n = nil; ni = nil; nr = nil; numRoots = nil; numRootsF = nil; outMode = nil; p = nil; poiIdx = nil; pwi = nil; pwr = nil; re_df = nil; roots = nil; smoothIter = nil; ti = nil; tr = nil; value = nil; zi_df = nil; zni = nil; znr = nil; zoom = nil; zoomPhase = nil; zr_df = nil; zx = nil; zy = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     maxIter = rt.construct(1, _u_iterations, 'int')
     poiIdx = rt.construct(1, _u_poi, 'int')
     outMode = rt.construct(1, _u_outputMode, 'int')
@@ -170,8 +170,8 @@ run_pixel = lambda do |ctx, out|
       effDegree = p[1]
       effZoomDepth = rt.component_wise('min', _u_zoomDepth, p[2])
     else
-      cHi.replace((rt.construct(2, _u_centerHiX, _u_centerHiY)).map { |c| rt.f32(c) })
-      cLo.replace((rt.construct(2, _u_centerLoX, _u_centerLoY)).map { |c| rt.f32(c) })
+      cHi[0] = rt.f32(_u_centerHiX); cHi[1] = rt.f32(_u_centerHiY)
+      cLo[0] = rt.f32(_u_centerLoX); cLo[1] = rt.f32(_u_centerLoY)
     end
     zoom = rt.f(0.0)
     zoomPhase = rt.f(0.0)
@@ -183,7 +183,7 @@ run_pixel = lambda do |ctx, out|
     end
     re_df = rt.construct(2, 0.0)
     im_df = rt.construct(2, 0.0)
-    (begin _retc, re_df, im_df = transformCoords_df64__vec2_vec2_vec2_float_float_vec2_vec2.call(globalCoord, rt.construct(2, rt.swizzle(cHi, 'x'), rt.swizzle(cLo, 'x')), rt.construct(2, rt.swizzle(cHi, 'y'), rt.swizzle(cLo, 'y')), zoom, _u_rotation, re_df, im_df); _retc end)
+    (begin _retc, re_df, im_df = transformCoords_df64__vec2_vec2_vec2_float_float_vec2_vec2.call(globalCoord, rt.construct(2, (rt.swizzle(cHi, 'x')), (rt.swizzle(cLo, 'x'))), rt.construct(2, (rt.swizzle(cHi, 'y')), (rt.swizzle(cLo, 'y'))), zoom, _u_rotation, re_df, im_df); _retc end)
     intDeg = rt.construct(1, rt.component_wise('floor', effDegree), 'int')
     numRoots = intDeg
     roots = rt.new_array(rt.i(8), 2)
@@ -252,7 +252,7 @@ run_pixel = lambda do |ctx, out|
       fpzi = rt.construct(2, df64_mul_f__vec2_float.call(pwi, rt.construct(1, intDeg)))
       fpzr_f = df64_to_float__vec2.call(fpzr)
       fpzi_f = df64_to_float__vec2.call(fpzi)
-      if rt.bool(rt.binary('<', rt.binary('+', rt.binary('*', fpzr_f, fpzr_f, 1, 'float'), rt.binary('*', fpzi_f, fpzi_f, 1, 'float'), 1, 'float'), rt.f(9.9999999999999995e-21)))
+      if rt.bool(rt.binary('<', rt.binary('+', rt.binary('*', fpzr_f, fpzr_f, 1, 'float'), rt.binary('*', fpzi_f, fpzi_f, 1, 'float'), 1, 'float'), rt.f(9.9999996826552254e-21)))
         break
       end
       denom = rt.binary('+', rt.binary('*', fpzr_f, fpzr_f, 1, 'float'), rt.binary('*', fpzi_f, fpzi_f, 1, 'float'), 1, 'float')
@@ -281,8 +281,8 @@ run_pixel = lambda do |ctx, out|
         if rt.bool(rt.binary('>=', k, numRoots))
           break
         end
-        dx = rt.binary('-', zx, rt.swizzle(roots[(k).to_i], 'x'), 1, 'float')
-        dy = rt.binary('-', zy, rt.swizzle(roots[(k).to_i], 'y'), 1, 'float')
+        dx = rt.binary('-', zx, rt.swizzle(rt.array_index(roots, k), 'x'), 1, 'float')
+        dy = rt.binary('-', zy, rt.swizzle(rt.array_index(roots, k), 'y'), 1, 'float')
         d = rt.component_wise('sqrt', rt.binary('+', rt.binary('*', dx, dx, 1, 'float'), rt.binary('*', dy, dy, 1, 'float'), 1, 'float'))
         if rt.bool(rt.binary('<', d, _u_tolerance))
           convergedRoot = k

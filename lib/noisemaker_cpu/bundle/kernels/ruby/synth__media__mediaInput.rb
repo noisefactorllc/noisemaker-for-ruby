@@ -26,12 +26,12 @@ run_pixel = lambda do |ctx, out|
     st = rt.copy(st, 'float')
     angle = nil; aspect = nil; size = nil
     rot = map__float_float_float_float_float.call(rot, rt.unary('-', rt.f(180)), rt.f(180), rt.f(0.5), rt.unary('-', rt.f(0.5)))
-    angle = rt.binary('*', rt.binary('*', rot, rt.f(6.2831853071800001), 1, 'float'), rt.unary('-', rt.f(1)), 1, 'float')
+    angle = rt.binary('*', rt.binary('*', rot, rt.f(6.2831854820251465), 1, 'float'), rt.unary('-', rt.f(1)), 1, 'float')
     size = _u_imageSize
     aspect = rt.binary('/', rt.swizzle(size, 'x'), rt.swizzle(size, 'y'), 1, 'float')
-    st.replace((rt.binary('-', st, rt.construct(2, rt.binary('*', rt.f(0.5), aspect, 1, 'float'), rt.f(0.5)), 2, 'float')).map { |c| rt.f32(c) })
-    st.replace((rt.matrix_mult(rt.construct(4, rt.component_wise('cos', angle), rt.unary('-', rt.component_wise('sin', angle)), rt.component_wise('sin', angle), rt.component_wise('cos', angle)), st, 2)).map { |c| rt.f32(c) })
-    st.replace((rt.binary('+', st, rt.construct(2, rt.binary('*', rt.f(0.5), aspect, 1, 'float'), rt.f(0.5)), 2, 'float')).map { |c| rt.f32(c) })
+    st[0] = rt.f32(rt.binary('-', st[0], (((rt.f(0.5)) * (aspect))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
+    rt.matrix_mult_assign(st, rt.construct(4, rt.component_wise('cos', angle), rt.unary('-', rt.component_wise('sin', angle)), rt.component_wise('sin', angle), rt.component_wise('cos', angle)), st, 2)
+    st[0] = rt.f32(rt.binary('+', st[0], (((rt.f(0.5)) * (aspect))), 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], (rt.f(0.5)), 1, 'float'))
     return st
   end
   tile__vec2 = lambda do |st|
@@ -64,14 +64,14 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     f = nil; lo = nil; p = nil; size = nil
     size = rt.texture_size(_u_imageTex)
-    p = rt.construct(2, rt.binary('-', rt.binary('*', uv, rt.construct(2, size), 2, 'float'), rt.f(0.5), 2, 'float'))
+    p = rt.construct(2, ((((uv[0]) * ((size[0])))) - (rt.f(0.5))), ((((uv[1]) * ((size[1])))) - (rt.f(0.5))))
     lo = rt.construct(2, rt.construct(2, rt.component_wise('floor', p)), 'int')
-    f = rt.construct(2, rt.component_wise('fract', p))
+    f = rt.construct(2, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]))
     return rt.component_wise('mix', rt.component_wise('mix', mediaTexel__ivec2_ivec2.call(lo, size), mediaTexel__ivec2_ivec2.call(rt.binary('+', lo, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), size), rt.swizzle(f, 'x')), rt.component_wise('mix', mediaTexel__ivec2_ivec2.call(rt.binary('+', lo, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), size), mediaTexel__ivec2_ivec2.call(rt.binary('+', lo, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), size), rt.swizzle(f, 'x')), rt.swizzle(f, 'y'))
   end
   getImage__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
-    scale = nil; size = nil; text = nil
+    __sc1760 = nil; scale = nil; size = nil; text = nil
     size = _u_imageSize
     st.replace((rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), size, 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.f(1), rt.swizzle(st, 'y'), 1, 'float'))
@@ -79,7 +79,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', scale, rt.f(0)))
       scale = rt.f(1)
     end
-    st.replace((rt.binary('*', st, scale, 2, 'float')).map { |c| rt.f32(c) })
+    __sc1760 = scale; st[0] = rt.f32(rt.binary('*', st[0], __sc1760, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1760, 1, 'float'))
     if rt.bool(rt.binary('==', _u_position, rt.i(0)))
       st = rt.assign_swizzle(st, 'y', rt.binary('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
     else
@@ -129,7 +129,7 @@ run_pixel = lambda do |ctx, out|
     end
     st = rt.assign_swizzle(st, 'x', rt.binary('/', rt.swizzle(st, 'x'), rt.binary('/', rt.swizzle(size, 'x'), rt.swizzle(size, 'y'), 1, 'float'), 1, 'float'))
     st.replace((tile__vec2.call(st)).map { |c| rt.f32(c) })
-    st.replace((rt.binary('+', st, rt.binary('/', rt.f(1), size, 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
+    st[0] = rt.f32(rt.binary('+', st[0], ((rt.f(1)) / (size[0])), 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], ((rt.f(1)) / (size[1])), 1, 'float'))
     if rt.bool(rt.binary('==', _u_flip, rt.i(1)))
       st = rt.assign_swizzle(st, 'x', rt.binary('-', rt.f(1), rt.swizzle(st, 'x'), 1, 'float'))
       st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.f(1), rt.swizzle(st, 'y'), 1, 'float'))
@@ -210,7 +210,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     st = nil
-    st = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    st = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
     st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.f(1), rt.swizzle(st, 'y'), 1, 'float'))
     g['fragColor'].replace((getImage__vec2.call(st)).map { |c| rt.f32(c) })
   end

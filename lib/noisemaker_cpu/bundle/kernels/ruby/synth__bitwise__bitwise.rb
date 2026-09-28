@@ -21,12 +21,12 @@ run_pixel = lambda do |ctx, out|
   _u_rotation = u.key?('rotation') ? u['rotation'] : rt.f(0.0)
   _u_colorOffset = u.key?('colorOffset') ? u['colorOffset'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.14159265358979)
+  g['PI'] = rt.f(3.1415927410125732)
   hsv2rgb__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     p = nil
-    p = rt.construct(3, rt.component_wise('abs', rt.binary('-', rt.binary('*', rt.component_wise('fract', rt.binary('+', rt.swizzle(c, 'xxx'), rt.construct(3, rt.f(1), rt.binary('/', rt.f(2), rt.f(3), 1, 'float'), rt.binary('/', rt.f(1), rt.f(3), 1, 'float')), 3, 'float')), rt.f(6), 3, 'float'), rt.f(3), 3, 'float')))
-    return rt.binary('*', rt.swizzle(c, 'z'), rt.component_wise('mix', rt.construct(3, rt.f(1)), rt.component_wise('clamp', rt.binary('-', p, rt.f(1), 3, 'float'), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')), 3, 'float')
+    p = rt.construct(3, rt.component_wise('abs', rt.f32(((((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(1))))))) * (rt.f(6)))) - (rt.f(3))))), rt.component_wise('abs', rt.f32(((((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.66666668653488159))))))) * (rt.f(6)))) - (rt.f(3))))), rt.component_wise('abs', rt.f32(((((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.3333333432674408))))))) * (rt.f(6)))) - (rt.f(3))))))
+    return rt.construct(3, ((rt.swizzle(c, 'z')) * (rt.component_wise('mix', (rt.f(1)), rt.component_wise('clamp', rt.f32(((p[0]) - (rt.f(1)))), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')))), ((rt.swizzle(c, 'z')) * (rt.component_wise('mix', (rt.f(1)), rt.component_wise('clamp', rt.f32(((p[1]) - (rt.f(1)))), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')))), ((rt.swizzle(c, 'z')) * (rt.component_wise('mix', (rt.f(1)), rt.component_wise('clamp', rt.f32(((p[2]) - (rt.f(1)))), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')))))
   end
   bitOp__int_int_int_int = lambda do |a, b, op, m|
     r = nil
@@ -65,14 +65,14 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _g = nil; angle = nil; animOffset = nil; b = nil; c = nil; centered = nil; coord = nil; globalCoord = nil; hueScale = nil; pixelScale = nil; r = nil; rotated = nil; s = nil; v = nil; x = nil; y = nil
-    pixelScale = rt.binary('*', rt.binary('*', _u_scale, rt.f(0.10000000000000001), 1, 'float'), _u_renderScale, 1, 'float')
+    pixelScale = rt.binary('*', rt.binary('*', _u_scale, rt.f(0.10000000149011612), 1, 'float'), _u_renderScale, 1, 'float')
     angle = rt.binary('/', rt.binary('*', _u_rotation, g['PI'], 1, 'float'), rt.f(180), 1, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    centered = rt.construct(2, rt.binary('-', globalCoord, rt.binary('*', _u_fullResolution, rt.f(0.5), 2, 'float'), 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    centered = rt.construct(2, ((globalCoord[0]) - (((_u_fullResolution[0]) * (rt.f(0.5))))), ((globalCoord[1]) - (((_u_fullResolution[1]) * (rt.f(0.5))))))
     rotated = rt.construct(2, rt.construct(2, rt.binary('-', rt.binary('*', rt.swizzle(centered, 'x'), c, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), s, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(centered, 'x'), s, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), c, 1, 'float'), 1, 'float')))
-    coord = rt.construct(2, rt.binary('+', rotated, rt.binary('*', _u_fullResolution, rt.f(0.5), 2, 'float'), 2, 'float'))
+    coord = rt.construct(2, ((rotated[0]) + (((_u_fullResolution[0]) * (rt.f(0.5))))), ((rotated[1]) + (((_u_fullResolution[1]) * (rt.f(0.5))))))
     animOffset = rt.construct(1, rt.component_wise('floor', rt.binary('*', rt.binary('*', _u_time, rt.construct(1, rt.construct(1, rt.unary('-', _u_speed), 'int')), 1, 'float'), rt.f(256), 1, 'float')), 'int')
     x = rt.binary('+', rt.binary('+', rt.construct(1, rt.component_wise('floor', rt.binary('/', rt.swizzle(coord, 'x'), pixelScale, 1, 'float')), 'int'), _u_offsetX, 1, 'int'), animOffset, 1, 'int')
     y = rt.binary('+', rt.construct(1, rt.component_wise('floor', rt.binary('/', rt.swizzle(coord, 'y'), pixelScale, 1, 'float')), 'int'), _u_offsetY, 1, 'int')
@@ -85,17 +85,17 @@ run_pixel = lambda do |ctx, out|
     r = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_colorMode, rt.i(0)))
       v = bitOp__int_int_int_int.call(x, y, _u_operation, _u_mask)
-      g['fragColor'].replace((rt.construct(4, v, v, v, rt.f(1))).map { |c| rt.f32(c) })
+      g['fragColor'][0] = rt.f32(v); g['fragColor'][1] = rt.f32(v); g['fragColor'][2] = rt.f32(v); g['fragColor'][3] = rt.f32(rt.f(1))
     else
       if rt.bool(rt.binary('==', _u_colorMode, rt.i(1)))
         r = bitOp__int_int_int_int.call(x, y, _u_operation, _u_mask)
         _g = bitOp__int_int_int_int.call(rt.binary('+', x, _u_colorOffset, 1, 'int'), y, _u_operation, _u_mask)
         b = bitOp__int_int_int_int.call(x, rt.binary('+', y, _u_colorOffset, 1, 'int'), _u_operation, _u_mask)
-        g['fragColor'].replace((rt.construct(4, r, _g, b, rt.f(1))).map { |c| rt.f32(c) })
+        g['fragColor'][0] = rt.f32(r); g['fragColor'][1] = rt.f32(_g); g['fragColor'][2] = rt.f32(b); g['fragColor'][3] = rt.f32(rt.f(1))
       else
         v = bitOp__int_int_int_int.call(x, y, _u_operation, _u_mask)
         hueScale = rt.binary('/', rt.construct(1, _u_mask), rt.construct(1, rt.binary('+', _u_mask, rt.i(1), 1, 'int')), 1, 'float')
-        g['fragColor'].replace((rt.construct(4, hsv2rgb__vec3.call(rt.construct(3, rt.binary('*', v, hueScale, 1, 'float'), rt.f(1), rt.f(1))), rt.f(1))).map { |c| rt.f32(c) })
+        g['fragColor'].replace((rt.construct(4, hsv2rgb__vec3.call(rt.construct(3, (((v) * (hueScale))), (rt.f(1)), (rt.f(1)))), rt.f(1))).map { |c| rt.f32(c) })
       end
     end
   end

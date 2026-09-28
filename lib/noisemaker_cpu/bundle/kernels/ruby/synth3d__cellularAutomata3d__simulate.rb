@@ -19,9 +19,10 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   hash3__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    p.replace((rt.binary('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000000000001), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-    p.replace((rt.component_wise('fract', rt.binary('*', p, rt.construct(3, rt.f(0.1031), rt.f(0.10299999999999999), rt.f(0.097299999999999998)), 3, 'float'))).map { |c| rt.f32(c) })
-    p.replace((rt.binary('+', p, rt.dot(p, rt.binary('+', rt.swizzle(p, 'yxz'), rt.f(33.329999999999998), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
+    __sc1920 = nil
+    p.replace((rt.binary('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+    p.replace((rt.component_wise('fract', rt.construct(3, ((p[0]) * ((rt.f(0.1031000018119812)))), ((p[1]) * ((rt.f(0.10300000011920929)))), ((p[2]) * ((rt.f(0.097300000488758087))))))).map { |c| rt.f32(c) })
+    __sc1920 = rt.dot(p, rt.binary('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float')); p[0] = rt.f32(rt.binary('+', p[0], __sc1920, 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __sc1920, 1, 'float')); p[2] = rt.f32(rt.binary('+', p[2], __sc1920, 1, 'float'))
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'))
   end
   atlasTexel__ivec3_int = lambda do |p, volSize|
@@ -216,16 +217,16 @@ run_pixel = lambda do |ctx, out|
       radius = rt.f(0.0)
       threshold = rt.f(0.0)
       if rt.bool(hasSeedInput)
-        lum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999999999999), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58699999999999997), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.114), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
+        lum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
         alive = (rt.bool(rt.binary('>', lum, rt.f(0.5))) ? (rt.f(1)) : (rt.f(0)))
         age = rt.f(0)
       else
         p = rt.construct(3, rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)))
         h = hash3__vec3.call(p)
-        threshold = rt.binary('*', _u_density, rt.f(0.01), 1, 'float')
+        threshold = rt.binary('*', _u_density, rt.f(0.0099999997764825821), 1, 'float')
         center = rt.construct(3, rt.construct(3, rt.binary('*', volSizeF, rt.f(0.5), 1, 'float')))
         dist = rt.length(rt.binary('-', p, center, 3, 'float'))
-        radius = rt.binary('*', volSizeF, rt.f(0.14999999999999999), 1, 'float')
+        radius = rt.binary('*', volSizeF, rt.f(0.15000000596046448), 1, 'float')
         if rt.bool((rt.bool(rt.binary('<', h, threshold)) || rt.bool(rt.binary('<', dist, radius)) ? 1 : 0))
           alive = rt.f(1)
           age = rt.f(0)
@@ -234,7 +235,7 @@ run_pixel = lambda do |ctx, out|
           age = rt.f(0)
         end
       end
-      g['fragColor'].replace((rt.construct(4, alive, alive, alive, rt.f(1))).map { |c| rt.f32(c) })
+      g['fragColor'][0] = rt.f32(alive); g['fragColor'][1] = rt.f32(alive); g['fragColor'][2] = rt.f32(alive); g['fragColor'][3] = rt.f32(rt.f(1))
       return
     end
     neighbors = 0
@@ -248,7 +249,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('>', alive, rt.f(0.5)))
       if rt.bool(shouldSurvive__int_int.call(neighbors, _u_ruleIndex))
         newAlive = rt.f(1)
-        newAge = rt.component_wise('min', rt.binary('+', age, rt.f(0.01), 1, 'float'), rt.f(1))
+        newAge = rt.component_wise('min', rt.binary('+', age, rt.f(0.0099999997764825821), 1, 'float'), rt.f(1))
       else
         newAlive = rt.f(0)
         newAge = rt.f(0)
@@ -262,16 +263,16 @@ run_pixel = lambda do |ctx, out|
         newAge = rt.f(0)
       end
     end
-    animSpeed = rt.binary('*', _u_speed, rt.f(0.01), 1, 'float')
+    animSpeed = rt.binary('*', _u_speed, rt.f(0.0099999997764825821), 1, 'float')
     finalAlive = rt.component_wise('mix', alive, newAlive, animSpeed)
     finalAge = rt.component_wise('mix', age, newAge, animSpeed)
     seedLum = rt.f(0.0)
     if rt.bool(rt.binary('>', _u_weight, rt.f(0)))
       seedVal = rt.construct(4, sampleSeed__ivec3_int.call(voxel, volSize))
-      seedLum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999999999999), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58699999999999997), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.114), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
-      finalAlive = rt.component_wise('mix', finalAlive, seedLum, rt.binary('*', _u_weight, rt.f(0.01), 1, 'float'))
+      seedLum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
+      finalAlive = rt.component_wise('mix', finalAlive, seedLum, rt.binary('*', _u_weight, rt.f(0.0099999997764825821), 1, 'float'))
     end
-    g['fragColor'].replace((rt.construct(4, finalAlive, finalAlive, finalAlive, rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(finalAlive); g['fragColor'][1] = rt.f32(finalAlive); g['fragColor'][2] = rt.f32(finalAlive); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

@@ -24,10 +24,10 @@ run_pixel = lambda do |ctx, out|
   _u_lightAngle = u.key?('lightAngle') ? u['lightAngle'] : rt.f(0.0)
   _u_rotation = u.key?('rotation') ? u['rotation'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.1415926535900001)
-  g['TAU'] = rt.f(6.2831853071800001)
+  g['PI'] = rt.f(3.1415927410125732)
+  g['TAU'] = rt.f(6.2831854820251465)
   g['BAILOUT'] = rt.f(256)
-  g['LOG2'] = rt.f(0.69314718055994529)
+  g['LOG2'] = rt.f(0.69314718246459961)
   g['MAX_ITER'] = rt.i(500)
   df64_quick_two_sum__float_float = lambda do |a, b|
     e = nil; s = nil
@@ -65,7 +65,7 @@ run_pixel = lambda do |ctx, out|
   df64_sub__vec2_vec2 = lambda do |a, b|
     a = rt.copy(a, 'float')
     b = rt.copy(b, 'float')
-    return df64_add__vec2_vec2.call(a, rt.construct(2, rt.unary('-', rt.swizzle(b, 'x')), rt.unary('-', rt.swizzle(b, 'y'))))
+    return df64_add__vec2_vec2.call(a, rt.construct(2, (rt.unary('-', rt.swizzle(b, 'x'))), (rt.unary('-', rt.swizzle(b, 'y')))))
   end
   df64_mul__vec2_vec2 = lambda do |a, b|
     a = rt.copy(a, 'float')
@@ -102,39 +102,39 @@ run_pixel = lambda do |ctx, out|
     cX_df = rt.copy(cX_df, 'float')
     cY_df = rt.copy(cY_df, 'float')
     if rt.bool(rt.binary('==', index, rt.i(1)))
-      cX_df.replace((rt.construct(2, rt.unary('-', rt.f(0.74453985691070557)), rt.unary('-', rt.f(3.4452027897000001e-09)))).map { |c| rt.f32(c) })
-      cY_df.replace((rt.construct(2, rt.f(0.12172377109527588), rt.f(2.7991489404000002e-09))).map { |c| rt.f32(c) })
+      cX_df[0] = rt.f32(rt.unary('-', rt.f(0.74453985691070557))); cX_df[1] = rt.f32(rt.unary('-', rt.f(3.4452027897202697e-09)))
+      cY_df[0] = rt.f32(rt.f(0.12172377109527588)); cY_df[1] = rt.f32(rt.f(2.7991489126577562e-09))
     else
       if rt.bool(rt.binary('==', index, rt.i(2)))
-        cX_df.replace((rt.construct(2, rt.f(0.29833000898361206), rt.unary('-', rt.f(8.9836120765000006e-09)))).map { |c| rt.f32(c) })
-        cY_df.replace((rt.construct(2, rt.f(0.0011099999537691474), rt.f(4.6230852696000003e-11))).map { |c| rt.f32(c) })
+        cX_df[0] = rt.f32(rt.f(0.29833000898361206)); cX_df[1] = rt.f32(rt.unary('-', rt.f(8.9836120764630323e-09)))
+        cY_df[0] = rt.f32(rt.f(0.0011099999537691474)); cY_df[1] = rt.f32(rt.f(4.6230852479567375e-11))
       else
         if rt.bool(rt.binary('==', index, rt.i(3)))
-          cX_df.replace((rt.construct(2, rt.unary('-', rt.f(1.7548776865005493)), rt.f(2.0253856592e-08))).map { |c| rt.f32(c) })
-          cY_df.replace((rt.construct(2, rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
+          cX_df[0] = rt.f32(rt.unary('-', rt.f(1.7548776865005493))); cX_df[1] = rt.f32(rt.f(2.0253857258012431e-08))
+          cY_df[0] = rt.f32(rt.f(0)); cY_df[1] = rt.f32(rt.f(0))
         else
           if rt.bool(rt.binary('==', index, rt.i(4)))
-            cX_df.replace((rt.construct(2, rt.unary('-', rt.f(1.7400623559951782)), rt.unary('-', rt.f(2.6584161760999999e-08)))).map { |c| rt.f32(c) })
-            cY_df.replace((rt.construct(2, rt.f(0.028175339102745056), rt.f(6.7646594229000005e-10))).map { |c| rt.f32(c) })
+            cX_df[0] = rt.f32(rt.unary('-', rt.f(1.7400623559951782))); cX_df[1] = rt.f32(rt.unary('-', rt.f(2.6584162426956937e-08)))
+            cY_df[0] = rt.f32(rt.f(0.028175339102745056)); cY_df[1] = rt.f32(rt.f(6.7646593882031425e-10))
           else
             if rt.bool(rt.binary('==', index, rt.i(5)))
-              cX_df.replace((rt.construct(2, rt.unary('-', rt.f(1.4011552333831787)), rt.f(4.4291128098000002e-08))).map { |c| rt.f32(c) })
-              cY_df.replace((rt.construct(2, rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
+              cX_df[0] = rt.f32(rt.unary('-', rt.f(1.4011552333831787))); cX_df[1] = rt.f32(rt.f(4.4291127210271952e-08))
+              cY_df[0] = rt.f32(rt.f(0)); cY_df[1] = rt.f32(rt.f(0))
             else
               if rt.bool(rt.binary('==', index, rt.i(6)))
-                cX_df.replace((rt.construct(2, rt.f(0.37500011920928955), rt.f(8.5257595428000001e-10))).map { |c| rt.f32(c) })
-                cY_df.replace((rt.construct(2, rt.unary('-', rt.f(0.21663938462734222)), rt.unary('-', rt.f(3.8103704636000004e-09)))).map { |c| rt.f32(c) })
+                cX_df[0] = rt.f32(rt.f(0.37500011920928955)); cX_df[1] = rt.f32(rt.f(8.5257595427989941e-10))
+                cY_df[0] = rt.f32(rt.unary('-', rt.f(0.21663938462734222))); cY_df[1] = rt.f32(rt.unary('-', rt.f(3.8103706856418285e-09)))
               else
                 if rt.bool(rt.binary('==', index, rt.i(7)))
-                  cX_df.replace((rt.construct(2, rt.unary('-', rt.f(0.74453890323638916)), rt.unary('-', rt.f(1.6763610832999999e-08)))).map { |c| rt.f32(c) })
-                  cY_df.replace((rt.construct(2, rt.f(0.12172418087720871), rt.unary('-', rt.f(8.7720870844999997e-10)))).map { |c| rt.f32(c) })
+                  cX_df[0] = rt.f32(rt.unary('-', rt.f(0.74453890323638916))); cX_df[1] = rt.f32(rt.unary('-', rt.f(1.6763610943826279e-08)))
+                  cY_df[0] = rt.f32(rt.f(0.12172418087720871)); cY_df[1] = rt.f32(rt.unary('-', rt.f(8.7720869457186268e-10)))
                 else
                   if rt.bool(rt.binary('==', index, rt.i(8)))
-                    cX_df.replace((rt.construct(2, rt.unary('-', rt.f(1.2553445100784302)), rt.unary('-', rt.f(1.4721569741000001e-08)))).map { |c| rt.f32(c) })
-                    cY_df.replace((rt.construct(2, rt.unary('-', rt.f(0.3822004497051239)), rt.unary('-', rt.f(1.3294876088999999e-08)))).map { |c| rt.f32(c) })
+                    cX_df[0] = rt.f32(rt.unary('-', rt.f(1.2553445100784302))); cX_df[1] = rt.f32(rt.unary('-', rt.f(1.4721569741027452e-08)))
+                    cY_df[0] = rt.f32(rt.unary('-', rt.f(0.3822004497051239))); cY_df[1] = rt.f32(rt.unary('-', rt.f(1.3294876310965265e-08)))
                   else
-                    cX_df.replace((rt.construct(2, _u_centerHiX, _u_centerLoX)).map { |c| rt.f32(c) })
-                    cY_df.replace((rt.construct(2, _u_centerHiY, _u_centerLoY)).map { |c| rt.f32(c) })
+                    cX_df[0] = rt.f32(_u_centerHiX); cX_df[1] = rt.f32(_u_centerLoX)
+                    cY_df[0] = rt.f32(_u_centerHiY); cY_df[1] = rt.f32(_u_centerLoY)
                   end
                 end
               end
@@ -152,11 +152,11 @@ run_pixel = lambda do |ctx, out|
     re_df = rt.copy(re_df, 'float')
     im_df = rt.copy(im_df, 'float')
     angle = nil; c = nil; s = nil; scale = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.binary('-', fragCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
+    uv = rt.construct(2, ((((fragCoord[0]) - (((rt.f(0.5)) * (_u_fullResolution[0]))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))), ((((fragCoord[1]) - (((rt.f(0.5)) * (_u_fullResolution[1]))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', rot), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
-    uv.replace((rt.matrix_mult(rt.construct(4, c, rt.unary('-', s), s, c), uv, 2)).map { |c| rt.f32(c) })
+    rt.matrix_mult_assign(uv, rt.construct(4, c, rt.unary('-', s), s, c), uv, 2)
     scale = rt.binary('/', rt.f(2.5), z, 1, 'float')
     re_df.replace((df64_add__vec2_vec2.call(df64_from__float.call(rt.binary('*', rt.swizzle(uv, 'x'), scale, 1, 'float')), cX_df)).map { |c| rt.f32(c) })
     im_df.replace((df64_add__vec2_vec2.call(df64_from__float.call(rt.binary('*', rt.swizzle(uv, 'y'), scale, 1, 'float')), cY_df)).map { |c| rt.f32(c) })
@@ -199,14 +199,14 @@ run_pixel = lambda do |ctx, out|
       z_final.replace((rt.construct(2, rt.f(0))).map { |c| rt.f32(c) })
       dz_final.replace((rt.construct(2, rt.f(0))).map { |c| rt.f32(c) })
       stripeAcc = rt.f(0)
-      trapMin = rt.f(1e+20)
+      trapMin = rt.f(1.0000000200408773e+20)
       return [nil, smoothIter, rawIter, z_final, dz_final, stripeAcc, trapMin]
     end
     zr = rt.construct(2, rt.construct(2, rt.f(0)))
     zi = rt.construct(2, rt.construct(2, rt.f(0)))
     dz = rt.construct(2, rt.construct(2, rt.f(1), rt.f(0)))
     stripe = rt.f(0)
-    trap = rt.f(1e+20)
+    trap = rt.f(1.0000000200408773e+20)
     i = rt.f(0)
     n = rt.i(0)
     _for0_first = true
@@ -223,7 +223,7 @@ run_pixel = lambda do |ctx, out|
       end
       zx = df64_to_float__vec2.call(zr)
       zy = df64_to_float__vec2.call(zi)
-      dz.replace((rt.construct(2, rt.binary('+', rt.binary('*', rt.f(2), rt.binary('-', rt.binary('*', zx, rt.swizzle(dz, 'x'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'y'), 1, 'float'), 1, 'float'), 1, 'float'), rt.f(1), 1, 'float'), rt.binary('*', rt.f(2), rt.binary('+', rt.binary('*', zx, rt.swizzle(dz, 'y'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'x'), 1, 'float'), 1, 'float'), 1, 'float'))).map { |c| rt.f32(c) })
+      dz[0] = rt.f32(rt.binary('+', rt.binary('*', rt.f(2), rt.binary('-', rt.binary('*', zx, rt.swizzle(dz, 'x'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'y'), 1, 'float'), 1, 'float'), 1, 'float'), rt.f(1), 1, 'float')); dz[1] = rt.f32(rt.binary('*', rt.f(2), rt.binary('+', rt.binary('*', zx, rt.swizzle(dz, 'y'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'x'), 1, 'float'), 1, 'float'), 1, 'float'))
       zr2 = rt.construct(2, df64_mul__vec2_vec2.call(zr, zr))
       zi2 = rt.construct(2, df64_mul__vec2_vec2.call(zi, zi))
       zri = rt.construct(2, df64_mul__vec2_vec2.call(zr, zi))
@@ -237,7 +237,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>', _u_stripeFreq, rt.f(0)))
         stripe = rt.binary('+', stripe, rt.component_wise('sin', rt.binary('*', _u_stripeFreq, rt.component_wise('atan', post_zy, post_zx), 1, 'float')), 1, 'float')
       end
-      trap = rt.component_wise('min', trap, trapDistance__vec2_int.call(rt.construct(2, post_zx, post_zy), _u_trapShape))
+      trap = rt.component_wise('min', trap, trapDistance__vec2_int.call(rt.construct(2, (post_zx), (post_zy)), _u_trapShape))
       if rt.bool(rt.binary('>', post_mag2, rt.binary('*', g['BAILOUT'], g['BAILOUT'], 1, 'float')))
         break
       end
@@ -246,7 +246,7 @@ run_pixel = lambda do |ctx, out|
     rawIter = i
     fx = df64_to_float__vec2.call(zr)
     fy = df64_to_float__vec2.call(zi)
-    z_final.replace((rt.construct(2, fx, fy)).map { |c| rt.f32(c) })
+    z_final[0] = rt.f32(fx); z_final[1] = rt.f32(fy)
     dz_final.replace((dz).map { |c| rt.f32(c) })
     stripeAcc = stripe
     trapMin = trap
@@ -323,11 +323,11 @@ run_pixel = lambda do |ctx, out|
     diffuse = nil; eps = nil; h0 = nil; hx = nil; hy = nil; lightDir = nil; normal = nil; rad = nil
     eps = rt.binary('/', rt.f(1), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 1, 'float')
     h0 = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(fragCoord, cX_df, cY_df, z_zoom, rot, maxIter)
-    hx = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(rt.binary('+', fragCoord, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float'), cX_df, cY_df, z_zoom, rot, maxIter)
-    hy = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(rt.binary('+', fragCoord, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float'), cX_df, cY_df, z_zoom, rot, maxIter)
+    hx = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(rt.construct(2, ((fragCoord[0]) + ((rt.f(1)))), ((fragCoord[1]) + ((rt.f(0))))), cX_df, cY_df, z_zoom, rot, maxIter)
+    hy = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(rt.construct(2, ((fragCoord[0]) + ((rt.f(0)))), ((fragCoord[1]) + ((rt.f(1))))), cX_df, cY_df, z_zoom, rot, maxIter)
     normal = rt.construct(3, rt.normalize(rt.construct(3, rt.binary('-', h0, hx, 1, 'float'), rt.binary('-', h0, hy, 1, 'float'), eps)))
     rad = rt.binary('/', rt.binary('*', angle, g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
-    lightDir = rt.construct(3, rt.normalize(rt.construct(3, rt.component_wise('cos', rad), rt.component_wise('sin', rad), rt.f(0.69999999999999996))))
+    lightDir = rt.construct(3, rt.normalize(rt.construct(3, rt.component_wise('cos', rad), rt.component_wise('sin', rad), rt.f(0.69999998807907104))))
     diffuse = rt.component_wise('max', rt.dot(normal, lightDir), rt.f(0))
     return rt.component_wise('clamp', diffuse, rt.f(0), rt.f(1))
   end
@@ -344,7 +344,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     cX_df = nil; cY_df = nil; dz_final = nil; effZoom = nil; globalCoord = nil; im_df = nil; maxIter = nil; rawI = nil; re_df = nil; rot = nil; smoothI = nil; stripeAcc = nil; trapMin = nil; value = nil; z_final = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     maxIter = rt.component_wise('min', _u_iterations, g['MAX_ITER'])
     effZoom = getEffectiveZoom__int.call(_u_poi)
     rot = (rt.bool(rt.binary('>', _u_poi, rt.i(0))) ? (rt.f(0)) : (_u_rotation))

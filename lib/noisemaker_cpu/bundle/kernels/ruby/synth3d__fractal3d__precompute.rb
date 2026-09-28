@@ -18,7 +18,7 @@ run_pixel = lambda do |ctx, out|
   _u_renderScale = u.key?('renderScale') ? u['renderScale'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   g['geoOut'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.1415926535897931)
+  g['PI'] = rt.f(3.1415927410125732)
   mandelbulb__vec3_float_int_float = lambda do |pos, n, maxIter, bail|
     pos = rt.copy(pos, 'float')
     _for0_first = nil; dist = nil; dr = nil; i = nil; iter = nil; newPhi = nil; newTheta = nil; phi = nil; r = nil; theta = nil; trap = nil; z = nil; zr = nil
@@ -49,7 +49,7 @@ run_pixel = lambda do |ctx, out|
       newTheta = rt.binary('*', theta, n, 1, 'float')
       newPhi = rt.binary('*', phi, n, 1, 'float')
       z.replace((rt.binary('*', zr, rt.construct(3, rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('cos', newPhi), 1, 'float'), rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('sin', newPhi), 1, 'float'), rt.component_wise('cos', newTheta)), 3, 'float')).map { |c| rt.f32(c) })
-      z.replace((rt.binary('+', z, pos, 3, 'float')).map { |c| rt.f32(c) })
+      z[0] = rt.f32(rt.binary('+', z[0], pos[0], 1, 'float')); z[1] = rt.f32(rt.binary('+', z[1], pos[1], 1, 'float')); z[2] = rt.f32(rt.binary('+', z[2], pos[2], 1, 'float'))
       iter = rt.binary('+', iter, rt.f(1), 1, 'float')
     end
     dist = rt.binary('/', rt.binary('*', rt.binary('*', rt.f(0.5), rt.component_wise('log', r), 1, 'float'), r, 1, 'float'), dr, 1, 'float')
@@ -86,7 +86,7 @@ run_pixel = lambda do |ctx, out|
       newTheta = rt.binary('*', theta, n, 1, 'float')
       newPhi = rt.binary('*', phi, n, 1, 'float')
       z.replace((rt.binary('*', zr, rt.construct(3, rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('cos', newPhi), 1, 'float'), rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('sin', newPhi), 1, 'float'), rt.component_wise('cos', newTheta)), 3, 'float')).map { |c| rt.f32(c) })
-      z.replace((rt.binary('+', z, c, 3, 'float')).map { |c| rt.f32(c) })
+      z[0] = rt.f32(rt.binary('+', z[0], c[0], 1, 'float')); z[1] = rt.f32(rt.binary('+', z[1], c[1], 1, 'float')); z[2] = rt.f32(rt.binary('+', z[2], c[2], 1, 'float'))
       iter = rt.binary('+', iter, rt.f(1), 1, 'float')
     end
     dist = rt.binary('/', rt.binary('*', rt.binary('*', rt.f(0.5), rt.component_wise('log', r), 1, 'float'), r, 1, 'float'), dr, 1, 'float')
@@ -94,11 +94,11 @@ run_pixel = lambda do |ctx, out|
   end
   boxFold__vec3_float = lambda do |z, foldingLimit|
     z = rt.copy(z, 'float')
-    return rt.binary('-', rt.binary('*', rt.component_wise('clamp', z, rt.unary('-', foldingLimit), foldingLimit), rt.f(2), 3, 'float'), z, 3, 'float')
+    return rt.construct(3, ((((rt.component_wise('clamp', z[0], rt.unary('-', foldingLimit), foldingLimit)) * (rt.f(2)))) - (z[0])), ((((rt.component_wise('clamp', z[1], rt.unary('-', foldingLimit), foldingLimit)) * (rt.f(2)))) - (z[1])), ((((rt.component_wise('clamp', z[2], rt.unary('-', foldingLimit), foldingLimit)) * (rt.f(2)))) - (z[2])))
   end
   mandelcube__vec3_float_int_float = lambda do |pos, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
-    _for2_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
+    __sc1944 = nil; __sc1952 = nil; _for2_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
     z = pos
     dr = rt.f(1)
     trap = rt.f(10000000000)
@@ -123,12 +123,12 @@ run_pixel = lambda do |ctx, out|
       factor = rt.f(0.0)
       if rt.bool(rt.binary('<', r2, minR2))
         factor = rt.binary('/', fixedR2, minR2, 1, 'float')
-        z.replace((rt.binary('*', z, factor, 3, 'float')).map { |c| rt.f32(c) })
+        __sc1944 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1944, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1944, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1944, 1, 'float'))
         dr = rt.binary('*', dr, factor, 1, 'float')
       else
         if rt.bool(rt.binary('<', r2, fixedR2))
           factor = rt.binary('/', fixedR2, r2, 1, 'float')
-          z.replace((rt.binary('*', z, factor, 3, 'float')).map { |c| rt.f32(c) })
+          __sc1952 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1952, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1952, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1952, 1, 'float'))
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end
@@ -147,7 +147,7 @@ run_pixel = lambda do |ctx, out|
   juliaCube__vec3_vec3_float_int_float = lambda do |pos, c, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
     c = rt.copy(c, 'float')
-    _for3_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
+    __sc1960 = nil; __sc1968 = nil; _for3_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
     z = pos
     dr = rt.f(1)
     trap = rt.f(10000000000)
@@ -172,12 +172,12 @@ run_pixel = lambda do |ctx, out|
       factor = rt.f(0.0)
       if rt.bool(rt.binary('<', r2, minR2))
         factor = rt.binary('/', fixedR2, minR2, 1, 'float')
-        z.replace((rt.binary('*', z, factor, 3, 'float')).map { |c| rt.f32(c) })
+        __sc1960 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1960, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1960, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1960, 1, 'float'))
         dr = rt.binary('*', dr, factor, 1, 'float')
       else
         if rt.bool(rt.binary('<', r2, fixedR2))
           factor = rt.binary('/', fixedR2, r2, 1, 'float')
-          z.replace((rt.binary('*', z, factor, 3, 'float')).map { |c| rt.f32(c) })
+          __sc1968 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1968, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1968, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1968, 1, 'float'))
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end
@@ -219,33 +219,33 @@ run_pixel = lambda do |ctx, out|
     volSize = _u_volumeSize
     scaledVolSize = rt.construct(1, rt.binary('*', rt.construct(1, volSize), _u_renderScale, 1, 'float'), 'int')
     scaledVolSizeF = rt.construct(1, scaledVolSize)
-    globalPixelCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalPixelCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     pixelCoord = rt.construct(2, rt.construct(2, globalPixelCoord), 'int')
     x = rt.construct(1, rt.component_wise('mod', rt.construct(1, rt.swizzle(pixelCoord, 'x')), scaledVolSizeF), 'int')
     y = rt.binary('%', rt.swizzle(pixelCoord, 'y'), scaledVolSize, 1, 'int')
     z = rt.binary('/', rt.construct(1, rt.swizzle(pixelCoord, 'y')), rt.construct(1, scaledVolSize), 1, 'float')
     if rt.bool((rt.bool((rt.bool(rt.binary('>=', x, scaledVolSize)) || rt.bool(rt.binary('>=', y, scaledVolSize)) ? 1 : 0)) || rt.bool(rt.binary('>=', z, scaledVolSize)) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
-      g['geoOut'].replace((rt.construct(4, rt.f(0.5), rt.f(0.5), rt.f(0.5), rt.f(0))).map { |c| rt.f32(c) })
+      g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))
       return
     end
-    p = rt.construct(3, rt.binary('*', rt.binary('-', rt.binary('*', rt.binary('/', rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)), rt.binary('-', scaledVolSizeF, rt.f(1), 1, 'float'), 3, 'float'), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'), rt.f(1.5), 3, 'float'))
-    juliaC = rt.construct(3, rt.binary('*', rt.construct(3, _u_juliaX, _u_juliaY, _u_juliaZ), rt.f(0.01), 3, 'float'))
+    p = rt.construct(3, ((((((((((x))) / (((scaledVolSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1)))) * (rt.f(1.5))), ((((((((((y))) / (((scaledVolSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1)))) * (rt.f(1.5))), ((((((((((z))) / (((scaledVolSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1)))) * (rt.f(1.5))))
+    juliaC = rt.construct(3, (((_u_juliaX)) * (rt.f(0.0099999997764825821))), (((_u_juliaY)) * (rt.f(0.0099999997764825821))), (((_u_juliaZ)) * (rt.f(0.0099999997764825821))))
     result = rt.construct(3, computeFractal__vec3_vec3.call(p, juliaC))
     dist = rt.swizzle(result, 'x')
     normalizedDist = rt.binary('-', rt.f(1), rt.component_wise('clamp', rt.binary('+', rt.binary('*', dist, rt.f(2), 1, 'float'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1)), 1, 'float')
     trap = rt.component_wise('clamp', rt.binary('*', rt.swizzle(result, 'y'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1))
     iterRatio = rt.swizzle(result, 'z')
-    eps = rt.f(0.01)
-    dxp = rt.swizzle(computeFractal__vec3_vec3.call(rt.binary('+', p, rt.construct(3, eps, rt.f(0), rt.f(0)), 3, 'float'), juliaC), 'x')
-    dyp = rt.swizzle(computeFractal__vec3_vec3.call(rt.binary('+', p, rt.construct(3, rt.f(0), eps, rt.f(0)), 3, 'float'), juliaC), 'x')
-    dzp = rt.swizzle(computeFractal__vec3_vec3.call(rt.binary('+', p, rt.construct(3, rt.f(0), rt.f(0), eps), 3, 'float'), juliaC), 'x')
-    gradient = rt.construct(3, rt.binary('/', rt.construct(3, rt.binary('-', dxp, dist, 1, 'float'), rt.binary('-', dyp, dist, 1, 'float'), rt.binary('-', dzp, dist, 1, 'float')), eps, 3, 'float'))
-    normal = rt.construct(3, rt.normalize(rt.binary('+', gradient, rt.construct(3, rt.f(9.9999999999999995e-07)), 3, 'float')))
+    eps = rt.f(0.0099999997764825821)
+    dxp = rt.swizzle(computeFractal__vec3_vec3.call(rt.construct(3, ((p[0]) + ((eps))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((rt.f(0))))), juliaC), 'x')
+    dyp = rt.swizzle(computeFractal__vec3_vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((eps))), ((p[2]) + ((rt.f(0))))), juliaC), 'x')
+    dzp = rt.swizzle(computeFractal__vec3_vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((eps)))), juliaC), 'x')
+    gradient = rt.construct(3, (((((dxp) - (dist)))) / (eps)), (((((dyp) - (dist)))) / (eps)), (((((dzp) - (dist)))) / (eps)))
+    normal = rt.construct(3, rt.normalize(rt.binary('+', gradient, rt.construct(3, rt.f(9.9999999747524271e-07)), 3, 'float')))
     if rt.bool(rt.binary('==', _u_colorMode, rt.i(0)))
-      g['fragColor'].replace((rt.construct(4, normalizedDist, normalizedDist, normalizedDist, rt.f(1))).map { |c| rt.f32(c) })
+      g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(normalizedDist); g['fragColor'][2] = rt.f32(normalizedDist); g['fragColor'][3] = rt.f32(rt.f(1))
     else
-      g['fragColor'].replace((rt.construct(4, normalizedDist, trap, iterRatio, rt.f(1))).map { |c| rt.f32(c) })
+      g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(trap); g['fragColor'][2] = rt.f32(iterRatio); g['fragColor'][3] = rt.f32(rt.f(1))
     end
     g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), normalizedDist)).map { |c| rt.f32(c) })
   end

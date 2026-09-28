@@ -37,11 +37,11 @@ run_pixel = lambda do |ctx, out|
   sdEquilateralTriangle__vec2_float = lambda do |p, r|
     p = rt.copy(p, 'float')
     k = nil
-    k = rt.f(1.7320508075688772)
+    k = rt.f(1.7320507764816284)
     p = rt.assign_swizzle(p, 'x', rt.binary('-', rt.component_wise('abs', rt.swizzle(p, 'x')), r, 1, 'float'))
     p = rt.assign_swizzle(p, 'y', rt.binary('+', rt.swizzle(p, 'y'), rt.binary('/', r, k, 1, 'float'), 1, 'float'))
     if rt.bool(rt.binary('>', rt.binary('+', rt.swizzle(p, 'x'), rt.binary('*', k, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.f(0)))
-      p.replace((rt.binary('/', rt.construct(2, rt.binary('-', rt.swizzle(p, 'x'), rt.binary('*', k, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.binary('-', rt.binary('*', rt.unary('-', k), rt.swizzle(p, 'x'), 1, 'float'), rt.swizzle(p, 'y'), 1, 'float')), rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
+      p[0] = rt.f32(rt.binary('/', rt.binary('-', rt.swizzle(p, 'x'), rt.binary('*', k, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.f(2), 1, 'float')); p[1] = rt.f32(rt.binary('/', rt.binary('-', rt.binary('*', rt.unary('-', k), rt.swizzle(p, 'x'), 1, 'float'), rt.swizzle(p, 'y'), 1, 'float'), rt.f(2), 1, 'float'))
     end
     p = rt.assign_swizzle(p, 'x', rt.binary('-', rt.swizzle(p, 'x'), rt.component_wise('clamp', rt.swizzle(p, 'x'), rt.binary('*', rt.unary('-', rt.f(2)), r, 1, 'float'), rt.f(0)), 1, 'float'))
     return rt.binary('*', rt.unary('-', rt.length(p)), rt.component_wise('sign', rt.swizzle(p, 'y')), 1, 'float')
@@ -53,18 +53,18 @@ run_pixel = lambda do |ctx, out|
     p = rt.copy(p, 'float')
     _Rlayer = nil; _for0_first = nil; baseSize = nil; d = nil; dBindu = nil; dir = nil; dynTwistRad = nil; folded = nil; i = nil; layerAnimRot = nil; layerTheta = nil; lt = nil; m = nil; q = nil; r = nil; radial = nil; shapeSize = nil; tangent = nil; theta = nil; twistRad = nil; wedge = nil
     r = rt.length(p)
-    theta = rt.binary('-', rt.component_wise('atan', rt.swizzle(p, 'y'), rt.swizzle(p, 'x')), rt.binary('*', rt.f(3.1415926535900001), rt.f(0.5), 1, 'float'), 1, 'float')
-    wedge = rt.binary('/', rt.f(6.2831853071800001), rt.construct(1, _u_symmetry), 1, 'float')
-    twistRad = rt.binary('/', rt.binary('*', _u_twist, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float')
-    baseSize = rt.binary('+', rt.f(0.25), rt.binary('*', _u_thickness, rt.f(0.65000000000000002), 1, 'float'), 1, 'float')
+    theta = rt.binary('-', rt.component_wise('atan', rt.swizzle(p, 'y'), rt.swizzle(p, 'x')), rt.f(1.5707963705062866), 1, 'float')
+    wedge = rt.binary('/', rt.f(6.2831854820251465), rt.construct(1, _u_symmetry), 1, 'float')
+    twistRad = rt.binary('/', rt.binary('*', _u_twist, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')
+    baseSize = rt.binary('+', rt.f(0.25), rt.binary('*', _u_thickness, rt.f(0.64999997615814209), 1, 'float'), 1, 'float')
     dynTwistRad = twistRad
     if rt.bool(rt.binary('==', _u_animation, rt.i(5)))
-      dynTwistRad = rt.binary('*', twistRad, rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float')), 1, 'float')
+      dynTwistRad = rt.binary('*', twistRad, rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float')), 1, 'float')
     end
     m = rt.f(0)
     dBindu = rt.f(0.0)
     if rt.bool(_u_bindu)
-      dBindu = rt.binary('-', rt.length(p), rt.binary('+', rt.f(0.14999999999999999), rt.binary('*', _u_thickness, rt.f(0.14999999999999999), 1, 'float'), 1, 'float'), 1, 'float')
+      dBindu = rt.binary('-', rt.length(p), rt.binary('+', rt.f(0.15000000596046448), rt.binary('*', _u_thickness, rt.f(0.15000000596046448), 1, 'float'), 1, 'float'), 1, 'float')
       m = rt.component_wise('max', m, fillEdge__float.call(dBindu))
     end
     i = rt.i(0)
@@ -84,11 +84,11 @@ run_pixel = lambda do |ctx, out|
       layerAnimRot = rt.f(0)
       dir = rt.f(0.0)
       if rt.bool(rt.binary('==', _u_animation, rt.i(3)))
-        layerAnimRot = rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), rt.binary('+', rt.component_wise('floor', _u_speed), rt.construct(1, i), 1, 'float'), 1, 'float')
+        layerAnimRot = rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), rt.binary('+', rt.component_wise('floor', _u_speed), rt.construct(1, i), 1, 'float'), 1, 'float')
       else
         if rt.bool(rt.binary('==', _u_animation, rt.i(4)))
           dir = (rt.bool(rt.binary('<', rt.component_wise('mod', rt.construct(1, i), rt.f(2)), rt.f(0.5))) ? (rt.f(1)) : (rt.unary('-', rt.f(1))))
-          layerAnimRot = rt.binary('*', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float'), dir, 1, 'float')
+          layerAnimRot = rt.binary('*', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float'), dir, 1, 'float')
         end
       end
       layerTheta = rt.binary('-', rt.binary('-', theta, rt.binary('*', rt.construct(1, i), dynTwistRad, 1, 'float'), 1, 'float'), layerAnimRot, 1, 'float')
@@ -101,12 +101,12 @@ run_pixel = lambda do |ctx, out|
       end
       shapeSize = rt.binary('*', baseSize, rt.binary('+', rt.f(1), rt.binary('*', _u_shapeGrowth, lt, 1, 'float'), 1, 'float'), 1, 'float')
       if rt.bool(rt.binary('==', _u_animation, rt.i(6)))
-        shapeSize = rt.binary('*', shapeSize, rt.binary('+', rt.f(1), rt.binary('*', _u_pulseDepth, rt.component_wise('sin', rt.binary('-', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float'), rt.binary('*', rt.construct(1, i), rt.f(0.59999999999999998), 1, 'float'), 1, 'float')), 1, 'float'), 1, 'float'), 1, 'float')
+        shapeSize = rt.binary('*', shapeSize, rt.binary('+', rt.f(1), rt.binary('*', _u_pulseDepth, rt.component_wise('sin', rt.binary('-', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float'), rt.binary('*', rt.construct(1, i), rt.f(0.60000002384185791), 1, 'float'), 1, 'float')), 1, 'float'), 1, 'float'), 1, 'float')
       end
       d = rt.f(0.0)
       q = rt.construct(2, 0.0)
       if rt.bool(rt.binary('==', _u_shape, rt.i(0)))
-        d = rt.binary('-', rt.length(rt.construct(2, rt.binary('*', radial, rt.f(0.55000000000000004), 1, 'float'), tangent)), shapeSize, 1, 'float')
+        d = rt.binary('-', rt.length(rt.construct(2, rt.binary('*', radial, rt.f(0.55000001192092896), 1, 'float'), tangent)), shapeSize, 1, 'float')
         m = rt.component_wise('max', m, fillEdge__float.call(d))
       else
         if rt.bool(rt.binary('==', _u_shape, rt.i(1)))
@@ -114,7 +114,7 @@ run_pixel = lambda do |ctx, out|
           d = sdEquilateralTriangle__vec2_float.call(q, shapeSize)
           m = rt.component_wise('max', m, fillEdge__float.call(d))
         else
-          d = rt.binary('-', rt.length(rt.construct(2, radial, tangent)), rt.binary('*', shapeSize, rt.f(0.69999999999999996), 1, 'float'), 1, 'float')
+          d = rt.binary('-', rt.length(rt.construct(2, radial, tangent)), rt.binary('*', shapeSize, rt.f(0.69999998807907104), 1, 'float'), 1, 'float')
           m = rt.component_wise('max', m, fillEdge__float.call(d))
         end
       end
@@ -123,22 +123,22 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; globalCoord = nil; m = nil; p = nil; rad = nil; scaleFactor = nil; st = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    st = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     st.replace((rt.binary('*', rt.binary('-', st, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
-    rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float')
+    rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')
     st.replace((rotate2D__vec2_float.call(st, rad)).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('==', _u_animation, rt.i(1)))
-      st.replace((rotate2D__vec2_float.call(st, rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float'))).map { |c| rt.f32(c) })
+      st.replace((rotate2D__vec2_float.call(st, rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float'))).map { |c| rt.f32(c) })
     end
     scaleFactor = rt.binary('-', rt.f(21), _u_scale, 1, 'float')
     if rt.bool(rt.binary('==', _u_animation, rt.i(2)))
-      scaleFactor = rt.binary('*', scaleFactor, rt.binary('+', rt.f(1), rt.binary('*', _u_pulseDepth, rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831853071800001), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float')), 1, 'float'), 1, 'float'), 1, 'float')
+      scaleFactor = rt.binary('*', scaleFactor, rt.binary('+', rt.f(1), rt.binary('*', _u_pulseDepth, rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), rt.component_wise('floor', _u_speed), 1, 'float')), 1, 'float'), 1, 'float'), 1, 'float')
     end
-    p = rt.construct(2, rt.binary('*', st, scaleFactor, 2, 'float'))
+    p = rt.construct(2, ((st[0]) * (scaleFactor)), ((st[1]) * (scaleFactor)))
     m = rt.component_wise('clamp', mandalaMask__vec2.call(p), rt.f(0), rt.f(1))
-    color = rt.construct(3, rt.component_wise('mix', _u_bgColor, _u_fgColor, m))
+    color = rt.construct(3, rt.component_wise('mix', _u_bgColor[0], _u_fgColor[0], m), rt.component_wise('mix', _u_bgColor[1], _u_fgColor[1], m), rt.component_wise('mix', _u_bgColor[2], _u_fgColor[2], m))
     g['fragColor'].replace((rt.construct(4, color, rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

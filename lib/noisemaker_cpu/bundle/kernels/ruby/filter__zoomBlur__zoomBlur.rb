@@ -10,34 +10,26 @@ run_pixel = lambda do |ctx, out|
   _u_fullResolution = u.key?('fullResolution') ? u['fullResolution'] : rt.construct(2, 0.0)
   _u_strength = u.key?('strength') ? u['strength'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
-  pcg__uvec3 = lambda do |v|
-    v = rt.copy(v, 'uint')
-    v.replace(rt.binary('+', rt.binary('*', v, rt.construct(1, rt.i(1664525), 'uint'), 3, 'uint'), rt.construct(1, rt.i(1013904223), 'uint'), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    v.replace(rt.binary('^', v, rt.binary('>>', v, rt.construct(1, rt.i(16), 'uint'), 3, 'uint'), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    return v
+  pcg__uvec3 = lambda do |value|
+    value = rt.copy(value, 'uint')
+    return rt.pcg3d(value)
   end
   prng__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    return rt.binary('/', rt.construct(3, pcg__uvec3.call(rt.construct(3, rt.construct(3, p), 'uint'))), rt.construct(1, rt.construct(1, rt.i(4294967295), 'uint')), 3, 'float')
+    return rt.construct(3, rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[0], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[1], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[2], rt.f(4294967296), 1, 'uint'))
   end
   main__void = lambda do
-    _for0_first = nil; _t = nil; color = nil; fullRes = nil; globalCoord = nil; globalUV = nil; offset = nil; percent = nil; tex = nil; texSize = nil; tileDims = nil; toCenter = nil; total = nil; uv = nil; weight = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    __sc1520 = nil; _for0_first = nil; _t = nil; color = nil; fullRes = nil; globalCoord = nil; globalUV = nil; offset = nil; percent = nil; tex = nil; texSize = nil; tileDims = nil; toCenter = nil; total = nil; uv = nil; weight = nil
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.texture_size(_u_inputTex)
     tileDims = rt.construct(2, rt.construct(2, texSize))
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), tileDims, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (tileDims[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (tileDims[1])))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (tileDims[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (tileDims[1])))
+    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
     color = rt.construct(3, rt.construct(3, rt.f(0)))
     total = rt.f(0)
-    toCenter = rt.construct(2, rt.binary('-', globalUV, rt.f(0.5), 2, 'float'))
-    offset = rt.swizzle(prng__vec3.call(rt.construct(3, rt.f(12.989800000000001), rt.f(78.233000000000004), rt.f(151.7182))), 'x')
+    toCenter = rt.construct(2, ((globalUV[0]) - (rt.f(0.5))), ((globalUV[1]) - (rt.f(0.5))))
+    offset = rt.swizzle(prng__vec3.call(rt.construct(3, (rt.f(12.989800453186035)), (rt.f(78.233001708984375)), (rt.f(151.71820068359375)))), 'x')
     _t = rt.f(0)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -50,11 +42,11 @@ run_pixel = lambda do |ctx, out|
       end
       percent = rt.binary('/', rt.binary('+', _t, offset, 1, 'float'), rt.f(40), 1, 'float')
       weight = rt.binary('*', rt.f(4), rt.binary('-', percent, rt.binary('*', percent, percent, 1, 'float'), 1, 'float'), 1, 'float')
-      tex = rt.construct(4, rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))
-      color.replace((rt.binary('+', color, rt.binary('*', rt.swizzle(tex, 'rgb'), weight, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+      tex = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))[3])
+      color[0] = rt.f32(rt.binary('+', color[0], ((rt.swizzle(tex, 'r')) * (weight)), 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], ((rt.swizzle(tex, 'g')) * (weight)), 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], ((rt.swizzle(tex, 'b')) * (weight)), 1, 'float'))
       total = rt.binary('+', total, weight, 1, 'float')
     end
-    color.replace((rt.binary('/', color, total, 3, 'float')).map { |c| rt.f32(c) })
+    __sc1520 = total; color[0] = rt.f32(rt.binary('/', color[0], __sc1520, 1, 'float')); color[1] = rt.f32(rt.binary('/', color[1], __sc1520, 1, 'float')); color[2] = rt.f32(rt.binary('/', color[2], __sc1520, 1, 'float'))
     g['fragColor'].replace((rt.construct(4, color, rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

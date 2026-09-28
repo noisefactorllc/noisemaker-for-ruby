@@ -13,13 +13,13 @@ run_pixel = lambda do |ctx, out|
   _u_alpha = u.key?('alpha') ? u['alpha'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
-    _for0_first = nil; blended = nil; convX = nil; convY = nil; dist = nil; globalCoord = nil; i = nil; offsets = nil; origColor = nil; resolution = nil; result = nil; sobel_x = nil; sobel_y = nil; texSample = nil; texSize = nil; texelSize = nil; uv = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    __hoist1168 = nil; __hoist1176 = nil; _for0_first = nil; blended = nil; convX = nil; convY = nil; dist = nil; globalCoord = nil; i = nil; offsets = nil; origColor = nil; resolution = nil; result = nil; sobel_x = nil; sobel_y = nil; texSample = nil; texSize = nil; texelSize = nil; uv = nil
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.texture_size(_u_inputTex)
     resolution = rt.construct(2, rt.construct(2, texSize))
-    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary('/', rt.f(1), resolution, 2, 'float'))
-    origColor = rt.construct(4, rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
+    texelSize = rt.construct(2, ((rt.f(1)) / (resolution[0])), ((rt.f(1)) / (resolution[1])))
+    origColor = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[3])
     sobel_x = rt.new_array(rt.i(9), 1)
     sobel_x[(rt.i(0)).to_i] = rt.f(1)
     sobel_x[(rt.i(1)).to_i] = rt.f(0)
@@ -62,13 +62,13 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      texSample = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', offsets[(i).to_i], _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'rgb'))
-      convX.replace((rt.binary('+', convX, rt.binary('*', texSample, sobel_x[(i).to_i], 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-      convY.replace((rt.binary('+', convY, rt.binary('*', texSample, sobel_y[(i).to_i], 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+      texSample = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'r'), rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'g'), rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'b'))
+      __hoist1168 = rt.binary('*', texSample, rt.array_index(sobel_x, i), 3, 'float'); convX[0] = rt.f32(rt.binary('+', convX[0], __hoist1168[0], 1, 'float')); convX[1] = rt.f32(rt.binary('+', convX[1], __hoist1168[1], 1, 'float')); convX[2] = rt.f32(rt.binary('+', convX[2], __hoist1168[2], 1, 'float'))
+      __hoist1176 = rt.binary('*', texSample, rt.array_index(sobel_y, i), 3, 'float'); convY[0] = rt.f32(rt.binary('+', convY[0], __hoist1176[0], 1, 'float')); convY[1] = rt.f32(rt.binary('+', convY[1], __hoist1176[1], 1, 'float')); convY[2] = rt.f32(rt.binary('+', convY[2], __hoist1176[2], 1, 'float'))
     end
     dist = rt.distance(convX, convY)
-    result = rt.construct(3, rt.binary('*', rt.swizzle(origColor, 'rgb'), dist, 3, 'float'))
-    blended = rt.construct(3, rt.component_wise('mix', rt.swizzle(origColor, 'rgb'), result, _u_alpha))
+    result = rt.construct(3, ((rt.swizzle(origColor, 'r')) * (dist)), ((rt.swizzle(origColor, 'g')) * (dist)), ((rt.swizzle(origColor, 'b')) * (dist)))
+    blended = rt.construct(3, rt.component_wise('mix', rt.swizzle(origColor, 'r'), result[0], _u_alpha), rt.component_wise('mix', rt.swizzle(origColor, 'g'), result[1], _u_alpha), rt.component_wise('mix', rt.swizzle(origColor, 'b'), result[2], _u_alpha))
     g['fragColor'].replace((rt.construct(4, blended, rt.swizzle(origColor, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

@@ -16,11 +16,11 @@ run_pixel = lambda do |ctx, out|
   _u_rotation = u.key?('rotation') ? u['rotation'] : rt.f(0.0)
   _u_seed = u.key?('seed') ? u['seed'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.1415926535897931)
-  g['TAU'] = rt.f(6.2831853071795862)
+  g['PI'] = rt.f(3.1415927410125732)
+  g['TAU'] = rt.f(6.2831854820251465)
   hash11__float_float = lambda do |p, s|
-    p = rt.component_wise('fract', rt.binary('+', rt.binary('*', p, rt.f(234.34), 1, 'float'), rt.binary('*', s, rt.f(0.71830000000000005), 1, 'float'), 1, 'float'))
-    p = rt.binary('+', p, rt.binary('*', p, rt.binary('+', p, rt.f(34.229999999999997), 1, 'float'), 1, 'float'), 1, 'float')
+    p = rt.component_wise('fract', rt.binary('+', rt.binary('*', p, rt.f(234.33999633789062), 1, 'float'), rt.binary('*', s, rt.f(0.7182999849319458), 1, 'float'), 1, 'float'))
+    p = rt.binary('+', p, rt.binary('*', p, rt.binary('+', p, rt.f(34.229999542236328), 1, 'float'), 1, 'float'), 1, 'float')
     return rt.component_wise('fract', rt.binary('*', p, p, 1, 'float'))
   end
   tilingNoise1D__float_float_float = lambda do |x, freq, s|
@@ -62,14 +62,14 @@ run_pixel = lambda do |ctx, out|
     return rt.component_wise('step', rt.f(0.5), rt.component_wise('fract', _t))
   end
   main__void = lambda do
-    _t = nil; freq = nil; globalCoord = nil; res = nil; rotRad = nil; scaledTime = nil; scrollOffset = nil; scrolledPos = nil; spatialPhase = nil; spatialPos = nil; st = nil; timeNoise = nil; timePhase = nil; val = nil; valueNoise = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    __sc1792 = nil; _t = nil; freq = nil; globalCoord = nil; res = nil; rotRad = nil; scaledTime = nil; scrollOffset = nil; scrolledPos = nil; spatialPhase = nil; spatialPos = nil; st = nil; timeNoise = nil; timePhase = nil; val = nil; valueNoise = nil
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     res = _u_fullResolution
     if rt.bool(rt.binary('<', rt.swizzle(res, 'x'), rt.f(1)))
-      res.replace((rt.construct(2, rt.f(1024), rt.f(1024))).map { |c| rt.f32(c) })
+      res[0] = rt.f32(rt.f(1024)); res[1] = rt.f32(rt.f(1024))
     end
-    st = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), res, 2, 'float'))
-    st.replace((rt.binary('-', st, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
+    st = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (res[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (res[1])))
+    __sc1792 = rt.f(0.5); st[0] = rt.f32(rt.binary('-', st[0], __sc1792, 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __sc1792, 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     rotRad = rt.binary('/', rt.binary('*', _u_rotation, g['PI'], 1, 'float'), rt.f(180), 1, 'float')
     st.replace((rotate2D__vec2_float.call(st, rotRad)).map { |c| rt.f32(c) })

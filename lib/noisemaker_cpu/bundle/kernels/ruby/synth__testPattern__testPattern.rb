@@ -18,7 +18,7 @@ run_pixel = lambda do |ctx, out|
       return 0
     end
     bitIndex = rt.binary('+', rt.binary('*', y, rt.i(3), 1, 'int'), rt.binary('-', rt.i(2), x, 1, 'int'), 1, 'int')
-    return rt.binary('==', rt.binary('&', rt.binary('>>', g['GLYPH'][(digit).to_i], bitIndex, 1, 'int'), rt.i(1), 1, 'int'), rt.i(1))
+    return rt.binary('==', rt.binary('&', rt.binary('>>', rt.array_index(g['GLYPH'], digit), bitIndex, 1, 'int'), rt.i(1), 1, 'int'), rt.i(1))
   end
   renderNumber__int_vec2 = lambda do |number, cellUV|
     cellUV = rt.copy(cellUV, 'float')
@@ -30,9 +30,9 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('>=', number, rt.i(100)))
       numDigits = rt.i(3)
     end
-    glyphWidth = rt.f(0.14999999999999999)
-    glyphHeight = rt.f(0.34999999999999998)
-    spacing = rt.f(0.050000000000000003)
+    glyphWidth = rt.f(0.15000000596046448)
+    glyphHeight = rt.f(0.34999999403953552)
+    spacing = rt.f(0.05000000074505806)
     totalWidth = rt.binary('+', rt.binary('*', rt.construct(1, numDigits), glyphWidth, 1, 'float'), rt.binary('*', rt.construct(1, rt.binary('-', numDigits, rt.i(1), 1, 'int')), spacing, 1, 'float'), 1, 'float')
     startX = rt.binary('-', rt.f(0.5), rt.binary('*', totalWidth, rt.f(0.5), 1, 'float'), 1, 'float')
     startY = rt.binary('-', rt.f(0.5), rt.binary('*', glyphHeight, rt.f(0.5), 1, 'float'), 1, 'float')
@@ -75,7 +75,7 @@ run_pixel = lambda do |ctx, out|
         localY = rt.binary('/', rt.binary('-', rt.swizzle(cellUV, 'y'), startY, 1, 'float'), glyphHeight, 1, 'float')
         gx = rt.construct(1, rt.binary('*', localX, rt.f(3), 1, 'float'), 'int')
         gy = rt.construct(1, rt.binary('*', localY, rt.f(5), 1, 'float'), 'int')
-        digit = digits[(rt.binary('-', rt.binary('-', numDigits, rt.i(1), 1, 'int'), d, 1, 'int')).to_i]
+        digit = rt.array_index(digits, rt.binary('-', rt.binary('-', numDigits, rt.i(1), 1, 'int'), d, 1, 'int'))
         return sampleGlyph__int_int_int.call(digit, gx, gy)
       end
     end
@@ -89,7 +89,7 @@ run_pixel = lambda do |ctx, out|
     cellY = rt.binary('%', rt.construct(1, rt.binary('*', rt.swizzle(uv, 'y'), rt.construct(1, n), 1, 'float'), 'int'), n, 1, 'int')
     cellNum = rt.binary('+', rt.binary('*', rt.binary('-', rt.binary('-', n, rt.i(1), 1, 'int'), cellY, 1, 'int'), n, 1, 'int'), cellX, 1, 'int')
     isWhiteCell = rt.binary('==', rt.binary('%', rt.binary('+', cellX, cellY, 1, 'int'), rt.i(2), 1, 'int'), rt.i(0))
-    cellUV = rt.construct(2, rt.component_wise('fract', rt.binary('*', uv, rt.construct(1, n), 2, 'float')))
+    cellUV = rt.construct(2, rt.component_wise('fract', rt.f32(((uv[0]) * ((n))))), rt.component_wise('fract', rt.f32(((uv[1]) * ((n))))))
     isGlyph = renderNumber__int_vec2.call(cellNum, cellUV)
     cellColor = (rt.bool(isWhiteCell) ? (rt.f(1)) : (rt.f(0)))
     glyphColor = (rt.bool(isWhiteCell) ? (rt.f(0)) : (rt.f(1)))
@@ -102,7 +102,7 @@ run_pixel = lambda do |ctx, out|
     bar = rt.construct(1, rt.binary('*', rt.swizzle(uv, 'x'), rt.f(8), 1, 'float'), 'int')
     bar = rt.component_wise('clamp', bar, rt.i(0), rt.i(7))
     colors = rt.construct(3, rt.array([rt.construct(3, rt.f(1), rt.f(1), rt.f(1)), rt.construct(3, rt.f(1), rt.f(1), rt.f(0)), rt.construct(3, rt.f(0), rt.f(1), rt.f(1)), rt.construct(3, rt.f(0), rt.f(1), rt.f(0)), rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), rt.construct(3, rt.f(1), rt.f(0), rt.f(0)), rt.construct(3, rt.f(0), rt.f(0), rt.f(1)), rt.construct(3, rt.f(0), rt.f(0), rt.f(0))]))
-    return rt.construct(4, colors[(bar).to_i], rt.f(1))
+    return rt.construct(4, rt.array_index(colors, bar), rt.f(1))
   end
   gradient__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
@@ -116,9 +116,9 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     cellUV = nil; edge = nil; fw = nil; line = nil; n = nil
     n = rt.component_wise('max', _u_gridSize, rt.i(1))
-    cellUV = rt.construct(2, rt.component_wise('fract', rt.binary('*', uv, rt.construct(1, n), 2, 'float')))
-    edge = rt.construct(2, rt.component_wise('min', cellUV, rt.binary('-', rt.f(1), cellUV, 2, 'float')))
-    fw = rt.construct(2, rt.binary('*', rt.binary('/', rt.construct(2, rt.f(1)), _u_fullResolution, 2, 'float'), rt.construct(1, n), 2, 'float'))
+    cellUV = rt.construct(2, rt.component_wise('fract', rt.f32(((uv[0]) * ((n))))), rt.component_wise('fract', rt.f32(((uv[1]) * ((n))))))
+    edge = rt.construct(2, rt.component_wise('min', cellUV[0], rt.f32(((rt.f(1)) - (cellUV[0])))), rt.component_wise('min', cellUV[1], rt.f32(((rt.f(1)) - (cellUV[1])))))
+    fw = rt.construct(2, (((((rt.f(1))) / (_u_fullResolution[0]))) * ((n))), (((((rt.f(1))) / (_u_fullResolution[1]))) * ((n))))
     line = rt.binary('-', rt.f(1), rt.binary('*', rt.component_wise('smoothstep', rt.f(0), rt.binary('*', rt.f(2), rt.swizzle(fw, 'x'), 1, 'float'), rt.swizzle(edge, 'x')), rt.component_wise('smoothstep', rt.f(0), rt.binary('*', rt.f(2), rt.swizzle(fw, 'y'), 1, 'float'), rt.swizzle(edge, 'y')), 1, 'float'), 1, 'float')
     return rt.construct(4, rt.construct(3, line), rt.f(1))
   end
@@ -136,23 +136,23 @@ run_pixel = lambda do |ctx, out|
     cellX = rt.binary('%', rt.construct(1, rt.binary('*', rt.swizzle(uv, 'x'), rt.construct(1, n), 1, 'float'), 'int'), n, 1, 'int')
     cellY = rt.binary('%', rt.construct(1, rt.binary('*', rt.swizzle(uv, 'y'), rt.construct(1, n), 1, 'float'), 'int'), n, 1, 'int')
     cellIndex = rt.binary('+', rt.binary('*', cellY, n, 1, 'int'), cellX, 1, 'int')
-    hue = rt.component_wise('fract', rt.binary('*', rt.construct(1, cellIndex), rt.f(0.61803398874989501), 1, 'float'))
+    hue = rt.component_wise('fract', rt.binary('*', rt.construct(1, cellIndex), rt.f(0.6180340051651001), 1, 'float'))
     return rt.construct(4, hue2rgb__float.call(hue), rt.f(1))
   end
   dotGrid__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     dist = nil; dot = nil; n = nil; nearest = nil; scaled = nil
     n = rt.component_wise('max', _u_gridSize, rt.i(1))
-    scaled = rt.construct(2, rt.binary('*', uv, rt.construct(1, n), 2, 'float'))
-    nearest = rt.construct(2, rt.component_wise('round', scaled))
+    scaled = rt.construct(2, ((uv[0]) * ((n))), ((uv[1]) * ((n))))
+    nearest = rt.construct(2, rt.component_wise('round', scaled[0]), rt.component_wise('round', scaled[1]))
     dist = rt.length(rt.binary('-', scaled, nearest, 2, 'float'))
-    dot = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.12), rt.f(0.14999999999999999), dist), 1, 'float')
+    dot = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.11999999731779099), rt.f(0.15000000596046448), dist), 1, 'float')
     return rt.construct(4, rt.construct(3, dot), rt.f(1))
   end
   main__void = lambda do
     globalCoord = nil; uv = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     if rt.bool(rt.binary('==', _u_pattern, rt.i(1)))
       g['fragColor'].replace((colorBars__vec2.call(uv)).map { |c| rt.f32(c) })
     else

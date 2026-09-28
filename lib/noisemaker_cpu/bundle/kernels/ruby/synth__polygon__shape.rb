@@ -21,29 +21,32 @@ run_pixel = lambda do |ctx, out|
   polygon__vec2_float = lambda do |st, sides|
     st = rt.copy(st, 'float')
     a = nil; r = nil
-    a = rt.binary('+', rt.component_wise('atan', rt.swizzle(st, 'y'), rt.swizzle(st, 'x')), rt.f(3.1415926500000002), 1, 'float')
-    r = rt.binary('/', rt.f(6.2831853000000004), sides, 1, 'float')
+    a = rt.binary('+', rt.component_wise('atan', rt.swizzle(st, 'y'), rt.swizzle(st, 'x')), rt.f(3.1415927410125732), 1, 'float')
+    r = rt.binary('/', rt.f(6.2831854820251465), sides, 1, 'float')
     return rt.binary('*', rt.component_wise('cos', rt.binary('-', rt.binary('*', rt.component_wise('floor', rt.binary('+', rt.f(0.5), rt.binary('/', a, r, 1, 'float'), 1, 'float')), r, 1, 'float'), a, 1, 'float')), rt.length(st), 1, 'float')
   end
   main__void = lambda do
-    bgMask = nil; c = nil; d = nil; fgMask = nil; globalCoord = nil; m = nil; outColor = nil; s = nil; sidesF = nil; st = nil; totalAlpha = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    bgMask = nil; c = nil; cpu_vector_assignment_1 = nil; cpu_vector_assignment_2 = nil; d = nil; fgMask = nil; globalCoord = nil; m = nil; outColor = nil; s = nil; sidesF = nil; st = nil; totalAlpha = nil
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    st = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     st.replace((rt.binary('*', rt.binary('-', st, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
-    c = rt.component_wise('cos', rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float'))
-    s = rt.component_wise('sin', rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415926535900001), 1, 'float'), rt.f(180), 1, 'float'))
-    st.replace((rt.construct(2, rt.binary('-', rt.binary('*', rt.swizzle(st, 'x'), c, 1, 'float'), rt.binary('*', rt.swizzle(st, 'y'), s, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(st, 'x'), s, 1, 'float'), rt.binary('*', rt.swizzle(st, 'y'), c, 1, 'float'), 1, 'float'))).map { |c| rt.f32(c) })
+    c = rt.component_wise('cos', rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float'))
+    s = rt.component_wise('sin', rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float'))
+    cpu_vector_assignment_1 = rt.construct(2, rt.construct(2, rt.binary('-', rt.binary('*', rt.swizzle(st, 'x'), c, 1, 'float'), rt.binary('*', rt.swizzle(st, 'y'), s, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(st, 'x'), s, 1, 'float'), rt.binary('*', rt.swizzle(st, 'y'), c, 1, 'float'), 1, 'float')))
+    st.replace((cpu_vector_assignment_1).map { |c| rt.f32(c) })
     sidesF = rt.construct(1, rt.component_wise('max', _u_sides, rt.i(3)))
+    cpu_vector_assignment_2 = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u_sides, rt.i(3)))
-      st.replace((rt.construct(2, rt.swizzle(st, 'y'), rt.unary('-', rt.swizzle(st, 'x')))).map { |c| rt.f32(c) })
+      cpu_vector_assignment_2 = rt.construct(2, rt.construct(2, rt.swizzle(st, 'y'), rt.unary('-', rt.swizzle(st, 'x'))))
+      st.replace((cpu_vector_assignment_2).map { |c| rt.f32(c) })
     end
-    d = rt.binary('/', polygon__vec2_float.call(st, sidesF), rt.component_wise('cos', rt.binary('/', rt.f(3.1415926535900001), sidesF, 1, 'float')), 1, 'float')
-    m = rt.component_wise('smoothstep', _u_radius, rt.binary('-', _u_radius, _u_smoothing, 1, 'float'), d)
+    d = rt.binary('/', polygon__vec2_float.call(st, sidesF), rt.component_wise('cos', rt.binary('/', rt.f(3.1415927410125732), sidesF, 1, 'float')), 1, 'float')
+    m = (rt.bool(rt.binary('==', _u_smoothing, rt.f(0))) ? ((rt.bool(rt.binary('<=', d, _u_radius)) ? (rt.f(1)) : (rt.f(0)))) : (rt.component_wise('smoothstep', _u_radius, rt.binary('-', _u_radius, _u_smoothing, 1, 'float'), d)))
     fgMask = rt.binary('*', m, _u_fgAlpha, 1, 'float')
     bgMask = rt.binary('*', rt.binary('-', rt.f(1), m, 1, 'float'), _u_bgAlpha, 1, 'float')
     totalAlpha = rt.binary('+', fgMask, bgMask, 1, 'float')
-    outColor = rt.construct(3, (rt.bool(rt.binary('>', totalAlpha, rt.f(0))) ? (rt.binary('/', rt.binary('+', rt.binary('*', _u_fgColor, fgMask, 3, 'float'), rt.binary('*', _u_bgColor, bgMask, 3, 'float'), 3, 'float'), totalAlpha, 3, 'float')) : (rt.construct(3, rt.f(0)))))
+    outColor = rt.construct(3, (rt.bool(rt.binary('>', totalAlpha, rt.f(0))) ? (((((((_u_fgColor[0]) * (fgMask))) + (((_u_bgColor[0]) * (bgMask))))) / (totalAlpha))) : ((rt.f(0)))), (rt.bool(rt.binary('>', totalAlpha, rt.f(0))) ? (((((((_u_fgColor[1]) * (fgMask))) + (((_u_bgColor[1]) * (bgMask))))) / (totalAlpha))) : ((rt.f(0)))), (rt.bool(rt.binary('>', totalAlpha, rt.f(0))) ? (((((((_u_fgColor[2]) * (fgMask))) + (((_u_bgColor[2]) * (bgMask))))) / (totalAlpha))) : ((rt.f(0)))))
     g['fragColor'].replace((rt.construct(4, rt.binary('*', outColor, totalAlpha, 3, 'float'), totalAlpha)).map { |c| rt.f32(c) })
   end
   main__void.call

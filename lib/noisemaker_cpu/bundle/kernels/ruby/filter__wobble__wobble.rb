@@ -11,41 +11,33 @@ run_pixel = lambda do |ctx, out|
   _u_range = u.key?('range') ? u['range'] : rt.f(0.0)
   _u_wrap = u.key?('wrap') ? u['wrap'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
-  g['TAU'] = rt.f(6.2831853071795898)
+  g['TAU'] = rt.f(6.2831854820251465)
   g['X_NOISE_SEED'] = rt.construct(3, rt.f(17), rt.f(29), rt.f(11))
   g['Y_NOISE_SEED'] = rt.construct(3, rt.f(41), rt.f(23), rt.f(7))
-  pcg__uvec3 = lambda do |v|
-    v = rt.copy(v, 'uint')
-    v.replace(rt.binary('+', rt.binary('*', v, rt.i(1664525), 3, 'uint'), rt.i(1013904223), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    v.replace(rt.binary('^', v, rt.binary('>>', v, rt.i(16), 3, 'uint'), 3, 'uint'))
-    v = rt.assign_swizzle(v, 'x', rt.binary('+', rt.swizzle(v, 'x'), rt.binary('*', rt.swizzle(v, 'y'), rt.swizzle(v, 'z'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'y', rt.binary('+', rt.swizzle(v, 'y'), rt.binary('*', rt.swizzle(v, 'z'), rt.swizzle(v, 'x'), 1, 'uint'), 1, 'uint'))
-    v = rt.assign_swizzle(v, 'z', rt.binary('+', rt.swizzle(v, 'z'), rt.binary('*', rt.swizzle(v, 'x'), rt.swizzle(v, 'y'), 1, 'uint'), 1, 'uint'))
-    return v
+  pcg__uvec3 = lambda do |value|
+    value = rt.copy(value, 'uint')
+    return rt.pcg3d(value)
   end
   hash31__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     seed = nil
     seed = rt.construct(3, rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'z'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'z'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'z')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), 'uint')
-    return rt.binary('/', rt.construct(1, rt.swizzle(pcg__uvec3.call(seed), 'x')), rt.construct(1, rt.i(4294967295)), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.swizzle(rt.pcg3d(seed), 'x')), rt.f(4294967296), 1, 'float')
   end
   noise3d__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     f = nil; i = nil; n000 = nil; n001 = nil; n010 = nil; n011 = nil; n100 = nil; n101 = nil; n110 = nil; n111 = nil; x0 = nil; x1 = nil; x2 = nil; x3 = nil; y0 = nil; y1 = nil
-    i = rt.construct(3, rt.component_wise('floor', p))
-    f = rt.construct(3, rt.component_wise('fract', p))
+    i = rt.construct(3, rt.component_wise('floor', p[0]), rt.component_wise('floor', p[1]), rt.component_wise('floor', p[2]))
+    f = rt.construct(3, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]), rt.component_wise('fract', p[2]))
     f.replace((rt.binary('*', rt.binary('*', f, f, 3, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 3, 'float'), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     n000 = hash31__vec3.call(i)
-    n100 = hash31__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(1), rt.f(0), rt.f(0)), 3, 'float'))
-    n010 = hash31__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(0), rt.f(1), rt.f(0)), 3, 'float'))
-    n110 = hash31__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(1), rt.f(1), rt.f(0)), 3, 'float'))
-    n001 = hash31__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(0), rt.f(0), rt.f(1)), 3, 'float'))
-    n101 = hash31__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(1), rt.f(0), rt.f(1)), 3, 'float'))
-    n011 = hash31__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(0), rt.f(1), rt.f(1)), 3, 'float'))
-    n111 = hash31__vec3.call(rt.binary('+', i, rt.construct(3, rt.f(1), rt.f(1), rt.f(1)), 3, 'float'))
+    n100 = hash31__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(0)))), ((i[2]) + ((rt.f(0))))))
+    n010 = hash31__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(0)))), ((i[1]) + ((rt.f(1)))), ((i[2]) + ((rt.f(0))))))
+    n110 = hash31__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(1)))), ((i[2]) + ((rt.f(0))))))
+    n001 = hash31__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(0)))), ((i[1]) + ((rt.f(0)))), ((i[2]) + ((rt.f(1))))))
+    n101 = hash31__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(0)))), ((i[2]) + ((rt.f(1))))))
+    n011 = hash31__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(0)))), ((i[1]) + ((rt.f(1)))), ((i[2]) + ((rt.f(1))))))
+    n111 = hash31__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(1)))), ((i[2]) + ((rt.f(1))))))
     x0 = rt.component_wise('mix', n000, n100, rt.swizzle(f, 'x'))
     x1 = rt.component_wise('mix', n010, n110, rt.swizzle(f, 'x'))
     x2 = rt.component_wise('mix', n001, n101, rt.swizzle(f, 'x'))
@@ -58,9 +50,9 @@ run_pixel = lambda do |ctx, out|
     seed = rt.copy(seed, 'float')
     angle = nil; n = nil; w = nil; z = nil
     angle = rt.binary('*', _t, g['TAU'], 1, 'float')
-    z = rt.binary('+', rt.binary('+', rt.binary('*', rt.component_wise('cos', angle), spd, 1, 'float'), rt.swizzle(seed, 'x'), 1, 'float'), rt.binary('*', spd, rt.f(0.317), 1, 'float'), 1, 'float')
-    w = rt.binary('+', rt.binary('+', rt.binary('*', rt.component_wise('sin', angle), spd, 1, 'float'), rt.swizzle(seed, 'y'), 1, 'float'), rt.binary('*', spd, rt.f(0.51900000000000002), 1, 'float'), 1, 'float')
-    n = noise3d__vec3.call(rt.construct(3, z, w, rt.binary('+', rt.swizzle(seed, 'z'), rt.binary('*', spd, rt.f(0.10000000000000001), 1, 'float'), 1, 'float')))
+    z = rt.binary('+', rt.binary('+', rt.binary('*', rt.component_wise('cos', angle), spd, 1, 'float'), rt.swizzle(seed, 'x'), 1, 'float'), rt.binary('*', spd, rt.f(0.31700000166893005), 1, 'float'), 1, 'float')
+    w = rt.binary('+', rt.binary('+', rt.binary('*', rt.component_wise('sin', angle), spd, 1, 'float'), rt.swizzle(seed, 'y'), 1, 'float'), rt.binary('*', spd, rt.f(0.51899999380111694), 1, 'float'), 1, 'float')
+    n = noise3d__vec3.call(rt.construct(3, (z), (w), (((rt.swizzle(seed, 'z')) + (((spd) * (rt.f(0.10000000149011612))))))))
     return rt.component_wise('clamp', n, rt.f(0), rt.f(1))
   end
   applyWrap__vec2 = lambda do |uv|
@@ -68,7 +60,7 @@ run_pixel = lambda do |ctx, out|
     mode = nil
     mode = rt.construct(1, _u_wrap, 'int')
     if rt.bool(rt.binary('==', mode, rt.i(0)))
-      return rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('+', uv, rt.f(1), 2, 'float'), rt.f(2)), rt.f(1), 2, 'float'))
+      return rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))
     else
       if rt.bool(rt.binary('==', mode, rt.i(1)))
         return rt.component_wise('fract', uv)
@@ -78,15 +70,15 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     offset = nil; offsetScale = nil; r = nil; sampleCoord = nil; sampled = nil; spd = nil; xRandom = nil; yRandom = nil
-    spd = rt.component_wise('max', _u_speed, rt.f(0.001))
+    spd = rt.component_wise('max', _u_speed, rt.f(0.0010000000474974513))
     r = rt.component_wise('max', _u_range, rt.f(0))
-    xRandom = simplexRandom__float_float_vec3.call(rt.binary('+', _u_time, rt.binary('*', _u_speed, rt.f(0.10000000000000001), 1, 'float'), 1, 'float'), spd, g['X_NOISE_SEED'])
-    yRandom = simplexRandom__float_float_vec3.call(rt.binary('+', _u_time, rt.binary('*', _u_speed, rt.f(0.10000000000000001), 1, 'float'), 1, 'float'), spd, g['Y_NOISE_SEED'])
-    offsetScale = rt.binary('*', r, rt.binary('+', rt.f(0.01), rt.binary('*', _u_speed, rt.f(0.02), 1, 'float'), 1, 'float'), 1, 'float')
-    offset = rt.construct(2, rt.binary('*', rt.binary('-', rt.construct(2, xRandom, yRandom), rt.f(0.5), 2, 'float'), offsetScale, 2, 'float'))
-    sampleCoord = rt.construct(2, rt.binary('+', ctx.uv, offset, 2, 'float'))
+    xRandom = simplexRandom__float_float_vec3.call(rt.binary('+', _u_time, rt.binary('*', _u_speed, rt.f(0.10000000149011612), 1, 'float'), 1, 'float'), spd, g['X_NOISE_SEED'])
+    yRandom = simplexRandom__float_float_vec3.call(rt.binary('+', _u_time, rt.binary('*', _u_speed, rt.f(0.10000000149011612), 1, 'float'), 1, 'float'), spd, g['Y_NOISE_SEED'])
+    offsetScale = rt.binary('*', r, rt.binary('+', rt.f(0.0099999997764825821), rt.binary('*', _u_speed, rt.f(0.019999999552965164), 1, 'float'), 1, 'float'), 1, 'float')
+    offset = rt.construct(2, (((((xRandom)) - (rt.f(0.5)))) * (offsetScale)), (((((yRandom)) - (rt.f(0.5)))) * (offsetScale)))
+    sampleCoord = rt.construct(2, ((ctx.uv[0]) + (offset[0])), ((ctx.uv[1]) + (offset[1])))
     sampleCoord.replace((applyWrap__vec2.call(sampleCoord)).map { |c| rt.f32(c) })
-    sampled = rt.construct(4, rt.texture(_u_inputTex, sampleCoord))
+    sampled = rt.construct(4, (rt.texture(_u_inputTex, sampleCoord))[0], (rt.texture(_u_inputTex, sampleCoord))[1], (rt.texture(_u_inputTex, sampleCoord))[2], (rt.texture(_u_inputTex, sampleCoord))[3])
     g['fragColor'].replace((sampled).map { |c| rt.f32(c) })
   end
   main__void.call

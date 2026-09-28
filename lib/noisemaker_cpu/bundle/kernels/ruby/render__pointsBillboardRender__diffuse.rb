@@ -17,21 +17,21 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     a = nil; b = nil; dims = nil; f = nil; lo = nil; p = nil
     dims = rt.texture_size(_u_defocusTex)
-    p = rt.construct(2, rt.binary('-', rt.binary('*', uv, rt.construct(2, dims), 2, 'float'), rt.f(0.5), 2, 'float'))
+    p = rt.construct(2, ((((uv[0]) * ((dims[0])))) - (rt.f(0.5))), ((((uv[1]) * ((dims[1])))) - (rt.f(0.5))))
     lo = rt.construct(2, rt.construct(2, rt.component_wise('floor', p)), 'int')
-    f = rt.construct(2, rt.component_wise('fract', p))
+    f = rt.construct(2, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]))
     a = rt.component_wise('clamp', lo, rt.construct(2, rt.i(0), 'int'), rt.binary('-', dims, rt.i(1), 2, 'int'))
     b = rt.component_wise('clamp', rt.binary('+', lo, rt.i(1), 2, 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', dims, rt.i(1), 2, 'int'))
     return rt.component_wise('mix', rt.component_wise('mix', rt.texel_fetch(_u_defocusTex, a, rt.i(0)), rt.texel_fetch(_u_defocusTex, rt.construct(2, rt.swizzle(b, 'x'), rt.swizzle(a, 'y'), 'int'), rt.i(0)), rt.swizzle(f, 'x')), rt.component_wise('mix', rt.texel_fetch(_u_defocusTex, rt.construct(2, rt.swizzle(a, 'x'), rt.swizzle(b, 'y'), 'int'), rt.i(0)), rt.texel_fetch(_u_defocusTex, b, rt.i(0)), rt.swizzle(f, 'x')), rt.swizzle(f, 'y'))
   end
   main__void = lambda do
-    decay = nil; trailColor = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    trailColor = rt.construct(4, rt.texture(_u_trailTex, uv))
+    __hoist1672 = nil; decay = nil; trailColor = nil; uv = nil
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
+    trailColor = rt.construct(4, (rt.texture(_u_trailTex, uv))[0], (rt.texture(_u_trailTex, uv))[1], (rt.texture(_u_trailTex, uv))[2], (rt.texture(_u_trailTex, uv))[3])
     decay = rt.component_wise('clamp', rt.binary('/', _u_intensity, rt.f(100), 1, 'float'), rt.f(0), rt.f(1))
-    g['fragColor'].replace((rt.component_wise('clamp', rt.binary('*', trailColor, decay, 4, 'float'), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.component_wise('clamp', rt.construct(4, ((trailColor[0]) * (decay)), ((trailColor[1]) * (decay)), ((trailColor[2]) * (decay)), ((trailColor[3]) * (decay))), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     if rt.bool((rt.bool((rt.bool(rt.binary('==', _u_blendMode, rt.i(0))) && rt.bool(rt.binary('>', _u_aperture, rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('!=', _u_viewMode, rt.i(0))) ? 1 : 0))
-      g['fragColor'].replace((rt.binary('+', g['fragColor'], sampleDefocus__vec2.call(uv), 4, 'float')).map { |c| rt.f32(c) })
+      __hoist1672 = sampleDefocus__vec2.call(uv); g['fragColor'][0] = rt.f32(rt.binary('+', g['fragColor'][0], __hoist1672[0], 1, 'float')); g['fragColor'][1] = rt.f32(rt.binary('+', g['fragColor'][1], __hoist1672[1], 1, 'float')); g['fragColor'][2] = rt.f32(rt.binary('+', g['fragColor'][2], __hoist1672[2], 1, 'float')); g['fragColor'][3] = rt.f32(rt.binary('+', g['fragColor'][3], __hoist1672[3], 1, 'float'))
     end
   end
   main__void.call

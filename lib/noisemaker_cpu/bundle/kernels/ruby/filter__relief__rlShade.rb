@@ -19,18 +19,18 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   lum__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
-    return rt.dot(c, rt.construct(3, rt.f(0.21260000000000001), rt.f(0.71519999999999995), rt.f(0.0722)))
+    return rt.dot(c, rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
   end
   hash12__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    p3 = nil
-    p3 = rt.construct(3, rt.component_wise('fract', rt.binary('*', rt.construct(3, rt.swizzle(p, 'xyx')), rt.f(0.1031), 3, 'float')))
-    p3.replace((rt.binary('+', p3, rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.329999999999998), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
-    return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float'), rt.swizzle(p3, 'z'), 1, 'float'))
+    __sc1104 = nil; p3 = nil
+    p3 = rt.construct(3, rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * (rt.f(0.1031000018119812))))))
+    __sc1104 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1104, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1104, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1104, 1, 'float'))
+    return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')))
   end
   reliefShade__float_float_float_float_float = lambda do |hC, hR, hT, strength, lightAngleDeg|
     _L = nil; a = nil; grad = nil; n = nil
-    grad = rt.construct(2, rt.binary('*', rt.construct(2, rt.binary('-', hR, hC, 1, 'float'), rt.binary('-', hT, hC, 1, 'float')), strength, 2, 'float'))
+    grad = rt.construct(2, (((((hR) - (hC)))) * (strength)), (((((hT) - (hC)))) * (strength)))
     n = rt.construct(3, rt.normalize(rt.construct(3, rt.unary('-', grad), rt.f(1))))
     a = rt.component_wise('radians', lightAngleDeg)
     _L = rt.construct(3, rt.normalize(rt.construct(3, rt.component_wise('cos', a), rt.component_wise('sin', a), rt.f(0.75))))
@@ -43,13 +43,13 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     bandHeight = nil; beveled = nil; edge = nil; globalCoord = nil; glossy = nil; gradMag = nil; grain = nil; hC = nil; hR = nil; hT = nil; hhC = nil; hhR = nil; hhT = nil; m = nil; outColor = nil; shade = nil; sheet = nil; sheetOut = nil; src = nil; strength = nil; texel = nil; threshold = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    texel = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
-    src = rt.construct(4, rt.texture(_u_inputTex, uv))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
+    texel = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
+    src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
     hC = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, uv), 'rgb'))
     hR = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
     hT = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('+', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
-    strength = rt.binary('*', _u_detail, rt.f(0.20000000000000001), 1, 'float')
+    strength = rt.binary('*', _u_detail, rt.f(0.20000000298023224), 1, 'float')
     outColor = rt.construct(3, 0.0)
     bandHeight = rt.f(0.0)
     beveled = rt.construct(3, 0.0)
@@ -71,9 +71,9 @@ run_pixel = lambda do |ctx, out|
       outColor.replace((tonemap2__float_vec3_vec3.call(rt.component_wise('mix', hC, shade, rt.f(0.75)), _u_inkColor, _u_paperColor)).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u__MODE, rt.i(1)))
-        hhC = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.34999999999999998), rt.f(0.65000000000000002), hC), 1, 'float')
-        hhR = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.34999999999999998), rt.f(0.65000000000000002), hR), 1, 'float')
-        hhT = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.34999999999999998), rt.f(0.65000000000000002), hT), 1, 'float')
+        hhC = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.34999999403953552), rt.f(0.64999997615814209), hC), 1, 'float')
+        hhR = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.34999999403953552), rt.f(0.64999997615814209), hR), 1, 'float')
+        hhT = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0.34999999403953552), rt.f(0.64999997615814209), hT), 1, 'float')
         shade = reliefShade__float_float_float_float_float.call(hhC, hhR, hhT, strength, _u_lightAngle)
         glossy = rt.component_wise('pow', shade, rt.f(2))
         outColor.replace((tonemap2__float_vec3_vec3.call(rt.component_wise('mix', hhC, glossy, rt.f(0.75)), _u_inkColor, _u_paperColor)).map { |c| rt.f32(c) })
@@ -81,16 +81,16 @@ run_pixel = lambda do |ctx, out|
         if rt.bool(rt.binary('==', _u__MODE, rt.i(2)))
           threshold = rt.binary('/', _u_balance, rt.f(100), 1, 'float')
           m = rt.component_wise('step', threshold, hC)
-          sheet = rt.construct(3, rt.component_wise('mix', rt.binary('+', rt.binary('*', _u_inkColor, rt.f(0.90000000000000002), 3, 'float'), rt.f(0.10000000000000001), 3, 'float'), _u_paperColor, m))
+          sheet = rt.construct(3, rt.component_wise('mix', rt.f32(((((_u_inkColor[0]) * (rt.f(0.89999997615814209)))) + (rt.f(0.10000000149011612)))), _u_paperColor[0], m), rt.component_wise('mix', rt.f32(((((_u_inkColor[1]) * (rt.f(0.89999997615814209)))) + (rt.f(0.10000000149011612)))), _u_paperColor[1], m), rt.component_wise('mix', rt.f32(((((_u_inkColor[2]) * (rt.f(0.89999997615814209)))) + (rt.f(0.10000000149011612)))), _u_paperColor[2], m))
           shade = reliefShade__float_float_float_float_float.call(hC, hR, hT, strength, _u_lightAngle)
           gradMag = rt.length(rt.construct(2, rt.binary('-', hR, hC, 1, 'float'), rt.binary('-', hT, hC, 1, 'float')))
-          bandHeight = rt.component_wise('max', rt.binary('*', gradMag, rt.f(2), 1, 'float'), rt.f(1.0000000000000001e-05))
+          bandHeight = rt.component_wise('max', rt.binary('*', gradMag, rt.f(2), 1, 'float'), rt.f(9.9999997473787516e-06))
           edge = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0), bandHeight, rt.component_wise('abs', rt.binary('-', hC, threshold, 1, 'float'))), 1, 'float')
-          beveled = rt.construct(3, rt.component_wise('clamp', rt.binary('*', sheet, rt.component_wise('mix', rt.f(0.59999999999999998), rt.f(1.3999999999999999), shade), 3, 'float'), rt.f(0), rt.f(1)))
-          sheetOut = rt.construct(3, rt.component_wise('mix', sheet, beveled, edge))
-          globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-          grain = rt.binary('*', rt.binary('*', rt.binary('-', hash12__vec2.call(rt.component_wise('floor', globalCoord)), rt.f(0.5), 1, 'float'), rt.binary('/', _u_graininess, rt.f(100), 1, 'float'), 1, 'float'), rt.f(0.14999999999999999), 1, 'float')
-          outColor.replace((rt.component_wise('clamp', rt.binary('+', sheetOut, rt.construct(3, grain), 3, 'float'), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+          beveled = rt.construct(3, rt.component_wise('clamp', rt.f32(((sheet[0]) * (rt.component_wise('mix', rt.f(0.60000002384185791), rt.f(1.3999999761581421), shade)))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((sheet[1]) * (rt.component_wise('mix', rt.f(0.60000002384185791), rt.f(1.3999999761581421), shade)))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((sheet[2]) * (rt.component_wise('mix', rt.f(0.60000002384185791), rt.f(1.3999999761581421), shade)))), rt.f(0), rt.f(1)))
+          sheetOut = rt.construct(3, rt.component_wise('mix', sheet[0], beveled[0], edge), rt.component_wise('mix', sheet[1], beveled[1], edge), rt.component_wise('mix', sheet[2], beveled[2], edge))
+          globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+          grain = rt.binary('*', rt.binary('*', rt.binary('-', hash12__vec2.call(rt.component_wise('floor', globalCoord)), rt.f(0.5), 1, 'float'), rt.binary('/', _u_graininess, rt.f(100), 1, 'float'), 1, 'float'), rt.f(0.15000000596046448), 1, 'float')
+          outColor.replace((rt.component_wise('clamp', rt.construct(3, ((sheetOut[0]) + ((grain))), ((sheetOut[1]) + ((grain))), ((sheetOut[2]) + ((grain)))), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
         end
       end
     end

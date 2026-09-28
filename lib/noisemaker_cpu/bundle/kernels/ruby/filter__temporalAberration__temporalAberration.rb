@@ -21,8 +21,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     bOut = nil; cur = nil; db = nil; dg = nil; dr = nil; gOut = nil; ib0 = nil; ib1 = nil; ig0 = nil; ig1 = nil; ir0 = nil; ir1 = nil; rOut = nil; s = nil; slots = nil; texSize = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, texSize), 2, 'float'))
-    cur = rt.construct(4, rt.texture(_u_inputTex, uv))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
+    cur = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
     slots = rt.new_array(rt.i(9), 4)
     slots[(rt.i(0)).to_i] = cur
     s = rt.construct(4, 0.0)
@@ -61,16 +61,16 @@ run_pixel = lambda do |ctx, out|
     dr = rt.component_wise('clamp', _u_redDelay, rt.f(0), rt.f(8))
     ir0 = rt.construct(1, rt.component_wise('floor', dr), 'int')
     ir1 = rt.component_wise('min', rt.binary('+', ir0, rt.i(1), 1, 'int'), rt.i(8))
-    rOut = rt.swizzle(rt.component_wise('mix', slots[(ir0).to_i], slots[(ir1).to_i], rt.binary('-', dr, rt.construct(1, ir0), 1, 'float')), 'r')
+    rOut = rt.swizzle(rt.component_wise('mix', rt.array_index(slots, ir0), rt.array_index(slots, ir1), rt.binary('-', dr, rt.construct(1, ir0), 1, 'float')), 'r')
     dg = rt.component_wise('clamp', _u_greenDelay, rt.f(0), rt.f(8))
     ig0 = rt.construct(1, rt.component_wise('floor', dg), 'int')
     ig1 = rt.component_wise('min', rt.binary('+', ig0, rt.i(1), 1, 'int'), rt.i(8))
-    gOut = rt.swizzle(rt.component_wise('mix', slots[(ig0).to_i], slots[(ig1).to_i], rt.binary('-', dg, rt.construct(1, ig0), 1, 'float')), 'g')
+    gOut = rt.swizzle(rt.component_wise('mix', rt.array_index(slots, ig0), rt.array_index(slots, ig1), rt.binary('-', dg, rt.construct(1, ig0), 1, 'float')), 'g')
     db = rt.component_wise('clamp', _u_blueDelay, rt.f(0), rt.f(8))
     ib0 = rt.construct(1, rt.component_wise('floor', db), 'int')
     ib1 = rt.component_wise('min', rt.binary('+', ib0, rt.i(1), 1, 'int'), rt.i(8))
-    bOut = rt.swizzle(rt.component_wise('mix', slots[(ib0).to_i], slots[(ib1).to_i], rt.binary('-', db, rt.construct(1, ib0), 1, 'float')), 'b')
-    g['fragColor'].replace((rt.construct(4, rOut, gOut, bOut, rt.swizzle(cur, 'a'))).map { |c| rt.f32(c) })
+    bOut = rt.swizzle(rt.component_wise('mix', rt.array_index(slots, ib0), rt.array_index(slots, ib1), rt.binary('-', db, rt.construct(1, ib0), 1, 'float')), 'b')
+    g['fragColor'][0] = rt.f32(rOut); g['fragColor'][1] = rt.f32(gOut); g['fragColor'][2] = rt.f32(bOut); g['fragColor'][3] = rt.f32(rt.swizzle(cur, 'a'))
   end
   main__void.call
   c = g['fragColor']

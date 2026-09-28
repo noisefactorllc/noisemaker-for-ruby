@@ -11,14 +11,14 @@ run_pixel = lambda do |ctx, out|
   _u_smoothType = u.key?('smoothType') ? u['smoothType'] : 0
   _u_threshold = u.key?('threshold') ? u['threshold'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
-  g['LUMA_WEIGHTS'] = rt.construct(3, rt.f(0.29899999999999999), rt.f(0.58699999999999997), rt.f(0.114))
+  g['LUMA_WEIGHTS'] = rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464))
   luminance__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
     return rt.dot(rgb, g['LUMA_WEIGHTS'])
   end
   main__void = lambda do
     _L = nil; _Le = nil; _Ln = nil; _Ls = nil; _Lw = nil; coord = nil; edgeH = nil; edgeV = nil; globalCoord = nil; maxCoord = nil; texSize = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.texture_size(_u_inputTex)
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     if rt.bool(rt.binary('==', _u_smoothType, rt.i(0)))
@@ -33,7 +33,7 @@ run_pixel = lambda do |ctx, out|
     _Le = luminance__vec3.call(rt.swizzle(rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxCoord), rt.i(0)), 'rgb'))
     edgeH = rt.component_wise('step', _u_threshold, rt.component_wise('max', rt.component_wise('abs', rt.binary('-', _L, _Ln, 1, 'float')), rt.component_wise('abs', rt.binary('-', _L, _Ls, 1, 'float'))))
     edgeV = rt.component_wise('step', _u_threshold, rt.component_wise('max', rt.component_wise('abs', rt.binary('-', _L, _Lw, 1, 'float')), rt.component_wise('abs', rt.binary('-', _L, _Le, 1, 'float'))))
-    g['fragColor'].replace((rt.construct(4, edgeH, edgeV, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(edgeH); g['fragColor'][1] = rt.f32(edgeV); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

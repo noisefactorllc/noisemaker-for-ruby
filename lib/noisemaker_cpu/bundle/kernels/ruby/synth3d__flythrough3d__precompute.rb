@@ -16,45 +16,46 @@ run_pixel = lambda do |ctx, out|
   _u_speed = u.key?('speed') ? u['speed'] : rt.f(0.0)
   _u_voiSize = u.key?('voiSize') ? u['voiSize'] : rt.f(0.0)
   _u_seed = u.key?('seed') ? u['seed'] : rt.f(0.0)
-  g['SAFETY_RADIUS'] = rt.f(0.080000000000000002)
+  g['SAFETY_RADIUS'] = rt.f(0.079999998211860657)
   g['fragColor'] = rt.construct(4, 0.0)
   g['geoOut'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.1415926535897931)
-  g['TAU'] = rt.f(6.2831853071795862)
+  g['PI'] = rt.f(3.1415927410125732)
+  g['TAU'] = rt.f(6.2831854820251465)
   hash__float = lambda do |n|
-    return rt.component_wise('fract', rt.binary('*', rt.component_wise('sin', rt.binary('+', n, _u_seed, 1, 'float')), rt.f(43758.545312299997), 1, 'float'))
+    return rt.component_wise('fract', rt.binary('*', rt.component_wise('sin', rt.binary('+', n, _u_seed, 1, 'float')), rt.f(43758.546875), 1, 'float'))
   end
   trefoilKnot__float_float = lambda do |_t, scale|
     p = nil; q = nil; r = nil
     p = rt.f(2)
     q = rt.f(3)
-    r = rt.binary('+', rt.f(0.5), rt.binary('*', rt.f(0.20000000000000001), rt.component_wise('cos', rt.binary('*', q, _t, 1, 'float')), 1, 'float'), 1, 'float')
-    return rt.binary('*', scale, rt.construct(3, rt.binary('*', r, rt.component_wise('cos', rt.binary('*', p, _t, 1, 'float')), 1, 'float'), rt.binary('*', r, rt.component_wise('sin', rt.binary('*', p, _t, 1, 'float')), 1, 'float'), rt.binary('*', rt.f(0.29999999999999999), rt.component_wise('sin', rt.binary('*', q, _t, 1, 'float')), 1, 'float')), 3, 'float')
+    r = rt.binary('+', rt.f(0.5), rt.binary('*', rt.f(0.20000000298023224), rt.component_wise('cos', rt.binary('*', q, _t, 1, 'float')), 1, 'float'), 1, 'float')
+    return rt.construct(3, ((scale) * ((((r) * (rt.component_wise('cos', ((p) * (_t)))))))), ((scale) * ((((r) * (rt.component_wise('sin', ((p) * (_t)))))))), ((scale) * ((((rt.f(0.30000001192092896)) * (rt.component_wise('sin', ((q) * (_t)))))))))
   end
   tiltedOrbit__float_float = lambda do |_t, scale|
-    a = nil; b = nil; c = nil; pos = nil; s = nil; tilt = nil
-    tilt = rt.f(0.40000000000000002)
+    a = nil; b = nil; c = nil; cpu_vector_assignment_1 = nil; pos = nil; s = nil; tilt = nil
+    tilt = rt.f(0.40000000596046448)
     a = rt.f(1)
-    b = rt.f(0.69999999999999996)
+    b = rt.f(0.69999998807907104)
     pos = rt.construct(3, rt.construct(3, rt.binary('*', a, rt.component_wise('cos', _t), 1, 'float'), rt.binary('*', b, rt.component_wise('sin', _t), 1, 'float'), rt.f(0)))
     c = rt.component_wise('cos', tilt)
     s = rt.component_wise('sin', tilt)
-    pos.replace((rt.construct(3, rt.swizzle(pos, 'x'), rt.binary('-', rt.binary('*', rt.swizzle(pos, 'y'), c, 1, 'float'), rt.binary('*', rt.swizzle(pos, 'z'), s, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(pos, 'y'), s, 1, 'float'), rt.binary('*', rt.swizzle(pos, 'z'), c, 1, 'float'), 1, 'float'))).map { |c| rt.f32(c) })
-    return rt.binary('*', scale, pos, 3, 'float')
+    cpu_vector_assignment_1 = rt.construct(3, rt.construct(3, rt.swizzle(pos, 'x'), rt.binary('-', rt.binary('*', rt.swizzle(pos, 'y'), c, 1, 'float'), rt.binary('*', rt.swizzle(pos, 'z'), s, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(pos, 'y'), s, 1, 'float'), rt.binary('*', rt.swizzle(pos, 'z'), c, 1, 'float'), 1, 'float')))
+    pos.replace((cpu_vector_assignment_1).map { |c| rt.f32(c) })
+    return rt.construct(3, ((scale) * (pos[0])), ((scale) * (pos[1])), ((scale) * (pos[2])))
   end
   lissajousOrbit__float_float = lambda do |_t, scale|
     fx = nil; fy = nil; fz = nil; px = nil; py = nil; pz = nil
     fx = rt.f(1)
-    fy = rt.f(1.6180000000000001)
+    fy = rt.f(1.6180000305175781)
     fz = rt.f(2)
     px = rt.f(0)
     py = rt.binary('*', g['PI'], rt.f(0.5), 1, 'float')
     pz = rt.binary('*', g['PI'], rt.f(0.25), 1, 'float')
-    return rt.binary('*', scale, rt.construct(3, rt.component_wise('sin', rt.binary('+', rt.binary('*', fx, _t, 1, 'float'), px, 1, 'float')), rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', fy, _t, 1, 'float'), py, 1, 'float')), rt.f(0.59999999999999998), 1, 'float'), rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', fz, _t, 1, 'float'), pz, 1, 'float')), rt.f(0.40000000000000002), 1, 'float')), 3, 'float')
+    return rt.construct(3, ((scale) * ((rt.component_wise('sin', ((((fx) * (_t))) + (px)))))), ((scale) * ((((rt.component_wise('sin', ((((fy) * (_t))) + (py)))) * (rt.f(0.60000002384185791)))))), ((scale) * ((((rt.component_wise('sin', ((((fz) * (_t))) + (pz)))) * (rt.f(0.40000000596046448)))))))
   end
   getOrbitPosition__float = lambda do |_t|
     orbitScale = nil; orbitType = nil
-    orbitScale = rt.f(0.69999999999999996)
+    orbitScale = rt.f(0.69999998807907104)
     orbitType = rt.construct(1, rt.component_wise('mod', rt.binary('*', _u_seed, rt.f(3), 1, 'float'), rt.f(3)), 'int')
     if rt.bool(rt.binary('==', orbitType, rt.i(0)))
       return trefoilKnot__float_float.call(_t, orbitScale)
@@ -68,7 +69,7 @@ run_pixel = lambda do |ctx, out|
   end
   getOrbitTangent__float = lambda do |_t|
     dt = nil; p0 = nil; p1 = nil
-    dt = rt.f(0.01)
+    dt = rt.f(0.0099999997764825821)
     p0 = rt.construct(3, getOrbitPosition__float.call(_t))
     p1 = rt.construct(3, getOrbitPosition__float.call(rt.binary('+', _t, dt, 1, 'float')))
     return rt.normalize(rt.binary('-', p1, p0, 3, 'float'))
@@ -77,22 +78,22 @@ run_pixel = lambda do |ctx, out|
     tangent = rt.copy(tangent, 'float')
     realUp = nil; right = nil; up = nil; wobbleAmp = nil; wx = nil; wy = nil
     up = rt.construct(3, rt.construct(3, rt.f(0), rt.f(1), rt.f(0)))
-    if rt.bool(rt.binary('>', rt.component_wise('abs', rt.dot(tangent, up)), rt.f(0.98999999999999999)))
-      up.replace((rt.construct(3, rt.f(1), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
+    if rt.bool(rt.binary('>', rt.component_wise('abs', rt.dot(tangent, up)), rt.f(0.99000000953674316)))
+      up[0] = rt.f32(rt.f(1)); up[1] = rt.f32(rt.f(0)); up[2] = rt.f32(rt.f(0))
     end
     right = rt.construct(3, rt.normalize(rt.cross(tangent, up)))
     realUp = rt.construct(3, rt.normalize(rt.cross(right, tangent)))
-    wobbleAmp = rt.f(0.14999999999999999)
-    wx = rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', _t, rt.f(2.7000000000000002), 1, 'float'), rt.binary('*', _u_seed, g['PI'], 1, 'float'), 1, 'float')), wobbleAmp, 1, 'float')
-    wy = rt.binary('*', rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', _t, rt.f(1.8999999999999999), 1, 'float'), rt.binary('*', _u_seed, g['TAU'], 1, 'float'), 1, 'float')), wobbleAmp, 1, 'float'), rt.f(0.69999999999999996), 1, 'float')
-    return rt.binary('+', rt.binary('*', right, wx, 3, 'float'), rt.binary('*', realUp, wy, 3, 'float'), 3, 'float')
+    wobbleAmp = rt.f(0.15000000596046448)
+    wx = rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', _t, rt.f(2.7000000476837158), 1, 'float'), rt.binary('*', _u_seed, g['PI'], 1, 'float'), 1, 'float')), wobbleAmp, 1, 'float')
+    wy = rt.binary('*', rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', _t, rt.f(1.8999999761581421), 1, 'float'), rt.binary('*', _u_seed, g['TAU'], 1, 'float'), 1, 'float')), wobbleAmp, 1, 'float'), rt.f(0.69999998807907104), 1, 'float')
+    return rt.construct(3, ((((right[0]) * (wx))) + (((realUp[0]) * (wy)))), ((((right[1]) * (wx))) + (((realUp[1]) * (wy)))), ((((right[2]) * (wx))) + (((realUp[2]) * (wy)))))
   end
   getCameraState__float_vec3_vec3_vec3 = lambda do |_t, pos, dir, up|
     pos = rt.copy(pos, 'float')
     dir = rt.copy(dir, 'float')
     up = rt.copy(up, 'float')
     orbitPos = nil; orbitTime = nil; right = nil; roll = nil; rollRight = nil; tangent = nil; wobble = nil; worldUp = nil
-    orbitTime = rt.binary('*', rt.binary('*', _t, _u_speed, 1, 'float'), rt.f(0.29999999999999999), 1, 'float')
+    orbitTime = rt.binary('*', rt.binary('*', _t, _u_speed, 1, 'float'), rt.f(0.30000001192092896), 1, 'float')
     orbitPos = rt.construct(3, getOrbitPosition__float.call(orbitTime))
     tangent = rt.construct(3, getOrbitTangent__float.call(orbitTime))
     wobble = rt.construct(3, getWobbleOffset__float_vec3.call(orbitTime, tangent))
@@ -101,8 +102,8 @@ run_pixel = lambda do |ctx, out|
     worldUp = rt.construct(3, rt.construct(3, rt.f(0), rt.f(1), rt.f(0)))
     right = rt.construct(3, rt.normalize(rt.cross(worldUp, dir)))
     up.replace((rt.normalize(rt.cross(dir, right))).map { |c| rt.f32(c) })
-    roll = rt.binary('*', rt.component_wise('sin', rt.binary('*', orbitTime, rt.f(0.5), 1, 'float')), rt.f(0.10000000000000001), 1, 'float')
-    rollRight = rt.construct(3, rt.binary('+', rt.binary('*', right, rt.component_wise('cos', roll), 3, 'float'), rt.binary('*', up, rt.component_wise('sin', roll), 3, 'float'), 3, 'float'))
+    roll = rt.binary('*', rt.component_wise('sin', rt.binary('*', orbitTime, rt.f(0.5), 1, 'float')), rt.f(0.10000000149011612), 1, 'float')
+    rollRight = rt.construct(3, ((((right[0]) * (rt.component_wise('cos', roll)))) + (((up[0]) * (rt.component_wise('sin', roll))))), ((((right[1]) * (rt.component_wise('cos', roll)))) + (((up[1]) * (rt.component_wise('sin', roll))))), ((((right[2]) * (rt.component_wise('cos', roll)))) + (((up[2]) * (rt.component_wise('sin', roll))))))
     up.replace((rt.normalize(rt.cross(rollRight, dir))).map { |c| rt.f32(c) })
     return [nil, pos, dir, up]
   end
@@ -137,7 +138,7 @@ run_pixel = lambda do |ctx, out|
       newTheta = rt.binary('*', theta, n, 1, 'float')
       newPhi = rt.binary('*', phi, n, 1, 'float')
       z.replace((rt.binary('*', zr, rt.construct(3, rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('cos', newPhi), 1, 'float'), rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('sin', newPhi), 1, 'float'), rt.component_wise('cos', newTheta)), 3, 'float')).map { |c| rt.f32(c) })
-      z.replace((rt.binary('+', z, pos, 3, 'float')).map { |c| rt.f32(c) })
+      z[0] = rt.f32(rt.binary('+', z[0], pos[0], 1, 'float')); z[1] = rt.f32(rt.binary('+', z[1], pos[1], 1, 'float')); z[2] = rt.f32(rt.binary('+', z[2], pos[2], 1, 'float'))
       iter = rt.binary('+', iter, rt.f(1), 1, 'float')
     end
     result = rt.assign_swizzle(result, 'x', rt.binary('/', rt.binary('*', rt.binary('*', rt.f(0.5), rt.component_wise('log', r), 1, 'float'), r, 1, 'float'), dr, 1, 'float'))
@@ -147,11 +148,11 @@ run_pixel = lambda do |ctx, out|
   end
   boxFold__vec3_float = lambda do |z, foldLimit|
     z = rt.copy(z, 'float')
-    return rt.binary('-', rt.binary('*', rt.component_wise('clamp', z, rt.unary('-', foldLimit), foldLimit), rt.f(2), 3, 'float'), z, 3, 'float')
+    return rt.construct(3, ((((rt.component_wise('clamp', z[0], rt.unary('-', foldLimit), foldLimit)) * (rt.f(2)))) - (z[0])), ((((rt.component_wise('clamp', z[1], rt.unary('-', foldLimit), foldLimit)) * (rt.f(2)))) - (z[1])), ((((rt.component_wise('clamp', z[2], rt.unary('-', foldLimit), foldLimit)) * (rt.f(2)))) - (z[2])))
   end
   mandelbox__vec3_float_int_float = lambda do |pos, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
-    _for1_first = nil; dr = nil; factor = nil; fixedRadius2 = nil; foldLimit = nil; i = nil; iter = nil; minRadius2 = nil; planeTrap = nil; r = nil; r2 = nil; result = nil; trap = nil; z = nil
+    __sc1928 = nil; __sc1936 = nil; _for1_first = nil; dr = nil; factor = nil; fixedRadius2 = nil; foldLimit = nil; i = nil; iter = nil; minRadius2 = nil; planeTrap = nil; r = nil; r2 = nil; result = nil; trap = nil; z = nil
     result = rt.construct(3, 0.0)
     z = pos
     dr = rt.f(1)
@@ -175,12 +176,12 @@ run_pixel = lambda do |ctx, out|
       factor = rt.f(0.0)
       if rt.bool(rt.binary('<', r2, minRadius2))
         factor = rt.binary('/', fixedRadius2, minRadius2, 1, 'float')
-        z.replace((rt.binary('*', z, factor, 3, 'float')).map { |c| rt.f32(c) })
+        __sc1928 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1928, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1928, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1928, 1, 'float'))
         dr = rt.binary('*', dr, factor, 1, 'float')
       else
         if rt.bool(rt.binary('<', r2, fixedRadius2))
           factor = rt.binary('/', fixedRadius2, r2, 1, 'float')
-          z.replace((rt.binary('*', z, factor, 3, 'float')).map { |c| rt.f32(c) })
+          __sc1936 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1936, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1936, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1936, 1, 'float'))
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end
@@ -211,10 +212,10 @@ run_pixel = lambda do |ctx, out|
     p = rt.copy(p, 'float')
     d0 = nil; dx = nil; dy = nil; dz = nil
     d0 = rt.swizzle(computeFractal__vec3.call(p), 'x')
-    dx = rt.swizzle(computeFractal__vec3.call(rt.binary('+', p, rt.construct(3, eps, rt.f(0), rt.f(0)), 3, 'float')), 'x')
-    dy = rt.swizzle(computeFractal__vec3.call(rt.binary('+', p, rt.construct(3, rt.f(0), eps, rt.f(0)), 3, 'float')), 'x')
-    dz = rt.swizzle(computeFractal__vec3.call(rt.binary('+', p, rt.construct(3, rt.f(0), rt.f(0), eps), 3, 'float')), 'x')
-    return rt.binary('/', rt.construct(3, rt.binary('-', dx, d0, 1, 'float'), rt.binary('-', dy, d0, 1, 'float'), rt.binary('-', dz, d0, 1, 'float')), eps, 3, 'float')
+    dx = rt.swizzle(computeFractal__vec3.call(rt.construct(3, ((p[0]) + ((eps))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((rt.f(0)))))), 'x')
+    dy = rt.swizzle(computeFractal__vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((eps))), ((p[2]) + ((rt.f(0)))))), 'x')
+    dz = rt.swizzle(computeFractal__vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((eps))))), 'x')
+    return rt.construct(3, (((((dx) - (d0)))) / (eps)), (((((dy) - (d0)))) / (eps)), (((((dz) - (d0)))) / (eps)))
   end
   applyCollisionAvoidance__vec3 = lambda do |pos|
     pos = rt.copy(pos, 'float')
@@ -224,16 +225,16 @@ run_pixel = lambda do |ctx, out|
     pushDir = rt.construct(3, 0.0)
     pushDist = rt.f(0.0)
     if rt.bool(rt.binary('<', rt.swizzle(fr, 'x'), g['SAFETY_RADIUS']))
-      grad = rt.construct(3, computeGradient__vec3_float.call(pos, rt.f(0.01)))
-      pushDir = rt.construct(3, rt.normalize(rt.binary('+', grad, rt.construct(3, rt.f(9.9999999999999995e-07)), 3, 'float')))
+      grad = rt.construct(3, computeGradient__vec3_float.call(pos, rt.f(0.0099999997764825821)))
+      pushDir = rt.construct(3, rt.normalize(rt.binary('+', grad, rt.construct(3, rt.f(9.9999999747524271e-07)), 3, 'float')))
       pushDist = rt.binary('-', g['SAFETY_RADIUS'], rt.swizzle(fr, 'x'), 1, 'float')
-      pos.replace((rt.binary('+', pos, rt.binary('*', rt.binary('*', pushDir, pushDist, 3, 'float'), rt.f(1.5), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+      pos[0] = rt.f32(rt.binary('+', pos[0], ((((pushDir[0]) * (pushDist))) * (rt.f(1.5))), 1, 'float')); pos[1] = rt.f32(rt.binary('+', pos[1], ((((pushDir[1]) * (pushDist))) * (rt.f(1.5))), 1, 'float')); pos[2] = rt.f32(rt.binary('+', pos[2], ((((pushDir[2]) * (pushDist))) * (rt.f(1.5))), 1, 'float'))
     end
     return pos
   end
   main__void = lambda do
     camDir = nil; camPos = nil; camRight = nil; camUp = nil; dist = nil; eps = nil; fr = nil; globalCoord = nil; gradient = nil; halfExtent = nil; iterRatio = nil; normal = nil; normalizedCoord = nil; normalizedDist = nil; pixelCoord = nil; trap = nil; voiOffset = nil; volSize = nil; volSizeF = nil; vx = nil; vy = nil; vz = nil; worldPos = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     volSize = _u_volumeSize
     volSizeF = rt.construct(1, volSize)
     pixelCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
@@ -242,7 +243,7 @@ run_pixel = lambda do |ctx, out|
     vz = rt.binary('/', rt.construct(1, rt.swizzle(pixelCoord, 'y')), rt.construct(1, volSize), 1, 'float')
     if rt.bool((rt.bool((rt.bool(rt.binary('>=', vx, volSize)) || rt.bool(rt.binary('>=', vy, volSize)) ? 1 : 0)) || rt.bool(rt.binary('>=', vz, volSize)) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
-      g['geoOut'].replace((rt.construct(4, rt.f(0.5), rt.f(0.5), rt.f(0.5), rt.f(0))).map { |c| rt.f32(c) })
+      g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))
       return
     end
     camPos = rt.construct(3, 0.0)
@@ -252,19 +253,19 @@ run_pixel = lambda do |ctx, out|
     camPos.replace((applyCollisionAvoidance__vec3.call(camPos)).map { |c| rt.f32(c) })
     camRight = rt.construct(3, rt.normalize(rt.cross(camDir, camUp)))
     camUp.replace((rt.normalize(rt.cross(camRight, camDir))).map { |c| rt.f32(c) })
-    normalizedCoord = rt.construct(3, rt.binary('-', rt.binary('*', rt.binary('/', rt.construct(3, rt.construct(1, vx), rt.construct(1, vy), rt.construct(1, vz)), rt.binary('-', volSizeF, rt.f(1), 1, 'float'), 3, 'float'), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'))
+    normalizedCoord = rt.construct(3, ((((((((vx))) / (((volSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1))), ((((((((vy))) / (((volSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1))), ((((((((vz))) / (((volSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1))))
     halfExtent = rt.binary('*', _u_voiSize, rt.f(0.5), 1, 'float')
-    voiOffset = rt.construct(3, rt.binary('*', camDir, halfExtent, 3, 'float'))
-    worldPos = rt.construct(3, rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('+', camPos, voiOffset, 3, 'float'), rt.binary('*', rt.binary('*', camRight, rt.swizzle(normalizedCoord, 'x'), 3, 'float'), halfExtent, 3, 'float'), 3, 'float'), rt.binary('*', rt.binary('*', camUp, rt.swizzle(normalizedCoord, 'y'), 3, 'float'), halfExtent, 3, 'float'), 3, 'float'), rt.binary('*', rt.binary('*', camDir, rt.swizzle(normalizedCoord, 'z'), 3, 'float'), halfExtent, 3, 'float'), 3, 'float'))
+    voiOffset = rt.construct(3, ((camDir[0]) * (halfExtent)), ((camDir[1]) * (halfExtent)), ((camDir[2]) * (halfExtent)))
+    worldPos = rt.construct(3, ((((((((camPos[0]) + (voiOffset[0]))) + (((((camRight[0]) * (rt.swizzle(normalizedCoord, 'x')))) * (halfExtent))))) + (((((camUp[0]) * (rt.swizzle(normalizedCoord, 'y')))) * (halfExtent))))) + (((((camDir[0]) * (rt.swizzle(normalizedCoord, 'z')))) * (halfExtent)))), ((((((((camPos[1]) + (voiOffset[1]))) + (((((camRight[1]) * (rt.swizzle(normalizedCoord, 'x')))) * (halfExtent))))) + (((((camUp[1]) * (rt.swizzle(normalizedCoord, 'y')))) * (halfExtent))))) + (((((camDir[1]) * (rt.swizzle(normalizedCoord, 'z')))) * (halfExtent)))), ((((((((camPos[2]) + (voiOffset[2]))) + (((((camRight[2]) * (rt.swizzle(normalizedCoord, 'x')))) * (halfExtent))))) + (((((camUp[2]) * (rt.swizzle(normalizedCoord, 'y')))) * (halfExtent))))) + (((((camDir[2]) * (rt.swizzle(normalizedCoord, 'z')))) * (halfExtent)))))
     fr = rt.construct(3, computeFractal__vec3.call(worldPos))
     dist = rt.swizzle(fr, 'x')
     normalizedDist = rt.binary('-', rt.f(1), rt.component_wise('clamp', rt.binary('+', rt.binary('*', dist, rt.f(2), 1, 'float'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1)), 1, 'float')
     trap = rt.component_wise('clamp', rt.binary('*', rt.swizzle(fr, 'y'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1))
     iterRatio = rt.swizzle(fr, 'z')
-    eps = rt.f(0.02)
+    eps = rt.f(0.019999999552965164)
     gradient = rt.construct(3, computeGradient__vec3_float.call(worldPos, eps))
-    normal = rt.construct(3, rt.normalize(rt.binary('+', gradient, rt.construct(3, rt.f(9.9999999999999995e-07)), 3, 'float')))
-    g['fragColor'].replace((rt.construct(4, normalizedDist, trap, iterRatio, rt.f(1))).map { |c| rt.f32(c) })
+    normal = rt.construct(3, rt.normalize(rt.binary('+', gradient, rt.construct(3, rt.f(9.9999999747524271e-07)), 3, 'float')))
+    g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(trap); g['fragColor'][2] = rt.f32(iterRatio); g['fragColor'][3] = rt.f32(rt.f(1))
     g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), normalizedDist)).map { |c| rt.f32(c) })
   end
   main__void.call

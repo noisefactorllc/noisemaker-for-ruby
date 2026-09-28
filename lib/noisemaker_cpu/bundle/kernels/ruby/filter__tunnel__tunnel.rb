@@ -17,8 +17,8 @@ run_pixel = lambda do |ctx, out|
   _u_aspectLens = u.key?('aspectLens') ? u['aspectLens'] : 0
   _u_antialias = u.key?('antialias') ? u['antialias'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.1415926535900001)
-  g['TAU'] = rt.f(6.2831853071800001)
+  g['PI'] = rt.f(3.1415927410125732)
+  g['TAU'] = rt.f(6.2831854820251465)
   polygonShape__vec2_int = lambda do |uv, sides|
     uv = rt.copy(uv, 'float')
     a = nil; r = nil
@@ -28,15 +28,15 @@ run_pixel = lambda do |ctx, out|
   end
   smod__vec2_float = lambda do |v, m|
     v = rt.copy(v, 'float')
-    return rt.binary('*', m, rt.binary('-', rt.binary('-', rt.f(0.75), rt.component_wise('abs', rt.binary('-', rt.component_wise('fract', v), rt.f(0.5), 2, 'float')), 2, 'float'), rt.f(0.25), 2, 'float'), 2, 'float')
+    return rt.construct(2, ((m) * (((((rt.f(0.75)) - (rt.component_wise('abs', rt.f32(((rt.component_wise('fract', v[0])) - (rt.f(0.5)))))))) - (rt.f(0.25))))), ((m) * (((((rt.f(0.75)) - (rt.component_wise('abs', rt.f32(((rt.component_wise('fract', v[1])) - (rt.f(0.5)))))))) - (rt.f(0.25))))))
   end
   main__void = lambda do
-    a = nil; amt = nil; aspectRatio = nil; centerMask = nil; centered = nil; color = nil; dx = nil; dy = nil; fullRes = nil; p = nil; r = nil; texSize = nil; tileDims = nil; tunnelCoords = nil; uv = nil
+    __hoist1368 = nil; __hoist1376 = nil; __hoist1384 = nil; __hoist1392 = nil; __sc1400 = nil; a = nil; amt = nil; aspectRatio = nil; centerMask = nil; centered = nil; color = nil; dx = nil; dy = nil; fullRes = nil; p = nil; r = nil; texSize = nil; tileDims = nil; tunnelCoords = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
     tileDims = rt.construct(2, rt.construct(2, texSize))
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
-    uv = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
-    centered = rt.construct(2, rt.binary('-', uv, rt.f(0.5), 2, 'float'))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (tileDims[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (tileDims[1])))
+    uv = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
+    centered = rt.construct(2, ((uv[0]) - (rt.f(0.5))), ((uv[1]) - (rt.f(0.5))))
     aspectRatio = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
     if rt.bool(_u_aspectLens)
       centered = rt.assign_swizzle(centered, 'x', rt.binary('*', rt.swizzle(centered, 'x'), aspectRatio, 1, 'float'))
@@ -48,26 +48,26 @@ run_pixel = lambda do |ctx, out|
       r = rt.length(centered)
     else
       if rt.bool(rt.binary('==', _u_shape, rt.i(1)))
-        r = polygonShape__vec2_int.call(rt.binary('*', centered, rt.f(2), 2, 'float'), rt.i(3))
+        r = polygonShape__vec2_int.call(rt.construct(2, ((centered[0]) * (rt.f(2))), ((centered[1]) * (rt.f(2)))), rt.i(3))
       else
         if rt.bool(rt.binary('==', _u_shape, rt.i(2)))
-          p = rt.construct(2, rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', centered, centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'), centered, 2, 'float'))
-          r = rt.component_wise('pow', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.binary('/', rt.f(1), rt.f(8), 1, 'float'))
+          p = rt.construct(2, ((((((((((((((centered[0]) * (centered[0]))) * (centered[0]))) * (centered[0]))) * (centered[0]))) * (centered[0]))) * (centered[0]))) * (centered[0])), ((((((((((((((centered[1]) * (centered[1]))) * (centered[1]))) * (centered[1]))) * (centered[1]))) * (centered[1]))) * (centered[1]))) * (centered[1])))
+          r = rt.component_wise('pow', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.f(0.125))
         else
           if rt.bool(rt.binary('==', _u_shape, rt.i(3)))
-            r = polygonShape__vec2_int.call(rt.binary('*', centered, rt.f(2), 2, 'float'), rt.i(4))
+            r = polygonShape__vec2_int.call(rt.construct(2, ((centered[0]) * (rt.f(2))), ((centered[1]) * (rt.f(2)))), rt.i(4))
           else
             if rt.bool(rt.binary('==', _u_shape, rt.i(4)))
-              r = polygonShape__vec2_int.call(rt.binary('*', centered, rt.f(2), 2, 'float'), rt.i(6))
+              r = polygonShape__vec2_int.call(rt.construct(2, ((centered[0]) * (rt.f(2))), ((centered[1]) * (rt.f(2)))), rt.i(6))
             else
-              r = polygonShape__vec2_int.call(rt.binary('*', centered, rt.f(2), 2, 'float'), rt.i(8))
+              r = polygonShape__vec2_int.call(rt.construct(2, ((centered[0]) * (rt.f(2))), ((centered[1]) * (rt.f(2)))), rt.i(8))
             end
           end
         end
       end
     end
-    r = rt.binary('-', r, rt.binary('*', _u_scale, rt.f(0.14999999999999999), 1, 'float'), 1, 'float')
-    tunnelCoords = rt.construct(2, smod__vec2_float.call(rt.construct(2, rt.binary('+', rt.binary('/', rt.f(0.29999999999999999), r, 1, 'float'), rt.binary('*', _u_time, _u_speed, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('/', a, g['PI'], 1, 'float'), rt.binary('*', _u_time, _u_rotation, 1, 'float'), 1, 'float')), rt.f(1)))
+    r = rt.binary('-', r, rt.binary('*', _u_scale, rt.f(0.15000000596046448), 1, 'float'), 1, 'float')
+    tunnelCoords = rt.construct(2, smod__vec2_float.call(rt.construct(2, (((((rt.f(0.30000001192092896)) / (r))) + (((_u_time) * (_u_speed))))), (((((a) / (g['PI']))) + (((_u_time) * (_u_rotation)))))), rt.f(1)))
     color = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)
@@ -75,11 +75,11 @@ run_pixel = lambda do |ctx, out|
       dx = rt.construct(2, rt.dFdx(tunnelCoords))
       dy = rt.construct(2, rt.dFdy(tunnelCoords))
       color.replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
-      color.replace((rt.binary('+', color, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      color.replace((rt.binary('+', color, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      color.replace((rt.binary('+', color, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      color.replace((rt.binary('+', color, rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      color.replace((rt.binary('*', color, rt.f(0.25), 4, 'float')).map { |c| rt.f32(c) })
+      __hoist1368 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')); color[0] = rt.f32(rt.binary('+', color[0], __hoist1368[0], 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], __hoist1368[1], 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], __hoist1368[2], 1, 'float')); color[3] = rt.f32(rt.binary('+', color[3], __hoist1368[3], 1, 'float'))
+      __hoist1376 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')); color[0] = rt.f32(rt.binary('+', color[0], __hoist1376[0], 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], __hoist1376[1], 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], __hoist1376[2], 1, 'float')); color[3] = rt.f32(rt.binary('+', color[3], __hoist1376[3], 1, 'float'))
+      __hoist1384 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')); color[0] = rt.f32(rt.binary('+', color[0], __hoist1384[0], 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], __hoist1384[1], 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], __hoist1384[2], 1, 'float')); color[3] = rt.f32(rt.binary('+', color[3], __hoist1384[3], 1, 'float'))
+      __hoist1392 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', tunnelCoords, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')); color[0] = rt.f32(rt.binary('+', color[0], __hoist1392[0], 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], __hoist1392[1], 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], __hoist1392[2], 1, 'float')); color[3] = rt.f32(rt.binary('+', color[3], __hoist1392[3], 1, 'float'))
+      __sc1400 = rt.f(0.25); color[0] = rt.f32(rt.binary('*', color[0], __sc1400, 1, 'float')); color[1] = rt.f32(rt.binary('*', color[1], __sc1400, 1, 'float')); color[2] = rt.f32(rt.binary('*', color[2], __sc1400, 1, 'float')); color[3] = rt.f32(rt.binary('*', color[3], __sc1400, 1, 'float'))
     else
       color.replace((rt.texture(_u_inputTex, tunnelCoords)).map { |c| rt.f32(c) })
     end

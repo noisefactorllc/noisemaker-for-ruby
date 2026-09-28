@@ -13,11 +13,11 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _t = nil; inputColor = nil; outAlpha = nil; outRGB = nil; outRGB_pre = nil; scaledInput = nil; trail = nil; trailColor = nil; trailPresence = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    inputColor = rt.construct(4, rt.texture(_u_inputTex, uv))
-    trailColor = rt.construct(4, rt.texture(_u_trailTex, uv))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
+    inputColor = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    trailColor = rt.construct(4, (rt.texture(_u_trailTex, uv))[0], (rt.texture(_u_trailTex, uv))[1], (rt.texture(_u_trailTex, uv))[2], (rt.texture(_u_trailTex, uv))[3])
     _t = rt.binary('/', _u_inputIntensity, rt.f(100), 1, 'float')
-    scaledInput = rt.construct(4, rt.binary('*', inputColor, _t, 4, 'float'))
+    scaledInput = rt.construct(4, ((inputColor[0]) * (_t)), ((inputColor[1]) * (_t)), ((inputColor[2]) * (_t)), ((inputColor[3]) * (_t)))
     outRGB = rt.construct(3, 0.0)
     outAlpha = rt.f(0.0)
     outRGB_pre = rt.construct(3, 0.0)
@@ -25,10 +25,14 @@ run_pixel = lambda do |ctx, out|
     trailPresence = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_blendMode, rt.i(1)))
       outAlpha = rt.binary('+', rt.swizzle(trailColor, 'a'), rt.binary('*', rt.swizzle(scaledInput, 'a'), rt.binary('-', rt.f(1), rt.swizzle(trailColor, 'a'), 1, 'float'), 1, 'float'), 1, 'float')
-      outRGB_pre = rt.construct(3, rt.binary('+', rt.swizzle(trailColor, 'rgb'), rt.binary('*', rt.binary('*', rt.swizzle(scaledInput, 'rgb'), rt.swizzle(scaledInput, 'a'), 3, 'float'), rt.binary('-', rt.f(1), rt.swizzle(trailColor, 'a'), 1, 'float'), 3, 'float'), 3, 'float'))
-      outRGB.replace(((rt.bool(rt.binary('>', outAlpha, rt.f(0))) ? (rt.binary('/', outRGB_pre, outAlpha, 3, 'float')) : (rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })
+      outRGB_pre = rt.construct(3, ((rt.swizzle(trailColor, 'r')) + (((((rt.swizzle(scaledInput, 'r')) * (rt.swizzle(scaledInput, 'a')))) * (((rt.f(1)) - (rt.swizzle(trailColor, 'a'))))))), ((rt.swizzle(trailColor, 'g')) + (((((rt.swizzle(scaledInput, 'g')) * (rt.swizzle(scaledInput, 'a')))) * (((rt.f(1)) - (rt.swizzle(trailColor, 'a'))))))), ((rt.swizzle(trailColor, 'b')) + (((((rt.swizzle(scaledInput, 'b')) * (rt.swizzle(scaledInput, 'a')))) * (((rt.f(1)) - (rt.swizzle(trailColor, 'a'))))))))
+      if rt.bool(rt.binary('>', outAlpha, rt.f(0)))
+        rt.binary('/', outRGB_pre, outAlpha, 3, 'float')
+      else
+        outRGB.replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })
+      end
     else
-      trail = rt.construct(3, rt.component_wise('clamp', rt.swizzle(trailColor, 'rgb'), rt.f(0), rt.f(1)))
+      trail = rt.construct(3, rt.component_wise('clamp', rt.swizzle(trailColor, 'r'), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.swizzle(trailColor, 'g'), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.swizzle(trailColor, 'b'), rt.f(0), rt.f(1)))
       trailPresence = rt.component_wise('max', rt.component_wise('max', rt.swizzle(trail, 'r'), rt.swizzle(trail, 'g')), rt.swizzle(trail, 'b'))
       outRGB.replace((rt.binary('+', trail, rt.binary('*', rt.swizzle(scaledInput, 'rgb'), rt.binary('-', rt.f(1), trail, 3, 'float'), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
       outAlpha = rt.component_wise('max', trailPresence, rt.swizzle(scaledInput, 'a'))

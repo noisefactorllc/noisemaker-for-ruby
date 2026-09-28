@@ -14,7 +14,7 @@ run_pixel = lambda do |ctx, out|
   _u_pause = u.key?('pause') ? u['pause'] : rt.f(0.0)
   _u_density = u.key?('density') ? u['density'] : rt.f(0.0)
   g['CHANNEL_COUNT'] = rt.i(4)
-  g['TAU'] = rt.f(6.2831853071795862)
+  g['TAU'] = rt.f(6.2831854820251465)
   g['TIME_SEED_OFFSETS'] = rt.construct(3, rt.f(97), rt.f(57), rt.f(131))
   g['STATIC_SEED'] = rt.construct(3, rt.f(37), rt.f(17), rt.f(53))
   g['LIMITER_SEED'] = rt.construct(3, rt.f(113), rt.f(71), rt.f(193))
@@ -33,14 +33,14 @@ run_pixel = lambda do |ctx, out|
   end
   snow_fract_vec3__vec3 = lambda do |value|
     value = rt.copy(value, 'float')
-    return rt.binary('-', value, rt.component_wise('floor', value), 3, 'float')
+    return rt.construct(3, ((value[0]) - (rt.component_wise('floor', value[0]))), ((value[1]) - (rt.component_wise('floor', value[1]))), ((value[2]) - (rt.component_wise('floor', value[2]))))
   end
   snow_hash__vec3 = lambda do |input_sample|
     input_sample = rt.copy(input_sample, 'float')
     combined = nil; dot_val = nil; fractional = nil; scaled = nil; shifted = nil
-    scaled = rt.construct(3, snow_fract_vec3__vec3.call(rt.binary('*', input_sample, rt.f(0.1031), 3, 'float')))
-    dot_val = rt.dot(scaled, rt.binary('+', rt.swizzle(scaled, 'yzx'), rt.construct(3, rt.f(33.329999999999998)), 3, 'float'))
-    shifted = rt.construct(3, rt.binary('+', scaled, dot_val, 3, 'float'))
+    scaled = rt.construct(3, snow_fract_vec3__vec3.call(rt.construct(3, ((input_sample[0]) * (rt.f(0.1031000018119812))), ((input_sample[1]) * (rt.f(0.1031000018119812))), ((input_sample[2]) * (rt.f(0.1031000018119812))))))
+    dot_val = rt.dot(scaled, rt.binary('+', rt.swizzle(scaled, 'yzx'), rt.construct(3, rt.f(33.330001831054688)), 3, 'float'))
+    shifted = rt.construct(3, ((scaled[0]) + (dot_val)), ((scaled[1]) + (dot_val)), ((scaled[2]) + (dot_val)))
     combined = rt.binary('*', rt.binary('+', rt.swizzle(shifted, 'x'), rt.swizzle(shifted, 'y'), 1, 'float'), rt.swizzle(shifted, 'z'), 1, 'float')
     fractional = rt.binary('-', combined, rt.component_wise('floor', combined), 1, 'float')
     return rt.component_wise('clamp', fractional, rt.f(0), rt.f(1))
@@ -56,7 +56,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool((rt.bool(rt.binary('==', speed, rt.f(0))) || rt.bool(rt.binary('==', time, rt.f(0))) ? 1 : 0))
       return base_value
     end
-    time_seed = rt.construct(3, rt.binary('+', seed, g['TIME_SEED_OFFSETS'], 3, 'float'))
+    time_seed = rt.construct(3, ((seed[0]) + (g['TIME_SEED_OFFSETS'][0])), ((seed[1]) + (g['TIME_SEED_OFFSETS'][1])), ((seed[2]) + (g['TIME_SEED_OFFSETS'][2])))
     time_sample = rt.construct(3, rt.construct(3, rt.binary('+', rt.swizzle(coord, 'x'), rt.swizzle(time_seed, 'x'), 1, 'float'), rt.binary('+', rt.swizzle(coord, 'y'), rt.swizzle(time_seed, 'y'), 1, 'float'), rt.binary('+', rt.f(1), rt.swizzle(time_seed, 'z'), 1, 'float')))
     time_value = snow_hash__vec3.call(time_sample)
     scaled_time = rt.binary('*', periodic_value__float_float.call(time, time_value), speed, 1, 'float')
@@ -65,7 +65,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     alphaVal = nil; coords = nil; d = nil; exponent = nil; globalCoord = nil; limiter_mask = nil; limiter_value = nil; mixed_rgb = nil; pixelCoord = nil; speedVal = nil; static_color = nil; static_value = nil; texel = nil; timeVal = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     coords = rt.construct(2, rt.construct(1, rt.swizzle(ctx.frag_coord, 'x'), 'int'), rt.construct(1, rt.swizzle(ctx.frag_coord, 'y'), 'int'), 'int')
     texel = rt.construct(4, rt.texel_fetch(_u_inputTex, coords, rt.i(0)))
     alphaVal = rt.component_wise('clamp', _u_alpha, rt.f(0), rt.f(1))
@@ -78,11 +78,11 @@ run_pixel = lambda do |ctx, out|
     speedVal = rt.f(100)
     static_value = snow_noise__vec2_float_float_vec3.call(pixelCoord, timeVal, speedVal, g['STATIC_SEED'])
     limiter_value = snow_noise__vec2_float_float_vec3.call(pixelCoord, timeVal, speedVal, g['LIMITER_SEED'])
-    d = rt.component_wise('max', rt.binary('*', _u_density, rt.f(0.01), 1, 'float'), rt.f(0.0001))
+    d = rt.component_wise('max', rt.binary('*', _u_density, rt.f(0.0099999997764825821), 1, 'float'), rt.f(9.9999997473787516e-05))
     exponent = rt.binary('/', rt.binary('-', rt.f(1), d, 1, 'float'), d, 1, 'float')
-    limiter_mask = rt.binary('*', rt.component_wise('pow', rt.component_wise('min', limiter_value, rt.f(0.98999999999999999)), exponent), alphaVal, 1, 'float')
+    limiter_mask = rt.binary('*', rt.component_wise('pow', rt.component_wise('min', limiter_value, rt.f(0.99000000953674316)), exponent), alphaVal, 1, 'float')
     static_color = rt.construct(3, rt.construct(3, static_value))
-    mixed_rgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(texel, 'xyz'), static_color, rt.construct(3, limiter_mask)))
+    mixed_rgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(texel, 'x'), static_color[0], (limiter_mask)), rt.component_wise('mix', rt.swizzle(texel, 'y'), static_color[1], (limiter_mask)), rt.component_wise('mix', rt.swizzle(texel, 'z'), static_color[2], (limiter_mask)))
     g['fragColor'].replace((rt.construct(4, mixed_rgb, rt.swizzle(texel, 'w'))).map { |c| rt.f32(c) })
   end
   main__void.call

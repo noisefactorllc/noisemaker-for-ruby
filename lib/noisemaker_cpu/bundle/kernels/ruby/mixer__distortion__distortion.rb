@@ -20,13 +20,13 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   getLuminosity__vec3 = lambda do |color|
     color = rt.copy(color, 'float')
-    return rt.dot(color, rt.construct(3, rt.f(0.29899999999999999), rt.f(0.58699999999999997), rt.f(0.114)))
+    return rt.dot(color, rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
   end
   calculateNormal__vec2_vec2_sampler2D = lambda do |uv, texelSize, mapTex|
     uv = rt.copy(uv, 'float')
     texelSize = rt.copy(texelSize, 'float')
     _for0_first = nil; dx = nil; dy = nil; height = nil; i = nil; normal = nil; normalStrength = nil; offsets = nil; sampleSize = nil; sobel_x = nil; sobel_y = nil; texSample = nil
-    sampleSize = rt.construct(2, rt.binary('*', texelSize, _u_smoothing, 2, 'float'))
+    sampleSize = rt.construct(2, ((texelSize[0]) * (_u_smoothing)), ((texelSize[1]) * (_u_smoothing)))
     sobel_x = rt.new_array(rt.i(9), 1)
     sobel_x[(rt.i(0)).to_i] = rt.unary('-', rt.f(1))
     sobel_x[(rt.i(1)).to_i] = rt.f(0)
@@ -69,12 +69,12 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      texSample = rt.construct(3, rt.swizzle(rt.texture(mapTex, rt.binary('+', uv, offsets[(i).to_i], 2, 'float')), 'rgb'))
+      texSample = rt.construct(3, rt.swizzle(rt.texture(mapTex, rt.binary('+', uv, rt.array_index(offsets, i), 2, 'float')), 'r'), rt.swizzle(rt.texture(mapTex, rt.binary('+', uv, rt.array_index(offsets, i), 2, 'float')), 'g'), rt.swizzle(rt.texture(mapTex, rt.binary('+', uv, rt.array_index(offsets, i), 2, 'float')), 'b'))
       height = getLuminosity__vec3.call(texSample)
-      dx = rt.binary('+', dx, rt.binary('*', height, sobel_x[(i).to_i], 1, 'float'), 1, 'float')
-      dy = rt.binary('+', dy, rt.binary('*', height, sobel_y[(i).to_i], 1, 'float'), 1, 'float')
+      dx = rt.binary('+', dx, rt.binary('*', height, rt.array_index(sobel_x, i), 1, 'float'), 1, 'float')
+      dy = rt.binary('+', dy, rt.binary('*', height, rt.array_index(sobel_y, i), 1, 'float'), 1, 'float')
     end
-    normalStrength = rt.binary('*', _u_intensity, rt.f(0.10000000000000001), 1, 'float')
+    normalStrength = rt.binary('*', _u_intensity, rt.f(0.10000000149011612), 1, 'float')
     dx = rt.binary('*', dx, normalStrength, 1, 'float')
     dy = rt.binary('*', dy, normalStrength, 1, 'float')
     normal = rt.construct(3, rt.normalize(rt.construct(3, rt.unary('-', dx), rt.unary('-', dy), rt.f(1))))
@@ -83,7 +83,7 @@ run_pixel = lambda do |ctx, out|
   wrapCoords__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      st.replace((rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', st, rt.f(2)), rt.f(1), 2, 'float'))).map { |c| rt.f32(c) })
+      st.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', st[0], rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', st[1], rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
       st.replace((rt.binary('-', rt.f(1), st, 2, 'float')).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
@@ -98,13 +98,13 @@ run_pixel = lambda do |ctx, out|
   end
   applyDisplacement__vec2_sampler2D_sampler2D = lambda do |uv, mapTex, targetTex|
     uv = rt.copy(uv, 'float')
-    col = nil; displacedUV = nil; dx = nil; dy = nil; len = nil; mapColor = nil; offset = nil
-    mapColor = rt.construct(4, rt.texture(mapTex, uv))
+    __hoist1528 = nil; __hoist1536 = nil; __hoist1544 = nil; __hoist1552 = nil; col = nil; displacedUV = nil; dx = nil; dy = nil; len = nil; mapColor = nil; offset = nil
+    mapColor = rt.construct(4, (rt.texture(mapTex, uv))[0], (rt.texture(mapTex, uv))[1], (rt.texture(mapTex, uv))[2], (rt.texture(mapTex, uv))[3])
     len = rt.length(rt.swizzle(mapColor, 'rgb'))
     offset = rt.construct(2, 0.0)
-    offset = rt.assign_swizzle(offset, 'x', rt.binary('*', rt.component_wise('cos', rt.binary('*', len, rt.f(6.2831853071800001), 1, 'float')), rt.binary('*', _u_intensity, rt.f(0.001), 1, 'float'), 1, 'float'))
-    offset = rt.assign_swizzle(offset, 'y', rt.binary('*', rt.component_wise('sin', rt.binary('*', len, rt.f(6.2831853071800001), 1, 'float')), rt.binary('*', _u_intensity, rt.f(0.001), 1, 'float'), 1, 'float'))
-    displacedUV = rt.construct(2, wrapCoords__vec2.call(rt.binary('+', uv, offset, 2, 'float')))
+    offset = rt.assign_swizzle(offset, 'x', rt.binary('*', rt.component_wise('cos', rt.binary('*', len, rt.f(6.2831854820251465), 1, 'float')), rt.binary('*', _u_intensity, rt.f(0.0010000000474974513), 1, 'float'), 1, 'float'))
+    offset = rt.assign_swizzle(offset, 'y', rt.binary('*', rt.component_wise('sin', rt.binary('*', len, rt.f(6.2831854820251465), 1, 'float')), rt.binary('*', _u_intensity, rt.f(0.0010000000474974513), 1, 'float'), 1, 'float'))
+    displacedUV = rt.construct(2, wrapCoords__vec2.call(rt.construct(2, ((uv[0]) + (offset[0])), ((uv[1]) + (offset[1])))))
     col = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)
@@ -112,11 +112,11 @@ run_pixel = lambda do |ctx, out|
       dx = rt.construct(2, rt.dFdx(displacedUV))
       dy = rt.construct(2, rt.dFdy(displacedUV))
       col = rt.construct(4, rt.construct(4, rt.f(0)))
-      col.replace((rt.binary('+', col, rt.texture(targetTex, rt.binary('+', rt.binary('+', displacedUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      col.replace((rt.binary('+', col, rt.texture(targetTex, rt.binary('+', rt.binary('+', displacedUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      col.replace((rt.binary('+', col, rt.texture(targetTex, rt.binary('+', rt.binary('+', displacedUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      col.replace((rt.binary('+', col, rt.texture(targetTex, rt.binary('+', rt.binary('+', displacedUV, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      return rt.binary('*', col, rt.f(0.25), 4, 'float')
+      __hoist1528 = rt.texture(targetTex, rt.binary('+', rt.binary('+', displacedUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1528[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1528[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1528[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1528[3], 1, 'float'))
+      __hoist1536 = rt.texture(targetTex, rt.binary('+', rt.binary('+', displacedUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1536[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1536[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1536[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1536[3], 1, 'float'))
+      __hoist1544 = rt.texture(targetTex, rt.binary('+', rt.binary('+', displacedUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1544[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1544[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1544[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1544[3], 1, 'float'))
+      __hoist1552 = rt.texture(targetTex, rt.binary('+', rt.binary('+', displacedUV, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1552[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1552[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1552[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1552[3], 1, 'float'))
+      return rt.construct(4, ((col[0]) * (rt.f(0.25))), ((col[1]) * (rt.f(0.25))), ((col[2]) * (rt.f(0.25))), ((col[3]) * (rt.f(0.25))))
     else
       return rt.texture(targetTex, displacedUV)
     end
@@ -124,10 +124,10 @@ run_pixel = lambda do |ctx, out|
   applyRefraction__vec2_vec2_sampler2D_sampler2D = lambda do |uv, texelSize, mapTex, targetTex|
     uv = rt.copy(uv, 'float')
     texelSize = rt.copy(texelSize, 'float')
-    col = nil; dx = nil; dy = nil; normal = nil; refractedUV = nil; refractionOffset = nil
+    __hoist1560 = nil; __hoist1568 = nil; __hoist1576 = nil; __hoist1584 = nil; col = nil; dx = nil; dy = nil; normal = nil; refractedUV = nil; refractionOffset = nil
     normal = rt.construct(3, calculateNormal__vec2_vec2_sampler2D.call(uv, texelSize, mapTex))
-    refractionOffset = rt.construct(2, rt.binary('*', rt.swizzle(normal, 'xy'), rt.binary('*', _u_intensity, rt.f(0.012500000000000001), 1, 'float'), 2, 'float'))
-    refractedUV = rt.construct(2, wrapCoords__vec2.call(rt.binary('+', uv, refractionOffset, 2, 'float')))
+    refractionOffset = rt.construct(2, ((rt.swizzle(normal, 'x')) * (((_u_intensity) * (rt.f(0.012500000186264515))))), ((rt.swizzle(normal, 'y')) * (((_u_intensity) * (rt.f(0.012500000186264515))))))
+    refractedUV = rt.construct(2, wrapCoords__vec2.call(rt.construct(2, ((uv[0]) + (refractionOffset[0])), ((uv[1]) + (refractionOffset[1])))))
     col = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)
@@ -135,11 +135,11 @@ run_pixel = lambda do |ctx, out|
       dx = rt.construct(2, rt.dFdx(refractedUV))
       dy = rt.construct(2, rt.dFdy(refractedUV))
       col = rt.construct(4, rt.construct(4, rt.f(0)))
-      col.replace((rt.binary('+', col, rt.texture(targetTex, rt.binary('+', rt.binary('+', refractedUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      col.replace((rt.binary('+', col, rt.texture(targetTex, rt.binary('+', rt.binary('+', refractedUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      col.replace((rt.binary('+', col, rt.texture(targetTex, rt.binary('+', rt.binary('+', refractedUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      col.replace((rt.binary('+', col, rt.texture(targetTex, rt.binary('+', rt.binary('+', refractedUV, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')), 4, 'float')).map { |c| rt.f32(c) })
-      return rt.binary('*', col, rt.f(0.25), 4, 'float')
+      __hoist1560 = rt.texture(targetTex, rt.binary('+', rt.binary('+', refractedUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1560[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1560[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1560[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1560[3], 1, 'float'))
+      __hoist1568 = rt.texture(targetTex, rt.binary('+', rt.binary('+', refractedUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1568[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1568[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1568[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1568[3], 1, 'float'))
+      __hoist1576 = rt.texture(targetTex, rt.binary('+', rt.binary('+', refractedUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1576[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1576[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1576[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1576[3], 1, 'float'))
+      __hoist1584 = rt.texture(targetTex, rt.binary('+', rt.binary('+', refractedUV, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1584[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1584[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1584[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1584[3], 1, 'float'))
+      return rt.construct(4, ((col[0]) * (rt.f(0.25))), ((col[1]) * (rt.f(0.25))), ((col[2]) * (rt.f(0.25))), ((col[3]) * (rt.f(0.25))))
     else
       return rt.texture(targetTex, refractedUV)
     end
@@ -152,14 +152,14 @@ run_pixel = lambda do |ctx, out|
     normal = rt.construct(3, calculateNormal__vec2_vec2_sampler2D.call(uv, texelSize, mapTex))
     incident = rt.construct(3, rt.construct(3, rt.normalize(rt.binary('-', globalUV, rt.f(0.5), 2, 'float')), rt.f(100)))
     reflectionVec = rt.construct(3, rt.reflect(incident, normal))
-    reflectionOffset = rt.construct(2, rt.binary('*', rt.swizzle(reflectionVec, 'xy'), rt.binary('*', _u_intensity, rt.f(5.0000000000000002e-05), 1, 'float'), 2, 'float'))
-    redOffset = rt.construct(2, rt.binary('*', reflectionOffset, rt.binary('+', rt.f(1), rt.binary('*', _u_aberration, rt.f(0.0074999999999999997), 1, 'float'), 1, 'float'), 2, 'float'))
+    reflectionOffset = rt.construct(2, ((rt.swizzle(reflectionVec, 'x')) * (((_u_intensity) * (rt.f(4.9999998736893758e-05))))), ((rt.swizzle(reflectionVec, 'y')) * (((_u_intensity) * (rt.f(4.9999998736893758e-05))))))
+    redOffset = rt.construct(2, ((reflectionOffset[0]) * (((rt.f(1)) + (((_u_aberration) * (rt.f(0.0074999998323619366))))))), ((reflectionOffset[1]) * (((rt.f(1)) + (((_u_aberration) * (rt.f(0.0074999998323619366))))))))
     greenOffset = reflectionOffset
-    blueOffset = rt.construct(2, rt.binary('*', reflectionOffset, rt.binary('-', rt.f(1), rt.binary('*', _u_aberration, rt.f(0.0074999999999999997), 1, 'float'), 1, 'float'), 2, 'float'))
-    redUV = rt.construct(2, wrapCoords__vec2.call(rt.binary('+', uv, redOffset, 2, 'float')))
-    greenUV = rt.construct(2, wrapCoords__vec2.call(rt.binary('+', uv, greenOffset, 2, 'float')))
-    blueUV = rt.construct(2, wrapCoords__vec2.call(rt.binary('+', uv, blueOffset, 2, 'float')))
-    alphaUV = rt.construct(2, wrapCoords__vec2.call(rt.binary('+', uv, reflectionOffset, 2, 'float')))
+    blueOffset = rt.construct(2, ((reflectionOffset[0]) * (((rt.f(1)) - (((_u_aberration) * (rt.f(0.0074999998323619366))))))), ((reflectionOffset[1]) * (((rt.f(1)) - (((_u_aberration) * (rt.f(0.0074999998323619366))))))))
+    redUV = rt.construct(2, wrapCoords__vec2.call(rt.construct(2, ((uv[0]) + (redOffset[0])), ((uv[1]) + (redOffset[1])))))
+    greenUV = rt.construct(2, wrapCoords__vec2.call(rt.construct(2, ((uv[0]) + (greenOffset[0])), ((uv[1]) + (greenOffset[1])))))
+    blueUV = rt.construct(2, wrapCoords__vec2.call(rt.construct(2, ((uv[0]) + (blueOffset[0])), ((uv[1]) + (blueOffset[1])))))
+    alphaUV = rt.construct(2, wrapCoords__vec2.call(rt.construct(2, ((uv[0]) + (reflectionOffset[0])), ((uv[1]) + (reflectionOffset[1])))))
     a = rt.f(0.0)
     alphaChannel = rt.f(0.0)
     b = rt.f(0.0)
@@ -181,10 +181,10 @@ run_pixel = lambda do |ctx, out|
       _g = rt.f(0)
       b = rt.f(0)
       a = rt.f(0)
-      o1 = rt.construct(2, rt.binary('+', rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'))
-      o2 = rt.construct(2, rt.binary('+', rt.binary('*', dx, rt.f(0.125), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'))
-      o3 = rt.construct(2, rt.binary('+', rt.binary('*', dx, rt.f(0.375), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float'))
-      o4 = rt.construct(2, rt.binary('+', rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float'))
+      o1 = rt.construct(2, ((((dx[0]) * (rt.unary('-', rt.f(0.375))))) + (((dy[0]) * (rt.unary('-', rt.f(0.125)))))), ((((dx[1]) * (rt.unary('-', rt.f(0.375))))) + (((dy[1]) * (rt.unary('-', rt.f(0.125)))))))
+      o2 = rt.construct(2, ((((dx[0]) * (rt.f(0.125)))) + (((dy[0]) * (rt.unary('-', rt.f(0.375)))))), ((((dx[1]) * (rt.f(0.125)))) + (((dy[1]) * (rt.unary('-', rt.f(0.375)))))))
+      o3 = rt.construct(2, ((((dx[0]) * (rt.f(0.375)))) + (((dy[0]) * (rt.f(0.125))))), ((((dx[1]) * (rt.f(0.375)))) + (((dy[1]) * (rt.f(0.125))))))
+      o4 = rt.construct(2, ((((dx[0]) * (rt.unary('-', rt.f(0.125))))) + (((dy[0]) * (rt.f(0.375))))), ((((dx[1]) * (rt.unary('-', rt.f(0.125))))) + (((dy[1]) * (rt.f(0.375))))))
       r = rt.binary('+', r, rt.swizzle(rt.texture(targetTex, rt.binary('+', redUV, o1, 2, 'float')), 'r'), 1, 'float')
       r = rt.binary('+', r, rt.swizzle(rt.texture(targetTex, rt.binary('+', redUV, o2, 2, 'float')), 'r'), 1, 'float')
       r = rt.binary('+', r, rt.swizzle(rt.texture(targetTex, rt.binary('+', redUV, o3, 2, 'float')), 'r'), 1, 'float')
@@ -201,7 +201,7 @@ run_pixel = lambda do |ctx, out|
       a = rt.binary('+', a, rt.swizzle(rt.texture(targetTex, rt.binary('+', alphaUV, o2, 2, 'float')), 'a'), 1, 'float')
       a = rt.binary('+', a, rt.swizzle(rt.texture(targetTex, rt.binary('+', alphaUV, o3, 2, 'float')), 'a'), 1, 'float')
       a = rt.binary('+', a, rt.swizzle(rt.texture(targetTex, rt.binary('+', alphaUV, o4, 2, 'float')), 'a'), 1, 'float')
-      return rt.binary('*', rt.construct(4, r, _g, b, a), rt.f(0.25), 4, 'float')
+      return rt.construct(4, (((r)) * (rt.f(0.25))), (((_g)) * (rt.f(0.25))), (((b)) * (rt.f(0.25))), (((a)) * (rt.f(0.25))))
     else
       redChannel = rt.swizzle(rt.texture(targetTex, redUV), 'r')
       greenChannel = rt.swizzle(rt.texture(targetTex, greenUV), 'g')
@@ -212,10 +212,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; fullRes = nil; globalUV = nil; texelSize = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary('/', rt.f(1), _u_resolution, 2, 'float'))
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    globalUV = rt.construct(2, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
+    texelSize = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (_u_resolution[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (_u_resolution[1])))
+    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
     color = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', _u_mode, rt.i(0)))
       if rt.bool(rt.binary('==', _u_mapSource, rt.i(0)))

@@ -22,9 +22,10 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   hash3__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    p.replace((rt.binary('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000000000001), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-    p.replace((rt.component_wise('fract', rt.binary('*', p, rt.construct(3, rt.f(0.1031), rt.f(0.10299999999999999), rt.f(0.097299999999999998)), 3, 'float'))).map { |c| rt.f32(c) })
-    p.replace((rt.binary('+', p, rt.dot(p, rt.binary('+', rt.swizzle(p, 'yxz'), rt.f(33.329999999999998), 3, 'float')), 3, 'float')).map { |c| rt.f32(c) })
+    __sc1976 = nil
+    p.replace((rt.binary('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+    p.replace((rt.component_wise('fract', rt.construct(3, ((p[0]) * ((rt.f(0.1031000018119812)))), ((p[1]) * ((rt.f(0.10300000011920929)))), ((p[2]) * ((rt.f(0.097300000488758087))))))).map { |c| rt.f32(c) })
+    __sc1976 = rt.dot(p, rt.binary('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float')); p[0] = rt.f32(rt.binary('+', p[0], __sc1976, 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __sc1976, 1, 'float')); p[2] = rt.f32(rt.binary('+', p[2], __sc1976, 1, 'float'))
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'))
   end
   atlasTexel__ivec3_int = lambda do |p, volSize|
@@ -51,8 +52,8 @@ run_pixel = lambda do |ctx, out|
     yn = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.unary('-', rt.i(1)), rt.i(0), 'int'), 3, 'int'), volSize))
     zp = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.i(1), 'int'), 3, 'int'), volSize))
     zn = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.unary('-', rt.i(1)), 'int'), 3, 'int'), volSize))
-    neighborSum = rt.construct(2, rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('+', rt.swizzle(xp, 'ra'), rt.swizzle(xn, 'ra'), 2, 'float'), rt.swizzle(yp, 'ra'), 2, 'float'), rt.swizzle(yn, 'ra'), 2, 'float'), rt.swizzle(zp, 'ra'), 2, 'float'), rt.swizzle(zn, 'ra'), 2, 'float'))
-    lap = rt.construct(2, rt.binary('-', neighborSum, rt.binary('*', rt.f(6), rt.swizzle(center, 'ra'), 2, 'float'), 2, 'float'))
+    neighborSum = rt.construct(2, ((((((((((rt.swizzle(xp, 'r')) + (rt.swizzle(xn, 'r')))) + (rt.swizzle(yp, 'r')))) + (rt.swizzle(yn, 'r')))) + (rt.swizzle(zp, 'r')))) + (rt.swizzle(zn, 'r'))), ((((((((((rt.swizzle(xp, 'a')) + (rt.swizzle(xn, 'a')))) + (rt.swizzle(yp, 'a')))) + (rt.swizzle(yn, 'a')))) + (rt.swizzle(zp, 'a')))) + (rt.swizzle(zn, 'a'))))
+    lap = rt.construct(2, ((neighborSum[0]) - (((rt.f(6)) * (rt.swizzle(center, 'r'))))), ((neighborSum[1]) - (((rt.f(6)) * (rt.swizzle(center, 'a'))))))
     return lap
   end
   main__void = lambda do
@@ -90,33 +91,33 @@ run_pixel = lambda do |ctx, out|
         lum = rt.f(0.0)
         p = rt.construct(3, 0.0)
         if rt.bool(hasSeedInput)
-          lum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999999999999), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58699999999999997), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.114), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
+          lum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
           b = (rt.bool(rt.binary('>', lum, rt.f(0.5))) ? (rt.f(1)) : (rt.f(0)))
         else
           p = rt.construct(3, rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)))
-          if rt.bool(rt.binary('>', hash3__vec3.call(p), rt.f(0.96999999999999997)))
+          if rt.bool(rt.binary('>', hash3__vec3.call(p), rt.f(0.97000002861022949)))
             b = rt.f(1)
           end
         end
       end
-      g['fragColor'].replace((rt.construct(4, b, b, b, a)).map { |c| rt.f32(c) })
+      g['fragColor'][0] = rt.f32(b); g['fragColor'][1] = rt.f32(b); g['fragColor'][2] = rt.f32(b); g['fragColor'][3] = rt.f32(a)
       return
     end
     lap = rt.construct(2, laplacian3D__ivec3_int.call(voxel, volSize))
-    f = rt.binary('*', _u_feed, rt.f(0.001), 1, 'float')
-    k = rt.binary('*', _u_kill, rt.f(0.001), 1, 'float')
-    r1 = rt.binary('/', rt.binary('*', _u_rate1, rt.f(0.01), 1, 'float'), rt.f(6), 1, 'float')
-    r2 = rt.binary('/', rt.binary('*', _u_rate2, rt.f(0.01), 1, 'float'), rt.f(6), 1, 'float')
+    f = rt.binary('*', _u_feed, rt.f(0.0010000000474974513), 1, 'float')
+    k = rt.binary('*', _u_kill, rt.f(0.0010000000474974513), 1, 'float')
+    r1 = rt.binary('/', rt.binary('*', _u_rate1, rt.f(0.0099999997764825821), 1, 'float'), rt.f(6), 1, 'float')
+    r2 = rt.binary('/', rt.binary('*', _u_rate2, rt.f(0.0099999997764825821), 1, 'float'), rt.f(6), 1, 'float')
     iterF = rt.component_wise('max', rt.f(1), rt.construct(1, _u_iterations))
-    s = rt.binary('/', rt.binary('*', _u_speed, rt.f(0.01), 1, 'float'), iterF, 1, 'float')
+    s = rt.binary('/', rt.binary('*', _u_speed, rt.f(0.0099999997764825821), 1, 'float'), iterF, 1, 'float')
     newA = rt.binary('+', a, rt.binary('*', rt.binary('+', rt.binary('-', rt.binary('*', r1, rt.swizzle(lap, 'y'), 1, 'float'), rt.binary('*', rt.binary('*', a, b, 1, 'float'), b, 1, 'float'), 1, 'float'), rt.binary('*', f, rt.binary('-', rt.f(1), a, 1, 'float'), 1, 'float'), 1, 'float'), s, 1, 'float'), 1, 'float')
     newB = rt.binary('+', b, rt.binary('*', rt.binary('-', rt.binary('+', rt.binary('*', r2, rt.swizzle(lap, 'x'), 1, 'float'), rt.binary('*', rt.binary('*', a, b, 1, 'float'), b, 1, 'float'), 1, 'float'), rt.binary('*', rt.binary('+', k, f, 1, 'float'), b, 1, 'float'), 1, 'float'), s, 1, 'float'), 1, 'float')
     seedLum = rt.f(0.0)
     seedVal = rt.construct(4, 0.0)
     if rt.bool(rt.binary('>', _u_weight, rt.f(0)))
       seedVal = rt.construct(4, sampleSeed__ivec3_int.call(voxel, volSize))
-      seedLum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999999999999), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58699999999999997), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.114), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
-      newB = rt.component_wise('mix', newB, seedLum, rt.binary('*', _u_weight, rt.f(0.01), 1, 'float'))
+      seedLum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
+      newB = rt.component_wise('mix', newB, seedLum, rt.binary('*', _u_weight, rt.f(0.0099999997764825821), 1, 'float'))
     end
     newA = rt.component_wise('clamp', newA, rt.f(0), rt.f(1))
     newB = rt.component_wise('clamp', newB, rt.f(0), rt.f(1))
@@ -125,7 +126,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', _u_colorMode, rt.i(0)))
       outRgb.replace((rt.construct(3, density)).map { |c| rt.f32(c) })
     else
-      outRgb.replace((rt.construct(3, density, newA, rt.binary('-', rt.f(1), density, 1, 'float'))).map { |c| rt.f32(c) })
+      outRgb[0] = rt.f32(density); outRgb[1] = rt.f32(newA); outRgb[2] = rt.f32(rt.binary('-', rt.f(1), density, 1, 'float'))
     end
     g['fragColor'].replace((rt.construct(4, outRgb, newA)).map { |c| rt.f32(c) })
   end

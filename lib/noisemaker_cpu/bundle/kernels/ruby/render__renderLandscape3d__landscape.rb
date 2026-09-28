@@ -3,8 +3,9 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  lighting__vec3_vec3_vec3 = inverseRotation__vec3 = forwardRotation__vec3 = renderPerspective__vec2 = main__void = nil
+  lighting__vec3_vec3_vec3 = sampleAtlasTexel__sampler2D_ivec3_bool = interpolateAtlas__vec4_vec4_float = atlasCoords__vec3 = sampleAtlasCoords__sampler2D_struct1_bool = sampleAtlas__sampler2D_vec3_bool = isSolid__struct1 = traceIsosurface__vec3_vec3_float_float = isosurfaceNormal__vec3_vec3 = inverseRotation__vec3 = forwardRotation__vec3 = renderPerspective__vec2 = main__void = nil
   _retc = nil
+  _u__FILTERING = u.key?('FILTERING') ? u['FILTERING'] : 0
   _u__VIEW_MODE = u.key?('VIEW_MODE') ? u['VIEW_MODE'] : 0
   _u_volumeCache = ctx.texture_binding('volumeCache')
   _u_analyticalGeo = ctx.texture_binding('analyticalGeo')
@@ -38,60 +39,180 @@ run_pixel = lambda do |ctx, out|
     viewDirection = rt.copy(viewDirection, 'float')
     halfVector = nil; light = nil; specular = nil
     light = rt.construct(3, rt.construct(3, rt.f(0), rt.f(1), rt.f(0)))
-    if rt.bool(rt.binary('>', rt.dot(_u_lightDirection, _u_lightDirection), rt.f(9.9999999999999995e-07)))
+    if rt.bool(rt.binary('>', rt.dot(_u_lightDirection, _u_lightDirection), rt.f(9.9999999747524271e-07)))
       light.replace((rt.normalize(_u_lightDirection)).map { |c| rt.f32(c) })
     end
-    halfVector = rt.construct(3, rt.binary('+', light, viewDirection, 3, 'float'))
+    halfVector = rt.construct(3, ((light[0]) + (viewDirection[0])), ((light[1]) + (viewDirection[1])), ((light[2]) + (viewDirection[2])))
     specular = rt.f(0)
-    if rt.bool(rt.binary('>', rt.dot(halfVector, halfVector), rt.f(9.9999999999999995e-07)))
+    if rt.bool(rt.binary('>', rt.dot(halfVector, halfVector), rt.f(9.9999999747524271e-07)))
       specular = rt.binary('*', rt.component_wise('pow', rt.component_wise('max', rt.dot(normal, rt.normalize(halfVector)), rt.f(0)), rt.f(32)), _u_specularIntensity, 1, 'float')
     end
-    return rt.binary('+', rt.binary('*', color, rt.binary('+', _u_ambient, rt.binary('*', rt.component_wise('max', rt.dot(normal, light), rt.f(0)), _u_diffuseIntensity, 1, 'float'), 1, 'float'), 3, 'float'), specular, 3, 'float')
+    return rt.construct(3, ((((color[0]) * (((_u_ambient) + (((rt.component_wise('max', rt.dot(normal, light), rt.f(0))) * (_u_diffuseIntensity))))))) + (specular)), ((((color[1]) * (((_u_ambient) + (((rt.component_wise('max', rt.dot(normal, light), rt.f(0))) * (_u_diffuseIntensity))))))) + (specular)), ((((color[2]) * (((_u_ambient) + (((rt.component_wise('max', rt.dot(normal, light), rt.f(0))) * (_u_diffuseIntensity))))))) + (specular)))
+  end
+  sampleAtlasTexel__sampler2D_ivec3_bool = lambda do |atlas, p, material|
+    p = rt.copy(p, 'int')
+    coord = nil; present = nil; value = nil
+    coord = rt.construct(2, rt.swizzle(p, 'x'), rt.binary('+', rt.swizzle(p, 'y'), rt.binary('*', rt.swizzle(p, 'z'), _u_volumeSize, 1, 'int'), 1, 'int'), 'int')
+    value = rt.construct(4, rt.texel_fetch(atlas, coord, rt.i(0)))
+    present = rt.f(0.0)
+    if rt.bool(material)
+      present = (rt.bool(rt.binary('>', rt.swizzle(rt.texel_fetch(_u_analyticalGeo, coord, rt.i(0)), 'a'), rt.f(0))) ? (rt.f(1)) : (rt.f(0)))
+      return rt.construct(4, rt.binary('*', rt.swizzle(value, 'rgb'), present, 3, 'float'), present)
+    end
+    return value
+  end
+  interpolateAtlas__vec4_vec4_float = lambda do |a, b, weight|
+    a = rt.copy(a, 'float')
+    b = rt.copy(b, 'float')
+    return rt.construct(4, ((a[0]) + (((((b[0]) - (a[0]))) * (weight)))), ((a[1]) + (((((b[1]) - (a[1]))) * (weight)))), ((a[2]) + (((((b[2]) - (a[2]))) * (weight)))), ((a[3]) + (((((b[3]) - (a[3]))) * (weight)))))
+  end
+  atlasCoords__vec3 = lambda do |p|
+    p = rt.copy(p, 'float')
+    texel = nil
+    texel = rt.construct(3, rt.component_wise('clamp', rt.f32(((p[0]) - (rt.f(0.5)))), (rt.f(0)), ((rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int')))), rt.component_wise('clamp', rt.f32(((p[1]) - (rt.f(0.5)))), (rt.f(0)), ((rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int')))), rt.component_wise('clamp', rt.f32(((p[2]) - (rt.f(0.5)))), (rt.f(0)), ((rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int')))))
+    return [rt.construct(3, rt.construct(3, rt.component_wise('floor', texel)), 'int'), rt.component_wise('fract', texel)]
+  end
+  sampleAtlasCoords__sampler2D_struct1_bool = lambda do |atlas, coords, material|
+    c00 = nil; c01 = nil; c10 = nil; c11 = nil; f = nil; hi = nil; lo = nil; value = nil
+    lo = coords[0]
+    hi = rt.component_wise('min', rt.binary('+', lo, rt.i(1), 3, 'int'), rt.construct(3, rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int'), 'int'))
+    f = rt.construct(3, coords[1])
+    c00 = rt.construct(4, interpolateAtlas__vec4_vec4_float.call(sampleAtlasTexel__sampler2D_ivec3_bool.call(atlas, rt.construct(3, rt.swizzle(lo, 'x'), rt.swizzle(lo, 'y'), rt.swizzle(lo, 'z'), 'int'), material), sampleAtlasTexel__sampler2D_ivec3_bool.call(atlas, rt.construct(3, rt.swizzle(hi, 'x'), rt.swizzle(lo, 'y'), rt.swizzle(lo, 'z'), 'int'), material), rt.swizzle(f, 'x')))
+    c10 = rt.construct(4, interpolateAtlas__vec4_vec4_float.call(sampleAtlasTexel__sampler2D_ivec3_bool.call(atlas, rt.construct(3, rt.swizzle(lo, 'x'), rt.swizzle(hi, 'y'), rt.swizzle(lo, 'z'), 'int'), material), sampleAtlasTexel__sampler2D_ivec3_bool.call(atlas, rt.construct(3, rt.swizzle(hi, 'x'), rt.swizzle(hi, 'y'), rt.swizzle(lo, 'z'), 'int'), material), rt.swizzle(f, 'x')))
+    c01 = rt.construct(4, interpolateAtlas__vec4_vec4_float.call(sampleAtlasTexel__sampler2D_ivec3_bool.call(atlas, rt.construct(3, rt.swizzle(lo, 'x'), rt.swizzle(lo, 'y'), rt.swizzle(hi, 'z'), 'int'), material), sampleAtlasTexel__sampler2D_ivec3_bool.call(atlas, rt.construct(3, rt.swizzle(hi, 'x'), rt.swizzle(lo, 'y'), rt.swizzle(hi, 'z'), 'int'), material), rt.swizzle(f, 'x')))
+    c11 = rt.construct(4, interpolateAtlas__vec4_vec4_float.call(sampleAtlasTexel__sampler2D_ivec3_bool.call(atlas, rt.construct(3, rt.swizzle(lo, 'x'), rt.swizzle(hi, 'y'), rt.swizzle(hi, 'z'), 'int'), material), sampleAtlasTexel__sampler2D_ivec3_bool.call(atlas, rt.construct(3, rt.swizzle(hi, 'x'), rt.swizzle(hi, 'y'), rt.swizzle(hi, 'z'), 'int'), material), rt.swizzle(f, 'x')))
+    value = rt.construct(4, interpolateAtlas__vec4_vec4_float.call(interpolateAtlas__vec4_vec4_float.call(c00, c10, rt.swizzle(f, 'y')), interpolateAtlas__vec4_vec4_float.call(c01, c11, rt.swizzle(f, 'y')), rt.swizzle(f, 'z')))
+    if rt.bool((rt.bool(material) && rt.bool(rt.binary('>', rt.swizzle(value, 'a'), rt.f(0))) ? 1 : 0))
+      value = rt.assign_swizzle(value, 'rgb', rt.binary('/', rt.swizzle(value, 'rgb'), rt.swizzle(value, 'a'), 3, 'float'))
+    end
+    return value
+  end
+  sampleAtlas__sampler2D_vec3_bool = lambda do |atlas, p, material|
+    p = rt.copy(p, 'float')
+    return sampleAtlasCoords__sampler2D_struct1_bool.call(atlas, atlasCoords__vec3.call(p), material)
+  end
+  isSolid__struct1 = lambda do |coords|
+    density = nil
+    density = rt.swizzle(sampleAtlasCoords__sampler2D_struct1_bool.call(_u_analyticalGeo, coords, 0), 'a')
+    return (rt.bool(rt.binary('>', density, rt.f(0))) && rt.bool(rt.binary('>=', density, _u_threshold)) ? 1 : 0)
+  end
+  traceIsosurface__vec3_vec3_float_float = lambda do |origin, direction, start, leave|
+    origin = rt.copy(origin, 'float')
+    direction = rt.copy(direction, 'float')
+    _for0_first = nil; _for1_first = nil; candidate = nil; candidateCoords = nil; coords = nil; distance = nil; hi = nil; lo = nil; mid = nil; position = nil; previous = nil; refine = nil; step = nil; stepSize = nil
+    position = rt.construct(3, ((origin[0]) + (((direction[0]) * (start)))), ((origin[1]) + (((direction[1]) * (start)))), ((origin[2]) + (((direction[2]) * (start)))))
+    coords = atlasCoords__vec3.call(position)
+    if rt.bool(isSolid__struct1.call(coords))
+      return [start, position, coords]
+    end
+    stepSize = rt.binary('/', rt.f(0.5), rt.length(direction), 1, 'float')
+    previous = start
+    step = rt.i(0)
+    _for0_first = true
+    (0..1048575).each do |_for0|
+      unless _for0_first
+        step = rt.binary('+', step, rt.i(1), 1, 'int')
+      end
+      _for0_first = false
+      unless rt.bool(rt.binary('<', step, rt.binary('*', _u_volumeSize, rt.i(4), 1, 'int')))
+        break
+      end
+      distance = rt.component_wise('min', rt.binary('+', previous, stepSize, 1, 'float'), leave)
+      position.replace((rt.binary('+', origin, rt.binary('*', direction, distance, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+      coords = atlasCoords__vec3.call(position)
+      hi = rt.f(0.0)
+      lo = rt.f(0.0)
+      if rt.bool(isSolid__struct1.call(coords))
+        lo = previous
+        hi = distance
+        refine = rt.i(0)
+        _for1_first = true
+        (0..1048575).each do |_for1|
+          unless _for1_first
+            refine = rt.binary('+', refine, rt.i(1), 1, 'int')
+          end
+          _for1_first = false
+          unless rt.bool(rt.binary('<', refine, rt.i(8)))
+            break
+          end
+          mid = rt.binary('*', rt.binary('+', lo, hi, 1, 'float'), rt.f(0.5), 1, 'float')
+          candidate = rt.construct(3, ((origin[0]) + (((direction[0]) * (mid)))), ((origin[1]) + (((direction[1]) * (mid)))), ((origin[2]) + (((direction[2]) * (mid)))))
+          candidateCoords = atlasCoords__vec3.call(candidate)
+          if rt.bool(isSolid__struct1.call(candidateCoords))
+            hi = mid
+            position.replace((candidate).map { |c| rt.f32(c) })
+            coords = candidateCoords
+          else
+            lo = mid
+          end
+        end
+        return [hi, position, coords]
+      end
+      if rt.bool(rt.binary('>=', distance, leave))
+        break
+      end
+      previous = distance
+    end
+    return [rt.unary('-', rt.f(1)), rt.construct(3, rt.f(0)), [rt.construct(3, rt.i(0), 'int'), rt.construct(3, rt.f(0))]]
+  end
+  isosurfaceNormal__vec3_vec3 = lambda do |p, fallback|
+    p = rt.copy(p, 'float')
+    fallback = rt.copy(fallback, 'float')
+    gradient = nil
+    gradient = rt.construct(3, rt.construct(3, rt.binary('-', rt.swizzle(sampleAtlas__sampler2D_vec3_bool.call(_u_analyticalGeo, rt.construct(3, ((p[0]) - ((rt.f(0.5)))), ((p[1]) - ((rt.f(0)))), ((p[2]) - ((rt.f(0))))), 0), 'a'), rt.swizzle(sampleAtlas__sampler2D_vec3_bool.call(_u_analyticalGeo, rt.construct(3, ((p[0]) + ((rt.f(0.5)))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((rt.f(0))))), 0), 'a'), 1, 'float'), rt.binary('-', rt.swizzle(sampleAtlas__sampler2D_vec3_bool.call(_u_analyticalGeo, rt.construct(3, ((p[0]) - ((rt.f(0)))), ((p[1]) - ((rt.f(0.5)))), ((p[2]) - ((rt.f(0))))), 0), 'a'), rt.swizzle(sampleAtlas__sampler2D_vec3_bool.call(_u_analyticalGeo, rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((rt.f(0.5)))), ((p[2]) + ((rt.f(0))))), 0), 'a'), 1, 'float'), rt.binary('-', rt.swizzle(sampleAtlas__sampler2D_vec3_bool.call(_u_analyticalGeo, rt.construct(3, ((p[0]) - ((rt.f(0)))), ((p[1]) - ((rt.f(0)))), ((p[2]) - ((rt.f(0.5))))), 0), 'a'), rt.swizzle(sampleAtlas__sampler2D_vec3_bool.call(_u_analyticalGeo, rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((rt.f(0.5))))), 0), 'a'), 1, 'float')))
+    if rt.bool(rt.binary('>', rt.dot(gradient, gradient), rt.f(9.999999960041972e-13)))
+      return rt.normalize(gradient)
+    end
+    return fallback
   end
   inverseRotation__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    c = nil; s = nil
-    c = rt.construct(3, rt.component_wise('cos', rt.construct(3, _u_rotateX, _u_rotateY, _u_rotateZ)))
-    s = rt.construct(3, rt.component_wise('sin', rt.construct(3, _u_rotateX, _u_rotateY, _u_rotateZ)))
-    p.replace((rt.construct(3, rt.binary('+', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(c, 'z'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(s, 'z'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.swizzle(s, 'z'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(c, 'z'), 1, 'float'), 1, 'float'), rt.swizzle(p, 'z'))).map { |c| rt.f32(c) })
-    p.replace((rt.construct(3, rt.binary('-', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(c, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(s, 'y'), 1, 'float'), 1, 'float'), rt.swizzle(p, 'y'), rt.binary('+', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(s, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(c, 'y'), 1, 'float'), 1, 'float'))).map { |c| rt.f32(c) })
+    c = nil; cpu_vector_assignment_1 = nil; cpu_vector_assignment_2 = nil; s = nil
+    c = rt.construct(3, rt.component_wise('cos', (_u_rotateX)), rt.component_wise('cos', (_u_rotateY)), rt.component_wise('cos', (_u_rotateZ)))
+    s = rt.construct(3, rt.component_wise('sin', (_u_rotateX)), rt.component_wise('sin', (_u_rotateY)), rt.component_wise('sin', (_u_rotateZ)))
+    cpu_vector_assignment_1 = rt.construct(3, rt.construct(3, rt.binary('+', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(c, 'z'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(s, 'z'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.swizzle(s, 'z'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(c, 'z'), 1, 'float'), 1, 'float'), rt.swizzle(p, 'z')))
+    p.replace((cpu_vector_assignment_1).map { |c| rt.f32(c) })
+    cpu_vector_assignment_2 = rt.construct(3, rt.construct(3, rt.binary('-', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(c, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(s, 'y'), 1, 'float'), 1, 'float'), rt.swizzle(p, 'y'), rt.binary('+', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(s, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(c, 'y'), 1, 'float'), 1, 'float')))
+    p.replace((cpu_vector_assignment_2).map { |c| rt.f32(c) })
     return rt.construct(3, rt.swizzle(p, 'x'), rt.binary('+', rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(c, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(s, 'x'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.swizzle(s, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(c, 'x'), 1, 'float'), 1, 'float'))
   end
   forwardRotation__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    c = nil; s = nil
-    c = rt.construct(3, rt.component_wise('cos', rt.construct(3, _u_rotateX, _u_rotateY, _u_rotateZ)))
-    s = rt.construct(3, rt.component_wise('sin', rt.construct(3, _u_rotateX, _u_rotateY, _u_rotateZ)))
-    p.replace((rt.construct(3, rt.swizzle(p, 'x'), rt.binary('-', rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(c, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(s, 'x'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(s, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(c, 'x'), 1, 'float'), 1, 'float'))).map { |c| rt.f32(c) })
-    p.replace((rt.construct(3, rt.binary('+', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(c, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(s, 'y'), 1, 'float'), 1, 'float'), rt.swizzle(p, 'y'), rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.swizzle(s, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(c, 'y'), 1, 'float'), 1, 'float'))).map { |c| rt.f32(c) })
+    c = nil; cpu_vector_assignment_3 = nil; cpu_vector_assignment_4 = nil; s = nil
+    c = rt.construct(3, rt.component_wise('cos', (_u_rotateX)), rt.component_wise('cos', (_u_rotateY)), rt.component_wise('cos', (_u_rotateZ)))
+    s = rt.construct(3, rt.component_wise('sin', (_u_rotateX)), rt.component_wise('sin', (_u_rotateY)), rt.component_wise('sin', (_u_rotateZ)))
+    cpu_vector_assignment_3 = rt.construct(3, rt.construct(3, rt.swizzle(p, 'x'), rt.binary('-', rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(c, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(s, 'x'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(s, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(c, 'x'), 1, 'float'), 1, 'float')))
+    p.replace((cpu_vector_assignment_3).map { |c| rt.f32(c) })
+    cpu_vector_assignment_4 = rt.construct(3, rt.construct(3, rt.binary('+', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(c, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(s, 'y'), 1, 'float'), 1, 'float'), rt.swizzle(p, 'y'), rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.swizzle(s, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'z'), rt.swizzle(c, 'y'), 1, 'float'), 1, 'float')))
+    p.replace((cpu_vector_assignment_4).map { |c| rt.f32(c) })
     return rt.construct(3, rt.binary('-', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(c, 'z'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(s, 'z'), 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(p, 'x'), rt.swizzle(s, 'z'), 1, 'float'), rt.binary('*', rt.swizzle(p, 'y'), rt.swizzle(c, 'z'), 1, 'float'), 1, 'float'), rt.swizzle(p, 'z'))
   end
   renderPerspective__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
-    _for0_first = nil; _for1_first = nil; _for2_first = nil; a = nil; atlas = nil; axis = nil; b = nil; boundary = nil; cameraRay = nil; cell = nil; crossed = nil; delta = nil; density = nil; direction = nil; distance = nil; enter = nil; farT = nil; focalLength = nil; framedUv = nil; leave = nil; nearT = nil; nextT = nil; normal = nil; origin = nil; size = nil; step = nil; stepDir = nil; viewDirection = nil; worldNormal = nil
+    _for2_first = nil; _for3_first = nil; _for4_first = nil; a = nil; atlas = nil; axis = nil; b = nil; boundary = nil; cameraRay = nil; cell = nil; crossed = nil; delta = nil; density = nil; direction = nil; distance = nil; enter = nil; farT = nil; focalLength = nil; framedUv = nil; hit = nil; leave = nil; nearT = nil; nextT = nil; normal = nil; origin = nil; p = nil; size = nil; step = nil; stepDir = nil; viewDirection = nil; worldNormal = nil
     size = rt.construct(1, _u_volumeSize)
-    focalLength = rt.binary('/', rt.f(1), rt.component_wise('tan', rt.binary('*', rt.component_wise('clamp', _u_fieldOfView, rt.f(10), rt.f(150)), rt.f(0.0087266462600000001), 1, 'float')), 1, 'float')
-    origin = rt.construct(3, rt.binary('*', rt.binary('+', rt.binary('/', inverseRotation__vec3.call(rt.construct(3, rt.unary('-', _u_posX), rt.unary('-', _u_posY), rt.binary('-', rt.f(80), _u_posZ, 1, 'float'))), rt.f(80), 3, 'float'), rt.f(0.5), 3, 'float'), size, 3, 'float'))
-    framedUv = rt.construct(2, rt.binary('/', rt.binary('+', uv, rt.construct(2, _u_panX, _u_panY), 2, 'float'), rt.component_wise('max', _u_zoom, rt.f(0.001)), 2, 'float'))
-    cameraRay = rt.construct(3, rt.construct(3, rt.binary('/', rt.binary('*', framedUv, rt.f(2), 2, 'float'), rt.binary('*', focalLength, rt.component_wise('max', _u_viewScale, rt.f(0.001)), 1, 'float'), 2, 'float'), rt.unary('-', rt.f(1))))
+    focalLength = rt.binary('/', rt.f(1), rt.component_wise('tan', rt.binary('*', rt.component_wise('clamp', _u_fieldOfView, rt.f(10), rt.f(150)), rt.f(0.0087266461923718452), 1, 'float')), 1, 'float')
+    origin = rt.construct(3, rt.binary('*', rt.binary('+', rt.binary('/', inverseRotation__vec3.call(rt.construct(3, (rt.unary('-', _u_posX)), (rt.unary('-', _u_posY)), (((rt.f(80)) - (_u_posZ))))), rt.f(80), 3, 'float'), rt.f(0.5), 3, 'float'), size, 3, 'float'))
+    framedUv = rt.construct(2, ((((uv[0]) + ((_u_panX)))) / (rt.component_wise('max', _u_zoom, rt.f(0.0010000000474974513)))), ((((uv[1]) + ((_u_panY)))) / (rt.component_wise('max', _u_zoom, rt.f(0.0010000000474974513)))))
+    cameraRay = rt.construct(3, rt.construct(3, rt.binary('/', rt.binary('*', framedUv, rt.f(2), 2, 'float'), rt.binary('*', focalLength, rt.component_wise('max', _u_viewScale, rt.f(0.0010000000474974513)), 1, 'float'), 2, 'float'), rt.unary('-', rt.f(1))))
     direction = rt.construct(3, rt.binary('*', inverseRotation__vec3.call(cameraRay), rt.binary('/', size, rt.f(80), 1, 'float'), 3, 'float'))
-    nearT = rt.construct(3, rt.construct(3, rt.unary('-', rt.f(1e+30))))
-    farT = rt.construct(3, rt.construct(3, rt.f(1e+30)))
-    delta = rt.construct(3, rt.construct(3, rt.f(1e+30)))
+    nearT = rt.construct(3, rt.construct(3, rt.unary('-', rt.f(1.0000000150474662e+30))))
+    farT = rt.construct(3, rt.construct(3, rt.f(1.0000000150474662e+30)))
+    delta = rt.construct(3, rt.construct(3, rt.f(1.0000000150474662e+30)))
     stepDir = rt.construct(3, rt.i(0), 'int')
     axis = rt.i(0)
-    _for0_first = true
-    (0..1048575).each do |_for0|
-      unless _for0_first
+    _for2_first = true
+    (0..1048575).each do |_for2|
+      unless _for2_first
         axis = rt.binary('+', axis, rt.i(1), 1, 'int')
       end
-      _for0_first = false
+      _for2_first = false
       unless rt.bool(rt.binary('<', axis, rt.i(3)))
         break
       end
       a = rt.f(0.0)
       b = rt.f(0.0)
-      if rt.bool(rt.binary('<', rt.component_wise('abs', direction[(axis).to_i]), rt.f(1e-08)))
+      if rt.bool(rt.binary('<', rt.component_wise('abs', direction[(axis).to_i]), rt.f(9.9999999392252903e-09)))
         if rt.bool((rt.bool(rt.binary('<', origin[(axis).to_i], rt.f(0))) || rt.bool(rt.binary('>=', origin[(axis).to_i], size)) ? 1 : 0))
           return
         end
@@ -106,19 +227,19 @@ run_pixel = lambda do |ctx, out|
     end
     enter = rt.component_wise('max', rt.component_wise('max', rt.swizzle(nearT, 'x'), rt.swizzle(nearT, 'y')), rt.swizzle(nearT, 'z'))
     leave = rt.component_wise('min', rt.component_wise('min', rt.swizzle(farT, 'x'), rt.swizzle(farT, 'y')), rt.swizzle(farT, 'z'))
-    distance = rt.component_wise('max', enter, rt.f(0.10000000000000001))
+    distance = rt.component_wise('max', enter, rt.f(0.10000000149011612))
     if rt.bool(rt.binary('>=', distance, leave))
       return
     end
-    cell = rt.component_wise('clamp', rt.construct(3, rt.construct(3, rt.component_wise('floor', rt.binary('+', rt.binary('+', origin, rt.binary('*', direction, distance, 3, 'float'), 3, 'float'), rt.binary('*', rt.construct(3, stepDir), rt.f(0.0001), 3, 'float'), 3, 'float'))), 'int'), rt.construct(3, rt.i(0), 'int'), rt.construct(3, rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int'), 'int'))
-    nextT = rt.construct(3, rt.construct(3, rt.f(1e+30)))
+    cell = rt.component_wise('clamp', rt.construct(3, rt.construct(3, rt.component_wise('floor', rt.construct(3, ((((origin[0]) + (((direction[0]) * (distance))))) + ((((stepDir[0])) * (rt.f(9.9999997473787516e-05))))), ((((origin[1]) + (((direction[1]) * (distance))))) + ((((stepDir[1])) * (rt.f(9.9999997473787516e-05))))), ((((origin[2]) + (((direction[2]) * (distance))))) + ((((stepDir[2])) * (rt.f(9.9999997473787516e-05)))))))), 'int'), rt.construct(3, rt.i(0), 'int'), rt.construct(3, rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int'), 'int'))
+    nextT = rt.construct(3, rt.construct(3, rt.f(1.0000000150474662e+30)))
     axis = rt.i(0)
-    _for1_first = true
-    (0..1048575).each do |_for1|
-      unless _for1_first
+    _for3_first = true
+    (0..1048575).each do |_for3|
+      unless _for3_first
         axis = rt.binary('+', axis, rt.i(1), 1, 'int')
       end
-      _for1_first = false
+      _for3_first = false
       unless rt.bool(rt.binary('<', axis, rt.i(3)))
         break
       end
@@ -130,7 +251,7 @@ run_pixel = lambda do |ctx, out|
     end
     viewDirection = rt.construct(3, rt.normalize(rt.unary('-', cameraRay)))
     normal = rt.construct(3, rt.normalize(rt.unary('-', direction)))
-    if rt.bool(rt.binary('>=', enter, rt.f(0.10000000000000001)))
+    if rt.bool(rt.binary('>=', enter, rt.f(0.10000000149011612)))
       normal.replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })
       if rt.bool((rt.bool(rt.binary('>=', rt.swizzle(nearT, 'y'), rt.swizzle(nearT, 'x'))) && rt.bool(rt.binary('>=', rt.swizzle(nearT, 'y'), rt.swizzle(nearT, 'z'))) ? 1 : 0))
         normal = rt.assign_swizzle(normal, 'y', rt.unary('-', rt.construct(1, rt.swizzle(stepDir, 'y'))))
@@ -142,13 +263,30 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
+    hit = [rt.f(0.0), rt.construct(3, 0.0), [rt.construct(3, 0.0, 'int'), rt.construct(3, 0.0)]]
+    p = rt.construct(3, 0.0)
+    worldNormal = rt.construct(3, 0.0)
+    if rt.bool(rt.binary('==', _u__FILTERING, rt.i(0)))
+      hit = traceIsosurface__vec3_vec3_float_float.call(origin, direction, distance, leave)
+      if rt.bool(rt.binary('<', hit[0], rt.f(0)))
+        return
+      end
+      p = rt.construct(3, hit[1])
+      if rt.bool(rt.binary('>', hit[0], distance))
+        normal.replace((isosurfaceNormal__vec3_vec3.call(p, normal)).map { |c| rt.f32(c) })
+      end
+      worldNormal = rt.construct(3, forwardRotation__vec3.call(normal))
+      g['fragColor'].replace((rt.construct(4, lighting__vec3_vec3_vec3.call(rt.swizzle(sampleAtlasCoords__sampler2D_struct1_bool.call(_u_volumeCache, hit[2], 1), 'rgb'), worldNormal, viewDirection), rt.f(1))).map { |c| rt.f32(c) })
+      g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', worldNormal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.binary('/', hit[0], rt.f(320), 1, 'float'), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
+      return
+    end
     step = rt.i(0)
-    _for2_first = true
-    (0..1048575).each do |_for2|
-      unless _for2_first
+    _for4_first = true
+    (0..1048575).each do |_for4|
+      unless _for4_first
         step = rt.binary('+', step, rt.i(1), 1, 'int')
       end
-      _for2_first = false
+      _for4_first = false
       unless rt.bool(rt.binary('<', step, rt.binary('*', _u_volumeSize, rt.i(3), 1, 'int')))
         break
       end
@@ -157,7 +295,6 @@ run_pixel = lambda do |ctx, out|
       end
       atlas = rt.construct(2, rt.swizzle(cell, 'x'), rt.binary('+', rt.swizzle(cell, 'y'), rt.binary('*', rt.swizzle(cell, 'z'), _u_volumeSize, 1, 'int'), 1, 'int'), 'int')
       density = rt.swizzle(rt.texel_fetch(_u_analyticalGeo, atlas, rt.i(0)), 'a')
-      worldNormal = rt.construct(3, 0.0)
       if rt.bool((rt.bool(rt.binary('>', density, rt.f(0))) && rt.bool(rt.binary('>=', density, _u_threshold)) ? 1 : 0))
         worldNormal = rt.construct(3, forwardRotation__vec3.call(normal))
         g['fragColor'].replace((rt.construct(4, lighting__vec3_vec3_vec3.call(rt.swizzle(rt.texel_fetch(_u_volumeCache, atlas, rt.i(0)), 'rgb'), worldNormal, viewDirection), rt.f(1))).map { |c| rt.f32(c) })
@@ -177,15 +314,15 @@ run_pixel = lambda do |ctx, out|
         end
       end
       cell.replace(rt.binary('+', cell, rt.binary('*', rt.construct(3, crossed, 'int'), stepDir, 3, 'int'), 3, 'int'))
-      nextT.replace((rt.binary('+', nextT, rt.binary('*', rt.construct(3, crossed), delta, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+      nextT[0] = rt.f32(rt.binary('+', nextT[0], (((crossed[0])) * (delta[0])), 1, 'float')); nextT[1] = rt.f32(rt.binary('+', nextT[1], (((crossed[1])) * (delta[1])), 1, 'float')); nextT[2] = rt.f32(rt.binary('+', nextT[2], (((crossed[2])) * (delta[2])), 1, 'float'))
     end
   end
   main__void = lambda do
-    _for3_first = nil; aspect = nil; atlas = nil; cell = nil; color = nil; crossed = nil; density = nil; distance = nil; enter = nil; fullRes = nil; leave = nil; nearT = nil; nextT = nil; normal = nil; origin = nil; right = nil; size = nil; span = nil; step = nil; up = nil; uv = nil
+    _for5_first = nil; aspect = nil; atlas = nil; cell = nil; color = nil; crossed = nil; density = nil; distance = nil; enter = nil; fullRes = nil; hit = nil; leave = nil; nearT = nil; nextT = nil; normal = nil; origin = nil; p = nil; right = nil; size = nil; span = nil; step = nil; up = nil; uv = nil
     g['fragColor'].replace((rt.construct(4, rt.binary('*', _u_bgColor, _u_bgAlpha, 3, 'float'), _u_bgAlpha)).map { |c| rt.f32(c) })
-    g['geoOut'].replace((rt.construct(4, rt.f(0.5), rt.f(0.5), rt.f(1), rt.f(1))).map { |c| rt.f32(c) })
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    uv = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.binary('*', fullRes, rt.f(0.5), 2, 'float'), 2, 'float'), rt.swizzle(fullRes, 'y'), 2, 'float'))
+    g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(1)); g['geoOut'][3] = rt.f32(rt.f(1))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (_u_resolution[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (_u_resolution[1])))
+    uv = rt.construct(2, ((((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) - (((fullRes[0]) * (rt.f(0.5)))))) / (rt.swizzle(fullRes, 'y'))), ((((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) - (((fullRes[1]) * (rt.f(0.5)))))) / (rt.swizzle(fullRes, 'y'))))
     aspect = rt.f(0.0)
     cell = rt.construct(3, 0.0, 'int')
     distance = rt.f(0.0)
@@ -204,34 +341,49 @@ run_pixel = lambda do |ctx, out|
     else
       size = rt.construct(1, _u_volumeSize)
       aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-      span = rt.binary('/', rt.binary('*', rt.binary('*', rt.component_wise('max', rt.f(1.6329931619), rt.binary('/', rt.f(1.4142135624000001), aspect, 1, 'float')), size, 1, 'float'), rt.f(1.0800000000000001), 1, 'float'), rt.component_wise('max', _u_zoom, rt.f(0.001)), 1, 'float')
-      right = rt.construct(3, rt.construct(3, rt.f(0.70710678120000003), rt.f(0), rt.unary('-', rt.f(0.70710678120000003))))
-      up = rt.construct(3, rt.construct(3, rt.unary('-', rt.f(0.4082482905)), rt.f(0.81649658089999999), rt.unary('-', rt.f(0.4082482905))))
-      origin = rt.construct(3, rt.binary('+', rt.binary('+', rt.construct(3, rt.binary('*', size, rt.f(2.5), 1, 'float')), rt.binary('*', rt.binary('*', right, rt.binary('+', rt.swizzle(uv, 'x'), _u_panX, 1, 'float'), 3, 'float'), span, 3, 'float'), 3, 'float'), rt.binary('*', rt.binary('*', up, rt.binary('+', rt.swizzle(uv, 'y'), _u_panY, 1, 'float'), 3, 'float'), span, 3, 'float'), 3, 'float'))
-      nearT = rt.construct(3, rt.binary('-', origin, size, 3, 'float'))
+      span = rt.binary('/', rt.binary('*', rt.binary('*', rt.component_wise('max', rt.f(1.632993221282959), rt.binary('/', rt.f(1.4142135381698608), aspect, 1, 'float')), size, 1, 'float'), rt.f(1.0800000429153442), 1, 'float'), rt.component_wise('max', _u_zoom, rt.f(0.0010000000474974513)), 1, 'float')
+      right = rt.construct(3, rt.construct(3, rt.f(0.70710676908493042), rt.f(0), rt.unary('-', rt.f(0.70710676908493042))))
+      up = rt.construct(3, rt.construct(3, rt.unary('-', rt.f(0.40824830532073975)), rt.f(0.81649661064147949), rt.unary('-', rt.f(0.40824830532073975))))
+      origin = rt.construct(3, (((((((size) * (rt.f(2.5))))) + (((((right[0]) * (((rt.swizzle(uv, 'x')) + (_u_panX))))) * (span))))) + (((((up[0]) * (((rt.swizzle(uv, 'y')) + (_u_panY))))) * (span)))), (((((((size) * (rt.f(2.5))))) + (((((right[1]) * (((rt.swizzle(uv, 'x')) + (_u_panX))))) * (span))))) + (((((up[1]) * (((rt.swizzle(uv, 'y')) + (_u_panY))))) * (span)))), (((((((size) * (rt.f(2.5))))) + (((((right[2]) * (((rt.swizzle(uv, 'x')) + (_u_panX))))) * (span))))) + (((((up[2]) * (((rt.swizzle(uv, 'y')) + (_u_panY))))) * (span)))))
+      nearT = rt.construct(3, ((origin[0]) - (size)), ((origin[1]) - (size)), ((origin[2]) - (size)))
       enter = rt.component_wise('max', rt.component_wise('max', rt.swizzle(nearT, 'x'), rt.swizzle(nearT, 'y')), rt.swizzle(nearT, 'z'))
       leave = rt.component_wise('min', rt.component_wise('min', rt.swizzle(origin, 'x'), rt.swizzle(origin, 'y')), rt.swizzle(origin, 'z'))
       if rt.bool(rt.binary('>=', enter, leave))
         return
       end
       distance = rt.component_wise('max', enter, rt.f(0))
-      cell = rt.component_wise('clamp', rt.construct(3, rt.construct(3, rt.component_wise('floor', rt.binary('-', origin, rt.binary('+', distance, rt.f(0.0001), 1, 'float'), 3, 'float'))), 'int'), rt.construct(3, rt.i(0), 'int'), rt.construct(3, rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int'), 'int'))
-      nextT = rt.construct(3, rt.binary('-', origin, rt.construct(3, cell), 3, 'float'))
+      cell = rt.component_wise('clamp', rt.construct(3, rt.construct(3, rt.component_wise('floor', rt.construct(3, ((origin[0]) - (((distance) + (rt.f(9.9999997473787516e-05))))), ((origin[1]) - (((distance) + (rt.f(9.9999997473787516e-05))))), ((origin[2]) - (((distance) + (rt.f(9.9999997473787516e-05)))))))), 'int'), rt.construct(3, rt.i(0), 'int'), rt.construct(3, rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int'), 'int'))
+      nextT = rt.construct(3, ((origin[0]) - ((cell[0]))), ((origin[1]) - ((cell[1]))), ((origin[2]) - ((cell[2]))))
       normal = rt.construct(3, rt.construct(3, rt.f(0), rt.f(0), rt.f(1)))
       if rt.bool((rt.bool(rt.binary('>=', rt.swizzle(nearT, 'y'), rt.swizzle(nearT, 'x'))) && rt.bool(rt.binary('>=', rt.swizzle(nearT, 'y'), rt.swizzle(nearT, 'z'))) ? 1 : 0))
-        normal.replace((rt.construct(3, rt.f(0), rt.f(1), rt.f(0))).map { |c| rt.f32(c) })
+        normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(1)); normal[2] = rt.f32(rt.f(0))
       else
         if rt.bool(rt.binary('>=', rt.swizzle(nearT, 'x'), rt.swizzle(nearT, 'z')))
-          normal.replace((rt.construct(3, rt.f(1), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
+          normal[0] = rt.f32(rt.f(1)); normal[1] = rt.f32(rt.f(0)); normal[2] = rt.f32(rt.f(0))
         end
       end
+      hit = [rt.f(0.0), rt.construct(3, 0.0), [rt.construct(3, 0.0, 'int'), rt.construct(3, 0.0)]]
+      p = rt.construct(3, 0.0)
+      if rt.bool(rt.binary('==', _u__FILTERING, rt.i(0)))
+        hit = traceIsosurface__vec3_vec3_float_float.call(origin, rt.construct(3, (rt.unary('-', rt.f(1))), (rt.unary('-', rt.f(1))), (rt.unary('-', rt.f(1)))), distance, leave)
+        if rt.bool(rt.binary('<', hit[0], rt.f(0)))
+          return
+        end
+        p = rt.construct(3, hit[1])
+        if rt.bool(rt.binary('>', hit[0], distance))
+          normal.replace((isosurfaceNormal__vec3_vec3.call(p, normal)).map { |c| rt.f32(c) })
+        end
+        g['fragColor'].replace((rt.construct(4, lighting__vec3_vec3_vec3.call(rt.swizzle(sampleAtlasCoords__sampler2D_struct1_bool.call(_u_volumeCache, hit[2], 1), 'rgb'), normal, rt.construct(3, (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)))), rt.f(1))).map { |c| rt.f32(c) })
+        g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.binary('/', hit[0], rt.binary('*', size, rt.f(4), 1, 'float'), 1, 'float'), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
+        return
+      end
       step = rt.i(0)
-      _for3_first = true
-      (0..1048575).each do |_for3|
-        unless _for3_first
+      _for5_first = true
+      (0..1048575).each do |_for5|
+        unless _for5_first
           step = rt.binary('+', step, rt.i(1), 1, 'int')
         end
-        _for3_first = false
+        _for5_first = false
         unless rt.bool(rt.binary('<', step, rt.binary('*', _u_volumeSize, rt.i(3), 1, 'int')))
           break
         end
@@ -242,24 +394,24 @@ run_pixel = lambda do |ctx, out|
         density = rt.swizzle(rt.texel_fetch(_u_analyticalGeo, atlas, rt.i(0)), 'a')
         color = rt.construct(3, 0.0)
         if rt.bool((rt.bool(rt.binary('>', density, rt.f(0))) && rt.bool(rt.binary('>=', density, _u_threshold)) ? 1 : 0))
-          color = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_volumeCache, atlas, rt.i(0)), 'rgb'))
-          g['fragColor'].replace((rt.construct(4, lighting__vec3_vec3_vec3.call(color, normal, rt.construct(3, rt.f(0.57735026919999999))), rt.f(1))).map { |c| rt.f32(c) })
+          color = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_volumeCache, atlas, rt.i(0)), 'r'), rt.swizzle(rt.texel_fetch(_u_volumeCache, atlas, rt.i(0)), 'g'), rt.swizzle(rt.texel_fetch(_u_volumeCache, atlas, rt.i(0)), 'b'))
+          g['fragColor'].replace((rt.construct(4, lighting__vec3_vec3_vec3.call(color, normal, rt.construct(3, (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)))), rt.f(1))).map { |c| rt.f32(c) })
           g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.binary('/', distance, rt.binary('*', size, rt.f(4), 1, 'float'), 1, 'float'), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
           return
         end
         distance = rt.component_wise('min', rt.component_wise('min', rt.swizzle(nextT, 'x'), rt.swizzle(nextT, 'y')), rt.swizzle(nextT, 'z'))
         crossed = rt.component_wise('lessThanEqual', nextT, rt.construct(3, distance))
         if rt.bool(rt.swizzle(crossed, 'y'))
-          normal.replace((rt.construct(3, rt.f(0), rt.f(1), rt.f(0))).map { |c| rt.f32(c) })
+          normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(1)); normal[2] = rt.f32(rt.f(0))
         else
           if rt.bool(rt.swizzle(crossed, 'x'))
-            normal.replace((rt.construct(3, rt.f(1), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
+            normal[0] = rt.f32(rt.f(1)); normal[1] = rt.f32(rt.f(0)); normal[2] = rt.f32(rt.f(0))
           else
-            normal.replace((rt.construct(3, rt.f(0), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
+            normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(0)); normal[2] = rt.f32(rt.f(1))
           end
         end
         cell.replace(rt.binary('-', cell, rt.construct(3, crossed, 'int'), 3, 'int'))
-        nextT.replace((rt.binary('+', nextT, rt.construct(3, crossed), 3, 'float')).map { |c| rt.f32(c) })
+        nextT[0] = rt.f32(rt.binary('+', nextT[0], (crossed[0]), 1, 'float')); nextT[1] = rt.f32(rt.binary('+', nextT[1], (crossed[1]), 1, 'float')); nextT[2] = rt.f32(rt.binary('+', nextT[2], (crossed[2]), 1, 'float'))
       end
     end
   end

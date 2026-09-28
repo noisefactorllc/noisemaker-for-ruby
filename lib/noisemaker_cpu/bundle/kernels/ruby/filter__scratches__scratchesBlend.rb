@@ -15,7 +15,7 @@ run_pixel = lambda do |ctx, out|
     base = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
     overlay = rt.construct(4, rt.texel_fetch(_u_overlayTex, coord, rt.i(0)))
     scratchStrength = rt.binary('*', rt.swizzle(overlay, 'a'), _u_alpha, 1, 'float')
-    result = rt.construct(3, rt.component_wise('max', rt.swizzle(base, 'rgb'), rt.construct(3, scratchStrength)))
+    result = rt.construct(3, rt.component_wise('max', rt.swizzle(base, 'r'), (scratchStrength)), rt.component_wise('max', rt.swizzle(base, 'g'), (scratchStrength)), rt.component_wise('max', rt.swizzle(base, 'b'), (scratchStrength)))
     g['fragColor'].replace((rt.construct(4, result, rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

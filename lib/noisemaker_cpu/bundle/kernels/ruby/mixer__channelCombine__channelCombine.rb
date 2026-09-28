@@ -17,16 +17,16 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   luminance__vec4 = lambda do |c|
     c = rt.copy(c, 'float')
-    return rt.dot(rt.swizzle(c, 'rgb'), rt.construct(3, rt.f(0.21260000000000001), rt.f(0.71519999999999995), rt.f(0.0722)))
+    return rt.dot(rt.swizzle(c, 'rgb'), rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
   end
   main__void = lambda do
     _g = nil; b = nil; globalCoord = nil; r = nil; st = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary('/', globalCoord, _u_fullResolution, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    st = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     r = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_rTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_rTex)), 2, 'float'))), _u_rLevel, 1, 'float'), rt.f(100), 1, 'float')
     _g = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_gTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_gTex)), 2, 'float'))), _u_gLevel, 1, 'float'), rt.f(100), 1, 'float')
     b = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_bTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_bTex)), 2, 'float'))), _u_bLevel, 1, 'float'), rt.f(100), 1, 'float')
-    g['fragColor'].replace((rt.construct(4, r, _g, b, rt.f(1))).map { |c| rt.f32(c) })
+    g['fragColor'][0] = rt.f32(r); g['fragColor'][1] = rt.f32(_g); g['fragColor'][2] = rt.f32(b); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call
   c = g['fragColor']

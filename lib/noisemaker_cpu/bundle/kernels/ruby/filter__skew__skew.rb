@@ -13,33 +13,33 @@ run_pixel = lambda do |ctx, out|
   _u_fullResolution = u.key?('fullResolution') ? u['fullResolution'] : rt.construct(2, 0.0)
   _u_renderScale = u.key?('renderScale') ? u['renderScale'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.1415926535900001)
+  g['PI'] = rt.f(3.1415927410125732)
   main__void = lambda do
-    angle = nil; aspect = nil; c = nil; effectiveSkewAmt = nil; globalPixel = nil; globalUV = nil; localUV = nil; maxSkew = nil; resolution = nil; s = nil; st = nil; texSize = nil; wrapMode = nil
+    __sc1136 = nil; __sc1144 = nil; angle = nil; aspect = nil; c = nil; effectiveSkewAmt = nil; globalPixel = nil; globalUV = nil; localUV = nil; maxSkew = nil; resolution = nil; s = nil; st = nil; texSize = nil; wrapMode = nil
     texSize = rt.texture_size(_u_inputTex)
     resolution = rt.construct(2, rt.construct(2, texSize))
-    globalPixel = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary('/', globalPixel, _u_fullResolution, 2, 'float'))
+    globalPixel = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalUV = rt.construct(2, ((globalPixel[0]) / (_u_fullResolution[0])), ((globalPixel[1]) / (_u_fullResolution[1])))
     aspect = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
     st = globalUV
-    st.replace((rt.binary('-', st, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
+    __sc1136 = rt.f(0.5); st[0] = rt.f32(rt.binary('-', st[0], __sc1136, 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __sc1136, 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), aspect, 1, 'float'))
     angle = rt.binary('/', rt.binary('*', _u_rotation, g['PI'], 1, 'float'), rt.f(180), 1, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
-    st.replace((rt.matrix_mult(rt.construct(4, c, rt.unary('-', s), s, c), st, 2)).map { |c| rt.f32(c) })
+    rt.matrix_mult_assign(st, rt.construct(4, c, rt.unary('-', s), s, c), st, 2)
     maxSkew = rt.binary('/', rt.f(512), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
     effectiveSkewAmt = rt.component_wise('clamp', _u_skewAmt, rt.unary('-', maxSkew), maxSkew)
     st = rt.assign_swizzle(st, 'x', rt.binary('+', rt.swizzle(st, 'x'), rt.binary('*', rt.swizzle(st, 'y'), rt.unary('-', effectiveSkewAmt), 1, 'float'), 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary('/', rt.swizzle(st, 'x'), aspect, 1, 'float'))
-    st.replace((rt.binary('+', st, rt.f(0.5), 2, 'float')).map { |c| rt.f32(c) })
-    localUV = rt.construct(2, rt.binary('/', rt.binary('-', rt.binary('*', st, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), resolution, 2, 'float'))
+    __sc1144 = rt.f(0.5); st[0] = rt.f32(rt.binary('+', st[0], __sc1144, 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __sc1144, 1, 'float'))
+    localUV = rt.construct(2, ((((((st[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (resolution[0])), ((((((st[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (resolution[1])))
     wrapMode = rt.construct(1, _u_wrap, 'int')
     if rt.bool(rt.binary('==', wrapMode, rt.i(0)))
       localUV.replace((rt.component_wise('clamp', localUV, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', wrapMode, rt.i(1)))
-        localUV.replace((rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('+', localUV, rt.f(1), 2, 'float'), rt.f(2)), rt.f(1), 2, 'float'))).map { |c| rt.f32(c) })
+        localUV.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
       else
         localUV.replace((rt.component_wise('fract', localUV)).map { |c| rt.f32(c) })
       end

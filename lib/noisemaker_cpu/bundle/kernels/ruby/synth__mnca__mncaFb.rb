@@ -32,11 +32,11 @@ run_pixel = lambda do |ctx, out|
   end
   lum__vec3 = lambda do |color|
     color = rt.copy(color, 'float')
-    return rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.21260000000000001), rt.swizzle(color, 'r'), 1, 'float'), rt.binary('*', rt.f(0.71519999999999995), rt.swizzle(color, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.0722), rt.swizzle(color, 'b'), 1, 'float'), 1, 'float')
+    return rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.2125999927520752), rt.swizzle(color, 'r'), 1, 'float'), rt.binary('*', rt.f(0.71520000696182251), rt.swizzle(color, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.072200000286102295), rt.swizzle(color, 'b'), 1, 'float'), 1, 'float')
   end
   random__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
-    return rt.component_wise('fract', rt.binary('*', rt.component_wise('sin', rt.dot(rt.swizzle(st, 'xy'), rt.construct(2, rt.f(12.989800000000001), rt.f(78.233000000000004)))), rt.f(43758.545312299997), 1, 'float'))
+    return rt.component_wise('fract', rt.binary('*', rt.component_wise('sin', rt.dot(rt.swizzle(st, 'xy'), rt.construct(2, rt.f(12.989800453186035), rt.f(78.233001708984375)))), rt.f(43758.546875), 1, 'float'))
   end
   neighborsAvgCircle__vec2_vec2 = lambda do |uv, texelSize|
     uv = rt.copy(uv, 'float')
@@ -73,7 +73,7 @@ run_pixel = lambda do |ctx, out|
         if rt.bool((rt.bool(rt.binary('==', rt.component_wise('abs', y), rt.i(3))) && rt.bool(rt.binary('>', rt.component_wise('abs', x), rt.i(1))) ? 1 : 0))
           next
         end
-        offset = rt.construct(2, rt.binary('*', rt.construct(2, rt.construct(1, x), rt.construct(1, y)), texelSize, 2, 'float'))
+        offset = rt.construct(2, ((((x))) * (texelSize[0])), ((((y))) * (texelSize[1])))
         n = rt.swizzle(rt.texture(_u_bufTex, rt.binary('+', uv, offset, 2, 'float')), 'r')
         total = rt.binary('+', total, n, 1, 'float')
       end
@@ -128,7 +128,7 @@ run_pixel = lambda do |ctx, out|
         if rt.bool((rt.bool(rt.binary('>', rt.component_wise('abs', x), rt.i(2))) && rt.bool(rt.binary('>', rt.component_wise('abs', y), rt.i(6))) ? 1 : 0))
           next
         end
-        offset = rt.construct(2, rt.binary('*', rt.construct(2, rt.construct(1, x), rt.construct(1, y)), texelSize, 2, 'float'))
+        offset = rt.construct(2, ((((x))) * (texelSize[0])), ((((y))) * (texelSize[1])))
         n = rt.swizzle(rt.texture(_u_bufTex, rt.binary('+', uv, offset, 2, 'float')), 'r')
         total = rt.binary('+', total, n, 1, 'float')
       end
@@ -137,22 +137,22 @@ run_pixel = lambda do |ctx, out|
     return avg
   end
   getState__float_float_float = lambda do |avg1, avg2, state|
-    if rt.bool((rt.bool(rt.binary('>=', avg1, rt.binary('*', _u_n1v1, rt.f(0.01), 1, 'float'))) && rt.bool(rt.binary('<=', avg1, rt.binary('+', rt.binary('*', _u_n1v1, rt.f(0.01), 1, 'float'), rt.binary('*', _u_n1r1, rt.f(0.01), 1, 'float'), 1, 'float'))) ? 1 : 0))
+    if rt.bool((rt.bool(rt.binary('>=', avg1, rt.binary('*', _u_n1v1, rt.f(0.0099999997764825821), 1, 'float'))) && rt.bool(rt.binary('<=', avg1, rt.binary('+', rt.binary('*', _u_n1v1, rt.f(0.0099999997764825821), 1, 'float'), rt.binary('*', _u_n1r1, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float'))) ? 1 : 0))
       state = rt.f(1)
     end
-    if rt.bool((rt.bool(rt.binary('>=', avg1, rt.binary('*', _u_n1v2, rt.f(0.01), 1, 'float'))) && rt.bool(rt.binary('<=', avg1, rt.binary('+', rt.binary('*', _u_n1v2, rt.f(0.01), 1, 'float'), rt.binary('*', _u_n1r2, rt.f(0.01), 1, 'float'), 1, 'float'))) ? 1 : 0))
+    if rt.bool((rt.bool(rt.binary('>=', avg1, rt.binary('*', _u_n1v2, rt.f(0.0099999997764825821), 1, 'float'))) && rt.bool(rt.binary('<=', avg1, rt.binary('+', rt.binary('*', _u_n1v2, rt.f(0.0099999997764825821), 1, 'float'), rt.binary('*', _u_n1r2, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float'))) ? 1 : 0))
       state = rt.f(0)
     end
-    if rt.bool((rt.bool(rt.binary('>=', avg1, rt.binary('*', _u_n1v3, rt.f(0.01), 1, 'float'))) && rt.bool(rt.binary('<=', avg1, rt.binary('+', rt.binary('*', _u_n1v3, rt.f(0.01), 1, 'float'), rt.binary('*', _u_n1r3, rt.f(0.01), 1, 'float'), 1, 'float'))) ? 1 : 0))
+    if rt.bool((rt.bool(rt.binary('>=', avg1, rt.binary('*', _u_n1v3, rt.f(0.0099999997764825821), 1, 'float'))) && rt.bool(rt.binary('<=', avg1, rt.binary('+', rt.binary('*', _u_n1v3, rt.f(0.0099999997764825821), 1, 'float'), rt.binary('*', _u_n1r3, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float'))) ? 1 : 0))
       state = rt.f(0)
     end
-    if rt.bool((rt.bool(rt.binary('>=', avg2, rt.binary('*', _u_n2v1, rt.f(0.01), 1, 'float'))) && rt.bool(rt.binary('<=', avg2, rt.binary('+', rt.binary('*', _u_n2v1, rt.f(0.01), 1, 'float'), rt.binary('*', _u_n2r1, rt.f(0.01), 1, 'float'), 1, 'float'))) ? 1 : 0))
+    if rt.bool((rt.bool(rt.binary('>=', avg2, rt.binary('*', _u_n2v1, rt.f(0.0099999997764825821), 1, 'float'))) && rt.bool(rt.binary('<=', avg2, rt.binary('+', rt.binary('*', _u_n2v1, rt.f(0.0099999997764825821), 1, 'float'), rt.binary('*', _u_n2r1, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float'))) ? 1 : 0))
       state = rt.f(0)
     end
-    if rt.bool((rt.bool(rt.binary('>=', avg2, rt.binary('*', _u_n2v2, rt.f(0.01), 1, 'float'))) && rt.bool(rt.binary('<=', avg2, rt.binary('+', rt.binary('*', _u_n2v2, rt.f(0.01), 1, 'float'), rt.binary('*', _u_n2r2, rt.f(0.01), 1, 'float'), 1, 'float'))) ? 1 : 0))
+    if rt.bool((rt.bool(rt.binary('>=', avg2, rt.binary('*', _u_n2v2, rt.f(0.0099999997764825821), 1, 'float'))) && rt.bool(rt.binary('<=', avg2, rt.binary('+', rt.binary('*', _u_n2v2, rt.f(0.0099999997764825821), 1, 'float'), rt.binary('*', _u_n2r2, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float'))) ? 1 : 0))
       state = rt.f(1)
     end
-    if rt.bool((rt.bool(rt.binary('>=', avg1, rt.binary('*', _u_n1v4, rt.f(0.01), 1, 'float'))) && rt.bool(rt.binary('<=', avg1, rt.binary('+', rt.binary('*', _u_n1v4, rt.f(0.01), 1, 'float'), rt.binary('*', _u_n1r4, rt.f(0.01), 1, 'float'), 1, 'float'))) ? 1 : 0))
+    if rt.bool((rt.bool(rt.binary('>=', avg1, rt.binary('*', _u_n1v4, rt.f(0.0099999997764825821), 1, 'float'))) && rt.bool(rt.binary('<=', avg1, rt.binary('+', rt.binary('*', _u_n1v4, rt.f(0.0099999997764825821), 1, 'float'), rt.binary('*', _u_n1r4, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float'))) ? 1 : 0))
       state = rt.f(0)
     end
     return state
@@ -160,29 +160,29 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     alive = nil; animSpeed = nil; bufState = nil; bufferIsEmpty = nil; currentState = nil; n1 = nil; n2 = nil; newState = nil; nextState = nil; prevFrame = nil; prevLum = nil; r = nil; state = nil; texSize = nil; texelSize = nil; uv = nil
     texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_bufTex)))
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary('/', rt.f(1), texSize, 2, 'float'))
+    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (texSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (texSize[1])))
+    texelSize = rt.construct(2, ((rt.f(1)) / (texSize[0])), ((rt.f(1)) / (texSize[1])))
     state = rt.swizzle(rt.texture(_u_bufTex, uv), 'r')
-    bufState = rt.construct(4, rt.texture(_u_bufTex, uv))
+    bufState = rt.construct(4, (rt.texture(_u_bufTex, uv))[0], (rt.texture(_u_bufTex, uv))[1], (rt.texture(_u_bufTex, uv))[2], (rt.texture(_u_bufTex, uv))[3])
     bufferIsEmpty = (rt.bool((rt.bool((rt.bool(rt.binary('==', rt.swizzle(bufState, 'r'), rt.f(0))) && rt.bool(rt.binary('==', rt.swizzle(bufState, 'g'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(bufState, 'b'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(bufState, 'a'), rt.f(0))) ? 1 : 0)
     alive = rt.f(0.0)
     r = rt.f(0.0)
     if rt.bool((rt.bool(_u_resetState) || rt.bool(bufferIsEmpty) ? 1 : 0))
-      r = random__vec2.call(rt.binary('+', uv, rt.construct(2, rt.construct(1, _u_seed)), 2, 'float'))
+      r = random__vec2.call(rt.construct(2, ((uv[0]) + (((_u_seed)))), ((uv[1]) + (((_u_seed))))))
       alive = rt.component_wise('step', rt.f(0.5), r)
-      g['fragColor'].replace((rt.construct(4, alive, alive, alive, rt.f(1))).map { |c| rt.f32(c) })
+      g['fragColor'][0] = rt.f32(alive); g['fragColor'][1] = rt.f32(alive); g['fragColor'][2] = rt.f32(alive); g['fragColor'][3] = rt.f32(rt.f(1))
       return
     end
-    prevFrame = rt.construct(3, rt.swizzle(rt.texture(_u_seedTex, uv), 'rgb'))
+    prevFrame = rt.construct(3, rt.swizzle(rt.texture(_u_seedTex, uv), 'r'), rt.swizzle(rt.texture(_u_seedTex, uv), 'g'), rt.swizzle(rt.texture(_u_seedTex, uv), 'b'))
     prevLum = lum__vec3.call(prevFrame)
     newState = state
     n1 = neighborsAvgCircle__vec2_vec2.call(uv, texelSize)
     n2 = neighborsAvgRing__vec2_vec2.call(uv, texelSize)
     newState = getState__float_float_float.call(n1, n2, state)
     if rt.bool(rt.binary('>', _u_weight, rt.f(0)))
-      newState = rt.component_wise('mix', newState, prevLum, rt.binary('*', _u_weight, rt.f(0.01), 1, 'float'))
+      newState = rt.component_wise('mix', newState, prevLum, rt.binary('*', _u_weight, rt.f(0.0099999997764825821), 1, 'float'))
     end
-    animSpeed = map__float_float_float_float_float.call(_u_speed, rt.f(1), rt.f(100), rt.f(0.10000000000000001), rt.f(100))
+    animSpeed = map__float_float_float_float_float.call(_u_speed, rt.f(1), rt.f(100), rt.f(0.10000000149011612), rt.f(100))
     currentState = rt.construct(4, rt.construct(4, state, state, state, rt.f(1)))
     nextState = rt.construct(4, rt.construct(4, newState, newState, newState, rt.f(1)))
     g['fragColor'].replace((rt.component_wise('mix', currentState, nextState, rt.component_wise('min', rt.f(1), rt.binary('*', _u_deltaTime, animSpeed, 1, 'float')))).map { |c| rt.f32(c) })

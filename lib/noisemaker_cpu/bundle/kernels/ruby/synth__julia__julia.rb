@@ -27,17 +27,17 @@ run_pixel = lambda do |ctx, out|
   _u_zoomSpeed = u.key?('zoomSpeed') ? u['zoomSpeed'] : rt.f(0.0)
   _u_zoomDepth = u.key?('zoomDepth') ? u['zoomDepth'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
-  g['PI'] = rt.f(3.1415926535900001)
-  g['TAU'] = rt.f(6.2831853071800001)
+  g['PI'] = rt.f(3.1415927410125732)
+  g['TAU'] = rt.f(6.2831854820251465)
   g['BAILOUT'] = rt.f(256)
-  g['LOG2'] = rt.f(0.69314718055994529)
+  g['LOG2'] = rt.f(0.69314718246459961)
   g['df64_split_const'] = rt.f(4097)
   getPOI__int = lambda do |idx|
     if rt.bool(rt.binary('==', idx, rt.i(1)))
-      return rt.construct(2, rt.unary('-', rt.f(0.123)), rt.f(0.745))
+      return rt.construct(2, rt.unary('-', rt.f(0.12300000339746475)), rt.f(0.74500000476837158))
     end
     if rt.bool(rt.binary('==', idx, rt.i(2)))
-      return rt.construct(2, rt.unary('-', rt.f(0.39050000000000001)), rt.f(0.58679999999999999))
+      return rt.construct(2, rt.unary('-', rt.f(0.39050000905990601)), rt.f(0.5867999792098999))
     end
     if rt.bool(rt.binary('==', idx, rt.i(3)))
       return rt.construct(2, rt.f(0), rt.f(1))
@@ -46,24 +46,24 @@ run_pixel = lambda do |ctx, out|
       return rt.construct(2, rt.unary('-', rt.f(1)), rt.f(0))
     end
     if rt.bool(rt.binary('==', idx, rt.i(5)))
-      return rt.construct(2, rt.unary('-', rt.f(0.74550000000000005)), rt.f(0.113))
+      return rt.construct(2, rt.unary('-', rt.f(0.74550002813339233)), rt.f(0.11299999803304672))
     end
     if rt.bool(rt.binary('==', idx, rt.i(6)))
-      return rt.construct(2, rt.unary('-', rt.f(0.098599999999999993)), rt.f(0.65339999999999998))
+      return rt.construct(2, rt.unary('-', rt.f(0.098600000143051147)), rt.f(0.6534000039100647))
     end
     if rt.bool(rt.binary('==', idx, rt.i(7)))
-      return rt.construct(2, rt.unary('-', rt.f(0.80000000000000004)), rt.f(0.156))
+      return rt.construct(2, rt.unary('-', rt.f(0.80000001192092896)), rt.f(0.15600000321865082))
     end
     if rt.bool(rt.binary('==', idx, rt.i(8)))
       return rt.construct(2, rt.unary('-', rt.f(0.75)), rt.f(0))
     end
     if rt.bool(rt.binary('==', idx, rt.i(9)))
-      return rt.construct(2, rt.unary('-', rt.f(0.57920000000000005)), rt.f(0.53849999999999998))
+      return rt.construct(2, rt.unary('-', rt.f(0.57920002937316895)), rt.f(0.53850001096725464))
     end
     if rt.bool(rt.binary('==', idx, rt.i(10)))
-      return rt.construct(2, rt.f(0.28000000000000003), rt.f(0.0080000000000000002))
+      return rt.construct(2, rt.f(0.2800000011920929), rt.f(0.0080000003799796104))
     end
-    return rt.construct(2, rt.unary('-', rt.f(0.123)), rt.f(0.745))
+    return rt.construct(2, rt.unary('-', rt.f(0.12300000339746475)), rt.f(0.74500000476837158))
   end
   getAnimatedC__int_float_float = lambda do |pathType, _t, radius|
     theta = nil
@@ -72,7 +72,7 @@ run_pixel = lambda do |ctx, out|
       return rt.construct(2, rt.binary('-', rt.binary('*', rt.component_wise('cos', theta), rt.f(0.5), 1, 'float'), rt.binary('*', rt.component_wise('cos', rt.binary('*', rt.f(2), theta, 1, 'float')), rt.f(0.25), 1, 'float'), 1, 'float'), rt.binary('-', rt.binary('*', rt.component_wise('sin', theta), rt.f(0.5), 1, 'float'), rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.f(2), theta, 1, 'float')), rt.f(0.25), 1, 'float'), 1, 'float'))
     end
     if rt.bool(rt.binary('==', pathType, rt.i(2)))
-      return rt.binary('*', rt.construct(2, rt.component_wise('cos', theta), rt.component_wise('sin', theta)), radius, 2, 'float')
+      return rt.construct(2, (((rt.component_wise('cos', theta))) * (radius)), (((rt.component_wise('sin', theta))) * (radius)))
     end
     if rt.bool(rt.binary('==', pathType, rt.i(3)))
       return rt.construct(2, rt.binary('+', rt.unary('-', rt.f(1)), rt.binary('*', rt.component_wise('cos', theta), rt.f(0.25), 1, 'float'), 1, 'float'), rt.binary('*', rt.component_wise('sin', theta), rt.f(0.25), 1, 'float'))
@@ -99,7 +99,7 @@ run_pixel = lambda do |ctx, out|
   df64_sub__vec2_vec2 = lambda do |a, b|
     a = rt.copy(a, 'float')
     b = rt.copy(b, 'float')
-    return df64_add__vec2_vec2.call(a, rt.construct(2, rt.unary('-', rt.swizzle(b, 'x')), rt.unary('-', rt.swizzle(b, 'y'))))
+    return df64_add__vec2_vec2.call(a, rt.construct(2, (rt.unary('-', rt.swizzle(b, 'x'))), (rt.unary('-', rt.swizzle(b, 'y')))))
   end
   df64_split__float_float_float = lambda do |a, hi, lo|
     _t = nil
@@ -151,11 +151,11 @@ run_pixel = lambda do |ctx, out|
     reDF = rt.copy(reDF, 'float')
     imDF = rt.copy(imDF, 'float')
     angle = nil; cs = nil; scale = nil; sn = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.binary('-', fragCoord, rt.binary('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
+    uv = rt.construct(2, ((((fragCoord[0]) - (((rt.f(0.5)) * (_u_fullResolution[0]))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))), ((((fragCoord[1]) - (((rt.f(0.5)) * (_u_fullResolution[1]))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', _u_rotation), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
     cs = rt.component_wise('cos', angle)
     sn = rt.component_wise('sin', angle)
-    uv.replace((rt.matrix_mult(rt.construct(4, cs, rt.unary('-', sn), sn, cs), uv, 2)).map { |c| rt.f32(c) })
+    rt.matrix_mult_assign(uv, rt.construct(4, cs, rt.unary('-', sn), sn, cs), uv, 2)
     scale = rt.binary('/', rt.f(2.5), zm, 1, 'float')
     reDF.replace((df64_add__vec2_vec2.call(df64_mul_f__vec2_float.call(df64_from__float.call(rt.swizzle(uv, 'x')), scale), df64_from__float.call(_u_centerX))).map { |c| rt.f32(c) })
     imDF.replace((df64_add__vec2_vec2.call(df64_mul_f__vec2_float.call(df64_from__float.call(rt.swizzle(uv, 'y')), scale), df64_from__float.call(_u_centerY))).map { |c| rt.f32(c) })
@@ -225,7 +225,7 @@ run_pixel = lambda do |ctx, out|
         period = rt.i(0)
         zSlow.replace((zHi).map { |c| rt.f32(c) })
       else
-        if rt.bool(rt.binary('<', rt.distance(zHi, zSlow), rt.f(1e-10)))
+        if rt.bool(rt.binary('<', rt.distance(zHi, zSlow), rt.f(1.000000013351432e-10)))
           i = rt.construct(1, maxIter)
           break
         end
@@ -256,7 +256,7 @@ run_pixel = lambda do |ctx, out|
     end
     zMag = rt.component_wise('sqrt', r[1])
     dzMag = rt.component_wise('sqrt', r[2])
-    if rt.bool(rt.binary('<', dzMag, rt.f(1e-10)))
+    if rt.bool(rt.binary('<', dzMag, rt.f(1.000000013351432e-10)))
       return rt.f(0)
     end
     dist = rt.binary('/', rt.binary('*', rt.binary('*', rt.f(2), zMag, 1, 'float'), rt.component_wise('log', zMag), 1, 'float'), dzMag, 1, 'float')
@@ -331,16 +331,16 @@ run_pixel = lambda do |ctx, out|
     c = rt.copy(c, 'float')
     d0 = nil; d1 = nil; d2 = nil; lightDir = nil; normal = nil; rad = nil
     d0 = iterateSmooth__vec2_vec2_int_float.call(fragCoord, c, maxIter, zm)
-    d1 = iterateSmooth__vec2_vec2_int_float.call(rt.binary('+', fragCoord, rt.construct(2, rt.f(1), rt.f(0)), 2, 'float'), c, maxIter, zm)
-    d2 = iterateSmooth__vec2_vec2_int_float.call(rt.binary('+', fragCoord, rt.construct(2, rt.f(0), rt.f(1)), 2, 'float'), c, maxIter, zm)
-    normal = rt.construct(3, rt.normalize(rt.construct(3, rt.binary('-', d1, d0, 1, 'float'), rt.binary('-', d2, d0, 1, 'float'), rt.f(0.050000000000000003))))
+    d1 = iterateSmooth__vec2_vec2_int_float.call(rt.construct(2, ((fragCoord[0]) + ((rt.f(1)))), ((fragCoord[1]) + ((rt.f(0))))), c, maxIter, zm)
+    d2 = iterateSmooth__vec2_vec2_int_float.call(rt.construct(2, ((fragCoord[0]) + ((rt.f(0)))), ((fragCoord[1]) + ((rt.f(1))))), c, maxIter, zm)
+    normal = rt.construct(3, rt.normalize(rt.construct(3, rt.binary('-', d1, d0, 1, 'float'), rt.binary('-', d2, d0, 1, 'float'), rt.f(0.05000000074505806))))
     rad = rt.binary('/', rt.binary('*', angle, g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
-    lightDir = rt.construct(3, rt.normalize(rt.construct(3, rt.component_wise('cos', rad), rt.component_wise('sin', rad), rt.f(0.69999999999999996))))
+    lightDir = rt.construct(3, rt.normalize(rt.construct(3, rt.component_wise('cos', rad), rt.component_wise('sin', rad), rt.f(0.69999998807907104))))
     return rt.component_wise('clamp', rt.component_wise('max', rt.dot(normal, lightDir), rt.f(0)), rt.f(0), rt.f(1))
   end
   main__void = lambda do
     c = nil; effectiveZoom = nil; globalCoord = nil; imDF = nil; phase = nil; r = nil; reDF = nil; value = nil
-    globalCoord = rt.construct(2, rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     c = rt.construct(2, resolveC__void.call())
     effectiveZoom = rt.f(0.0)
     phase = rt.f(0.0)
