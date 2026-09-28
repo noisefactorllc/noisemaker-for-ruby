@@ -1,0 +1,158 @@
+#!/bin/sh
+# Runs this repository's test suite (the same cases `rake test` runs:
+# test/test_*.rb via minitest). Exits nonzero on any failure.
+#
+# Environment: expects Ruby >= 3.2 on PATH. When absent, installs a local
+# toolchain outside the repo (never system-wide): apt ruby first, then a
+# prebuilt ruby-builder tarball relocated to a writable path.
+#
+# The JavaScript oracle (noisemaker-for-cpu checkout) is not present in the
+# check container; the suite skips oracle-dependent tests by design
+# (see test/test_parity.rb, NoisemakerOracle::Tests).
+set -eu
+
+cd "$(dirname "$0")/.."
+RUBY_MIN=3.2
+
+ruby_ok() {
+  command -v "$1" >/dev/null 2>&1 || return 1
+  "$1" -e "exit(RUBY_VERSION >= '${RUBY_MIN}.0' ? 0 : 1)" 2>/dev/null
+}
+
+RUBY_BIN=ruby
+if ! ruby_ok ruby; then
+  echo "scripts/test: no usable Ruby >= ${RUBY_MIN}; installing a local toolchain" >&2
+  if command -v apt-get >/dev/null 2>&1; then
+    apt-get update -qq >/dev/null 2>&1 || true
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ruby >/dev/null 2>&1 || true
+  fi
+  if ruby_ok ruby; then
+    RUBY_BIN=ruby
+  else
+    # Prebuilt toolchain: ruby-builder tarballs (the source ruby/setup-ruby
+    # uses). They are not relocatable: the build prefix
+    # (/opt/hostedtoolcache/Ruby/<ver>/x64, 36 chars) is compiled into every
+    # binary, extension and config. We extract to <base>/x64 and expose the
+    # tree through a self-symlink whose path is padded to exactly that length,
+    # then rewrite every occurrence of the old prefix in the extracted tree
+    # (same length => binary-safe), including bin/* shebangs and rbconfig.rb.
+    # The rewritten tree then behaves like a normal install (rubygems, zlib,
+    # RbConfig.ruby all resolve) even for subprocesses with a stripped env.
+    . /etc/os-release 2>/dev/null || true
+    # Build glibc must not exceed the host's: ubuntu-24.04 needs 2.38;
+    # ubuntu-22.04 needs only 2.35 and runs on Debian 12+.
+    case "${ID:-}:${VERSION_ID:-}" in
+      ubuntu:24.*) UB=24.04 ;;
+      ubuntu:26.*) UB=26.04 ;;
+      *) UB=22.04 ;;
+    esac
+    RV=3.4.11
+    URL="https://github.com/ruby/ruby-builder/releases/download/ruby-${RV}/ruby-${RV}-ubuntu-${UB}-x64.tar.gz"
+    echo "scripts/test: downloading $URL" >&2
+    RELOCATED=""
+    YLIB=""
+    for BASE in ${NOISEMAKER_TEST_TOOLCHAIN:-} /tmp/ruby-toolchain "$HOME/.cache/ruby-toolchain" /state/cache/ruby-toolchain; do
+      [ -n "$BASE" ] || continue
+      case "$BASE" in
+        /state/*|/tmp/*|"$HOME"/*) ;;     # keep installs off the repo and system dirs
+        *) continue ;;
+      esac
+      ROOT="$BASE/x64"
+      rm -rf "$BASE"
+      mkdir -p "$ROOT"
+      if ! curl -fsSL "$URL" | tar -xz -C "$ROOT" --strip-components=1; then
+        continue
+      fi
+      LD_LIBRARY_PATH="$ROOT/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+      export LD_LIBRARY_PATH
+      REL=$(python3 - "$ROOT" <<'PYEOF'
+import os, sys
+root = os.path.realpath(sys.argv[1])
+old_len = 36                      # len("/opt/hostedtoolcache/Ruby/3.4.11/x64")
+pad = old_len - len(root) - 1     # one '/' plus filler characters
+if pad < 0:
+    sys.exit(3)
+filler = "a" * pad
+link = os.path.join(root, filler)
+if not os.path.lexists(link):
+    os.symlink(".", link)
+new = os.path.join(root, filler)
+assert len(new.encode()) == old_len, len(new)
+print(new)
+PYEOF
+      ) || continue
+      python3 - "$ROOT" "$REL" <<'PYEOF2'
+import pathlib, re, sys
+root = pathlib.Path(sys.argv[1]); new = sys.argv[2].encode()
+rb = root / "lib/ruby/3.4.0/x86_64-linux/rbconfig.rb"
+old = None
+for line in rb.read_text(errors="ignore").splitlines():
+    if 'CONFIG["prefix"]' in line or 'CONFIG["bindir"]' in line or 'CONFIG["rubydir"]' in line:
+        m = re.search(r'"(/[^"]*hostedtoolcache[^"]*)"', line)
+        if m:
+            old = m.group(1).encode()
+            break
+if old is None:
+    m = re.search(rb"/[\x20-\x7e]*hostedtoolcache[\x20-\x7e]*/x64",
+                  (root / "bin/ruby").read_bytes())
+    old = m.group(0)
+assert len(old) == len(new), (old, new)
+for p in root.rglob("*"):
+    if not p.is_file() or p.stat().st_size > 50_000_000:
+        continue
+    try:
+        data = p.read_bytes()
+    except OSError:
+        continue
+    if old in data:
+        p.write_bytes(data.replace(old, new))
+PYEOF2
+      if ruby_ok "$ROOT/bin/ruby" && "$ROOT/bin/ruby" -e 'require "zlib"; require "rubygems"; require "psych"' 2>/dev/null; then
+        RUBY_BIN=$ROOT/bin/ruby
+        PATH="$ROOT/bin:$PATH"
+        export PATH
+        RELOCATED=yes
+        break
+      fi
+      if ruby_ok "$ROOT/bin/ruby" &&
+         "$ROOT/bin/ruby" -e 'require "zlib"; require "rubygems"' 2>/dev/null &&
+         ! "$ROOT/bin/ruby" -e 'require "psych"' 2>/dev/null; then
+        # The tarball needs libyaml for psych (rubygems gem build/install).
+        # The yaml release tarball ships a ready ./configure; build a shared
+        # libyaml next to the toolchain and add it to the loader path.
+        YVER=0.2.5
+        YSRC="$BASE/yaml-src"
+        if [ ! -f "$YSRC/config.log" ]; then
+          curl -fsSL "https://github.com/yaml/libyaml/releases/download/${YVER}/yaml-${YVER}.tar.gz" \
+            | tar -xz -C "$BASE" --one-top-level="$YSRC" --strip-components=1 &&
+            (cd "$YSRC" && ./configure --prefix="$BASE/yaml" --enable-shared --without-libxml2 >/dev/null 2>&1 &&
+             make >/dev/null 2>&1 && make install >/dev/null 2>&1)
+        fi
+        if [ -f "$BASE/yaml/lib/libyaml.so" ]; then
+          ln -sf libyaml.so "$BASE/yaml/lib/libyaml-0.so.2" 2>/dev/null || true
+          YLIB="$BASE/yaml/lib:"
+          LD_LIBRARY_PATH="$YLIB$LD_LIBRARY_PATH"
+          export LD_LIBRARY_PATH
+        fi
+      fi
+      if ruby_ok "$ROOT/bin/ruby" && "$ROOT/bin/ruby" -e 'require "zlib"; require "rubygems"; require "psych"' 2>/dev/null; then
+        RUBY_BIN=$ROOT/bin/ruby
+        PATH="$ROOT/bin:$PATH"
+        export PATH
+        RELOCATED=yes
+        break
+      fi
+    done
+    [ -n "$RELOCATED" ] || { echo "scripts/test: Ruby >= ${RUBY_MIN} unavailable" >&2; exit 1; }
+    LD_LIBRARY_PATH="$YLIB$(dirname "$RUBY_BIN")/../lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH
+  fi
+fi
+
+ruby_ok "$RUBY_BIN" || { echo "scripts/test: Ruby >= ${RUBY_MIN} unavailable" >&2; exit 1; }
+echo "scripts/test: using $($RUBY_BIN -v)" >&2
+
+# Same cases rake test runs (test/test_*.rb, libs lib+test), driven directly
+# by minitest so no rake/bundler install is needed.
+exec "$RUBY_BIN" -Ilib -Itest \
+  -e 'Dir.glob("test/test_*.rb").sort.each { |f| require File.expand_path(f) }'

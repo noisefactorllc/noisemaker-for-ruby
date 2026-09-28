@@ -106,6 +106,71 @@ class TestOutputRuntime < Minitest::Test
     assert_equal NoisemakerCpu::SinkManager, NoisemakerCpu.const_get(:SinkManager)
   end
 
+  def with_viewport_scale_fixture
+    original_meta = NoisemakerCpu::Renderer.instance_variable_get(:@meta)
+    original_kernel_for = NoisemakerCpu::Renderer.method(:_kernel_for)
+    resolution = lambda do |ctx, out|
+      res = ctx.uniforms["resolution"]
+      out[0, 4] = [res[0], res[1], 0, 1]
+    end
+    copy = lambda do |ctx, out|
+      out[0, 4] = ctx.textures.fetch("input").data[0, 4]
+    end
+    meta = {
+      "effects" => {
+        "filter/viewportScale" => {
+          "namespace" => "filter", "func" => "viewportScale", "kind" => "filter",
+          "domain" => "viewport-scale", "params" => {}, "paramOrder" => [],
+          "passes" => [
+            {
+              "name" => "writeScaled", "key" => "filter/viewportScale:writeScaled",
+              "inputs" => {}, "outputs" => { "fragColor" => "_scaled" },
+              "viewport" => { "w" => { "scale" => 0.5, "clamp" => { "min" => 8, "max" => 128 } },
+                              "h" => { "scale" => 0.25 } }
+            }
+          ]
+        },
+        "filter/viewportCopy" => {
+          "namespace" => "filter", "func" => "viewportCopy", "kind" => "filter",
+          "domain" => "viewport-scale", "params" => {}, "paramOrder" => [],
+          "passes" => [
+            {
+              "name" => "copy", "key" => "filter/viewportCopy:copy",
+              "inputs" => { "input" => "_scaled" }, "outputs" => { "fragColor" => "outputTex" }
+            }
+          ]
+        }
+      }
+    }
+    kernels = {
+      "filter/viewportScale:writeScaled" => { kernel: resolution, uses_derivatives: false },
+      "filter/viewportCopy:copy" => { kernel: copy, uses_derivatives: false }
+    }
+    NoisemakerCpu::Renderer.instance_variable_set(:@meta, meta)
+    NoisemakerCpu::Renderer.define_singleton_method(:_kernel_for, ->(key) { kernels.fetch(key) })
+    yield
+  ensure
+    NoisemakerCpu::Renderer.instance_variable_set(:@meta, original_meta)
+    NoisemakerCpu::Renderer.define_singleton_method(:_kernel_for, original_kernel_for)
+  end
+
+  def test_viewport_scale_destination_resolution_and_clamps
+    [
+      [64, 32, 16.0],
+      [8, 8, 2.0],
+      [512, 128, 128.0]
+    ].each do |(width, expected_w, expected_h)|
+      result = with_viewport_scale_fixture do
+        NoisemakerCpu::Renderer.render_dsl(
+          "search filter\nviewportScale().write(o0)\nrender(o0)",
+          width: width, height: width
+        )
+      end
+      assert_equal expected_w, result.data[0], "viewport w at input #{width}x#{width}"
+      assert_equal expected_h, result.data[1], "viewport h at input #{width}x#{width}"
+    end
+  end
+
   def test_sink_manager_configures_current_and_later_sinks
     first = RecordingSink.new
     later = RecordingSink.new

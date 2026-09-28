@@ -199,7 +199,7 @@ module NoisemakerCpu
 
     def self._texture_dimension(spec, axis, params, width, height, resources = nil)
       fallback = axis == :width ? width : height
-      return fallback if spec.nil? || spec == "input" || spec == "screen" || spec == "resolution" || spec == "100%"
+      return fallback if spec.nil? || spec == "input" || spec == "screen" || spec == "auto" || spec == "resolution" || spec == "100%"
       return [1, spec.round].max if spec.is_a?(Numeric)
 
       if spec.is_a?(String)
@@ -214,16 +214,29 @@ module NoisemakerCpu
           return axis == :width ? input.width : input.height if input.respond_to?(:data)
         end
         if spec.key?("param")
+          has_transform = spec.key?("power") || spec.key?("multiply")
+          param_default = spec["paramDefault"] || spec["default"] || 64
           value = params[spec["param"]]
-          value = spec["paramDefault"] || spec["default"] if value.nil?
+          value = param_default if value.nil?
+          value *= spec["multiply"] if spec.key?("multiply")
           value = value**spec["power"] if spec.key?("power")
+          value = spec["default"] if has_transform && !params.key?(spec["param"]) && !spec["default"].nil?
           return [1, value.round].max
         end
         if spec.key?("screenDivide")
           divisor = params[spec["screenDivide"]]
           divisor = spec["default"] if divisor.nil?
+          divisor = 1 if divisor.nil?
           divisor = [1, divisor].max
           return [1, fallback.fdiv(divisor).ceil].max
+        end
+        if spec.key?("scale")
+          computed = (fallback * spec["scale"]).floor
+          if spec["clamp"].is_a?(Hash)
+            computed = [spec["clamp"]["min"], computed].max unless spec["clamp"]["min"].nil?
+            computed = [computed, spec["clamp"]["max"]].min unless spec["clamp"]["max"].nil?
+          end
+          return [1, computed].max
         end
       end
       raise "unsupported canonical texture dimension #{spec.inspect}"
@@ -232,9 +245,11 @@ module NoisemakerCpu
     def self._destination(eff, output_name, params, width, height, pass: nil, resources: nil)
       spec = (eff["textures"] || {})[output_name] || {}
       viewport = pass && pass["viewport"] || {}
+      width_spec = viewport.key?("w") && !viewport["w"].nil? ? viewport["w"] : (viewport["width"] || spec["width"])
+      height_spec = viewport.key?("h") && !viewport["h"].nil? ? viewport["h"] : (viewport["height"] || spec["height"])
       output = NoisemakerCpu::Surface.new(
-        _texture_dimension(viewport["width"] || spec["width"], :width, params, width, height, resources),
-        _texture_dimension(viewport["height"] || spec["height"], :height, params, width, height, resources)
+        _texture_dimension(width_spec, :width, params, width, height, resources),
+        _texture_dimension(height_spec, :height, params, width, height, resources)
       )
       output.format = spec["format"] || "rgba16f"
       output
@@ -743,10 +758,9 @@ module NoisemakerCpu
         # Sorted for determinism: every current pass has at most one output,
         # but hash order must never pick the format-defining attachment.
         out_names = (p["outputs"] || {}).keys.sort.map { |k| p["outputs"][k] }
-        fmt = "rgba16f"
-        if !out_names.empty? && eff["textures"] && eff["textures"][out_names[0]]
-          fmt = eff["textures"][out_names[0]]["format"] || "rgba16f"
-        end
+        destination_name = out_names[0] || "outputTex"
+        dest = _destination(eff, destination_name, params, width, height, pass: p)
+        fmt = dest.format
         draw_op = p["drawMode"] ? NoisemakerCpu::DrawOps.get_draw_op(effect_id, p["program"]) : nil
         if draw_op
           # CPU-only draw op (e.g. point-scatter): fresh destination seeds
@@ -754,16 +768,19 @@ module NoisemakerCpu
           src_name = (p["inputs"] || {}).keys.sort.map { |k| p["inputs"][k] }.first
           src_name = "inputTex" if src_name.nil?
           src = textures[src_name] || textures["inputTex"] || blank
-          result = NoisemakerCpu::Surface.new(width, height)
+          result = dest
           prev = out_names.empty? ? nil : attachments[out_names[0]]
           result.data.replace(prev.data) if !prev.nil? && prev.data.length == result.data.length
           draw_op.call(src, result, pass_uniforms)
         else
+          pass_uniforms = pass_uniforms.merge(
+            "resolution" => [0.0 + dest.width, 0.0 + dest.height]
+          )
           ctx = NoisemakerCpu::Ctx.new(
             rt: rt,
             uniforms: pass_uniforms,
             textures: textures,
-            resolution: [0.0 + width, 0.0 + height],
+            resolution: [0.0 + dest.width, 0.0 + dest.height],
             time: time,
             seed: seed,
             blank: blank
@@ -774,9 +791,9 @@ module NoisemakerCpu
           kernel = adapter.call(rt, compiled) if adapter
           result =
             if compiled[:uses_derivatives]
-              NoisemakerCpu::PassRunner.run_pass_deriv(kernel, ctx, width, height)
+              NoisemakerCpu::PassRunner.run_pass_deriv(kernel, ctx, dest.width, dest.height)
             else
-              NoisemakerCpu::PassRunner.run_pass(kernel, ctx, width, height)
+              NoisemakerCpu::PassRunner.run_pass(kernel, ctx, dest.width, dest.height)
             end
         end
         # Quantize the pass output to its declared texture format.
