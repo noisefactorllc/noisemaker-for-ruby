@@ -43,14 +43,14 @@ Rows dated 2026-09-28 come from the scheduled audit. A verified row states its m
 | Source-level checks | verified | 2026-09-28: standalone suite from a `b02f816` source archive, 229 runs, 1,336 assertions, 0 failures, 0 errors, 24 dependency skips. |
 | Actual host rendering | verified | 2026-09-28: CLI and library rendered valid PNGs on Linux x86_64 Ruby 3.4.5. CPU renderer only. No GPU claim. |
 | Minimum and current host versions | verified | CI at identical runtime `91ae3f6`: Ruby 3.2 through 4.0 Linux, plus 4.0 macOS, all green. Local probes ran 3.4.5. Ruby 3.2 is end of life. |
-| Supported operating systems and backends | verified (Linux local and CI, macOS CI) | Windows unmeasured: no host in this harness. |
+| Supported operating systems and backends | verified (Linux local and CI, macOS CI) | Windows unmeasured: no Windows host and no workflow-change grant for a hosted Windows runner leg in this harness. |
 | Installed package and first useful result | verified | 2026-09-28: built gem installed in an isolated `GEM_HOME`. First render, filter, and DSL output pass. |
 | Parameters, external inputs, state, and chains | passed (1625/1625 cases byte-exact) | Extended sweep covered parameters, seeds, sizes, times, state, and volumes at the pinned authority. The 17 previously differing cases across 13 effects and the colorBars runtime error are corrected (commits `6591842c`, `2b161d0a`, `e9c4f12f`); the whole-port PARITY-SUMMARY at the published candidate is 205/205 exact and the extended grid is byte-exact at the corrected tree (raw reports archived with the job evidence). |
 | Invalid input and recovery | verified | 2026-09-28: invalid effect and parameter name the effect and parameter, exit 2, and corrected input renders. |
 | Cancellation and file preservation | verified (isolated install) | 2026-09-28: SIGINT mid-render exits at once. An existing output file stays byte-identical, and frames written before the interrupt are retained. Cancelled runs print a raw Ruby Interrupt trace. |
-| Upgrade, removal, and resource cleanup | verified (removal) | Removal verified 2026-09-28. Upgrade untested: one kit version and one gem version exist. |
+| Upgrade, removal, and resource cleanup | verified | Removal verified 2026-09-28. Upgrade verified 2026-09-29: gem upgrade `0.0.0` → `0.0.1` in an isolated `GEM_HOME` and kit upgrade `0.1.9` → `0.1.13`, both byte-verified ([GAP-003](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification)). |
 | Accessibility of provided controls | verified (CLI diagnostics) | No graphical interface ships, so keyboard and focus checks are out of scope. |
-| Release readiness | blocked | GAP-001 full parity qualified. No `rubygems.org` publication. Upgrade untested. |
+| Release readiness | verified (build-from-checkout distribution) | GAP-001 parity qualified and GAP-003 closed 2026-09-29: kits 0.1.9/0.1.13 byte-verified, gem and kit upgrade paths tested. `rubygems.org` publication remains an optional owner decision; the register does not approve a release. |
 
 ## 3. Parity coverage
 
@@ -355,8 +355,8 @@ Next bounded checks live in the [current status list](COMPLETION_GAPS.md#5-order
 See [GAP-001 and the complete gap register](COMPLETION_GAPS.md#4-known-gaps) for evidence, dependencies, and acceptance criteria.
 
 1. ~~GAP-001: correct the 13 diverging effects.~~ Done 2026-09-29 (GAP-001 closed). Keep its evidence current whenever the runtime, transpiler, or pin changes.
-2. GAP-003: the owner decides the `rubygems.org` publication path. After a published version exists, run an isolated upgrade test.
-3. GAP-003: run the Windows platform checks when a Windows host is available.
+2. ~~GAP-003: the owner decides the `rubygems.org` publication path. After a published version exists, run an isolated upgrade test.~~ Done 2026-09-29: gem and kit upgrade paths tested; GAP-003 closed. `rubygems.org` publication remains an optional owner decision.
+3. GAP-003 follow-up: run the Windows platform checks when a workflow-change grant for a GitHub-hosted Windows runner leg or a Windows host is available.
 4. Keep GAP-002 evidence current whenever entry points change.
 
 All eligible ports have equal priority. Zero missing executable cases toward the 210-ID authority and zero skipped cases remain the goal.
