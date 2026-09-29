@@ -3,7 +3,7 @@
 ## 1. Source and authority revisions
 
 Scheduled audit: 2026-09-28. Current inspected source: [`b02f816a43a8e467e7c2adff3b1cc4fe4289e0f8`](https://github.com/noisefactorllc/noisemaker-for-ruby/commit/b02f816a43a8e467e7c2adff3b1cc4fe4289e0f8). Local `main` matched remote before checks. Checkout clean.
-Full rendered parity remains **unverified**. No release approval follows from this audit.
+Full rendered parity is **qualified** at the pinned authority (GAP-001 closed 2026-09-29: whole-port PARITY-SUMMARY 205/205 exact at the published candidate, supervisor-executed). No release approval follows from this audit.
 Pinned authority: CPU `bfbe54764eee87c8f67d2b281d5f304faad04a5b`, upstream `8eeb7b5ac14eb37a8d16037f607a88ce63924cd3` (lock repinned by sync commit `a8f1ffe` for the delivered range `36fbfac07be5..bfbe54764eee`). Measured results below from the 2026-09-28 scheduled audit bind the earlier pin `aaa6df50421d9d6db752289cdc1ff7c1efb1d9d1` / upstream `2f47612c`; post-repin results are recorded in "Post-repin requalification, 2026-09-28" in section 3 and bind the new pin.
 Current CPU authority head: `21d211e0f3dcdf409b197fb5d212aac706fc75e0`, newer than the pin and unqualified for this port.
 Upstream discovery: `73c15be00d6888f4b5d2835d8e242ee9e840df45`. CDN `/1.0/` manifest SHA-256 `05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e` is unchanged and holds 210 effect IDs.
@@ -45,12 +45,12 @@ Rows dated 2026-09-28 come from the scheduled audit. A verified row states its m
 | Minimum and current host versions | verified | CI at identical runtime `91ae3f6`: Ruby 3.2 through 4.0 Linux, plus 4.0 macOS, all green. Local probes ran 3.4.5. Ruby 3.2 is end of life. |
 | Supported operating systems and backends | verified (Linux local and CI, macOS CI) | Windows unmeasured: no host in this harness. |
 | Installed package and first useful result | verified | 2026-09-28: built gem installed in an isolated `GEM_HOME`. First render, filter, and DSL output pass. |
-| Parameters, external inputs, state, and chains | failed (17 cases across 13 effects) | Extended sweep covered parameters, seeds, sizes, times, state, and volumes. 1607 of 1625 cases exact. The 17 differing cases are GAP-001. |
+| Parameters, external inputs, state, and chains | passed (1625/1625 cases byte-exact) | Extended sweep covered parameters, seeds, sizes, times, state, and volumes at the pinned authority. The 17 previously differing cases across 13 effects and the colorBars runtime error are corrected (commits `6591842c`, `2b161d0a`, `e9c4f12f`); the whole-port PARITY-SUMMARY at the published candidate is 205/205 exact and the extended grid is byte-exact at the corrected tree (raw reports archived with the job evidence). |
 | Invalid input and recovery | verified | 2026-09-28: invalid effect and parameter name the effect and parameter, exit 2, and corrected input renders. |
 | Cancellation and file preservation | verified (isolated install) | 2026-09-28: SIGINT mid-render exits at once. An existing output file stays byte-identical, and frames written before the interrupt are retained. Cancelled runs print a raw Ruby Interrupt trace. |
 | Upgrade, removal, and resource cleanup | verified (removal) | Removal verified 2026-09-28. Upgrade untested: one kit version and one gem version exist. |
 | Accessibility of provided controls | verified (CLI diagnostics) | No graphical interface ships, so keyboard and focus checks are out of scope. |
-| Release readiness | blocked | GAP-001 full parity open. No `rubygems.org` publication. Upgrade untested. |
+| Release readiness | blocked | GAP-001 full parity qualified. No `rubygems.org` publication. Upgrade untested. |
 
 ## 3. Parity coverage
 
@@ -62,6 +62,10 @@ Fresh execution at `b02f816` with the pinned oracle (CPU `aaa6df50421d9d6db75228
 - `ruby scripts/parity-sweep.rb --only <13 diverging effects>` re-ran the diverging subset. Result: 107 cases, 89 exact, 17 diff, 1 Ruby error, 0 oracle errors. The 18 non-exact cases match the committed 2026-09-26 report case for case, with identical maxdiff values. The committed divergence evidence is re-verified by fresh execution.
 - The committed 2026-09-26 sweep evidence is carried, not re-verified in full. Its report records 353 candidate source hashes. 352 match `b02f816`. The one mismatch, `Gemfile.lock`, is not tracked in Git. Runtime, harness, and lock files are unchanged since those runs.
 - Inventory correction: five manifest IDs sit outside the bundle and the sweep. Their rows previously claimed execution and now state the truth. They remain missing cases toward the 210-ID authority.
+
+### GAP-001 closure, 2026-09-29 (records-only)
+
+The 13 effects that diverged at nondefault settings and the synth/testPattern colorBars runtime error were corrected (transpiler compound op-assign hoisting and destructure fixes, codegen vecN-argument and snap-condition fixes, oracle-faithful int/uint division semantics, filter/dither blockOrigin int-floor lowering, filter/median half-decode adapter fixes), and the committed bundle was fully regenerated to match the corrected transpiler and runtime at the pinned authority (commits `6591842c6a53a400cf574a8b92ae7408cbe5142a`, `2b161d0a76e2f21c41286f6b9d177c6146b64a84`, `e9c4f12fd2e3fa4b353edcd981702438bf9396da`). The whole-port machine check `ruby scripts/parity-summary`, executed by the supervisor at the published candidate, reports PARITY-SUMMARY {"expected":205,"executed":205,"exact":205,"strict":0,"near":0,"defer":0,"skip":0,"fail":0,"missing":0} with exit 0. The extended 1625-case grid at the corrected tree is byte-exact for every case; the raw merged and per-shard sweep reports are archived with the job evidence (`gap-001/parity-sweep-report-bfbe5476-full.json` and shards 0-5, SHA-256 digests recorded in that archive). Standalone suite: 230 runs, 0 failures with and without the pinned oracle.
 
 ### Post-repin requalification, 2026-09-28 (sync `a8f1ffe`)
 
