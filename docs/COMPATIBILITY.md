@@ -350,17 +350,16 @@ Raw CI evidence: ruby-final-ci.log (operator-retained, not committed to this rep
 
 ## 5. Open compatibility limits
 
-Next bounded check: the implementation job corrects the 13 effects that diverge at nondefault settings. They are listed in section 3 and [completion gaps](COMPLETION_GAPS.md#5-ordered-next-actions). It then re-runs the extended sweep and the required checks.
-See the stable entries in [completion gaps](COMPLETION_GAPS.md).
-
+GAP-001 closed on 2026-09-29: the 13 diverging effects are corrected, the whole-port gate is 205/205 byte-exact at the pinned authority, and the extended 1625-case grid is byte-exact at the corrected tree. Its scope is the 205 bundled effect IDs; the five non-bundled authority-manifest IDs remain missing toward 210.
+Next bounded checks live in the [current status list](COMPLETION_GAPS.md#5-ordered-next-actions).
 See [GAP-001 and the complete gap register](COMPLETION_GAPS.md#4-known-gaps) for evidence, dependencies, and acceptance criteria.
 
-1. GAP-001: correct the 13 diverging effects. Then re-run the extended sweep with unchanged denominators and tolerances.
-2. GAP-003: decide the `rubygems.org` publication path. After a published version exists, run an isolated upgrade test.
+1. ~~GAP-001: correct the 13 diverging effects.~~ Done 2026-09-29 (GAP-001 closed). Keep its evidence current whenever the runtime, transpiler, or pin changes.
+2. GAP-003: the owner decides the `rubygems.org` publication path. After a published version exists, run an isolated upgrade test.
 3. GAP-003: run the Windows platform checks when a Windows host is available.
 4. Keep GAP-002 evidence current whenever entry points change.
 
-All eligible ports have equal priority. Full parity and zero skipped cases remain the goal.
+All eligible ports have equal priority. Zero missing executable cases toward the 210-ID authority and zero skipped cases remain the goal.
 Implementation corrections remain with the separate job. This report does not advance the parity checkpoint.
 
 ## 6. History
