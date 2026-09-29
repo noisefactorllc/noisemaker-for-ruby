@@ -8,7 +8,7 @@ Pinned authority: CPU `fd9d56c74ce7500b7eaeea90a93d3bf49375d28e`, upstream `73c1
 Current CPU authority head: `fd9d56c74ce7500b7eaeea90a93d3bf49375d28e` — the pin (delivered-range audit below, 2026-09-29).
 Upstream discovery: `73c15be00d6888f4b5d2835d8e242ee9e840df45`. CDN `/1.0/` manifest SHA-256 `05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e` is unchanged and holds 210 effect IDs.
 Current served kit: `0.1.13`, source `e9c4f12fd2e3fa4b353edcd981702438bf9396da`. All 329 served files match the inventory hashes. 325 files are byte-identical to that source.
-`rubygems.org` returns 404 for this package. Distribution is build-from-checkout plus the export kit.
+`rubygems.org` returns 404 for this package. Distribution is build-from-checkout plus the export kit. GAP-003 closes for this existing distribution after the published `0.1.9` → `0.1.13` consumer upgrade on Ruby 4.0.5 Darwin arm64; Windows remains unqualified. [Commands and results](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification).
 
 Daily review: 2026-09-25. Previously inspected source: [`d7942883e2e56486dd6c186486cd794cc3a512a4`](https://github.com/noisefactorllc/noisemaker-for-ruby/commit/d7942883e2e56486dd6c186486cd794cc3a512a4).
 
@@ -48,9 +48,9 @@ Rows dated 2026-09-28 come from the scheduled audit. A verified row states its m
 | Parameters, external inputs, state, and chains | passed (1625/1625 cases byte-exact) | Extended sweep covered parameters, seeds, sizes, times, state, and volumes at the pinned authority. The 17 previously differing cases across 13 effects and the colorBars runtime error are corrected (commits `6591842c`, `2b161d0a`, `e9c4f12f`); the whole-port PARITY-SUMMARY at the published candidate is 205/205 exact and the extended grid is byte-exact at the corrected tree (raw reports archived with the job evidence). |
 | Invalid input and recovery | verified | 2026-09-28: invalid effect and parameter name the effect and parameter, exit 2, and corrected input renders. |
 | Cancellation and file preservation | verified (isolated install) | 2026-09-28: SIGINT mid-render exits at once. An existing output file stays byte-identical, and frames written before the interrupt are retained. Cancelled runs print a raw Ruby Interrupt trace. |
-| Upgrade, removal, and resource cleanup | verified (removal; upgrade mechanics probed) | Removal verified 2026-09-28. Upgrade mechanics probed 2026-09-29 with synthetic versions (gem `0.0.0`→`0.0.1` same-checkout bump in an isolated `GEM_HOME`; staged kit `0.1.9`→`0.1.13` byte-verified); upgrade of a published version remains untested — none exists ([GAP-003](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification)). |
+| Upgrade, removal, and resource cleanup | verified for existing distribution | 2026-09-29: published kit `0.1.9` → `0.1.13` consumer upgrade on Ruby 4.0.5 Darwin arm64; 329/329 files verified per version and after replacement, program renders byte-identically before/after, invalid-input recovery passes, consumer and download trees removed. Earlier isolated gem removal remains verified. [GAP-003 evidence](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification). |
 | Accessibility of provided controls | verified (CLI diagnostics) | No graphical interface ships, so keyboard and focus checks are out of scope. |
-| Release readiness | blocked | Parity is qualified at GAP-001's published 205-bundled-ID scope. No `rubygems.org` publication and no owner release decision; upgrade of a published version untested ([GAP-003](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification)). This report does not approve a release. |
+| Release readiness | qualified for existing distribution | GAP-003 closed for the existing checkout/CDN channels and measured matrix. Parity remains limited to GAP-001’s 205 bundled IDs. RubyGems remains unpublished and Windows unqualified; no new release is approved. [GAP-003 evidence](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification). |
 
 ## 3. Parity coverage
 
@@ -368,8 +368,8 @@ Next bounded checks live in the [current status list](COMPLETION_GAPS.md#5-order
 See [GAP-001 and the complete gap register](COMPLETION_GAPS.md#4-known-gaps) for evidence, dependencies, and acceptance criteria.
 
 1. ~~GAP-001: correct the 13 diverging effects.~~ Done 2026-09-29 (GAP-001 closed). Keep its evidence current whenever the runtime, transpiler, or pin changes.
-2. GAP-003: the owner decides the `rubygems.org` publication path (or records a build-from-checkout release decision); after a published version exists, run an isolated upgrade test. Preparatory upgrade probes (synthetic gem bump, staged kit `0.1.9`→`0.1.13`) are recorded; GAP-001's parity dependency is met within its published 205-bundled-ID scope.
-3. GAP-003 follow-up: run the Windows platform checks when a workflow-change grant for a GitHub-hosted Windows runner leg or a Windows host is available.
+2. GAP-003: closed for existing checkout/CDN distribution after the published-kit consumer upgrade. Repeat its lifecycle checks when distributed files change; RubyGems publication remains a separate owner decision. [Measured scope and evidence](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification).
+3. Windows remains unqualified. Run its platform checks when an authorized Windows runner or host is available; this closure makes no Windows claim.
 4. Keep GAP-002 evidence current whenever entry points change.
 
 All eligible ports have equal priority. Zero missing executable cases toward the 210-ID authority and zero skipped cases remain the goal.
