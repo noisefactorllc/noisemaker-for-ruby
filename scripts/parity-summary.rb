@@ -130,7 +130,7 @@ expected = ids.length
 missing = expected - exact - fail_count - defer_count
 missing = 0 if missing.negative?
 counts = {
-  expected: expected, executed: exact + fail_count + defer_count,
+  expected: expected, executed: exact + fail_count,
   exact: exact, strict: 0, near: 0, defer: defer_count,
   skip: 0, fail: fail_count, missing: missing
 }
