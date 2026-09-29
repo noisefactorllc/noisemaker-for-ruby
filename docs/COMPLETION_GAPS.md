@@ -186,24 +186,24 @@ Provenance and machine-checkability of these numbers: the default-gate result at
 
 Ruby 3.2 reached end of life on 2026-04-01. Ruby lists 3.4 and 4.0 under normal maintenance. Preserve 3.2 compatibility results, but identify maintained versions for new installations. [Official maintenance status, checked 2026-09-25](https://www.ruby-lang.org/en/downloads/branches/).
 
-- Status: open. Priority: P2. Category: release.
+- Status: blocked. Priority: P2. Category: release.
 - Affected scope: Actual artifact, dependencies, notices, version promises, and release evidence.
 - Expected behavior: The delivered artifact supports its documented installation and first useful result.
-- Observed behavior: Audit 2026-09-28 byte-verified the served kit `0.1.9` in full. All 329 inventory hashes match. 327 files are byte-identical to source `91ae3f6`. The upstream notice matches `noisemaker@2f47612c`. Gem build, isolated install, metadata, and removal pass (section 3). Upgrade behavior is untested: only one kit version and one gem version exist. `rubygems.org` holds no published version.
-- Evidence: Section 3, [kit metadata](https://kits.noisedeck.app/ruby/0/deployment-meta.json), and exact-source CI in section 2.
-- Next action: The owner decides the `rubygems.org` publication path. After a published version exists, test an upgrade in an isolated consumer. Close this gap after GAP-001 passes and the upgrade check runs.
-- Dependencies: GAP-001 full parity. A published artifact or an explicit build-from-checkout release decision.
-- Acceptance criteria: Match artifact bytes to their inventory (done 2026-09-28). Check notices and dependencies (done 2026-09-28). Pass installation, examples, upgrade, and removal. Upgrade remains untested.
+- Observed behavior: Audit 2026-09-28 byte-verified the served kit `0.1.9` in full. All 329 inventory hashes match. 327 files are byte-identical to source `91ae3f6`. The upstream notice matches `noisemaker@2f47612c`. Gem build, isolated install, metadata, and removal pass (section 3). Upgrade behavior is untested: only one kit version and one gem version exist. `rubygems.org` holds no published version. GAP-001 closed 2026-09-29, so its parity blocker is resolved. Maintained versions for new installations are identified: [Ruby maintenance branches](https://www.ruby-lang.org/en/downloads/branches/) list 3.4 and 4.0 under normal maintenance, and README Install now directs new installations to 3.4 or 4.0 while keeping the 3.2 floor. Distribution remains build-from-checkout plus the export kit.
+- Evidence: Section 3, [kit metadata](https://kits.noisedeck.app/ruby/0/deployment-meta.json), exact-source CI in section 2, and [README Install](../README.md).
+- Next action: The owner decides the `rubygems.org` publication path; publication needs owner credentials this harness does not hold, so it is blocked here. After a published version exists, test an upgrade in an isolated consumer (at least two gem versions must exist). Recheck the maintained-version guidance at each audit.
+- Dependencies: None open on the port side (GAP-001 full parity is met). Open external dependency: a published artifact or an explicit build-from-checkout release decision by the owner.
+- Acceptance criteria: Match artifact bytes to their inventory (done 2026-09-28). Check notices and dependencies (done 2026-09-28). Pass installation, examples, and removal (done 2026-09-28). Upgrade remains untested until a published version exists.
 - Required checks: Inspect exact-source CI jobs and render legs (done at `91ae3f6`). Count skips and errors rather than trusting green summaries.
-- Last verification: 2026-09-28. This register does not approve a release.
+- Last verification: 2026-09-29. This register does not approve a release. Blocked on the owner's `rubygems.org` publication decision; the upgrade test and any close await a published version.
 
 ## 5. Ordered next actions
 
-Current first action: the implementation job corrects the 13 effects that diverge from the pinned JavaScript oracle at nondefault settings. They are classicNoisedeck/noise3d, filter/craquelure, filter/median, filter/spookyTicker, mixer/shapeMask, points/dla, render/pointsBillboardRender, render/render3d, render/renderCubemap3d, synth/gradient, synth/mandelbrot, synth/testPattern, synth3d/flythrough3d. It then re-runs the extended sweep and the required checks.
+Current first action: none on the port side. GAP-001 closed 2026-09-29; GAP-003 is blocked on the owner's `rubygems.org` publication decision.
 Subsequent actions depend on that evidence. No implementation is authorized by this audit.
 
-1. GAP-001: correct the 13 diverging effects, then re-run the extended sweep with unchanged denominators and tolerances.
-2. GAP-003: decide the `rubygems.org` publication path. After a published version exists, run an isolated upgrade test.
+1. ~~GAP-001: correct the 13 diverging effects, then re-run the extended sweep with unchanged denominators and tolerances.~~ Done 2026-09-29 (GAP-001 closed).
+2. GAP-003: the owner decides the `rubygems.org` publication path (blocked here; publication needs owner credentials). After a published version exists, run an isolated upgrade test.
 3. GAP-003: run the Windows platform checks when a Windows host is available.
 4. Keep GAP-002 evidence current whenever entry points change. Re-run the installed workflow probes after any CLI or library change.
 5. Keep GAP-001 evidence current at each authority or source change. Pin updates belong to the sync job.

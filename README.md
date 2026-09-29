@@ -42,7 +42,10 @@ playback and large production renders are not its practical target.
 
 ## Install
 
-Core stdlib only — no runtime gem dependencies. Ruby 3.2+.
+Core stdlib only — no runtime gem dependencies. Ruby 3.2+. New installations
+should use a maintained Ruby: 3.4 or 4.0 ([Ruby maintenance
+branches](https://www.ruby-lang.org/en/downloads/branches/); 3.2 reached end of
+life on 2026-04-01 and stays supported here only as the compatibility floor).
 
 ```bash
 gem build noisemaker-for-ruby.gemspec
