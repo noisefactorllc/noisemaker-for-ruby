@@ -8,8 +8,9 @@ Pinned authority: CPU `d2965d0b7880cee678de11ec797155c8a65c7b66`, upstream `f24b
 Current CPU authority head: `d2965d0b7880cee678de11ec797155c8a65c7b66` — the pin (delivered-range audit below, 2026-09-29).
 Upstream discovery: `f24b52540af6a88d12daa05feba1a04ad61b22a2`. CDN `/1.0/` manifest SHA-256 `05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e` is unchanged and holds 210 effect IDs.
 Current served kit: `0.1.13`, source `e9c4f12fd2e3fa4b353edcd981702438bf9396da`. All 329 served files match the inventory hashes. 325 files are byte-identical to that source.
-`rubygems.org` returns 404 for this package. Distribution is build-from-checkout plus the export kit. GAP-003 closes for this existing distribution after the published `0.1.9` → `0.1.13` consumer upgrade on Ruby 4.0.5 Darwin arm64; Windows remains unqualified. [Commands and results](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification).
+`rubygems.org` returns 404 for this package. Distribution is build-from-checkout plus the export kit. GAP-003 closed for this existing distribution on 2026-09-29 after the published `0.1.9` → `0.1.13` consumer upgrade on Ruby 4.0.5 Darwin arm64; Windows remains unqualified. [Commands and results](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification).
 
+Daily review: 2026-09-29. GAP-001 and GAP-003 closures verified by fresh execution at [`20ce8debc93e55e9d2d3710b45fa996bf461abd4`](https://github.com/noisefactorllc/noisemaker-for-ruby/commit/20ce8debc93e55e9d2d3710b45fa996bf461abd4). Whole-port gate 205/205 byte-exact at the pinned oracle. Kit `0.1.13` re-verified in full. Raw evidence: shared series store at `/series/review-20260929-215800/`.
 Daily review: 2026-09-25. Previously inspected source: [`d7942883e2e56486dd6c186486cd794cc3a512a4`](https://github.com/noisefactorllc/noisemaker-for-ruby/commit/d7942883e2e56486dd6c186486cd794cc3a512a4).
 
 ### Earlier source observations
@@ -391,6 +392,7 @@ Implementation corrections remain with the separate job. This report does not ad
 
 | Date | Source | Result | Change |
 |---|---|---|---|
+| 2026-09-29 | `20ce8debc93e55e9d2d3710b45fa996bf461abd4` | Daily review verified the GAP-001 and GAP-003 closures by fresh execution. | Whole-port gate 205/205 byte-exact at `20ce8de` with the pinned oracle. Oracle-present suite 230 runs, 0 failures, 7 skips. Kit `0.1.13` 329/329 hashes, 325/325 mapped files byte-identical. Section-1 stale closure sentences corrected. |
 | 2026-09-28 | `b02f816a43a8e467e7c2adff3b1cc4fe4289e0f8` | Default gate re-verified by fresh execution (205/205 byte-exact). GAP-002 closed for the qualified matrix. | Served kit `0.1.9` byte-verified in full. Five false inventory rows corrected. Installed workflow, error recovery, and removal verified on Linux Ruby 3.4.5. |
 | 2026-09-26 | this commit | Extended qualification | Ran the locked 205-effect comparator at the pinned authority with the extended sweep (1625 cases). Default gate exact; 17 cases across 13 effects differ off-default; one Ruby runtime error. Evidence committed under [evidence/gap-001](evidence/gap-001/parity-evidence-summary.json). GAP-001 remains open. |
 | 2026-09-24 | `379aa03df26df8b17f6916535c83328bb0e8eaa3` | Full qualification unverified | Created the requested maintained compatibility report. Preserved historical evidence and open gaps. |
