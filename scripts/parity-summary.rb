@@ -28,9 +28,53 @@
 # The port's published numerical contract is byte-exact RGBA8 (maxdiff 0),
 # so every pass is exact and strict is always 0.
 
+require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+
+# The authority golden is rendered by the pinned noisemaker-cpu oracle
+# (scripts/oracle-lock.json). When NOISEMAKER_CPU_DIR does not already point
+# at a usable pinned checkout, provision one on demand into a cache outside
+# the repository (same discipline as the Ruby toolchain in ruby-bootstrap.sh)
+# so the entrypoint is self-sufficient in a bare check container.
+def provision_oracle
+  lock = JSON.parse(File.read(File.expand_path("oracle-lock.json", __dir__)))
+  revision = lock.fetch("revision")
+  dir = ENV["NOISEMAKER_CPU_DIR"]
+  return dir if dir && File.file?(File.join(dir, "bin", "noisemaker-cpu.js"))
+  return nil if system("git", "-C", File.expand_path("../..", __dir__),
+                       "rev-parse", "-q", "--verify", "#{revision}^{commit}",
+                       out: File::NULL, err: File::NULL) &&
+               File.file?(File.expand_path("../../noisemaker-for-cpu/bin/noisemaker-cpu.js", __dir__))
+
+  base = ENV["NOISEMAKER_PARITY_CACHE"]
+  base ||= ["/tmp/noisemaker-parity-cache", File.join(Dir.home.to_s, ".cache", "noisemaker-parity")]
+          .find { |c| c.start_with?("/tmp/", "/state/", "#{Dir.home}/") && (File.directory?(c) || FileUtils.mkdir_p(c) rescue false) }
+  return nil unless base
+
+  dir = File.join(base, "noisemaker-for-cpu")
+  unless File.directory?(File.join(dir, ".git"))
+    url = lock.fetch("repository")
+    warn "scripts/parity-summary: provisioning the pinned oracle #{revision[0, 12]} from #{url}"
+    return nil unless system("git", "clone", "--quiet", "--filter=blob:none", url, dir,
+                             out: File::NULL, err: File::NULL)
+  end
+  have = system("git", "-C", dir, "cat-file", "-e", "--quiet", "#{revision}^{commit}",
+                out: File::NULL, err: File::NULL)
+  unless have
+    return nil unless system("git", "-C", dir, "fetch", "--quiet", "origin", revision,
+                             out: File::NULL, err: File::NULL)
+  end
+  return nil unless system("git", "-C", dir, "checkout", "--quiet", "--detach", revision,
+                           out: File::NULL, err: File::NULL)
+  warn "scripts/parity-summary: using provisioned oracle at #{dir}"
+  dir
+end
+
+if (provisioned = provision_oracle)
+  ENV["NOISEMAKER_CPU_DIR"] = provisioned
+end
 
 require_relative "oracle"
 require_relative "../lib/noisemaker_cpu/renderer"
