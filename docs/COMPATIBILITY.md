@@ -7,7 +7,7 @@ Full rendered parity is **qualified** at the pinned authority (GAP-001 closed 20
 Pinned authority: CPU `bfbe54764eee87c8f67d2b281d5f304faad04a5b`, upstream `8eeb7b5ac14eb37a8d16037f607a88ce63924cd3` (lock repinned by sync commit `a8f1ffe` for the delivered range `36fbfac07be5..bfbe54764eee`). Measured results below from the 2026-09-28 scheduled audit bind the earlier pin `aaa6df50421d9d6db752289cdc1ff7c1efb1d9d1` / upstream `2f47612c`; post-repin results are recorded in "Post-repin requalification, 2026-09-28" in section 3 and bind the new pin.
 Current CPU authority head: `21d211e0f3dcdf409b197fb5d212aac706fc75e0`, newer than the pin and unqualified for this port.
 Upstream discovery: `73c15be00d6888f4b5d2835d8e242ee9e840df45`. CDN `/1.0/` manifest SHA-256 `05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e` is unchanged and holds 210 effect IDs.
-Current served kit: `0.1.9`, source `91ae3f6008001678d311dbc06f1f485c577d71ce`. All 329 served files match the inventory hashes. 327 files are byte-identical to that source.
+Current served kit: `0.1.13`, source `e9c4f12fd2e3fa4b353edcd981702438bf9396da`. All 329 served files match the inventory hashes. 325 files are byte-identical to that source.
 `rubygems.org` returns 404 for this package. Distribution is build-from-checkout plus the export kit.
 
 Daily review: 2026-09-25. Previously inspected source: [`d7942883e2e56486dd6c186486cd794cc3a512a4`](https://github.com/noisefactorllc/noisemaker-for-ruby/commit/d7942883e2e56486dd6c186486cd794cc3a512a4).
@@ -112,7 +112,7 @@ The five manifest IDs outside the bundle are `render/meshLoader`, `render/meshRe
 The port and the JavaScript oracle both exclude them, so no executable case exists for them in this contract.
 They remain missing cases toward the 210-ID authority. They do not become successful tests.
 
-Current served declaration: 205 effect IDs, equal to the bundle. This inventory is not evidence of execution. The declaration column below reflects kit `0.1.9`.
+Current served declaration: 205 effect IDs, equal to the bundle. This inventory is not evidence of execution. The declaration column below reflects kit `0.1.13` (the declaration set is unchanged from kit `0.1.9`).
 
 ### Effect inventory
 
