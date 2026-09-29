@@ -48,9 +48,9 @@ Rows dated 2026-09-28 come from the scheduled audit. A verified row states its m
 | Parameters, external inputs, state, and chains | passed (1625/1625 cases byte-exact) | Extended sweep covered parameters, seeds, sizes, times, state, and volumes at the pinned authority. The 17 previously differing cases across 13 effects and the colorBars runtime error are corrected (commits `6591842c`, `2b161d0a`, `e9c4f12f`); the whole-port PARITY-SUMMARY at the published candidate is 205/205 exact and the extended grid is byte-exact at the corrected tree (raw reports archived with the job evidence). |
 | Invalid input and recovery | verified | 2026-09-28: invalid effect and parameter name the effect and parameter, exit 2, and corrected input renders. |
 | Cancellation and file preservation | verified (isolated install) | 2026-09-28: SIGINT mid-render exits at once. An existing output file stays byte-identical, and frames written before the interrupt are retained. Cancelled runs print a raw Ruby Interrupt trace. |
-| Upgrade, removal, and resource cleanup | verified | Removal verified 2026-09-28. Upgrade verified 2026-09-29: gem upgrade `0.0.0` → `0.0.1` in an isolated `GEM_HOME` and kit upgrade `0.1.9` → `0.1.13`, both byte-verified ([GAP-003](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification)). |
+| Upgrade, removal, and resource cleanup | verified (removal; upgrade mechanics probed) | Removal verified 2026-09-28. Upgrade mechanics probed 2026-09-29 with synthetic versions (gem `0.0.0`→`0.0.1` same-checkout bump in an isolated `GEM_HOME`; staged kit `0.1.9`→`0.1.13` byte-verified); upgrade of a published version remains untested — none exists ([GAP-003](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification)). |
 | Accessibility of provided controls | verified (CLI diagnostics) | No graphical interface ships, so keyboard and focus checks are out of scope. |
-| Release readiness | verified (build-from-checkout distribution) | GAP-001 parity qualified and GAP-003 closed 2026-09-29: kits 0.1.9/0.1.13 byte-verified, gem and kit upgrade paths tested. `rubygems.org` publication remains an optional owner decision; the register does not approve a release. |
+| Release readiness | blocked | Parity is qualified at GAP-001's published 205-bundled-ID scope. No `rubygems.org` publication and no owner release decision; upgrade of a published version untested ([GAP-003](COMPLETION_GAPS.md#gap-003-distribution-and-release-qualification)). This report does not approve a release. |
 
 ## 3. Parity coverage
 
@@ -132,7 +132,7 @@ Current served declaration: 205 effect IDs, equal to the bundle. This inventory 
 | `classicNoisedeck/lensDistortion` | yes | default + extended sweep exact |
 | `classicNoisedeck/moodscape` | yes | default + extended sweep exact |
 | `classicNoisedeck/noise` | yes | default + extended sweep exact |
-| `classicNoisedeck/noise3d` | yes | differs off-default (param-type, maxdiff 112) |
+| `classicNoisedeck/noise3d` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 112) |
 | `classicNoisedeck/refract` | yes | default + extended sweep exact |
 | `classicNoisedeck/shapeMixer` | yes | default + extended sweep exact |
 | `classicNoisedeck/shapes` | yes | default + extended sweep exact |
@@ -151,7 +151,7 @@ Current served declaration: 205 effect IDs, equal to the bundle. This inventory 
 | `filter/colorReplace` | yes | default + extended sweep exact |
 | `filter/convolutionFeedback` | yes | default + extended sweep exact |
 | `filter/corrupt` | yes | default + extended sweep exact |
-| `filter/craquelure` | yes | differs off-default (size-16, maxdiff 1) |
+| `filter/craquelure` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 1) |
 | `filter/crt` | yes | default + extended sweep exact |
 | `filter/degauss` | yes | default + extended sweep exact |
 | `filter/deriv` | yes | default + extended sweep exact |
@@ -180,7 +180,7 @@ Current served declaration: 205 effect IDs, equal to the bundle. This inventory 
 | `filter/lightLeak` | yes | default + extended sweep exact |
 | `filter/lighting` | yes | default + extended sweep exact |
 | `filter/lowPoly` | yes | default + extended sweep exact |
-| `filter/median` | yes | differs off-default (param-radius, maxdiff 128) |
+| `filter/median` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 128) |
 | `filter/morphology` | yes | default + extended sweep exact |
 | `filter/mosaicTiles` | yes | default + extended sweep exact |
 | `filter/motionBlur` | yes | default + extended sweep exact |
@@ -225,7 +225,7 @@ Current served declaration: 205 effect IDs, equal to the bundle. This inventory 
 | `filter/spatter` | yes | default + extended sweep exact |
 | `filter/spinBlur` | yes | default + extended sweep exact |
 | `filter/spiral` | yes | default + extended sweep exact |
-| `filter/spookyTicker` | yes | differs off-default (seed/time/size cases, maxdiff 63-102) |
+| `filter/spookyTicker` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 63-102) |
 | `filter/stamp` | yes | default + extended sweep exact |
 | `filter/step` | yes | default + extended sweep exact |
 | `filter/stipple` | yes | default + extended sweep exact |
@@ -264,13 +264,13 @@ Current served declaration: 205 effect IDs, equal to the bundle. This inventory 
 | `mixer/mashup` | yes | default + extended sweep exact |
 | `mixer/patternMix` | yes | default + extended sweep exact |
 | `mixer/shadow` | yes | default + extended sweep exact |
-| `mixer/shapeMask` | yes | differs off-default (param-shape, maxdiff 128) |
+| `mixer/shapeMask` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 128) |
 | `mixer/split` | yes | default + extended sweep exact |
 | `mixer/thresholdMix` | yes | default + extended sweep exact |
 | `mixer/uvRemap` | yes | default + extended sweep exact |
 | `points/attractor` | yes | default + extended sweep exact |
 | `points/buddhabrot` | yes | default + extended sweep exact |
-| `points/dla` | yes | differs off-default (size-16, maxdiff 1) |
+| `points/dla` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 1) |
 | `points/flock` | yes | default + extended sweep exact |
 | `points/flow` | yes | default + extended sweep exact |
 | `points/heightGrid` | yes | default + extended sweep exact |
@@ -283,11 +283,11 @@ Current served declaration: 205 effect IDs, equal to the bundle. This inventory 
 | `render/loopEnd` | yes | default + extended sweep exact |
 | `render/meshLoader` | no | missing from bundle and oracle inventory; never executed |
 | `render/meshRender` | no | missing from bundle and oracle inventory; never executed |
-| `render/pointsBillboardRender` | yes | differs off-default (param-blendMode, maxdiff 128) |
+| `render/pointsBillboardRender` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 128) |
 | `render/pointsEmit` | yes | default + extended sweep exact |
 | `render/pointsRender` | yes | default + extended sweep exact |
-| `render/render3d` | yes | differs off-default (param-filtering, maxdiff 142) |
-| `render/renderCubemap3d` | yes | differs off-default (param-filtering, maxdiff 129) |
+| `render/render3d` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 142) |
+| `render/renderCubemap3d` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 129) |
 | `render/renderCubemapSurface` | yes | default + extended sweep exact |
 | `render/renderLandscape3d` | yes | default + extended sweep exact |
 | `render/renderLit3d` | yes | default + extended sweep exact |
@@ -296,10 +296,10 @@ Current served declaration: 205 effect IDs, equal to the bundle. This inventory 
 | `synth/cellularAutomata` | yes | default + extended sweep exact |
 | `synth/curl` | yes | default + extended sweep exact |
 | `synth/gabor` | yes | default + extended sweep exact |
-| `synth/gradient` | yes | differs off-default (param-rotation, maxdiff 1) |
+| `synth/gradient` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 1) |
 | `synth/julia` | yes | default + extended sweep exact |
 | `synth/mandala` | yes | default + extended sweep exact |
-| `synth/mandelbrot` | yes | differs off-default (param-outputMode, maxdiff 249) |
+| `synth/mandelbrot` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 249) |
 | `synth/media` | yes | default + extended sweep exact |
 | `synth/mnca` | yes | default + extended sweep exact |
 | `synth/modPattern` | yes | default + extended sweep exact |
@@ -319,10 +319,10 @@ Current served declaration: 205 effect IDs, equal to the bundle. This inventory 
 | `synth/solid` | yes | default + extended sweep exact |
 | `synth/spectrum` | no | missing from bundle and oracle inventory; never executed |
 | `synth/subdivide` | yes | default + extended sweep exact |
-| `synth/testPattern` | yes | Ruby error on param-pattern (colorBars); size-16 differs (maxdiff 255) |
+| `synth/testPattern` | yes | byte-exact (colorBars runtime error and size-16 divergence corrected 2026-09-29) |
 | `synth3d/cell3d` | yes | default + extended sweep exact |
 | `synth3d/cellularAutomata3d` | yes | default + extended sweep exact |
-| `synth3d/flythrough3d` | yes | differs off-default (param-power, maxdiff 13) |
+| `synth3d/flythrough3d` | yes | byte-exact (off-default corrected 2026-09-29; was maxdiff 13) |
 | `synth3d/fractal3d` | yes | default + extended sweep exact |
 | `synth3d/heightmap3d` | yes | default + extended sweep exact |
 | `synth3d/noise3d` | yes | default + extended sweep exact |
@@ -355,7 +355,7 @@ Next bounded checks live in the [current status list](COMPLETION_GAPS.md#5-order
 See [GAP-001 and the complete gap register](COMPLETION_GAPS.md#4-known-gaps) for evidence, dependencies, and acceptance criteria.
 
 1. ~~GAP-001: correct the 13 diverging effects.~~ Done 2026-09-29 (GAP-001 closed). Keep its evidence current whenever the runtime, transpiler, or pin changes.
-2. ~~GAP-003: the owner decides the `rubygems.org` publication path. After a published version exists, run an isolated upgrade test.~~ Done 2026-09-29: gem and kit upgrade paths tested; GAP-003 closed. `rubygems.org` publication remains an optional owner decision.
+2. GAP-003: the owner decides the `rubygems.org` publication path (or records a build-from-checkout release decision); after a published version exists, run an isolated upgrade test. Preparatory upgrade probes (synthetic gem bump, staged kit `0.1.9`→`0.1.13`) are recorded; GAP-001's parity dependency is met within its published 205-bundled-ID scope.
 3. GAP-003 follow-up: run the Windows platform checks when a workflow-change grant for a GitHub-hosted Windows runner leg or a Windows host is available.
 4. Keep GAP-002 evidence current whenever entry points change.
 
