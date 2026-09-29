@@ -154,5 +154,13 @@ echo "scripts/test: using $($RUBY_BIN -v)" >&2
 
 # Same cases rake test runs (test/test_*.rb, libs lib+test), driven directly
 # by minitest so no rake/bundler install is needed.
-exec "$RUBY_BIN" -Ilib -Itest \
-  -e 'Dir.glob("test/test_*.rb").sort.each { |f| require File.expand_path(f) }'
+"$RUBY_BIN" -Ilib -Itest \
+  -e 'Dir.glob("test/test_*.rb").sort.each { |f| require File.expand_path(f) }' || exit $?
+
+# Rendered-parity gate: run the PARITY-SUMMARY contract entrypoint (whole
+# port unless case ids are given). It self-provisions the pinned oracle when
+# NOISEMAKER_CPU_DIR is unset, so its last output line is machine-checkable
+# structured evidence bound to this exact tree:
+#   PARITY-SUMMARY {"expected":N,"executed":N,"exact":N,"strict":N,"near":N,"defer":N,"skip":N,"fail":N,"missing":N}
+# Any non-exact accounting (near/defer/skip/fail/missing > 0) fails the suite.
+exec ./scripts/parity-summary
