@@ -230,7 +230,7 @@ every assertion, adjusting only syntax.
 - Each `test/test_*.rb` is self-contained:
   `require "minitest/autorun"` + `require_relative "../lib/noisemaker_cpu"`
   (transpiler tests require `../lib/noisemaker_cpu/transpiler/...` directly).
-- Run: `cd /Users/alex/platform/noisemaker-for-ruby && /opt/homebrew/opt/ruby/bin/ruby -Ilib test/test_<name>.rb`
+- Run: `/opt/homebrew/opt/ruby/bin/ruby -Ilib test/test_<name>.rb`
 - The parity harness contract (worker E): same flags and behavior as
   `scripts/parity.pl` — `--only id,id`, `--size N`, JS oracle located via
   `NOISEMAKER_CPU_DIR` env (default `../noisemaker-for-cpu`), summary line format
@@ -243,7 +243,7 @@ every assertion, adjusting only syntax.
 - **No git commands.** The coordinator commits.
 - **No network calls** — except the code you *write* for `transpiler/cdn.rb`
   (worker E), whose *tests* must run offline (seed `.cdn-cache/` from
-  `/Users/alex/platform/noisemaker-for-python/.cdn-cache` if present, else
+  `../noisemaker-for-python/.cdn-cache` if present, else
   skip network-dependent assertions and flag it).
 - **Foreground to completion.** Never launch a sweep in the background and
   end your turn "to resume later" — that is a failed task. Block and wait.
