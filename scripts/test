@@ -167,41 +167,49 @@ echo "scripts/test: using $($RUBY_BIN -v)" >&2
 # the whole-port run exits 1 while the port bundle lacks executable cases
 # (currently the five non-bundled authority ids recorded in GAP-001; the
 # pinned oracle implements none of them, so no golden can exist).
-# This suite accepts exactly that one recorded state and nothing else: the
-# exit-1 result is accepted only when near/defer/skip/fail are all zero,
-# every executed case passes (exact + strict == executed, executed + missing
-# == expected), the denominator is exactly the recorded authority-manifest
-# size (210), and the missing ids are exactly the recorded five — compared
-# as a set, not as a count, so a newly added authority id outside the bundle
-# still fails. Any difference, runtime or oracle error, unknown id, or
-# changed denominator or missing set still fails. When the authority
-# manifest or the bundle changes, update this check together with the
-# GAP-001 record.
+# This suite accepts exactly the recorded authority state and nothing else,
+# on both the exit-0 and exit-1 paths: the denominator must equal the
+# recorded authority-manifest size (210); near/defer/skip/fail must be
+# zero; every executed case must pass (exact + strict == executed and
+# executed + missing == expected). On exit 1 the missing ids must be
+# exactly the recorded five — compared as a set, not as a count, so a newly
+# added authority id outside the bundle still fails; on exit 0 there must
+# be no not-in-bundle warning and no missing ids, so a changed denominator
+# with all cases passing also fails. Any difference, runtime or oracle
+# error, or unknown id still fails. When the authority manifest or the
+# bundle changes, update this check together with the GAP-001 record.
 RECORDED_EXPECTED=210
 RECORDED_MISSING='render/meshLoader render/meshRender synth/roll synth/scope synth/spectrum'
 OUT=$(./scripts/parity-summary 2>&1) && RC=0 || RC=$?
 printf '%s\n' "$OUT"
-if [ "$RC" -eq 0 ]; then
-  exit 0
-fi
 LINE=$(printf '%s\n' "$OUT" | tail -1)
 WARN=$(printf '%s\n' "$OUT" | sed -n 's/^not in the port bundle (no executable case); counted missing: //p')
 case "$LINE" in
   PARITY-SUMMARY\ *{\"expected\":*) ;;
   *) echo "scripts/test: parity-summary exited $RC without a final PARITY-SUMMARY line" >&2; exit "$RC" ;;
 esac
-[ -n "$WARN" ] || { echo "scripts/test: parity-summary exited $RC without an oracle-missing warning" >&2; exit "$RC"; }
 field() { printf '%s' "$LINE" | sed -E "s/.*\"$1\":([0-9]+).*/\\1/"; }
 EXPECTED=$(field expected); EXECUTED=$(field executed); EXACT=$(field exact)
 STRICT=$(field strict); NEAR=$(field near); DEFER=$(field defer)
 SKIP=$(field skip); FAIL=$(field fail); MISSING=$(field missing)
 WARN_N=$(printf '%s\n' $WARN | wc -l)
-if [ "$NEAR" -ne 0 ] || [ "$DEFER" -ne 0 ] || [ "$SKIP" -ne 0 ] || [ "$FAIL" -ne 0 ] ||
-   [ "$WARN" != "$RECORDED_MISSING" ] || [ "$EXPECTED" -ne "$RECORDED_EXPECTED" ] ||
-   [ "$MISSING" -ne "$WARN_N" ] ||
+REJECT_RC=$RC
+[ "$REJECT_RC" -ne 0 ] || REJECT_RC=1
+if [ "$EXPECTED" -ne "$RECORDED_EXPECTED" ] ||
+   [ "$NEAR" -ne 0 ] || [ "$DEFER" -ne 0 ] || [ "$SKIP" -ne 0 ] || [ "$FAIL" -ne 0 ] ||
    [ $((EXACT + STRICT)) -ne "$EXECUTED" ] || [ $((EXECUTED + MISSING)) -ne "$EXPECTED" ]; then
-  echo "scripts/test: parity-summary exited $RC on an unaccepted parity state: $LINE (warned missing: $WARN_N; recorded set: $RECORDED_MISSING; recorded denominator: $RECORDED_EXPECTED)" >&2
-  exit "$RC"
+  echo "scripts/test: parity-summary exited $RC on an unaccepted parity state: $LINE (recorded denominator: $RECORDED_EXPECTED)" >&2
+  exit "$REJECT_RC"
 fi
+if [ "$RC" -eq 0 ]; then
+  # All-pass path: the recorded denominator must hold with nothing missing
+  # and no not-in-bundle warning; a changed denominator with all cases
+  # passing is rejected above by the EXPECTED check.
+  [ -z "$WARN" ] || { echo "scripts/test: parity-summary exited 0 with an unexpected not-in-bundle warning: $WARN" >&2; exit 1; }
+  echo "scripts/test: parity gate accepted the all-pass authority state: $LINE" >&2
+  exit 0
+fi
+# Recorded-missing path: the missing ids must be exactly the recorded five.
+[ "$WARN" = "$RECORDED_MISSING" ] && [ "$MISSING" -eq "$WARN_N" ] || { echo "scripts/test: parity-summary exited $RC with an unaccepted missing set: $LINE (warned missing: $WARN_N; recorded set: $RECORDED_MISSING)" >&2; exit "$REJECT_RC"; }
 echo "scripts/test: parity gate accepted the recorded authority state: $LINE (all non-executed ids lack oracle implementations)" >&2
 exit 0
