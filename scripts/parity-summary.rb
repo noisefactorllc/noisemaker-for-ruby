@@ -7,12 +7,14 @@
 # each against the authority's golden (rendered by the pinned noisemaker-cpu
 # oracle checkout, located via NOISEMAKER_CPU_DIR like scripts/parity.rb).
 # Given case ids as arguments, it renders and counts only those; with no
-# arguments it covers the whole port (every manifest effect).
+# arguments it covers the whole port (every id in the current authority's
+# manifest).
 #
 # The last output line is:
 #   PARITY-SUMMARY {"expected":N,"executed":N,"exact":N,"strict":N,"near":N,"defer":N,"skip":N,"fail":N,"missing":N}
 #
-#   expected  the authority's cases (manifest ids, or the requested subset)
+#   expected  the authority's cases (the full authority manifest ids, or the
+#             requested subset of them)
 #   executed  cases actually rendered by both engines
 #   exact     byte-identical RGBA8
 #   strict    other passes within the port's published numerical contract
@@ -24,6 +26,14 @@
 #
 # Exit 0 iff expected > 0, executed == expected, exact + strict == expected,
 # and near, defer, skip, fail and missing are all zero.
+#
+# The authority case set is the current authority's full manifest (the
+# upstream manifest recorded by the pinned oracle's upstream snapshot), not
+# the port bundle: ids the pinned oracle does not implement have no golden
+# and cannot be executed, so they are counted as missing and the whole-port
+# run exits 1 while any authority id lacks an oracle-side implementation.
+# Given explicit case ids, ids outside the authority manifest are rejected
+# as unknown.
 #
 # The port's published numerical contract is byte-exact RGBA8 (maxdiff 0),
 # so every pass is exact and strict is always 0.
@@ -81,15 +91,36 @@ require_relative "../lib/noisemaker_cpu/renderer"
 
 manifest_ids = NoisemakerCpu::Renderer.meta["effects"].keys.sort
 
+# The authority case set is the current authority's full manifest, recorded
+# by the pinned oracle's upstream snapshot (currently 210 ids). The port
+# bundle is a subset of it: ids the pinned oracle does not implement have
+# no golden and cannot be executed, so they count as missing rather than
+# shrinking the denominator to the bundle.
+oracle_dir = ENV["NOISEMAKER_CPU_DIR"]
+snapshot_path = oracle_dir && File.join(oracle_dir, "src", "effects", "generated", "upstream-snapshot.js")
+abort "parity-summary: no pinned oracle checkout; cannot read the authority manifest" unless oracle_dir && File.file?(snapshot_path)
+node_out, node_err, node_status = Open3.capture3(
+  "node", "-e",
+  "const m = require(process.argv[1]); console.log(JSON.stringify((m.default || m).sourceEffectIds))",
+  snapshot_path
+)
+abort "parity-summary: cannot read the authority manifest from the pinned oracle:\n#{node_err}" unless node_status.success?
+authority_ids = JSON.parse(node_out).sort
+
 args = ARGV.reject { |a| a.start_with?("--") }
-unknown = args.uniq - manifest_ids
+unknown = args.uniq - authority_ids
 unless unknown.empty?
   warn "unknown case ids: #{unknown.join(' ')}"
   warn "PARITY-SUMMARY #{JSON.generate(expected: args.uniq.length, executed: 0, exact: 0, strict: 0, near: 0, defer: 0, skip: 0, fail: 0, missing: args.uniq.length)}"
   exit 1
 end
 
-ids = args.empty? ? manifest_ids : args.uniq.sort
+ids = args.empty? ? authority_ids : args.uniq.sort
+executable_ids = ids & manifest_ids
+not_bundled = ids - manifest_ids
+unless not_bundled.empty?
+  warn "not in the port bundle (no executable case); counted missing: #{not_bundled.join(' ')}"
+end
 
 def run_gate(ids)
   out, _err, status = Open3.capture3(
@@ -98,7 +129,12 @@ def run_gate(ids)
   [out, status.success?]
 end
 
-out, = run_gate(ids)
+out, =
+  if executable_ids.empty?
+    ["", true]
+  else
+    run_gate(executable_ids)
+  end
 line = out[/^=== PARITY: (\d+)\/(\d+) pass \(byte-exact\)  \|  (\d+) diff  \|  (\d+) runtime-error  \|  (\d+) oracle-error ===$/, 0]
 abort "parity-summary: could not parse scripts/parity.rb output\n#{out}" unless line
 
@@ -114,7 +150,7 @@ else
   exact = 0
   fail_count = 0
   defer_count = 0
-  ids.each do |cid|
+  executable_ids.each do |cid|
     out1, ok1 = run_gate([cid])
     if out1.include?("ORACLE ERRORS")
       defer_count += 1
