@@ -96,7 +96,7 @@ run_pixel = lambda do |ctx, out|
     pixelCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     x = rt.swizzle(pixelCoord, 'x')
     y = rt.binary('%', rt.swizzle(pixelCoord, 'y'), volSize, 1, 'int')
-    z = rt.binary('/', rt.construct(1, rt.swizzle(pixelCoord, 'y')), rt.construct(1, volSize), 1, 'float')
+    z = rt.trunc_div(rt.swizzle(pixelCoord, 'y'), volSize)
     if rt.bool((rt.bool((rt.bool(rt.binary('>=', x, volSize)) || rt.bool(rt.binary('>=', y, volSize)) ? 1 : 0)) || rt.bool(rt.binary('>=', z, volSize)) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))

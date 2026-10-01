@@ -119,7 +119,7 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('-', edge1, edge2, 1, 'float')
   end
   main__void = lambda do
-    __sc1600 = nil; aspect = nil; color = nil; colorA = nil; colorB = nil; fullRes = nil; globalCoord = nil; globalUV = nil; m = nil; p = nil; rad = nil; st = nil
+    __sc1784 = nil; aspect = nil; color = nil; colorA = nil; colorB = nil; fullRes = nil; globalCoord = nil; globalUV = nil; m = nil; p = nil; rad = nil; st = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     st = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     colorA = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[3])
@@ -131,7 +131,7 @@ run_pixel = lambda do |ctx, out|
     p = rt.assign_swizzle(p, 'x', rt.binary('*', rt.swizzle(p, 'x'), aspect, 1, 'float'))
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')
     p.replace((rotate2D__vec2_float.call(p, rad)).map { |c| rt.f32(c) })
-    __sc1600 = rt.binary('-', rt.f(21), _u_scale, 1, 'float'); p[0] = rt.f32(rt.binary('*', p[0], __sc1600, 1, 'float')); p[1] = rt.f32(rt.binary('*', p[1], __sc1600, 1, 'float'))
+    __sc1784 = rt.binary('-', rt.f(21), _u_scale, 1, 'float'); p[0] = rt.f32(rt.binary('*', p[0], __sc1784, 1, 'float')); p[1] = rt.f32(rt.binary('*', p[1], __sc1784, 1, 'float'))
     m = rt.f(0)
     if rt.bool(rt.binary('==', _u_patternType, rt.i(0)))
       m = checkerboard__vec2_float.call(p, _u_smoothness)

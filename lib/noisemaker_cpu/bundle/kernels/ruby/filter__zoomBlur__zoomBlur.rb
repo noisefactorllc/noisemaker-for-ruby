@@ -19,7 +19,7 @@ run_pixel = lambda do |ctx, out|
     return rt.construct(3, rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[0], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[1], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[2], rt.f(4294967296), 1, 'uint'))
   end
   main__void = lambda do
-    __sc1520 = nil; _for0_first = nil; _t = nil; color = nil; fullRes = nil; globalCoord = nil; globalUV = nil; offset = nil; percent = nil; tex = nil; texSize = nil; tileDims = nil; toCenter = nil; total = nil; uv = nil; weight = nil
+    __sc1704 = nil; _for0_first = nil; _t = nil; color = nil; fullRes = nil; globalCoord = nil; globalUV = nil; offset = nil; percent = nil; tex = nil; texSize = nil; tileDims = nil; toCenter = nil; total = nil; uv = nil; weight = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.texture_size(_u_inputTex)
     tileDims = rt.construct(2, rt.construct(2, texSize))
@@ -46,7 +46,7 @@ run_pixel = lambda do |ctx, out|
       color[0] = rt.f32(rt.binary('+', color[0], ((rt.swizzle(tex, 'r')) * (weight)), 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], ((rt.swizzle(tex, 'g')) * (weight)), 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], ((rt.swizzle(tex, 'b')) * (weight)), 1, 'float'))
       total = rt.binary('+', total, weight, 1, 'float')
     end
-    __sc1520 = total; color[0] = rt.f32(rt.binary('/', color[0], __sc1520, 1, 'float')); color[1] = rt.f32(rt.binary('/', color[1], __sc1520, 1, 'float')); color[2] = rt.f32(rt.binary('/', color[2], __sc1520, 1, 'float'))
+    __sc1704 = total; color[0] = rt.f32(rt.binary('/', color[0], __sc1704, 1, 'float')); color[1] = rt.f32(rt.binary('/', color[1], __sc1704, 1, 'float')); color[2] = rt.f32(rt.binary('/', color[2], __sc1704, 1, 'float'))
     g['fragColor'].replace((rt.construct(4, color, rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

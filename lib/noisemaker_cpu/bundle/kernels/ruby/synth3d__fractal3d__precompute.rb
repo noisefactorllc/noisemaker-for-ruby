@@ -98,7 +98,7 @@ run_pixel = lambda do |ctx, out|
   end
   mandelcube__vec3_float_int_float = lambda do |pos, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
-    __sc1944 = nil; __sc1952 = nil; _for2_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
+    __sc2128 = nil; __sc2136 = nil; _for2_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
     z = pos
     dr = rt.f(1)
     trap = rt.f(10000000000)
@@ -123,12 +123,12 @@ run_pixel = lambda do |ctx, out|
       factor = rt.f(0.0)
       if rt.bool(rt.binary('<', r2, minR2))
         factor = rt.binary('/', fixedR2, minR2, 1, 'float')
-        __sc1944 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1944, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1944, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1944, 1, 'float'))
+        __sc2128 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2128, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2128, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2128, 1, 'float'))
         dr = rt.binary('*', dr, factor, 1, 'float')
       else
         if rt.bool(rt.binary('<', r2, fixedR2))
           factor = rt.binary('/', fixedR2, r2, 1, 'float')
-          __sc1952 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1952, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1952, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1952, 1, 'float'))
+          __sc2136 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2136, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2136, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2136, 1, 'float'))
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end
@@ -147,7 +147,7 @@ run_pixel = lambda do |ctx, out|
   juliaCube__vec3_vec3_float_int_float = lambda do |pos, c, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
     c = rt.copy(c, 'float')
-    __sc1960 = nil; __sc1968 = nil; _for3_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
+    __sc2144 = nil; __sc2152 = nil; _for3_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
     z = pos
     dr = rt.f(1)
     trap = rt.f(10000000000)
@@ -172,12 +172,12 @@ run_pixel = lambda do |ctx, out|
       factor = rt.f(0.0)
       if rt.bool(rt.binary('<', r2, minR2))
         factor = rt.binary('/', fixedR2, minR2, 1, 'float')
-        __sc1960 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1960, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1960, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1960, 1, 'float'))
+        __sc2144 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2144, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2144, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2144, 1, 'float'))
         dr = rt.binary('*', dr, factor, 1, 'float')
       else
         if rt.bool(rt.binary('<', r2, fixedR2))
           factor = rt.binary('/', fixedR2, r2, 1, 'float')
-          __sc1968 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1968, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1968, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1968, 1, 'float'))
+          __sc2152 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2152, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2152, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2152, 1, 'float'))
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end
@@ -223,7 +223,7 @@ run_pixel = lambda do |ctx, out|
     pixelCoord = rt.construct(2, rt.construct(2, globalPixelCoord), 'int')
     x = rt.construct(1, rt.component_wise('mod', rt.construct(1, rt.swizzle(pixelCoord, 'x')), scaledVolSizeF), 'int')
     y = rt.binary('%', rt.swizzle(pixelCoord, 'y'), scaledVolSize, 1, 'int')
-    z = rt.binary('/', rt.construct(1, rt.swizzle(pixelCoord, 'y')), rt.construct(1, scaledVolSize), 1, 'float')
+    z = rt.trunc_div(rt.swizzle(pixelCoord, 'y'), scaledVolSize)
     if rt.bool((rt.bool((rt.bool(rt.binary('>=', x, scaledVolSize)) || rt.bool(rt.binary('>=', y, scaledVolSize)) ? 1 : 0)) || rt.bool(rt.binary('>=', z, scaledVolSize)) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))

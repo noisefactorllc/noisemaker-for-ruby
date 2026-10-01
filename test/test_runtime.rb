@@ -97,11 +97,16 @@ class TestRuntime < Minitest::Test
   end
 
   def test_cpu_noise3d_hash4_matches_canonical_javascript_number_semantics
+    # Since noisemaker-for-cpu d13b0a2 the canonical hash4 LCG mixing wraps
+    # exactly mod 2^32 (cpu_umul / >>> 0) and the final xor chain is unsigned
+    # before the f32 snap, so the hash is now in [0, 1). Expected values
+    # extracted by executing the real canonicalFactory288 hash4 body from the
+    # pinned canonical-kernels.js with seed = 1.
     cases = {
-      [0.0, -3.0, 0.0, 1.0] => -0.12224575132131577,
-      [0.1, 0.2, 0.3, 0.4] => -0.09264284372329712,
-      [-3.0, -3.0, -3.0, 0.0] => -0.3358503580093384,
-      [3.0, 3.0, 3.0, 1.0] => -0.10188091546297073,
+      [0.0, -3.0, 0.0, 1.0] => 0.35828956961631775,
+      [0.1, 0.2, 0.3, 0.4] => 0.04977041855454445,
+      [-3.0, -3.0, -3.0, 0.0] => 0.4224112033843994,
+      [3.0, 3.0, 3.0, 1.0] => 0.28525039553642273,
     }
 
     cases.each do |point, expected|

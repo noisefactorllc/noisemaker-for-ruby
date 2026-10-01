@@ -64,7 +64,12 @@ class TestVolumeCatalog < Minitest::Test
     adapted = Build._adapt_source("synth3d/noise3d", "precompute", source)
     assert_includes adapted, "return cpu_noise3d_hash4(p, seed);"
     refute_includes adapted, "uvec4 q"
-    assert_includes adapted, "float z = float(pixelCoord.y) / float(volSize);"
+    # Since noisemaker-for-cpu d13b0a2 the canonical lowering keeps the int
+    # division (compile-glsl restoreIntegerDivision truncates it at the
+    # statement level in the compiled kernel); the port no longer rewrites
+    # the GLSL to float casts (which emulated the pre-d13b0a2 raw-f64 bug).
+    assert_includes adapted, "int z = pixelCoord.y / volSize;"
+    refute_includes adapted, "float z = float(pixelCoord.y) / float(volSize);"
   end
 
   def test_cell3d_hash_result_preserves_canonical_uint_division_order

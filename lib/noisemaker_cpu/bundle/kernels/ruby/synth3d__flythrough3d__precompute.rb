@@ -152,7 +152,7 @@ run_pixel = lambda do |ctx, out|
   end
   mandelbox__vec3_float_int_float = lambda do |pos, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
-    __sc1928 = nil; __sc1936 = nil; _for1_first = nil; dr = nil; factor = nil; fixedRadius2 = nil; foldLimit = nil; i = nil; iter = nil; minRadius2 = nil; planeTrap = nil; r = nil; r2 = nil; result = nil; trap = nil; z = nil
+    __sc2112 = nil; __sc2120 = nil; _for1_first = nil; dr = nil; factor = nil; fixedRadius2 = nil; foldLimit = nil; i = nil; iter = nil; minRadius2 = nil; planeTrap = nil; r = nil; r2 = nil; result = nil; trap = nil; z = nil
     result = rt.construct(3, 0.0)
     z = pos
     dr = rt.f(1)
@@ -176,12 +176,12 @@ run_pixel = lambda do |ctx, out|
       factor = rt.f(0.0)
       if rt.bool(rt.binary('<', r2, minRadius2))
         factor = rt.binary('/', fixedRadius2, minRadius2, 1, 'float')
-        __sc1928 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1928, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1928, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1928, 1, 'float'))
+        __sc2112 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2112, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2112, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2112, 1, 'float'))
         dr = rt.binary('*', dr, factor, 1, 'float')
       else
         if rt.bool(rt.binary('<', r2, fixedRadius2))
           factor = rt.binary('/', fixedRadius2, r2, 1, 'float')
-          __sc1936 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc1936, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc1936, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc1936, 1, 'float'))
+          __sc2120 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2120, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2120, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2120, 1, 'float'))
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end
@@ -240,7 +240,7 @@ run_pixel = lambda do |ctx, out|
     pixelCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     vx = rt.swizzle(pixelCoord, 'x')
     vy = rt.binary('%', rt.swizzle(pixelCoord, 'y'), volSize, 1, 'int')
-    vz = rt.binary('/', rt.construct(1, rt.swizzle(pixelCoord, 'y')), rt.construct(1, volSize), 1, 'float')
+    vz = rt.trunc_div(rt.swizzle(pixelCoord, 'y'), volSize)
     if rt.bool((rt.bool((rt.bool(rt.binary('>=', vx, volSize)) || rt.bool(rt.binary('>=', vy, volSize)) ? 1 : 0)) || rt.bool(rt.binary('>=', vz, volSize)) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))

@@ -443,10 +443,44 @@ module NoisemakerCpu
           program = m[1]
           backtick_start = m.end(0) - 1
           end_idx = _skip_string(bundle, backtick_start)
-          programs[program] = bundle[backtick_start + 1, end_idx - 1 - (backtick_start + 1)]
+          programs[program] = _decode_template_literal(
+            bundle[backtick_start + 1, end_idx - 1 - (backtick_start + 1)]
+          )
           pos = end_idx
         end
         programs
+      end
+
+      # The GLSL body is a JS template literal: the bundle text keeps JS
+      # escapes (today only \` and \uXXXX) that the JS import decodes before
+      # the shader compiler ever sees them. Decode the standard simple
+      # escapes so the extracted GLSL matches the shipped source
+      # byte-for-byte -- the committed bundle-lock.json hashes the decoded
+      # text (the historical warm cache was python-seeded with the same
+      # decoding; a cold fetch that kept the escapes drifted every hashed
+      # shader and mis-compiled escaped content outside comments).
+      def self._decode_template_literal(text)
+        text.gsub(/\\(?:[`\\$"nrtbfv0]|x[0-9a-fA-F]{2}|u\{[0-9a-fA-F]+\}|u[0-9a-fA-F]{4})/) do |esc|
+          c = esc[1]
+          case c
+          when "`", "\\", "$"
+            c
+          when "n" then "\n"
+          when "r" then "\r"
+          when "t" then "\t"
+          when "b" then "\b"
+          when "f" then "\f"
+          when "v" then "\v"
+          when "0" then "\0"
+          when "x" then esc[2, 2].to_i(16).chr(Encoding::UTF_8)
+          when "u"
+            if esc[2] == "{"
+              esc[3, esc.length - 4].to_i(16).chr(Encoding::UTF_8)
+            else
+              esc[2, 4].to_i(16).chr(Encoding::UTF_8)
+            end
+          end
+        end
       end
 
       def self._parse_field(region, effect_id, key, default)

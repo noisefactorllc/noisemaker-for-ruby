@@ -171,12 +171,6 @@ module NoisemakerCpu
 
           source = source.sub(pigment, "pigmentSum += vec3(srcSample(centerUV).rgb * mark);")
         end
-        if effect_id.start_with?("synth3d/")
-          source = source.gsub(
-            /\bint\s+(z|vz)\s*=\s*([A-Za-z_]\w*(?:\.y)?)\s*\/\s*([A-Za-z_]\w*)\s*;/,
-            'float \1 = float(\2) / float(\3);'
-          )
-        end
         if effect_id == "synth3d/cell3d" && program == "precompute"
           adapted = source.sub(
             "return vec3(q) / 4294967295.0;",

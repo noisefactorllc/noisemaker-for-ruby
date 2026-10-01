@@ -700,22 +700,29 @@ module NoisemakerCpu
       q = ps.map do |value|
         NoisemakerCpu::UintMath.u32(f32(value * 1000.0).to_i + 65_536)
       end
-      q.map! { |value| (value * 1_664_525.0) + 1_013_904_223.0 }
-      q[0] += q[1] * q[2]
-      q[1] += q[2] * q[3]
-      q[2] += q[3] * q[0]
-      q[3] += q[0] * q[1]
+      # Since noisemaker-for-cpu d13b0a2 the canonical hash4 lowering restores
+      # exact GLSL uint semantics (compile-glsl restoreUnsignedIntegerArithmetic):
+      # every LCG mix runs through cpu_umul (Math.imul >>> 0, i.e. exact
+      # mod-2^32) and every accumulate/shift/xor wraps with >>> 0, instead of
+      # the old raw-f64 operators. Mirror that exactly; the final >>> 0 makes
+      # the xor chain unsigned before the f32 snap.
+      u32 = ->(value) { NoisemakerCpu::UintMath.u32(value) }
+      umul = ->(left, right) { u32.call(_s32(left) * _s32(right)) }
+      q.map! { |value| u32.call(umul.call(value, 1_664_525) + 1_013_904_223) }
+      q[0] = u32.call(q[0] + umul.call(q[1], q[2]))
+      q[1] = u32.call(q[1] + umul.call(q[2], q[3]))
+      q[2] = u32.call(q[2] + umul.call(q[3], q[0]))
+      q[3] = u32.call(q[3] + umul.call(q[0], q[1]))
       q.map! do |value|
-        int = _s32(NoisemakerCpu::UintMath.u32(value))
-        _s32(int ^ (int >> 16))
+        u32.call(_s32(value) ^ _s32(value >> 16))
       end
-      q[0] += q[1] * q[2]
-      q[1] += q[2] * q[3]
-      q[2] += q[3] * q[0]
-      q[3] += q[0] * q[1]
-      xor = q.map { |value| _s32(NoisemakerCpu::UintMath.u32(value)) }
-             .reduce { |left, right| _s32(left ^ right) }
-      f32(xor).fdiv(f32(4_294_967_295.0))
+      q[0] = u32.call(q[0] + umul.call(q[1], q[2]))
+      q[1] = u32.call(q[1] + umul.call(q[2], q[3]))
+      q[2] = u32.call(q[2] + umul.call(q[3], q[0]))
+      q[3] = u32.call(q[3] + umul.call(q[0], q[1]))
+      xor = q.map { |value| u32.call(_s32(value)) }
+             .reduce { |left, right| u32.call(_s32(left) ^ _s32(right)) }
+      f32(xor).fdiv(4_294_967_296.0)
     end
 
     # canonicalFactory278 divides the uint components while they are still
@@ -887,6 +894,21 @@ module NoisemakerCpu
       return _s32(-x.to_i - 1) unless _is_vec(x)
 
       IVec.new(x.map { |c| -c.to_i - 1 })
+    end
+
+    # JS Math.trunc of the raw f64 quotient. The oracle's compile-glsl
+    # restoreIntegerDivision (synced at noisemaker-for-cpu d13b0a2100fb)
+    # emits `Math.trunc(vec[i] / intName)` for statement-level int-typed
+    # atlas divisions: GLSL int/int truncates toward zero, the old compiled
+    # kernels kept the raw f64 quotient. Mirrors that lowering; NaN/Infinity
+    # pass through like Math.trunc, and a negative zero quotient keeps its
+    # sign (JS Math.trunc(-0.5) is -0).
+    def trunc_div(a, b)
+      q = a.to_f / b.to_f
+      return q if q.nan? || q.infinite?
+
+      t = q.truncate
+      q.negative? && t.zero? ? -0.0 : t
     end
 
     private

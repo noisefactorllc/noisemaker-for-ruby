@@ -521,7 +521,15 @@ module NoisemakerCpu
             t = type_of_name(s["type"], dc["array"])
             # Resolve the initializer in the ENCLOSING scope, before the new
             # name is defined (GLSL `float time = time;` reads the outer time).
-            init_code = dc["init"].nil? ? nil : expr(dc["init"], scope)[0]
+            init = dc["init"]
+            init_code =
+              if init.nil?
+                nil
+              elsif (tid = _restore_integer_division(init, scope))
+                tid
+              else
+                expr(init, scope)[0]
+              end
             e = scope.define(dc["name"], t)
             _local(e["py"])
             if !init_code.nil?
@@ -761,6 +769,48 @@ module NoisemakerCpu
           raise "codegen: unresolved identifier '#{name}'\n"
         end
         [e["py"], e["type"]]
+      end
+
+      # The oracle's compile-glsl.js restoreIntegerDivision (synced at
+      # noisemaker-for-cpu d13b0a2100fb) rewrites statement-level
+      # `var name = vec[i] / intName;` declarations to
+      # `Math.trunc(vec[i] / intName)`: GLSL int/int division truncates
+      # toward zero, but the compiled kernels kept the raw f64 quotient
+      # (the volume-atlas `int z = pixelCoord.y / volSize` mapping sampled
+      # z = 63.984 where the authority samples z = 63). Mirror the narrowing
+      # exactly: declarations only, a component-selected dividend
+      # (single-component member or numeric-literal index of an identifier)
+      # and a plain int-typed identifier divisor. The CPU repo measured and
+      # REJECTED broader expression-level rewrites (filter/spookyTicker's
+      # authority bytes contradict the pinned GLSL's int-division semantics;
+      # see its GAP-003 record) -- do not widen this rule.
+      def _restore_integer_division(init, scope)
+        return nil unless init.is_a?(Hash) && init["k"] == "binary" && init["op"] == "/"
+
+        l = init["l"]
+        r = init["r"]
+        dividend_code =
+          if l.is_a?(Hash) && l["k"] == "member" && l["obj"].is_a?(Hash) &&
+             l["obj"]["k"] == "id" && l["field"].is_a?(String) && l["field"].length == 1
+            obj_code, obj_t = expr(l["obj"], scope)
+            return nil unless Codegen.width_of(obj_t) > 1 && Codegen.base_of(obj_t) != "struct"
+
+            "rt.swizzle(#{obj_code}, #{Codegen.rq(l['field'])})"
+          elsif l.is_a?(Hash) && l["k"] == "index" && l["obj"].is_a?(Hash) &&
+                l["obj"]["k"] == "id" && l["idx"].is_a?(Hash) && l["idx"]["k"] == "num"
+            obj_code, obj_t = expr(l["obj"], scope)
+            return nil unless Codegen.width_of(obj_t) > 1 && Codegen.base_of(obj_t) != "struct"
+
+            "#{obj_code}[(rt.i(#{l['idx']['value'].to_i})).to_i]"
+          else
+            return nil
+          end
+        return nil unless r.is_a?(Hash) && r["k"] == "id"
+
+        re = scope.resolve(r["name"])
+        return nil unless re && Codegen.base_of(re["type"]) == "int"
+
+        "rt.trunc_div(#{dividend_code}, #{re['py']})"
       end
 
       def _e_member(node, scope)

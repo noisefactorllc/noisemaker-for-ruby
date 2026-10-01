@@ -71,7 +71,7 @@ run_pixel = lambda do |ctx, out|
   end
   getImage__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
-    __sc1760 = nil; scale = nil; size = nil; text = nil
+    __sc1944 = nil; scale = nil; size = nil; text = nil
     size = _u_imageSize
     st.replace((rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), size, 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.f(1), rt.swizzle(st, 'y'), 1, 'float'))
@@ -79,7 +79,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', scale, rt.f(0)))
       scale = rt.f(1)
     end
-    __sc1760 = scale; st[0] = rt.f32(rt.binary('*', st[0], __sc1760, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1760, 1, 'float'))
+    __sc1944 = scale; st[0] = rt.f32(rt.binary('*', st[0], __sc1944, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1944, 1, 'float'))
     if rt.bool(rt.binary('==', _u_position, rt.i(0)))
       st = rt.assign_swizzle(st, 'y', rt.binary('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
     else

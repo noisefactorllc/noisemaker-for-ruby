@@ -53,7 +53,7 @@ run_pixel = lambda do |ctx, out|
   boxBlur3__vec2_vec2 = lambda do |uv, texel|
     uv = rt.copy(uv, 'float')
     texel = rt.copy(texel, 'float')
-    __hoist544 = nil; _for0_first = nil; _for1_first = nil; o = nil; sum = nil; x = nil; y = nil
+    __hoist728 = nil; _for0_first = nil; _for1_first = nil; o = nil; sum = nil; x = nil; y = nil
     sum = rt.construct(3, rt.construct(3, rt.f(0)))
     y = rt.unary('-', rt.i(1))
     _for0_first = true
@@ -76,7 +76,7 @@ run_pixel = lambda do |ctx, out|
           break
         end
         o = rt.construct(2, ((((x))) * (texel[0])), ((((y))) * (texel[1])))
-        __hoist544 = rt.swizzle(rt.texture(_u_inputTex, rt.component_wise('clamp', rt.construct(2, ((uv[0]) + (o[0])), ((uv[1]) + (o[1]))), rt.f(0), rt.f(1))), 'rgb'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist544[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist544[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist544[2], 1, 'float'))
+        __hoist728 = rt.swizzle(rt.texture(_u_inputTex, rt.component_wise('clamp', rt.construct(2, ((uv[0]) + (o[0])), ((uv[1]) + (o[1]))), rt.f(0), rt.f(1))), 'rgb'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist728[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist728[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist728[2], 1, 'float'))
       end
     end
     return rt.construct(3, ((sum[0]) / (rt.f(9))), ((sum[1]) / (rt.f(9))), ((sum[2]) / (rt.f(9))))

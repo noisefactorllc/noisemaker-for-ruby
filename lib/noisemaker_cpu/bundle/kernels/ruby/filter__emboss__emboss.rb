@@ -25,7 +25,7 @@ run_pixel = lambda do |ctx, out|
   colorDefaultEmboss__vec2_vec2 = lambda do |uv, texelSize|
     uv = rt.copy(uv, 'float')
     texelSize = rt.copy(texelSize, 'float')
-    __hoist464 = nil; _for0_first = nil; _kernel = nil; conv = nil; i = nil; offsets = nil; texSample = nil
+    __hoist648 = nil; _for0_first = nil; _kernel = nil; conv = nil; i = nil; offsets = nil; texSample = nil
     _kernel = rt.new_array(rt.i(9), 1)
     _kernel[(rt.i(0)).to_i] = rt.unary('-', rt.f(2))
     _kernel[(rt.i(1)).to_i] = rt.unary('-', rt.f(1))
@@ -58,14 +58,14 @@ run_pixel = lambda do |ctx, out|
         break
       end
       texSample = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'r'), rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'g'), rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'b'))
-      __hoist464 = rt.binary('*', texSample, rt.array_index(_kernel, i), 3, 'float'); conv[0] = rt.f32(rt.binary('+', conv[0], __hoist464[0], 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], __hoist464[1], 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], __hoist464[2], 1, 'float'))
+      __hoist648 = rt.binary('*', texSample, rt.array_index(_kernel, i), 3, 'float'); conv[0] = rt.f32(rt.binary('+', conv[0], __hoist648[0], 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], __hoist648[1], 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], __hoist648[2], 1, 'float'))
     end
     return conv
   end
   colorGeneralEmboss__vec2_vec2 = lambda do |uv, texelSize|
     uv = rt.copy(uv, 'float')
     texelSize = rt.copy(texelSize, 'float')
-    __hoist472 = nil; _for1_first = nil; _kernel = nil; baseOffsetsPx = nil; basePx = nil; conv = nil; ct = nil; i = nil; offsetUV = nil; rotatedPx = nil; st = nil; texSample = nil; theta = nil
+    __hoist656 = nil; _for1_first = nil; _kernel = nil; baseOffsetsPx = nil; basePx = nil; conv = nil; ct = nil; i = nil; offsetUV = nil; rotatedPx = nil; st = nil; texSample = nil; theta = nil
     _kernel = rt.new_array(rt.i(9), 1)
     _kernel[(rt.i(0)).to_i] = rt.unary('-', rt.f(2))
     _kernel[(rt.i(1)).to_i] = rt.unary('-', rt.f(1))
@@ -104,7 +104,7 @@ run_pixel = lambda do |ctx, out|
       rotatedPx = rt.construct(2, (((((((ct) * (rt.swizzle(basePx, 'x')))) + (((st) * (rt.swizzle(basePx, 'y'))))))) * (_u_height)), (((((((rt.unary('-', st)) * (rt.swizzle(basePx, 'x')))) + (((ct) * (rt.swizzle(basePx, 'y'))))))) * (_u_height)))
       offsetUV = rt.construct(2, ((((((rotatedPx[0]) * (texelSize[0]))) * (_u_amount))) * (_u_renderScale)), ((((((rotatedPx[1]) * (texelSize[1]))) * (_u_amount))) * (_u_renderScale)))
       texSample = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, offsetUV, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'r'), rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, offsetUV, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'g'), rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, offsetUV, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'b'))
-      __hoist472 = rt.binary('*', texSample, rt.array_index(_kernel, i), 3, 'float'); conv[0] = rt.f32(rt.binary('+', conv[0], __hoist472[0], 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], __hoist472[1], 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], __hoist472[2], 1, 'float'))
+      __hoist656 = rt.binary('*', texSample, rt.array_index(_kernel, i), 3, 'float'); conv[0] = rt.f32(rt.binary('+', conv[0], __hoist656[0], 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], __hoist656[1], 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], __hoist656[2], 1, 'float'))
     end
     return conv
   end

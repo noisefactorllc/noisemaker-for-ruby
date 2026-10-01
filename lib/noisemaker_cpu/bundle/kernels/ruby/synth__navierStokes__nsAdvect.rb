@@ -35,7 +35,7 @@ run_pixel = lambda do |ctx, out|
     return rt.component_wise('mix', v0, v1, rt.swizzle(f, 'y'))
   end
   main__void = lambda do
-    __sc1776 = nil; _u = nil; advected = nil; backUv = nil; dDecay = nil; dt = nil; fragCoord = nil; here = nil; newDye = nil; newVel = nil; texSize = nil; uv = nil; vDecay = nil
+    __sc1960 = nil; _u = nil; advected = nil; backUv = nil; dDecay = nil; dt = nil; fragCoord = nil; here = nil; newDye = nil; newVel = nil; texSize = nil; uv = nil; vDecay = nil
     texSize = rt.texture_size(_u_bufTex)
     fragCoord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'x'), rt.swizzle(ctx.frag_coord, 'y'))
     uv = rt.construct(2, ((fragCoord[0]) / ((texSize[0]))), ((fragCoord[1]) / ((texSize[1]))))
@@ -48,7 +48,7 @@ run_pixel = lambda do |ctx, out|
     newDye = rt.swizzle(advected, 'b')
     vDecay = rt.component_wise('pow', rt.binary('*', rt.component_wise('clamp', _u_velocityDecay, rt.f(0), rt.f(100)), rt.f(0.0099999997764825821), 1, 'float'), rt.binary('*', dt, rt.f(60), 1, 'float'))
     dDecay = rt.component_wise('pow', rt.binary('*', rt.component_wise('clamp', _u_dyeDecay, rt.f(0), rt.f(100)), rt.f(0.0099999997764825821), 1, 'float'), rt.binary('*', dt, rt.f(60), 1, 'float'))
-    __sc1776 = vDecay; newVel[0] = rt.f32(rt.binary('*', newVel[0], __sc1776, 1, 'float')); newVel[1] = rt.f32(rt.binary('*', newVel[1], __sc1776, 1, 'float'))
+    __sc1960 = vDecay; newVel[0] = rt.f32(rt.binary('*', newVel[0], __sc1960, 1, 'float')); newVel[1] = rt.f32(rt.binary('*', newVel[1], __sc1960, 1, 'float'))
     newDye = rt.binary('*', newDye, dDecay, 1, 'float')
     g['fragColor'].replace((rt.construct(4, newVel, newDye, rt.f(1))).map { |c| rt.f32(c) })
   end

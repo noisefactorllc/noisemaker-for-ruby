@@ -256,18 +256,18 @@ run_pixel = lambda do |ctx, out|
     return p
   end
   main__void = lambda do
-    __sc1800 = nil; __sc1808 = nil; __sc1816 = nil; _g = nil; b = nil; col = nil; freq = nil; globalCoord = nil; r = nil; res = nil; st = nil; timeAngle = nil; zWarp = nil
+    __sc1984 = nil; __sc1992 = nil; __sc2000 = nil; _g = nil; b = nil; col = nil; freq = nil; globalCoord = nil; r = nil; res = nil; st = nil; timeAngle = nil; zWarp = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     res = _u_fullResolution
     if rt.bool(rt.binary('<', rt.swizzle(res, 'x'), rt.f(1)))
       res[0] = rt.f32(rt.f(1024)); res[1] = rt.f32(rt.f(1024))
     end
     st = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (res[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (res[1])))
-    __sc1800 = rt.f(0.5); st[0] = rt.f32(rt.binary('-', st[0], __sc1800, 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __sc1800, 1, 'float'))
+    __sc1984 = rt.f(0.5); st[0] = rt.f32(rt.binary('-', st[0], __sc1984, 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __sc1984, 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     freq = rt.component_wise('max', rt.f(0.10000000149011612), rt.binary('/', rt.f(100), rt.component_wise('max', _u_scale, rt.f(0.0099999997764825821)), 1, 'float'))
-    __sc1808 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc1808, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1808, 1, 'float'))
-    __sc1816 = rt.f(1000); st[0] = rt.f32(rt.binary('+', st[0], __sc1816, 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __sc1816, 1, 'float'))
+    __sc1992 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc1992, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1992, 1, 'float'))
+    __sc2000 = rt.f(1000); st[0] = rt.f32(rt.binary('+', st[0], __sc2000, 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __sc2000, 1, 'float'))
     timeAngle = rt.binary('*', rt.binary('*', _u_time, _u_speed, 1, 'float'), g['TAU'], 1, 'float')
     zWarp = rt.f(0.0)
     if rt.bool(rt.binary('==', _u__DIMENSIONS, rt.i(2)))

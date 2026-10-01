@@ -90,7 +90,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     texelSize = rt.copy(texelSize, 'float')
     texSize = rt.copy(texSize, 'int')
-    _L = nil; _Le = nil; _Ln = nil; _Ls = nil; _Lw = nil; __hoist1152 = nil; _for0_first = nil; center = nil; coord = nil; count = nil; i = nil; maxC = nil; maxDiff = nil; offset = nil; sum = nil
+    _L = nil; _Le = nil; _Ln = nil; _Ls = nil; _Lw = nil; __hoist1336 = nil; _for0_first = nil; center = nil; coord = nil; count = nil; i = nil; maxC = nil; maxDiff = nil; offset = nil; sum = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     maxC = rt.binary('-', texSize, rt.i(1), 2, 'int')
     center = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
@@ -119,7 +119,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       offset = rt.construct(2, rt.binary('*', getSampleOffset__int_int.call(i, count), _u_radius, 2, 'float'))
-      __hoist1152 = sampleBilinear__vec2_ivec2.call(rt.construct(2, ((uv[0]) + (((offset[0]) * (texelSize[0])))), ((uv[1]) + (((offset[1]) * (texelSize[1]))))), texSize); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1152[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1152[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1152[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1152[3], 1, 'float'))
+      __hoist1336 = sampleBilinear__vec2_ivec2.call(rt.construct(2, ((uv[0]) + (((offset[0]) * (texelSize[0])))), ((uv[1]) + (((offset[1]) * (texelSize[1]))))), texSize); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1336[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1336[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1336[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1336[3], 1, 'float'))
     end
     return rt.construct(4, ((sum[0]) / ((count))), ((sum[1]) / ((count))), ((sum[2]) / ((count))), ((sum[3]) / ((count))))
   end
@@ -189,7 +189,7 @@ run_pixel = lambda do |ctx, out|
   end
   edgeBlur__ivec2 = lambda do |texSize|
     texSize = rt.copy(texSize, 'int')
-    __hoist1160 = nil; _for2_first = nil; _for3_first = nil; center = nil; coord = nil; d = nil; dx = nil; dy = nil; edges = nil; maxC = nil; r = nil; sigma = nil; sigma2 = nil; sum = nil; totalWeight = nil; w = nil
+    __hoist1344 = nil; _for2_first = nil; _for3_first = nil; center = nil; coord = nil; d = nil; dx = nil; dy = nil; edges = nil; maxC = nil; r = nil; sigma = nil; sigma2 = nil; sum = nil; totalWeight = nil; w = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     maxC = rt.binary('-', texSize, rt.i(1), 2, 'int')
     edges = rt.construct(4, rt.texel_fetch(_u_edgeTex, coord, rt.i(0)))
@@ -230,7 +230,7 @@ run_pixel = lambda do |ctx, out|
         end
         d = rt.construct(1, rt.binary('+', rt.binary('*', dx, dx, 1, 'int'), rt.binary('*', dy, dy, 1, 'int'), 1, 'int'))
         w = rt.component_wise('exp', rt.binary('/', rt.unary('-', d), sigma2, 1, 'float'))
-        __hoist1160 = rt.binary('*', rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, dx, dy, 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)), w, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1160[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1160[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1160[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1160[3], 1, 'float'))
+        __hoist1344 = rt.binary('*', rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, dx, dy, 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxC), rt.i(0)), w, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1344[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1344[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1344[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1344[3], 1, 'float'))
         totalWeight = rt.binary('+', totalWeight, w, 1, 'float')
       end
     end
