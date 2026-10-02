@@ -166,22 +166,70 @@ class TestExternalInput < Minitest::Test
     assert_nil NoisemakerCpu::MeshRender.get_adapter("render/meshRender", "clear")
   end
 
+  def test_midi_program_change_three_bytes_routes_and_updates_program
+    midi = NoisemakerCpu::ExternalInput::MidiState.new
+    # Oracle semantics verified with node against the pinned checkout
+    # (b0e6c4130ac2, src/runtime/external-input.js handleMessage): a Program
+    # Change still validates its third byte, so the 3-byte form routes and
+    # the program value rides data[1].
+    assert_equal 0, midi.handle_message([0xC0, 5, 0])
+    assert_equal 5, midi.get_channel(1).program
+    assert_equal 0, midi.handle_message([0xC3, 120, 0])
+    assert_equal 120, midi.get_channel(4).program
+  end
+
+  def test_midi_program_change_two_bytes_is_rejected_like_the_oracle
+    midi = NoisemakerCpu::ExternalInput::MidiState.new
+    # The oracle's shared two-data-byte validation rejects a 2-byte Program
+    # Change ([0xC0, program]) before routing (node probe: handleMessage
+    # returns -1 and the channel program stays 0); the port must match, so
+    # type-specific validation would diverge from the authority here.
+    assert_equal(-1, midi.handle_message([0xC0, 5]))
+    assert_equal 0, midi.get_channel(1).program
+  end
+
+  def test_midi_channel_pressure_two_bytes_routes_like_the_oracle
+    midi = NoisemakerCpu::ExternalInput::MidiState.new
+    # 0xD0 skips the velocity validation, so its 2-byte form routes (node
+    # probe against the pinned checkout: 0, pressure 64).
+    assert_equal 0, midi.handle_message([0xD0, 64])
+    assert_equal 64, midi.get_channel(1).pressure
+  end
+
   def test_cli_random_pool_excludes_external_input_effects
-    # The random `effect` pool mirrors the oracle CLI's exclusion of the
-    # external-input effects: without the exclusion the reactive generators
-    # would be selectable, with it none of the five can be returned.
+    # Enumerate the CLI's actual random pool: stub the module's `rand` to
+    # walk every pool index in turn, so the assertion exercises the real
+    # selection path (_resolve_effect) instead of recomputing a predicate.
+    # If the exclusion were removed, pool.length would grow and the
+    # reactive generators would appear among the enumerated results.
+    cli = NoisemakerCpu::CLI
+    counter = 0
+    pool_n = nil
+    cli.define_singleton_method(:rand) { |n| pool_n = n; (counter += 1) % n }
+    seen = []
+    begin
+      300.times { seen << cli._resolve_effect("random", "generator") }
+    ensure
+      cli.singleton_class.remove_method(:rand)
+    end
+    distinct = seen.uniq
+    assert_equal pool_n, distinct.length,
+      "expected a full sweep of the #{pool_n}-entry pool, got #{distinct.length} distinct ids"
+    excluded = distinct & %w[synth/roll synth/scope synth/spectrum render/meshLoader render/meshRender]
+    assert_empty excluded, "external-input ids must stay out of the random pool"
+
+    # Load-bearing check: without the exclusion these three reactive
+    # generators would be in the generator pool (so the assertion above is
+    # meaningful), and the two mesh effects are filters, not generators.
     effects = NoisemakerCpu::Renderer.meta["effects"]
-    unguarded = effects.keys.select do |key|
+    selectable = effects.keys.select do |key|
       candidate = effects[key]
       (candidate["kind"] || "") == "generator" &&
         (candidate["domain"] || "image") == "image" &&
         !candidate["iterated"] && candidate["externalTexture"].nil?
     end
-    reactive = unguarded & %w[synth/roll synth/scope synth/spectrum]
-    assert_equal %w[synth/roll synth/scope synth/spectrum], reactive.sort,
-      "the exclusion must be load-bearing: these generators would be selectable"
-    guarded = unguarded - NoisemakerCpu::CLI::EXTERNAL_INPUT_EFFECT_IDS
-    assert_empty guarded & NoisemakerCpu::CLI::EXTERNAL_INPUT_EFFECT_IDS
-    20.times { NoisemakerCpu::CLI._resolve_effect("random", "generator") }
+    assert_equal %w[synth/roll synth/scope synth/spectrum],
+      (selectable & NoisemakerCpu::CLI::EXTERNAL_INPUT_EFFECT_IDS).sort
+    assert_includes distinct, "synth/solid"
   end
 end
