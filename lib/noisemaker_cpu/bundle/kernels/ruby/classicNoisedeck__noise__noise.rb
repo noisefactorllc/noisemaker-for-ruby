@@ -381,10 +381,10 @@ run_pixel = lambda do |ctx, out|
   end
   diamonds__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
-    __sc416 = nil
+    __sc232 = nil
     st.replace((rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.swizzle(_u_fullResolution, 'y'), 2, 'float')).map { |c| rt.f32(c) })
     st[0] = rt.f32(rt.binary('-', st[0], (((((rt.f(0.5)) * (rt.swizzle(_u_fullResolution, 'x')))) / (rt.swizzle(_u_fullResolution, 'y')))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
-    __sc416 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc416, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc416, 1, 'float'))
+    __sc232 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc232, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc232, 1, 'float'))
     return rt.binary('+', rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'x'), rt.f(3.1415927410125732), 1, 'float')), rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'y'), rt.f(3.1415927410125732), 1, 'float')), 1, 'float')
   end
   shape__vec2_int_float = lambda do |st, sides, blend|

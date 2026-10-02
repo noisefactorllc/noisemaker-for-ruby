@@ -44,7 +44,7 @@ run_pixel = lambda do |ctx, out|
   end
   fbm__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    __sc1848 = nil; _for0_first = nil; a = nil; i = nil; v = nil
+    __sc1664 = nil; _for0_first = nil; a = nil; i = nil; v = nil
     v = rt.f(0)
     a = rt.f(0.5)
     i = rt.i(0)
@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       v = rt.binary('+', v, rt.binary('*', a, noise2D__vec2.call(p), 1, 'float'), 1, 'float')
-      __sc1848 = rt.f(2); p[0] = rt.f32(rt.binary('*', p[0], __sc1848, 1, 'float')); p[1] = rt.f32(rt.binary('*', p[1], __sc1848, 1, 'float'))
+      __sc1664 = rt.f(2); p[0] = rt.f32(rt.binary('*', p[0], __sc1664, 1, 'float')); p[1] = rt.f32(rt.binary('*', p[1], __sc1664, 1, 'float'))
       a = rt.binary('*', a, rt.f(0.5), 1, 'float')
     end
     return v

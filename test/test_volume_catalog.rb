@@ -19,7 +19,7 @@ class TestVolumeCatalog < Minitest::Test
     object.define_singleton_method(name, original)
   end
 
-  def test_eligible_ids_include_volume_and_loop_effects_but_exclude_mesh_and_reactive
+  def test_eligible_ids_include_volume_loop_mesh_and_reactive_effects
     manifest = %w[
       synth/solid synth/scope classicNoisedeck/noise3d filter3d/flow3d
       render/loopBegin render/loopEnd render/render3d render/meshRender synth3d/noise3d
@@ -35,8 +35,8 @@ class TestVolumeCatalog < Minitest::Test
     assert_includes ids, "render/loopEnd"
     assert_includes ids, "render/render3d"
     assert_includes ids, "synth3d/noise3d"
-    refute_includes ids, "render/meshRender"
-    refute_includes ids, "synth/scope"
+    assert_includes ids, "render/meshRender"
+    assert_includes ids, "synth/scope"
   end
 
   def test_volume_and_loop_stateful_effects_receive_cpu_iteration_metadata

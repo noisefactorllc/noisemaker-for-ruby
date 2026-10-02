@@ -98,7 +98,7 @@ run_pixel = lambda do |ctx, out|
   end
   mandelcube__vec3_float_int_float = lambda do |pos, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
-    __sc2128 = nil; __sc2136 = nil; _for2_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
+    __sc2136 = nil; __sc2144 = nil; _for2_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
     z = pos
     dr = rt.f(1)
     trap = rt.f(10000000000)
@@ -123,12 +123,12 @@ run_pixel = lambda do |ctx, out|
       factor = rt.f(0.0)
       if rt.bool(rt.binary('<', r2, minR2))
         factor = rt.binary('/', fixedR2, minR2, 1, 'float')
-        __sc2128 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2128, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2128, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2128, 1, 'float'))
+        __sc2136 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2136, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2136, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2136, 1, 'float'))
         dr = rt.binary('*', dr, factor, 1, 'float')
       else
         if rt.bool(rt.binary('<', r2, fixedR2))
           factor = rt.binary('/', fixedR2, r2, 1, 'float')
-          __sc2136 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2136, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2136, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2136, 1, 'float'))
+          __sc2144 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2144, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2144, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2144, 1, 'float'))
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end
@@ -147,7 +147,7 @@ run_pixel = lambda do |ctx, out|
   juliaCube__vec3_vec3_float_int_float = lambda do |pos, c, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
     c = rt.copy(c, 'float')
-    __sc2144 = nil; __sc2152 = nil; _for3_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
+    __sc2152 = nil; __sc2160 = nil; _for3_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
     z = pos
     dr = rt.f(1)
     trap = rt.f(10000000000)
@@ -172,12 +172,12 @@ run_pixel = lambda do |ctx, out|
       factor = rt.f(0.0)
       if rt.bool(rt.binary('<', r2, minR2))
         factor = rt.binary('/', fixedR2, minR2, 1, 'float')
-        __sc2144 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2144, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2144, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2144, 1, 'float'))
+        __sc2152 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2152, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2152, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2152, 1, 'float'))
         dr = rt.binary('*', dr, factor, 1, 'float')
       else
         if rt.bool(rt.binary('<', r2, fixedR2))
           factor = rt.binary('/', fixedR2, r2, 1, 'float')
-          __sc2152 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2152, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2152, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2152, 1, 'float'))
+          __sc2160 = factor; z[0] = rt.f32(rt.binary('*', z[0], __sc2160, 1, 'float')); z[1] = rt.f32(rt.binary('*', z[1], __sc2160, 1, 'float')); z[2] = rt.f32(rt.binary('*', z[2], __sc2160, 1, 'float'))
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end

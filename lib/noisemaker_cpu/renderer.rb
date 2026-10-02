@@ -16,6 +16,8 @@ require_relative "parameters"
 require_relative "pass_runner"
 require_relative "adapters"
 require_relative "draw_ops"
+require_relative "external_input"
+require_relative "mesh_render"
 require_relative "overlay_gen"
 
 require_relative "dsl"
@@ -30,6 +32,13 @@ require_relative "frame_export_queue"
 require_relative "cpu_frame_export_adapter"
 
 module NoisemakerCpu
+  # Reactive (MIDI/audio) effects: their kernels read the external-input
+  # uniforms bound by render_effect (renderer.js REACTIVE_EFFECT_IDS).
+  REACTIVE_EFFECT_IDS = %w[synth/roll synth/scope synth/spectrum].freeze
+  # Upstream mesh-texture convention (renderer.js MESH_TEX_WIDTH/HEIGHT).
+  MESH_TEX_WIDTH = 256
+  MESH_TEX_HEIGHT = 256
+
   module Renderer
     @cache = NoisemakerCpu::KernelCache.new
 
@@ -629,9 +638,11 @@ module NoisemakerCpu
       )
     end
 
-    def self.render_effect(effect_id, params = nil, inputs = nil, width: 256, height: 256, seed: 1, time: 0.0)
+    def self.render_effect(effect_id, params = nil, inputs = nil, width: 256, height: 256, seed: 1, time: 0.0,
+      external_inputs: nil)
       params ||= {}
       inputs ||= {}
+      external_inputs = (external_inputs || {}).transform_keys(&:to_s)
       eff = meta["effects"][effect_id]
       raise "unknown effect '#{effect_id}' (not in bundle)" if eff.nil?
       params = Parameters.normalize(eff, params)
@@ -695,6 +706,53 @@ module NoisemakerCpu
       uniforms["data"] = _remap_uniform_data(uniforms, width, height) if effect_id == "synth/remap"
       blank = NoisemakerCpu::Surface.new(1, 1)
 
+      # Reactive (MIDI/audio) uniform defaults and mesh/external data-texture
+      # bindings. Mirrors the upstream pipeline's global-uniform stage
+      # (renderer.js bindExternalInputs): the 128-float audio arrays and the
+      # MIDI clock counter are bound only for the effects whose kernels
+      # declare them, zero-initialized when no external state is supplied
+      # (like WebGL uniform arrays), and the packed note grid uploads as a
+      # 128x16 RGBA data texture. Mesh textures (`global_mesh0_*`) bind from
+      # externalInputs.meshData -- the same packed RGBA arrays the upstream
+      # uploadMeshData path feeds.
+      pass_input_names = {}
+      (eff["passes"] || []).each do |pp|
+        (pp["inputs"] || {}).each_value { |v| pass_input_names[v] = 1 }
+      end
+      midi_state = external_inputs["midiState"]
+      audio_state = external_inputs["audioState"]
+      if REACTIVE_EFFECT_IDS.include?(effect_id)
+        uniforms["midiClockCount"] = midi_state ? midi_state.clock_count : 0
+        uniforms["audioWaveform"] = audio_state ? audio_state.waveform : Array.new(128, 0.0)
+        uniforms["audioSpectrum"] = audio_state ? audio_state.spectrum : Array.new(128, 0.0)
+      end
+      external_textures = {}
+      if REACTIVE_EFFECT_IDS.include?(effect_id) && pass_input_names["midiNoteGrid"]
+        grid = midi_state ? midi_state.note_grid : Array.new(128 * 16 * 4, 0.0)
+        external_textures["midiNoteGrid"] =
+          NoisemakerCpu::ExternalInput.external_data_surface(grid, 128, 16, "rgba32f")
+      end
+      mesh_names = pass_input_names.keys.select { |n| n.start_with?("global_mesh0_") }
+      unless mesh_names.empty?
+        mesh_data = external_inputs["meshData"]
+        raise "#{effect_id} requires external mesh data (renderOptions.externalInputs.meshData)" unless mesh_data
+
+        tex_width = mesh_data["texWidth"] || MESH_TEX_WIDTH
+        tex_height = mesh_data["texHeight"] || MESH_TEX_HEIGHT
+        if mesh_names.include?("global_mesh0_positions")
+          external_textures["global_mesh0_positions"] =
+            NoisemakerCpu::ExternalInput.external_data_surface(mesh_data["positionData"], tex_width, tex_height)
+        end
+        if mesh_names.include?("global_mesh0_normals")
+          external_textures["global_mesh0_normals"] =
+            NoisemakerCpu::ExternalInput.external_data_surface(mesh_data["normalData"], tex_width, tex_height)
+        end
+        if mesh_names.include?("global_mesh0_uvs")
+          external_textures["global_mesh0_uvs"] =
+            NoisemakerCpu::ExternalInput.external_data_surface(mesh_data["uvData"], tex_width, tex_height)
+        end
+      end
+
       rt = NoisemakerCpu::Runtime.new
       result = nil
       attachments = {} # attach-name -> Surface produced by an earlier pass
@@ -725,6 +783,24 @@ module NoisemakerCpu
       # for warp effects sampling at fractional coordinates).
       external_tex = eff["externalTexture"]
 
+      # Consumed internal scratch textures: a declared texture that one pass
+      # consumes and a later pass produces (synth/roll's _rollFb) is
+      # pre-created cleared, like the upstream pre-created feedback
+      # attachment (renderer.js initializeCanonicalResources: produced &&
+      # consumed && '_' names are no longer skipped).
+      produced = {}
+      consumed = {}
+      (eff["passes"] || []).each do |pp|
+        (pp["outputs"] || {}).each_value { |v| produced[v] = 1 }
+        (pp["inputs"] || {}).each_value { |v| consumed[v] = 1 }
+      end
+      (eff["textures"] || {}).keys.each do |tname|
+        next if attachments.key?(tname) || surface_params.key?(tname)
+        next unless tname.start_with?("_") && produced[tname] && consumed[tname]
+
+        attachments[tname] = _destination(eff, tname, params, width, height)
+      end
+
       (eff["passes"] || []).each do |p|
         textures = {}
         surface_params.keys.sort.each do |sampler|
@@ -737,8 +813,10 @@ module NoisemakerCpu
         (p["inputs"] || {}).keys.sort.each do |sampler_name|
           source = p["inputs"][sampler_name]
           # An earlier pass's named attachment wins over a same-named
-          # external input.
-          surf = attachments[source] || inputs[source] || inputs[sampler_name] || result
+          # external input; external-input data textures (midiNoteGrid,
+          # global_mesh0_*) bind from renderOptions.externalInputs.
+          surf = attachments[source] || inputs[source] ||
+            external_textures[source] || inputs[sampler_name] || result
           next if surf.nil?
 
           surf.filter((!external_tex.nil? && sampler_name == external_tex) ? "linear" : "nearest")
@@ -762,7 +840,21 @@ module NoisemakerCpu
         dest = _destination(eff, destination_name, params, width, height, pass: p)
         fmt = dest.format
         draw_op = p["drawMode"] ? NoisemakerCpu::DrawOps.get_draw_op(effect_id, p["program"]) : nil
-        if draw_op
+        if p["drawMode"] == "triangles"
+          # CPU triangle-mesh rasterizer (render/meshRender): fresh
+          # destination seeds from the prior same-name attachment (the clear
+          # pass output) or clears, then the hand-ported adapter rasterizes
+          # the external mesh data (renderer.js drawMode 'triangles' branch).
+          raise "#{effect_id} pass \"#{p['name']}\" has no fragment output" if out_names.empty?
+
+          adapter = NoisemakerCpu::MeshRender.get_adapter(effect_id, p["program"])
+          raise "Missing CPU mesh adapter \"#{effect_id}:#{p['program']}\"" unless adapter
+
+          previous = attachments[out_names[0]]
+          dest.data.replace(previous.data) if previous && previous.data.length == dest.data.length
+          result = dest
+          adapter.call(result, pass_uniforms, external_inputs)
+        elsif draw_op
           # CPU-only draw op (e.g. point-scatter): fresh destination seeds
           # from the prior same-name attachment (accumulator) or clears.
           src_name = (p["inputs"] || {}).keys.sort.map { |k| p["inputs"][k] }.first
@@ -824,7 +916,8 @@ module NoisemakerCpu
     # path render_effect resolves), and external textures
     # (imageTex/textTex/named) pass straight through. Explicit surface args
     # and inputTex-defaults win over them.
-    def self._run_effect_step(step, current, surfaces, external_textures, width, height, seed, time)
+    def self._run_effect_step(step, current, surfaces, external_textures, width, height, seed, time,
+      external_inputs: nil)
       inputs = (external_textures || {}).dup
       bundle = _chain_bundle(current)
       inputs["inputTex"] = bundle["image"] unless bundle["image"].nil?
@@ -836,7 +929,8 @@ module NoisemakerCpu
       end
       render_effect(
         step["effect_id"], step["params"], inputs,
-        width: width, height: height, seed: seed, time: time
+        width: width, height: height, seed: seed, time: time,
+        external_inputs: external_inputs
       )
     end
 
@@ -911,7 +1005,7 @@ module NoisemakerCpu
     # steps over a named-surface map (o0..o7), running one render_effect per
     # effect step.
     def self.render_dsl(source, width: 512, height: 512, seed: 1, time: 0.0, external_textures: nil,
-      seed_surfaces: nil)
+      seed_surfaces: nil, external_inputs: nil)
       surfaces = (seed_surfaces || {}).dup
       plan = NoisemakerCpu::DSL.compile_dsl(source, meta["effects"])
       plan["chains"].each do |chain|
@@ -940,7 +1034,8 @@ module NoisemakerCpu
             else
               group["steps"].each do |effect_step|
                 current = _run_effect_step(
-                  effect_step, current, surfaces, external_textures, width, height, seed, time
+                  effect_step, current, surfaces, external_textures, width, height, seed, time,
+                  external_inputs: external_inputs
                 )
               end
             end

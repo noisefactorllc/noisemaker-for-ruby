@@ -213,8 +213,8 @@ run_pixel = lambda do |ctx, out|
   end
   sineNoise__vec2_float_float_float = lambda do |st, freq, s, blend|
     st = rt.copy(st, 'float')
-    __sc2088 = nil; a = nil; b = nil; c = nil; r1 = nil; r2 = nil; x = nil; y = nil
-    __sc2088 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc2088, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc2088, 1, 'float'))
+    __sc2096 = nil; a = nil; b = nil; c = nil; r1 = nil; r2 = nil; x = nil; y = nil
+    __sc2096 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc2096, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc2096, 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary('+', rt.swizzle(st, 'x'), s, 1, 'float'))
     a = blend
     b = blend
@@ -354,10 +354,10 @@ run_pixel = lambda do |ctx, out|
   end
   diamonds__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
-    __sc2096 = nil; stLocal = nil
+    __sc2104 = nil; stLocal = nil
     stLocal = rt.construct(2, ((g['globalCoord'][0]) / (rt.swizzle(_u_fullResolution, 'y'))), ((g['globalCoord'][1]) / (rt.swizzle(_u_fullResolution, 'y'))))
     stLocal[0] = rt.f32(rt.binary('-', stLocal[0], (((rt.f(0.5)) * (g['aspectRatio']))), 1, 'float')); stLocal[1] = rt.f32(rt.binary('-', stLocal[1], (rt.f(0.5)), 1, 'float'))
-    __sc2096 = freq; stLocal[0] = rt.f32(rt.binary('*', stLocal[0], __sc2096, 1, 'float')); stLocal[1] = rt.f32(rt.binary('*', stLocal[1], __sc2096, 1, 'float'))
+    __sc2104 = freq; stLocal[0] = rt.f32(rt.binary('*', stLocal[0], __sc2104, 1, 'float')); stLocal[1] = rt.f32(rt.binary('*', stLocal[1], __sc2104, 1, 'float'))
     return rt.binary('+', rt.component_wise('cos', rt.binary('*', rt.swizzle(stLocal, 'x'), g['PI'], 1, 'float')), rt.component_wise('cos', rt.binary('*', rt.swizzle(stLocal, 'y'), g['PI'], 1, 'float')), 1, 'float')
   end
   shape__vec2_int_float = lambda do |st, sides, blend|

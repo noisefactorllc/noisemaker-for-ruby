@@ -494,6 +494,10 @@ module NoisemakerCpu
     # Resolve an EFFECT argument to a catalog id. `random` picks from
     # image-domain effects of the given `kind` ("generator"/"filter"); an
     # explicit id is used as-is.
+    EXTERNAL_INPUT_EFFECT_IDS = %w[
+      synth/roll synth/scope synth/spectrum render/meshLoader render/meshRender
+    ].freeze
+
     def self._resolve_effect(effect, kind)
       effects = Renderer.meta["effects"]
       if effect == "random"
@@ -501,7 +505,8 @@ module NoisemakerCpu
           candidate = effects[key]
           (kind.nil? || (candidate["kind"] || "") == kind) &&
             (candidate["domain"] || "image") == "image" &&
-            !candidate["iterated"] && candidate["externalTexture"].nil?
+            !candidate["iterated"] && candidate["externalTexture"].nil? &&
+            !EXTERNAL_INPUT_EFFECT_IDS.include?(key)
         end.sort
         raise UsageError, "usage: No #{kind} effects available.\n" if pool.empty?
 

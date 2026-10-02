@@ -163,23 +163,18 @@ echo "scripts/test: using $($RUBY_BIN -v)" >&2
 # structured evidence bound to this exact tree:
 #   PARITY-SUMMARY {"expected":N,"executed":N,"exact":N,"strict":N,"near":N,"defer":N,"skip":N,"fail":N,"missing":N}
 #
-# The entrypoint counts the full authority manifest (currently 210 ids), so
-# the whole-port run exits 1 while the port bundle lacks executable cases
-# (currently the five non-bundled authority ids recorded in GAP-001; the
-# pinned oracle implements none of them, so no golden can exist).
-# This suite accepts exactly the recorded authority state and nothing else,
-# on both the exit-0 and exit-1 paths: the denominator must equal the
-# recorded authority-manifest size (210); near/defer/skip/fail must be
-# zero; every executed case must pass (exact + strict == executed and
-# executed + missing == expected). On exit 1 the missing ids must be
-# exactly the recorded five — compared as a set, not as a count, so a newly
-# added authority id outside the bundle still fails; on exit 0 there must
-# be no not-in-bundle warning and no missing ids, so a changed denominator
-# with all cases passing also fails. Any difference, runtime or oracle
-# error, or unknown id still fails. When the authority manifest or the
+# The entrypoint counts the full authority manifest (currently 210 ids) and
+# the port bundle now implements all of them (the reactive/mesh
+# external-input cases included), so the whole-port run exits 0 with nothing
+# missing. This suite accepts exactly the recorded authority state and
+# nothing else: the denominator must equal the recorded authority-manifest
+# size (210); near/defer/skip/fail/missing must be zero; every executed case
+# must pass (exact + strict == executed and executed + missing == expected).
+# On the all-pass path there must be no not-in-bundle warning, so a changed
+# denominator with all cases passing also fails. Any difference, runtime or
+# oracle error, or unknown id still fails. When the authority manifest or the
 # bundle changes, update this check together with the GAP-001 record.
 RECORDED_EXPECTED=210
-RECORDED_MISSING='render/meshLoader render/meshRender synth/roll synth/scope synth/spectrum'
 OUT=$(./scripts/parity-summary 2>&1) && RC=0 || RC=$?
 printf '%s\n' "$OUT"
 LINE=$(printf '%s\n' "$OUT" | tail -1)
@@ -209,7 +204,8 @@ if [ "$RC" -eq 0 ]; then
   echo "scripts/test: parity gate accepted the all-pass authority state: $LINE" >&2
   exit 0
 fi
-# Recorded-missing path: the missing ids must be exactly the recorded five.
-[ "$WARN" = "$RECORDED_MISSING" ] && [ "$MISSING" -eq "$WARN_N" ] || { echo "scripts/test: parity-summary exited $RC with an unaccepted missing set: $LINE (warned missing: $WARN_N; recorded set: $RECORDED_MISSING)" >&2; exit "$REJECT_RC"; }
-echo "scripts/test: parity gate accepted the recorded authority state: $LINE (all non-executed ids lack oracle implementations)" >&2
-exit 0
+# No missing ids are recorded any more: any nonzero exit already failed the
+# unaccepted-state check above (fail/defer/missing cannot be zero on an
+# exit-1 run), so this line is unreachable except as a hard stop.
+echo "scripts/test: parity-summary exited $RC on an unaccepted parity state: $LINE" >&2
+exit "$REJECT_RC"

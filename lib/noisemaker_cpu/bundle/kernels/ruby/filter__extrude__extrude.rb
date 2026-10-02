@@ -23,9 +23,9 @@ run_pixel = lambda do |ctx, out|
   g['EPS'] = rt.f(9.9999997473787516e-05)
   hash12__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    __sc664 = nil; p3 = nil
+    __sc480 = nil; p3 = nil
     p3 = rt.construct(3, rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * (rt.f(0.1031000018119812))))))
-    __sc664 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc664, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc664, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc664, 1, 'float'))
+    __sc480 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc480, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc480, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc480, 1, 'float'))
     return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')))
   end
   lum__vec3 = lambda do |c|
@@ -38,7 +38,7 @@ run_pixel = lambda do |ctx, out|
   end
   cellAvgColor3x3__vec2 = lambda do |centerPx|
     centerPx = rt.copy(centerPx, 'float')
-    __hoist672 = nil; _for0_first = nil; _for1_first = nil; i = nil; j = nil; p = nil; sp = nil; sum = nil
+    __hoist488 = nil; _for0_first = nil; _for1_first = nil; i = nil; j = nil; p = nil; sp = nil; sum = nil
     sp = rt.binary('*', _u_size, rt.f(0.25), 1, 'float')
     sum = rt.construct(4, rt.construct(4, rt.f(0)))
     j = rt.unary('-', rt.i(1))
@@ -62,7 +62,7 @@ run_pixel = lambda do |ctx, out|
           break
         end
         p = rt.construct(2, ((centerPx[0]) + (((((i))) * (sp)))), ((centerPx[1]) + (((((j))) * (sp)))))
-        __hoist672 = rt.texture(_u_inputTex, toSampleUV__vec2.call(p)); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist672[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist672[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist672[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist672[3], 1, 'float'))
+        __hoist488 = rt.texture(_u_inputTex, toSampleUV__vec2.call(p)); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist488[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist488[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist488[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist488[3], 1, 'float'))
       end
     end
     return rt.construct(4, ((sum[0]) * (rt.f(0.1111111119389534))), ((sum[1]) * (rt.f(0.1111111119389534))), ((sum[2]) * (rt.f(0.1111111119389534))), ((sum[3]) * (rt.f(0.1111111119389534))))

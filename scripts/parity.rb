@@ -11,6 +11,7 @@ require "tmpdir"
 require "optparse"
 require_relative "oracle"
 
+require_relative "../lib/noisemaker_cpu/external_input"
 require_relative "../lib/noisemaker_cpu/png"
 require_relative "../lib/noisemaker_cpu/renderer"
 require_relative "../lib/noisemaker_cpu/surface"
@@ -42,6 +43,57 @@ at_exit { FileUtils.remove_entry(tmp) }
 ext_png = File.join(tmp, "ph_ext.png")
 ext_tex = nil
 
+# The five reactive/mesh authority cases (scripts/parity/reactive-fixtures.js
+# on the CPU side): both engines run the exact DSL program the oracle repo's
+# parity fixtures run, with the deterministic external-input fixtures bound.
+EXTERNAL_INPUT_SOURCES = {
+  "synth/roll" => "search synth\n\nroll()\n.write(o0)\n\nrender(o0)\n",
+  "synth/scope" => "search synth\n\nscope()\n.write(o0)\n\nrender(o0)\n",
+  "synth/spectrum" => "search synth\n\nspectrum()\n.write(o0)\n\nrender(o0)\n",
+  "render/meshLoader" => "search render\n\nmeshLoader().write(o0)\n\nrender(o0)\n",
+  "render/meshRender" => "search render\n\nmeshLoader()\n  .meshRender()\n  .write(o0)\n\nrender(o0)\n",
+}.freeze
+
+# Byte-identical port of scripts/parity/reactive-fixtures.js on the CPU side:
+# MIDI channel 1 C-major triad (60/64/67, velocities 100/80/90), channel 2 low
+# C (48, velocity 64), then 24 clock pulses; audio waveform
+# 0.5+0.5*sin(2*pi*3*i/128) and spectrum (1-i/127)^2 (128 samples); a
+# 12-triangle cube OBJ packed into 256x256 RGBA mesh textures.
+REACTIVE_FIXTURES = begin
+  midi_state = NoisemakerCpu::ExternalInput::MidiState.new
+  midi_messages = [
+    [0x90, 60, 100], [0x90, 64, 80], [0x90, 67, 90],
+    [0x91, 48, 64],
+  ] + Array.new(24) { [0xf8] }
+  midi_messages.each { |message| midi_state.handle_message(message) }
+  midi_state.update_note_grid
+
+  audio_state = NoisemakerCpu::ExternalInput::AudioState.new
+  audio_state.set_waveform(Array.new(128) { |i| 0.5 + 0.5 * Math.sin((2 * Math::PI * 3 * i) / 128) })
+  audio_state.set_spectrum(Array.new(128) { |i| (1 - i / 127.0)**2 })
+
+  cube_obj = [
+    "v -0.7 -0.7 -0.7", "v 0.7 -0.7 -0.7", "v 0.7 0.7 -0.7", "v -0.7 0.7 -0.7",
+    "v -0.7 -0.7 0.7", "v 0.7 -0.7 0.7", "v 0.7 0.7 0.7", "v -0.7 0.7 0.7",
+    "vn 0 0 -1", "vn 0 0 1", "vn 0 -1 0", "vn 0 1 0", "vn -1 0 0", "vn 1 0 0",
+    "f 1//1 2//1 3//1 4//1", "f 5//2 8//2 7//2 6//2", "f 1//3 5//3 6//3 2//3",
+    "f 2//4 6//4 7//4 3//4", "f 3//5 7//5 8//5 4//5", "f 4//6 8//6 5//6 1//6",
+    "",
+  ].join("\n")
+  parsed = NoisemakerCpu::ExternalInput.parse_obj(cube_obj)
+  mesh_data = NoisemakerCpu::ExternalInput.pack_mesh_data_for_textures(
+    parsed["positions"], parsed["normals"], parsed["uvs"], 256, 256
+  ).merge("texWidth" => 256, "texHeight" => 256)
+
+  {
+    "synth/roll" => { "midiState" => midi_state },
+    "synth/scope" => { "audioState" => audio_state },
+    "synth/spectrum" => { "audioState" => audio_state },
+    "render/meshLoader" => { "meshData" => mesh_data },
+    "render/meshRender" => { "meshData" => mesh_data },
+  }.freeze
+end
+
 # Deterministic non-uniform 8-bit texture for external-texture effects
 # (text/media) -- a solid would hide texture-orientation/sampling divergence.
 ext_texture = lambda do
@@ -61,6 +113,18 @@ end
 
 js_effect = lambda do |effect_id, out, input_png, params|
   raise oracle_error if oracle_error
+  # The reactive/mesh cases bind deterministic external-input fixtures, which
+  # the `effect` CLI cannot (its random pools exclude them); render them
+  # through the pinned oracle's own renderer with the oracle's fixture
+  # module (scripts/oracle-external-input.mjs).
+  if (external_source = EXTERNAL_INPUT_SOURCES[effect_id])
+    cmd = ["node", File.expand_path("oracle-external-input.mjs", __dir__), effect_id, out,
+           "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s]
+    _stdout, stderr, status = Open3.capture3(*cmd, stdin_data: external_source)
+    raise "oracle failed: #{stderr}" unless status.success?
+
+    return NoisemakerCpu::PNG.decode_png(File.binread(out))
+  end
   program = NoisemakerOracle.particle_program(NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id), params)
   cmd = ["node", cli, "effect", effect_id,
          "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s,
@@ -92,6 +156,12 @@ end
 
 ruby_render = lambda do |effect_id, kind, ext, render_params|
   eff = NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id)
+  if (external_source = EXTERNAL_INPUT_SOURCES[effect_id])
+    return NoisemakerCpu::Renderer.render_dsl(
+      external_source, width: size, height: size, seed: seed, time: render_time,
+      external_inputs: REACTIVE_FIXTURES.fetch(effect_id)
+    )
+  end
   program = NoisemakerOracle.particle_program(eff, render_params)
   if program
     return NoisemakerCpu::Renderer.render_dsl(program, width: size, height: size, seed: seed, time: render_time)

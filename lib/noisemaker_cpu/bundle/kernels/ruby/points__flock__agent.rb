@@ -79,7 +79,7 @@ run_pixel = lambda do |ctx, out|
     return rt.construct(2, rt.construct(2, rt.component_wise('clamp', rt.construct(2, ((pos[0]) / (cellSize[0])), ((pos[1]) / (cellSize[1]))), rt.construct(2, rt.f(0)), rt.construct(2, rt.construct(1, rt.binary('-', g['GRID_SIZE'], rt.i(1), 1, 'int'))))), 'int')
   end
   main__void = lambda do
-    __sc1816 = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; age = nil; alignSteer = nil; alignmentCount = nil; alignmentSum = nil; alive = nil; angle = nil; avgPos = nil; avgVel = nil; away = nil; boidId = nil; cellSeed = nil; checkCell = nil; cohesionCount = nil; cohesionSteer = nil; cohesionSum = nil; coord = nil; desired = nil; diff = nil; dist = nil; distSq = nil; dx = nil; dy = nil; myCell = nil; newPx = nil; newPy = nil; noiseForce = nil; noiseScale = nil; nx = nil; ny = nil; otherPos = nil; otherVel = nil; otherVelocity = nil; otherXyz = nil; perceptionSq = nil; pos = nil; px = nil; py = nil; rgba = nil; s = nil; sampleIdx = nil; sampleSeed = nil; seed = nil; separationCount = nil; separationForce = nil; separationSq = nil; speed = nil; stateSize = nil; steer = nil; sx = nil; sy = nil; totalBoids = nil; turnStrength = nil; vel = nil; velocity = nil; vx = nil; vy = nil; wallForce = nil; xyz = nil
+    __sc1632 = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; age = nil; alignSteer = nil; alignmentCount = nil; alignmentSum = nil; alive = nil; angle = nil; avgPos = nil; avgVel = nil; away = nil; boidId = nil; cellSeed = nil; checkCell = nil; cohesionCount = nil; cohesionSteer = nil; cohesionSum = nil; coord = nil; desired = nil; diff = nil; dist = nil; distSq = nil; dx = nil; dy = nil; myCell = nil; newPx = nil; newPy = nil; noiseForce = nil; noiseScale = nil; nx = nil; ny = nil; otherPos = nil; otherVel = nil; otherVelocity = nil; otherXyz = nil; perceptionSq = nil; pos = nil; px = nil; py = nil; rgba = nil; s = nil; sampleIdx = nil; sampleSeed = nil; seed = nil; separationCount = nil; separationForce = nil; separationSq = nil; speed = nil; stateSize = nil; steer = nil; sx = nil; sy = nil; totalBoids = nil; turnStrength = nil; vel = nil; velocity = nil; vx = nil; vy = nil; wallForce = nil; xyz = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
     xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
@@ -205,7 +205,7 @@ run_pixel = lambda do |ctx, out|
     end
     steer = rt.construct(2, rt.construct(2, rt.f(0)))
     if rt.bool(rt.binary('>', separationCount, rt.i(0)))
-      __sc1816 = rt.construct(1, separationCount); separationForce[0] = rt.f32(rt.binary('/', separationForce[0], __sc1816, 1, 'float')); separationForce[1] = rt.f32(rt.binary('/', separationForce[1], __sc1816, 1, 'float'))
+      __sc1632 = rt.construct(1, separationCount); separationForce[0] = rt.f32(rt.binary('/', separationForce[0], __sc1632, 1, 'float')); separationForce[1] = rt.f32(rt.binary('/', separationForce[1], __sc1632, 1, 'float'))
       if rt.bool(rt.binary('>', rt.length(separationForce), rt.f(0)))
         separationForce.replace((setMag__vec2_float.call(separationForce, _u_maxSpeed)).map { |c| rt.f32(c) })
         separationForce[0] = rt.f32(rt.binary('-', separationForce[0], velocity[0], 1, 'float')); separationForce[1] = rt.f32(rt.binary('-', separationForce[1], velocity[1], 1, 'float'))

@@ -17,9 +17,9 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   hash12__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    __sc1048 = nil; p3 = nil
+    __sc864 = nil; p3 = nil
     p3 = rt.construct(3, rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * (rt.f(0.1031000018119812))))))
-    __sc1048 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1048, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1048, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1048, 1, 'float'))
+    __sc864 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc864, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc864, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc864, 1, 'float'))
     return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')))
   end
   vnoise__vec2 = lambda do |p|
@@ -32,7 +32,7 @@ run_pixel = lambda do |ctx, out|
   end
   fbm__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    __sc1056 = nil; _for0_first = nil; a = nil; i = nil; v = nil
+    __sc872 = nil; _for0_first = nil; a = nil; i = nil; v = nil
     v = rt.f(0)
     a = rt.f(0.5)
     i = rt.i(0)
@@ -46,7 +46,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       v = rt.binary('+', v, rt.binary('*', a, vnoise__vec2.call(p), 1, 'float'), 1, 'float')
-      __sc1056 = rt.f(2.0299999713897705); p[0] = rt.f32(rt.binary('*', p[0], __sc1056, 1, 'float')); p[1] = rt.f32(rt.binary('*', p[1], __sc1056, 1, 'float'))
+      __sc872 = rt.f(2.0299999713897705); p[0] = rt.f32(rt.binary('*', p[0], __sc872, 1, 'float')); p[1] = rt.f32(rt.binary('*', p[1], __sc872, 1, 'float'))
       a = rt.binary('*', a, rt.f(0.5), 1, 'float')
     end
     return v
@@ -71,7 +71,7 @@ run_pixel = lambda do |ctx, out|
   end
   tent3x3__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
-    __hoist1064 = nil; _for1_first = nil; _for2_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
+    __hoist880 = nil; _for1_first = nil; _for2_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
     px = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
     sum = rt.construct(3, rt.construct(3, rt.f(0)))
     wsum = rt.f(0)
@@ -96,7 +96,7 @@ run_pixel = lambda do |ctx, out|
           break
         end
         w = rt.binary('*', (rt.bool(rt.binary('==', dx, rt.i(0))) ? (rt.f(2)) : (rt.f(1))), (rt.bool(rt.binary('==', dy, rt.i(0))) ? (rt.f(2)) : (rt.f(1))), 1, 'float')
-        __hoist1064 = rt.binary('*', rt.swizzle(rt.texture(_u_flatTex, rt.binary('+', uv, rt.binary('*', rt.construct(2, rt.construct(1, dx), rt.construct(1, dy)), px, 2, 'float'), 2, 'float')), 'rgb'), w, 3, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1064[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1064[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1064[2], 1, 'float'))
+        __hoist880 = rt.binary('*', rt.swizzle(rt.texture(_u_flatTex, rt.binary('+', uv, rt.binary('*', rt.construct(2, rt.construct(1, dx), rt.construct(1, dy)), px, 2, 'float'), 2, 'float')), 'rgb'), w, 3, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist880[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist880[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist880[2], 1, 'float'))
         wsum = rt.binary('+', wsum, w, 1, 'float')
       end
     end

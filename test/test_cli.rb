@@ -35,7 +35,7 @@ class TestCli < Minitest::Test
   def test_effect_discovery_and_parameter_help
     rc, out, err = run_cli(["effects"])
     assert_equal 0, rc, err
-    assert_equal 205, out.lines.size
+    assert_equal 210, out.lines.size
     assert_includes out, "synth/curl"
     rc, out, err = run_cli(["effects", "filter/"])
     assert_equal 0, rc, err

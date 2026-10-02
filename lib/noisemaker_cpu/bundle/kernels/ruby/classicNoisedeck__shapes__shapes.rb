@@ -219,8 +219,8 @@ run_pixel = lambda do |ctx, out|
   end
   sineNoise__vec2_float_float_float = lambda do |st, freq, s, blend|
     st = rt.copy(st, 'float')
-    __sc472 = nil; a = nil; b = nil; c = nil; r1 = nil; r2 = nil; x = nil; y = nil
-    __sc472 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc472, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc472, 1, 'float'))
+    __sc288 = nil; a = nil; b = nil; c = nil; r1 = nil; r2 = nil; x = nil; y = nil
+    __sc288 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc288, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc288, 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary('+', rt.swizzle(st, 'x'), s, 1, 'float'))
     a = blend
     b = blend
@@ -360,10 +360,10 @@ run_pixel = lambda do |ctx, out|
   end
   diamonds__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
-    __sc480 = nil
+    __sc296 = nil
     st.replace((rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.swizzle(_u_fullResolution, 'y'), 2, 'float')).map { |c| rt.f32(c) })
     st[0] = rt.f32(rt.binary('-', st[0], (((((rt.f(0.5)) * (rt.swizzle(_u_fullResolution, 'x')))) / (rt.swizzle(_u_fullResolution, 'y')))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
-    __sc480 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc480, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc480, 1, 'float'))
+    __sc296 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc296, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc296, 1, 'float'))
     return rt.binary('+', rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'x'), rt.f(3.1415927410125732), 1, 'float')), rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'y'), rt.f(3.1415927410125732), 1, 'float')), 1, 'float')
   end
   shape__vec2_int_float = lambda do |st, sides, blend|

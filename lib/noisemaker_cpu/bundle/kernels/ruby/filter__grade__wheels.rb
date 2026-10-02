@@ -80,7 +80,7 @@ run_pixel = lambda do |ctx, out|
     shadowWheel = rt.copy(shadowWheel, 'float')
     midWheel = rt.copy(midWheel, 'float')
     highWheel = rt.copy(highWheel, 'float')
-    __sc688 = nil; colorShift = nil; hW = nil; highOffset = nil; luma = nil; lumaDiff = nil; mW = nil; midOffset = nil; newLuma = nil; result = nil; sW = nil; shadowOffset = nil; totalWeight = nil
+    __sc504 = nil; colorShift = nil; hW = nil; highOffset = nil; luma = nil; lumaDiff = nil; mW = nil; midOffset = nil; newLuma = nil; result = nil; sW = nil; shadowOffset = nil; totalWeight = nil
     shadowOffset = rt.construct(3, ((((shadowWheel[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((shadowWheel[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((shadowWheel[2]) - (rt.f(0.5)))) * (rt.f(2))))
     midOffset = rt.construct(3, ((((midWheel[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((midWheel[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((midWheel[2]) - (rt.f(0.5)))) * (rt.f(2))))
     highOffset = rt.construct(3, ((((highWheel[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((highWheel[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((highWheel[2]) - (rt.f(0.5)))) * (rt.f(2))))
@@ -102,7 +102,7 @@ run_pixel = lambda do |ctx, out|
     result = rt.construct(3, ((rgb[0]) + (colorShift[0])), ((rgb[1]) + (colorShift[1])), ((rgb[2]) + (colorShift[2])))
     newLuma = rt.dot(result, g['LUMA_WEIGHTS'])
     lumaDiff = rt.binary('-', luma, newLuma, 1, 'float')
-    __sc688 = rt.binary('*', lumaDiff, rt.f(0.30000001192092896), 1, 'float'); result[0] = rt.f32(rt.binary('+', result[0], __sc688, 1, 'float')); result[1] = rt.f32(rt.binary('+', result[1], __sc688, 1, 'float')); result[2] = rt.f32(rt.binary('+', result[2], __sc688, 1, 'float'))
+    __sc504 = rt.binary('*', lumaDiff, rt.f(0.30000001192092896), 1, 'float'); result[0] = rt.f32(rt.binary('+', result[0], __sc504, 1, 'float')); result[1] = rt.f32(rt.binary('+', result[1], __sc504, 1, 'float')); result[2] = rt.f32(rt.binary('+', result[2], __sc504, 1, 'float'))
     return result
   end
   main__void = lambda do

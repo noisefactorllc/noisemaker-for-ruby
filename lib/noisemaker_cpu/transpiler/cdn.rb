@@ -33,14 +33,11 @@ module NoisemakerCpu
       CDN_VERSION = ENV["NM_SHADER_VERSION"] || "1.0"
 
       RENDER_ALLOWLIST = %w[
-        loopBegin loopEnd pointsEmit pointsRender pointsBillboardRender
+        loopBegin loopEnd meshLoader meshRender pointsEmit pointsRender pointsBillboardRender
         render3d renderCubemap3d renderCubemapSurface renderLit3d renderLandscape3d
       ]
                          .each_with_object({}) { |k, h| h[k] = true }.freeze
-      ID_EXCLUSIONS = %w[
-        synth/roll synth/scope synth/spectrum
-        render/meshLoader render/meshRender
-      ].each_with_object({}) { |k, h| h[k] = true }.freeze
+      ID_EXCLUSIONS = [].each_with_object({}) { |k, h| h[k] = true }.freeze
       ITERATED_IDS = %w[
         filter/convolutionFeedback filter/feedback filter/motionBlur filter/temporalAberration
         filter3d/flow3d

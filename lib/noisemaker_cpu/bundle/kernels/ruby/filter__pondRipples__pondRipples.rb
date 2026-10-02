@@ -18,11 +18,11 @@ run_pixel = lambda do |ctx, out|
   _u_antialias = u.key?('antialias') ? u['antialias'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
-    __hoist1240 = nil; __hoist1248 = nil; __hoist1256 = nil; __hoist1264 = nil; __sc1224 = nil; __sc1232 = nil; amountGain = nil; aspectRatio = nil; co = nil; col = nil; damping = nil; dir = nil; dx = nil; dy = nil; globalCoord = nil; phase = nil; r = nil; rDelta = nil; rot = nil; rotDelta = nil; rotatedDir = nil; s = nil; sampleUV = nil; uv = nil; w = nil; x = nil
+    __hoist1056 = nil; __hoist1064 = nil; __hoist1072 = nil; __hoist1080 = nil; __sc1040 = nil; __sc1048 = nil; amountGain = nil; aspectRatio = nil; co = nil; col = nil; damping = nil; dir = nil; dx = nil; dy = nil; globalCoord = nil; phase = nil; r = nil; rDelta = nil; rot = nil; rotDelta = nil; rotatedDir = nil; s = nil; sampleUV = nil; uv = nil; w = nil; x = nil
     aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    __sc1224 = rt.f(0.5); uv[0] = rt.f32(rt.binary('-', uv[0], __sc1224, 1, 'float')); uv[1] = rt.f32(rt.binary('-', uv[1], __sc1224, 1, 'float'))
+    __sc1040 = rt.f(0.5); uv[0] = rt.f32(rt.binary('-', uv[0], __sc1040, 1, 'float')); uv[1] = rt.f32(rt.binary('-', uv[1], __sc1040, 1, 'float'))
     uv = rt.assign_swizzle(uv, 'x', rt.binary('*', rt.swizzle(uv, 'x'), aspectRatio, 1, 'float'))
     r = rt.length(uv)
     phase = rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('*', r, rt.construct(1, _u_ridges), 1, 'float'), rt.f(2), 1, 'float'), rt.f(3.1415927410125732), 1, 'float'), rt.binary('*', rt.binary('*', rt.binary('*', _u_time, rt.f(2), 1, 'float'), rt.f(3.1415927410125732), 1, 'float'), rt.construct(1, _u_speed), 1, 'float'), 1, 'float')
@@ -56,7 +56,7 @@ run_pixel = lambda do |ctx, out|
     rotatedDir = rt.construct(2, (rt.matrix_mult(rt.construct(4, co, rt.unary('-', s), s, co), dir, 2))[0], (rt.matrix_mult(rt.construct(4, co, rt.unary('-', s), s, co), dir, 2))[1])
     uv.replace((rt.binary('*', rotatedDir, rt.binary('+', r, rDelta, 1, 'float'), 2, 'float')).map { |c| rt.f32(c) })
     uv = rt.assign_swizzle(uv, 'x', rt.binary('/', rt.swizzle(uv, 'x'), aspectRatio, 1, 'float'))
-    __sc1232 = rt.f(0.5); uv[0] = rt.f32(rt.binary('+', uv[0], __sc1232, 1, 'float')); uv[1] = rt.f32(rt.binary('+', uv[1], __sc1232, 1, 'float'))
+    __sc1048 = rt.f(0.5); uv[0] = rt.f32(rt.binary('+', uv[0], __sc1048, 1, 'float')); uv[1] = rt.f32(rt.binary('+', uv[1], __sc1048, 1, 'float'))
     if rt.bool(rt.binary('==', _u__WRAP, rt.i(0)))
       uv.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
     else
@@ -74,10 +74,10 @@ run_pixel = lambda do |ctx, out|
       dx = rt.construct(2, rt.dFdx(sampleUV))
       dy = rt.construct(2, rt.dFdy(sampleUV))
       col = rt.construct(4, rt.construct(4, rt.f(0)))
-      __hoist1240 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1240[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1240[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1240[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1240[3], 1, 'float'))
-      __hoist1248 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1248[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1248[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1248[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1248[3], 1, 'float'))
-      __hoist1256 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1256[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1256[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1256[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1256[3], 1, 'float'))
-      __hoist1264 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1264[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1264[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1264[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1264[3], 1, 'float'))
+      __hoist1056 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1056[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1056[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1056[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1056[3], 1, 'float'))
+      __hoist1064 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.f(0.125), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.unary('-', rt.f(0.375)), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1064[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1064[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1064[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1064[3], 1, 'float'))
+      __hoist1072 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.f(0.375), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.125), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1072[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1072[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1072[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1072[3], 1, 'float'))
+      __hoist1080 = rt.texture(_u_inputTex, rt.binary('+', rt.binary('+', sampleUV, rt.binary('*', dx, rt.unary('-', rt.f(0.125)), 2, 'float'), 2, 'float'), rt.binary('*', dy, rt.f(0.375), 2, 'float'), 2, 'float')); col[0] = rt.f32(rt.binary('+', col[0], __hoist1080[0], 1, 'float')); col[1] = rt.f32(rt.binary('+', col[1], __hoist1080[1], 1, 'float')); col[2] = rt.f32(rt.binary('+', col[2], __hoist1080[2], 1, 'float')); col[3] = rt.f32(rt.binary('+', col[3], __hoist1080[3], 1, 'float'))
       g['fragColor'].replace((rt.binary('*', col, rt.f(0.25), 4, 'float')).map { |c| rt.f32(c) })
     else
       g['fragColor'].replace((rt.texture(_u_inputTex, sampleUV)).map { |c| rt.f32(c) })

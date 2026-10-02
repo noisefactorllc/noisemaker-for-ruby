@@ -59,10 +59,10 @@ run_pixel = lambda do |ctx, out|
   perlin__vec2_vec2_float = lambda do |st, scale, speed|
     st = rt.copy(st, 'float')
     scale = rt.copy(scale, 'float')
-    __sc488 = nil; __sc496 = nil; bl = nil; br = nil; cell = nil; lower = nil; tl = nil; tr = nil; upper = nil; val = nil
-    __sc488 = rt.f(0.5); st[0] = rt.f32(rt.binary('-', st[0], __sc488, 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __sc488, 1, 'float'))
+    __sc304 = nil; __sc312 = nil; bl = nil; br = nil; cell = nil; lower = nil; tl = nil; tr = nil; upper = nil; val = nil
+    __sc304 = rt.f(0.5); st[0] = rt.f32(rt.binary('-', st[0], __sc304, 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __sc304, 1, 'float'))
     st[0] = rt.f32(rt.binary('*', st[0], scale[0], 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], scale[1], 1, 'float'))
-    __sc496 = rt.f(0.5); st[0] = rt.f32(rt.binary('+', st[0], __sc496, 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __sc496, 1, 'float'))
+    __sc312 = rt.f(0.5); st[0] = rt.f32(rt.binary('+', st[0], __sc312, 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __sc312, 1, 'float'))
     cell = rt.construct(2, rt.component_wise('floor', st[0]), rt.component_wise('floor', st[1]))
     tl = grid__vec2_vec2_float.call(st, cell, speed)
     tr = grid__vec2_vec2_float.call(st, rt.construct(2, (((rt.swizzle(cell, 'x')) + (rt.f(1)))), (rt.swizzle(cell, 'y'))), speed)

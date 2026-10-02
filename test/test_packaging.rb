@@ -27,7 +27,7 @@ class TestPackaging < Minitest::Test
       run.call("-e", 'require "noisemaker_cpu"; puts NoisemakerCpu::Renderer.render_effect("synth/solid", {}, nil, width: 2, height: 2).to_rgba8.bytesize')
       File.write(File.join(dir, "Gemfile"), "gem 'noisemaker-for-ruby'\n")
       output = run.call("-rbundler/setup", "-e", 'Bundler.require; puts NoisemakerCpu::Renderer.meta.fetch("effects").size')
-      assert_equal "205", output.strip
+      assert_equal "210", output.strip
     end
   end
 end
