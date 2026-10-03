@@ -27,7 +27,7 @@ Effect kernels are **transpiled directly from the upstream GLSL** served by the 
 - Screen-space derivatives.
 - GL texture sampling.
 
-The bundle includes 205 catalog effects (289 kernels). The parity harness
+The bundle includes 210 catalog effects (295 kernels). The parity harness
 compares exact RGBA8 output with a pinned JavaScript reference. It uses 8×8
 images, seed 1, time 0.25, small volume atlases, and identical explicit scenes
 for particle consumers. These checks cover the catalog, not every parameter,
@@ -169,7 +169,7 @@ bundle exec ruby scripts/parity.rb --only synth/curl,filter/lighting
 The harness fails on any pixel difference, runtime failure, missing oracle,
 or unknown selection. Required CI checks run Ruby 3.2, 3.3, 3.4 and 4.0 on
 Linux, Ruby 4.0 on macOS, archive installation under Bundler, C-locale
-rendering, video frame counts, and all 205 reference comparisons. Export-kit
+rendering, video frame counts, and all 210 reference comparisons. Export-kit
 publication waits for those checks. Live CDN checks are separate from this
 reproducible gate and may require `NOISEMAKER_PERL_LOCK` for cross-port lock checks.
 
