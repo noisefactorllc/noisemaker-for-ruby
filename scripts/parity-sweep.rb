@@ -19,13 +19,18 @@
 #
 # Usage:
 #   ruby scripts/parity-sweep.rb [--report PATH] [--only id,id]
-#                                [--no-case NAME,...] [--jobs N]
+#                                [--no-case NAME,...] [--all-params] [--jobs N]
+#
+# --all-params drops the 3-parameter cap and renders a nondefault case for
+# every parameter with a deterministic nondefault value (opt-in; the default
+# grid stays capped so whole-port sweeps stay bounded).
 #
 require "digest"
 require "fileutils"
 require "tmpdir"
 require "optparse"
 require_relative "oracle"
+require_relative "reactive_fixtures"
 
 require_relative "../lib/noisemaker_cpu/png"
 require_relative "../lib/noisemaker_cpu/renderer"
@@ -45,11 +50,13 @@ only = nil
 skip_cases = {}
 shard = nil
 merge_files = nil
+all_params = false
 raw_command = "ruby #{$PROGRAM_NAME} #{ARGV.join(' ')}".strip
 OptionParser.new do |opts|
   opts.on("--report PATH") { |value| report_path = value }
   opts.on("--only IDS") { |value| only = value.split(",").to_h { |id| [id, true] } }
   opts.on("--skip-case NAMES", String) { |value| skip_cases = value.split(",").to_h { |c| [c, true] } }
+  opts.on("--all-params") { all_params = true }
   opts.on("--shard I/M") { |value| shard = value.split("/").map { |p| Integer(p, 10) } }
   opts.on("--merge FILES", String) { |value| merge_files = value.split(",") }
 end.parse!
@@ -100,17 +107,28 @@ end
 
 js_effect = lambda do |effect_id, out, input_png, params, js_params, size, seed, render_time|
   raise oracle_error if oracle_error
-  program = NoisemakerOracle.particle_program(NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id), params)
-  cmd = ["node", cli, "effect", effect_id,
-         "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s,
-         "--output", out]
-  cmd += ["--input", input_png] if input_png
-  if program
-    cmd[2, 2] = ["render", "-"]
+  # The reactive/mesh cases bind deterministic external-input fixtures, which
+  # the `effect` CLI cannot (its random pools exclude them); render them
+  # through the pinned oracle's own renderer with the oracle's fixture
+  # module (scripts/oracle-external-input.mjs), with the case's parameters
+  # injected into the DSL program.
+  if (external_source = EXTERNAL_INPUT_SOURCES[effect_id])
+    cmd = ["node", File.expand_path("oracle-external-input.mjs", __dir__), effect_id, out,
+           "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s]
+    _stdout, stderr, status = Open3.capture3(*cmd, stdin_data: external_input_source_for(effect_id, params))
   else
-    js_params.each { |name, value| cmd += ["--param", "#{name}=#{value}"] }
+    program = NoisemakerOracle.particle_program(NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id), params)
+    cmd = ["node", cli, "effect", effect_id,
+           "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s,
+           "--output", out]
+    cmd += ["--input", input_png] if input_png
+    if program
+      cmd[2, 2] = ["render", "-"]
+    else
+      js_params.each { |name, value| cmd += ["--param", "#{name}=#{value}"] }
+    end
+    _stdout, stderr, status = Open3.capture3(*cmd, chdir: cpu_dir, stdin_data: program || "")
   end
-  _stdout, stderr, status = Open3.capture3(*cmd, chdir: cpu_dir, stdin_data: program || "")
   raise "oracle failed: #{stderr}" unless status.success?
 
   bytes =
@@ -131,6 +149,16 @@ end
 
 ruby_render = lambda do |effect_id, kind, ext, render_params, size, seed, render_time, volume_size|
   eff = NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id)
+  # The reactive/mesh cases bind the same deterministic external-input
+  # fixtures as the default gate (scripts/reactive_fixtures.rb), with the
+  # case's parameters injected into the DSL program.
+  if (external_source = EXTERNAL_INPUT_SOURCES[effect_id])
+    return NoisemakerCpu::Renderer.render_dsl(
+      external_input_source_for(effect_id, render_params),
+      width: size, height: size, seed: seed, time: render_time,
+      external_inputs: REACTIVE_FIXTURES.fetch(effect_id)
+    )
+  end
   program = NoisemakerOracle.particle_program(eff, render_params)
   if program
     return NoisemakerCpu::Renderer.render_dsl(program, width: size, height: size, seed: seed, time: render_time)
@@ -247,7 +275,7 @@ unknown_ids = only ? only.keys.reject { |eid| effects.key?(eid) }.sort : []
 all_ids = effects.keys.sort.select { |eid| !only || only[eid] }
 ids = shard ? all_ids.each_with_index.select { |_, i| i % shard[1] == shard[0] }.map(&:first) : all_ids
 
-def case_grid(eff, skip_cases)
+def case_grid(eff, skip_cases, all_params = false)
   eid = eff.fetch("id")
   params = eff["params"] || {}
   order = (eff["paramOrder"] && !eff["paramOrder"].empty?) ? eff["paramOrder"] : params.keys.sort
@@ -267,7 +295,7 @@ def case_grid(eff, skip_cases)
       next
     end
     next if value == spec["default"]
-    if param_cases.length >= 3
+    if !all_params && param_cases.length >= 3
       exclusions << { "param" => pname, "type" => spec["type"],
                       "reason" => "capped: at most 3 nondefault-parameter cases per effect" }
       next
@@ -360,7 +388,7 @@ if merge_files
   uniq.values.map { |c| c["effect"] }.uniq.each do |eid|
     raise "unknown effect #{eid}" unless effects.key?(eid)
     eff = effects[eid].merge("id" => eid)
-    want = case_grid(eff, skip_cases)[0].map { |c| c["name"] }
+    want = case_grid(eff, skip_cases, all_params)[0].map { |c| c["name"] }
     got = uniq.select { |(e, _), _| e == eid }.keys.map { |(_, n)| n }
     missing_cases = want - got
     raise "incomplete grid for #{eid}: missing #{missing_cases.join(',')}" unless missing_cases.empty?
@@ -400,7 +428,7 @@ ids.each do |eid|
   eff["id"] = eid
   kind = effects[eid]["kind"]
   ext = effects[eid]["externalTexture"]
-  grid, exclusions = case_grid(eff, skip_cases)
+  grid, exclusions = case_grid(eff, skip_cases, all_params)
   report["exclusions"] ||= []
   report["exclusions"].concat(exclusions.map { |x| x.merge("effect" => eid) })
   grid.each do |cs|
