@@ -56,4 +56,32 @@ class TestGeneratedRegressions < Minitest::Test
     )
     assert_equal [-0.5, 0.25, 0.5, 1.0], result.data[0, 4]
   end
+
+  def test_dither_palette_arrays_render_nearest_colors_without_crashing
+    # Mirror of noisemaker-for-cpu 5de2bf8's renderer.test.js: the dither
+    # kernel's builtin palette globals are vecN rows, so the pre-5de2bf8
+    # rt.copy (a flat scalar-buffer copy) raised TypeError on every palette
+    # > PALETTE_INPUT; the fixed copy retains the vecN rows and each solid
+    # input maps to the nearest builtin palette color.
+    endpoints = [
+      [[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]],                    # MONOCHROME
+      [[0.61, 0.74, 0.06], [0.06, 0.22, 0.06]],              # DOT_MATRIX
+      [[1.0, 0.6, 0.0], [0.0, 0.0, 0.0]],                    # AMBER
+      [[1.0, 0.945, 0.91], [0.0, 0.0, 0.0]],                 # PICO8
+    ] + Array.new(5) { [[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]] }  # C64..EGA
+    (1..9).each do |palette|
+      [1, 0, 1, 0].each do |color|
+        frame = NoisemakerCpu::Renderer.render_dsl(
+          "search synth, filter\n" \
+          "solid(color: [#{color}, #{color}, #{color}]).dither(palette: #{palette}, threshold: #{color.zero? ? -0.5 : 0.5}).write(o0)\n" \
+          "render(o0)",
+          width: 3, height: 2
+        )
+        endpoint = endpoints[palette - 1][color.zero? ? 1 : 0]
+        expected = endpoint.map { |v| ([v.to_f].pack("e").unpack1("e") * 255).round } + [255]
+        assert_equal Array.new(6, expected).flatten, frame.to_rgba8.bytes,
+                     "palette #{palette}, color #{color}"
+      end
+    end
+  end
 end

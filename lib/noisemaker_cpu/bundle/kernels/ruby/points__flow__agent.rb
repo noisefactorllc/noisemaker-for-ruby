@@ -80,7 +80,7 @@ run_pixel = lambda do |ctx, out|
             else
               if rt.bool(rt.binary('==', behaviorMode, rt.i(5)))
                 quarterSize = rt.component_wise('max', rt.i(1), rt.binary('/', totalAgents, rt.i(4), 1, 'int'))
-                band = rt.binary('/', agentIndex, quarterSize, 1, 'int')
+                band = rt.trunc_div(agentIndex, quarterSize)
                 if rt.bool(rt.binary('<=', band, rt.i(0)))
                   return baseHeading
                 else

@@ -357,7 +357,7 @@ module NoisemakerCpu
                 adapted = _adapt_source(eid, p["program"], glsl)
                 norm = NoisemakerCpu::Transpiler::Preprocess.normalize(adapted, defines)
                 ast = NoisemakerCpu::Transpiler::Parser.parse(norm["source"])
-                ruby_src = NoisemakerCpu::Transpiler::Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"])
+                ruby_src = NoisemakerCpu::Transpiler::Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"], eid)
                 # The upstream JS generator mis-compiles render3d's voxel
                 # DDA (canonical-kernels.js 28046/28074/28075): the initial
                 # `voxelToWorld(voxel + max(step, ivec3(0)))` unwinds to

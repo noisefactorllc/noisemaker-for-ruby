@@ -292,13 +292,14 @@ module NoisemakerCpu
       SKIP_FUNCS = %w[cpu_umul cpu_ivec2 cpu_ivec3 cpu_ivec4 cpu_uvec2 cpu_uvec3 cpu_uvec4 cpu_float]
                    .each_with_object({}) { |n, h| h[n] = true }.freeze
 
-      def self.emit_ruby(program, outputs, varyings)
+      def self.emit_ruby(program, outputs, varyings, effect_id = nil)
         program["decls"] = program["decls"].reject { |d| (d["k"] || "") == "func" && SKIP_FUNCS[d["name"] || ""] }
-        new(program, outputs, varyings).emit
+        new(program, outputs, varyings, effect_id).emit
       end
 
-      def initialize(program, outputs, varyings)
+      def initialize(program, outputs, varyings, effect_id = nil)
         @program = program
+        @effect_id = effect_id
         @outputs = outputs && !outputs.empty? ? outputs : ["fragColor"]
         @varyings = {}
         (varyings || []).each { |v| @varyings[v] = true }
@@ -786,7 +787,7 @@ module NoisemakerCpu
       end
 
       # The oracle's compile-glsl.js restoreIntegerDivision (synced at
-      # noisemaker-for-cpu d13b0a2100fb) rewrites statement-level
+      # noisemaker-for-cpu 26d6f42be38d) rewrites statement-level
       # `var name = vec[i] / intName;` declarations to
       # `Math.trunc(vec[i] / intName)`: GLSL int/int division truncates
       # toward zero, but the compiled kernels kept the raw f64 quotient
@@ -794,10 +795,17 @@ module NoisemakerCpu
       # z = 63.984 where the authority samples z = 63). Mirror the narrowing
       # exactly: declarations only, a component-selected dividend
       # (single-component member or numeric-literal index of an identifier)
-      # and a plain int-typed identifier divisor. The CPU repo measured and
-      # REJECTED broader expression-level rewrites (filter/spookyTicker's
-      # authority bytes contradict the pinned GLSL's int-division semantics;
-      # see its GAP-003 record) -- do not widen this rule.
+      # and a plain int-typed identifier divisor.
+      #
+      # It also rewrites statement-level scalar/scalar int divisions
+      # (synth3d/shape3d: `int z = yAtlas / volumeSize;` where yAtlas is a
+      # scalar int local) when BOTH operands are int-typed GLSL identifiers
+      # (and they differ). The CPU repo measured and REJECTED broader
+      # expression-level rewrites (filter/spookyTicker's authority bytes
+      # contradict the pinned GLSL's int-division semantics; see its GAP-003
+      # record) -- do not widen this rule. filter/spookyTicker is exempt
+      # from the scalar/scalar form: its pinned authority capture matches
+      # the untruncated lowering, so truncating it regresses the gate.
       def _restore_integer_division(init, scope)
         return nil unless init.is_a?(Hash) && init["k"] == "binary" && init["op"] == "/"
 
@@ -816,6 +824,16 @@ module NoisemakerCpu
             return nil unless Codegen.width_of(obj_t) > 1 && Codegen.base_of(obj_t) != "struct"
 
             "#{obj_code}[(rt.i(#{l['idx']['value'].to_i})).to_i]"
+          elsif l.is_a?(Hash) && l["k"] == "id" && @effect_id != "filter/spookyTicker"
+            # Statement-level scalar/scalar form (synth3d/shape3d's
+            # `int z = yAtlas / volumeSize;`). Both operands must be
+            # provably int-typed GLSL identifiers (the transpiler loses the
+            # int typing and emits a raw f64 division, shifting every
+            # volume z-slice coordinate).
+            le = scope.resolve(l["name"])
+            return nil unless le && Codegen.base_of(le["type"]) == "int"
+
+            le["py"]
           else
             return nil
           end
@@ -823,6 +841,7 @@ module NoisemakerCpu
 
         re = scope.resolve(r["name"])
         return nil unless re && Codegen.base_of(re["type"]) == "int"
+        return nil if l.is_a?(Hash) && l["k"] == "id" && l["name"] == r["name"]
 
         "rt.trunc_div(#{dividend_code}, #{re['py']})"
       end

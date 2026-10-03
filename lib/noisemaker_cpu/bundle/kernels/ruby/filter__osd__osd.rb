@@ -35,8 +35,8 @@ run_pixel = lambda do |ctx, out|
   end
   sample_glyph__int_int_int_int = lambda do |digit, localX, localY, iScale|
     gx = nil; gy = nil; row = nil
-    gx = rt.binary('/', localX, iScale, 1, 'int')
-    gy = rt.binary('/', localY, iScale, 1, 'int')
+    gx = rt.trunc_div(localX, iScale)
+    gy = rt.trunc_div(localY, iScale)
     if rt.bool((rt.bool((rt.bool((rt.bool(rt.binary('<', gx, rt.i(0))) || rt.bool(rt.binary('>=', gx, g['GLYPH_W'])) ? 1 : 0)) || rt.bool(rt.binary('<', gy, rt.i(0))) ? 1 : 0)) || rt.bool(rt.binary('>=', gy, g['GLYPH_H'])) ? 1 : 0))
       return rt.f(0)
     end
@@ -111,7 +111,7 @@ run_pixel = lambda do |ctx, out|
     within_glyph_x = 0
     if rt.bool((rt.bool((rt.bool((rt.bool(rt.binary('>=', lx, rt.i(0))) && rt.bool(rt.binary('<', lx, overlay_w)) ? 1 : 0)) && rt.bool(rt.binary('>=', ly, rt.i(0))) ? 1 : 0)) && rt.bool(rt.binary('<', ly, overlay_h)) ? 1 : 0))
       cell_stride = rt.binary('+', _CELL_W, _GAP, 1, 'int')
-      glyph_idx = rt.binary('/', lx, cell_stride, 1, 'int')
+      glyph_idx = rt.trunc_div(lx, cell_stride)
       within_glyph_x = rt.binary('-', lx, rt.binary('*', glyph_idx, cell_stride, 1, 'int'), 1, 'int')
       digit = 0
       digit_hash = 0

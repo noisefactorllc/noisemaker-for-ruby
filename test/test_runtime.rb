@@ -205,4 +205,19 @@ class TestRuntime < Minitest::Test
     # fdiv honors negative-zero denominators
     assert_equal(-Float::INFINITY, NoisemakerCpu::UintMath.fdiv(5.0, -0.0), "fdiv(5, -0.0) = -Inf")
   end
+
+  def test_copy_preserves_vector_array_rows_and_isolates_mutations
+    # Mirror of noisemaker-for-cpu 5de2bf8's glsl-runtime.test.js: GLSL array
+    # parameters can contain vectors (Dither's builtin palette uniforms are
+    # vecN rows), so rt.copy must retain their shape and value semantics and
+    # isolate later mutations from the source rows.
+    palette = [[0.0, 0.0, 0.0], [1.0, 0.5, 1.0]]
+    copied = @rt.copy(palette)
+    assert_equal palette, copied
+    copied[0][0] = 0.75
+    copied[1][1] = 0.25
+    assert_equal [0.0, 0.0, 0.0], palette[0]
+    assert_equal [1.0, 0.5, 1.0], palette[1]
+    veq @rt.copy(@rt.construct(3, 1.0, 2.0, 3.0)), [1.0, 2.0, 3.0], "flat copy"
+  end
 end

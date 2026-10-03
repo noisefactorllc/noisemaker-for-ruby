@@ -463,6 +463,11 @@ module NoisemakerCpu
     # uvecN hash seed keeps full precision.
     def copy(vec, base = nil)
       return f32(vec) unless _is_vec(vec)
+      # GLSL array parameters can contain vectors; retain their shape and
+      # value semantics (mirrors noisemaker-for-cpu 5de2bf8's copy guard:
+      # Dither's palette arrays are vecN rows, not a flat scalar buffer).
+      return vec.map { |row| copy(row) } if _is_vec(vec[0])
+
       return IVec.new(vec.map(&:to_i)) if base == "int" || base == "uint"
 
       vec.map { |c| f32(c) }

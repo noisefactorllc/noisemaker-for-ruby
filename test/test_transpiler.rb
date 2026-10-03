@@ -106,6 +106,16 @@ class TestTranspilerPipeline < Minitest::Test
       ~x
     end
 
+    # Mirrors Runtime#trunc_div (restoreIntegerDivision's Math.trunc(a/b)):
+    # raw f64 quotient truncated toward zero.
+    def trunc_div(a, b)
+      q = a.to_f / b.to_f
+      return q if q.nan? || q.infinite?
+
+      t = q.truncate
+      q.negative? && t.zero? ? -0.0 : t
+    end
+
     def binary(op, a, b, width = nil, base = nil)
       scalar = lambda do |x, y|
         case op
@@ -938,6 +948,56 @@ class TestTranspilerPipeline < Minitest::Test
     # the sum is [10,4,6]. A live alias would destroy the initializer and
     # collapse the sum to [18,4,6].
     assert_equal [10.0, 4.0, 6.0, 1.0], out
+  end
+
+  def test_scalar_int_division_statement_truncates_toward_zero
+    # The oracle's compile-glsl.js restoreIntegerDivision (CPU 26d6f42) also
+    # rewrites statement-level scalar/scalar int divisions when BOTH operands
+    # are provably int-typed GLSL identifiers (synth3d/shape3d's volume
+    # `int z = yAtlas / volumeSize;`): the transpiler loses the int typing
+    # and emits a raw f64 division (7/2 = 3.5), shifting every volume
+    # z-slice coordinate. The port mirrors the same truncating rewrite.
+    src = transpile(<<~GLSL)
+      out vec4 fragColor;
+      void main() {
+        int volSize = 2;
+        int yAtlas = 7;
+        int neg = 0 - 7;
+        int z = yAtlas / volSize;
+        int w = neg / volSize;
+        fragColor = vec4(float(z), float(w), 0.0, 1.0);
+      }
+    GLSL
+
+    assert_includes src, "rt.trunc_div("
+    out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
+    # Truncation toward zero: 7/2 = 3 (raw f64 division yields 3.5) and
+    # -7/2 = -3 (raw f64 yields -3.5, and GLSL truncates toward zero, not
+    # toward -inf).
+    assert_equal [3.0, -3.0, 0.0, 1.0], out
+  end
+
+  def test_scalar_int_division_rewrite_is_exempt_for_spookyTicker
+    # filter/spookyTicker's pinned M4/Metal authority capture matches the
+    # untruncated lowering (measured, see its GAP-003 record), so the
+    # scalar/scalar rewrite must be exempt for that effect id. The
+    # component-selected form still applies everywhere.
+    source = <<~GLSL
+      out vec4 fragColor;
+      void main() {
+        int volSize = 2;
+        int yAtlas = 7;
+        int z = yAtlas / volSize;
+        fragColor = vec4(float(z), 0.0, 0.0, 1.0);
+      }
+    GLSL
+
+    norm = Preprocess.normalize(source, {})
+    ast = Parser.parse(norm["source"])
+    exempt = Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"], "filter/spookyTicker")
+    refute_includes exempt, "rt.trunc_div("
+    regular = Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"])
+    assert_includes regular, "rt.trunc_div("
   end
 
   def test_integer_vector_constructor_snaps_float_vector_expression
