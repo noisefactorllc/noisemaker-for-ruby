@@ -108,7 +108,7 @@ run_pixel = lambda do |ctx, out|
     balancePoint = rt.binary('+', rt.f(0.5), rt.binary('*', balance, rt.f(0.30000001192092896), 1, 'float'), 1, 'float')
     shadowWeight = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0), balancePoint, luma), 1, 'float')
     highlightWeight = rt.component_wise('smoothstep', balancePoint, rt.f(1), luma)
-    tintedRgb = rgb
+    tintedRgb = rt.copy(rgb, 'float')
     tintedRgb[0] = rt.f32(rt.binary('+', tintedRgb[0], ((((shadowShift[0]) * (shadowWeight))) * (rt.f(0.30000001192092896))), 1, 'float')); tintedRgb[1] = rt.f32(rt.binary('+', tintedRgb[1], ((((shadowShift[1]) * (shadowWeight))) * (rt.f(0.30000001192092896))), 1, 'float')); tintedRgb[2] = rt.f32(rt.binary('+', tintedRgb[2], ((((shadowShift[2]) * (shadowWeight))) * (rt.f(0.30000001192092896))), 1, 'float'))
     tintedRgb[0] = rt.f32(rt.binary('+', tintedRgb[0], ((((highlightShift[0]) * (highlightWeight))) * (rt.f(0.30000001192092896))), 1, 'float')); tintedRgb[1] = rt.f32(rt.binary('+', tintedRgb[1], ((((highlightShift[1]) * (highlightWeight))) * (rt.f(0.30000001192092896))), 1, 'float')); tintedRgb[2] = rt.f32(rt.binary('+', tintedRgb[2], ((((highlightShift[2]) * (highlightWeight))) * (rt.f(0.30000001192092896))), 1, 'float'))
     return tintedRgb

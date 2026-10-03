@@ -171,23 +171,23 @@ run_pixel = lambda do |ctx, out|
   end
   lutCinematic__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
-    __hoist512 = nil; highlightTint = nil; l = nil; shadowTint = nil
+    __hoist696 = nil; highlightTint = nil; l = nil; shadowTint = nil
     l = luma__vec3.call(rgb)
     rgb.replace((rt.binary('+', rt.binary('*', rgb, rt.f(0.89999997615814209), 3, 'float'), rt.f(0.029999999329447746), 3, 'float')).map { |c| rt.f32(c) })
     shadowTint = rt.construct(3, rt.construct(3, rt.f(0.94999998807907104), rt.f(1), rt.f(1.0499999523162842)))
     highlightTint = rt.construct(3, rt.construct(3, rt.f(1.0499999523162842), rt.f(1), rt.f(0.94999998807907104)))
-    __hoist512 = rt.component_wise('mix', shadowTint, highlightTint, l); rgb[0] = rt.f32(rt.binary('*', rgb[0], __hoist512[0], 1, 'float')); rgb[1] = rt.f32(rt.binary('*', rgb[1], __hoist512[1], 1, 'float')); rgb[2] = rt.f32(rt.binary('*', rgb[2], __hoist512[2], 1, 'float'))
+    __hoist696 = rt.component_wise('mix', shadowTint, highlightTint, l); rgb[0] = rt.f32(rt.binary('*', rgb[0], __hoist696[0], 1, 'float')); rgb[1] = rt.f32(rt.binary('*', rgb[1], __hoist696[1], 1, 'float')); rgb[2] = rt.f32(rt.binary('*', rgb[2], __hoist696[2], 1, 'float'))
     rgb.replace((rt.component_wise('pow', rgb, rt.construct(3, rt.f(1.1000000238418579)))).map { |c| rt.f32(c) })
     return rt.component_wise('clamp', rgb, rt.f(0), rt.f(1))
   end
   lutDayForNight__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
-    __sc520 = nil; l = nil
+    __sc704 = nil; l = nil
     l = luma__vec3.call(rgb)
     rgb = rt.assign_swizzle(rgb, 'r', rt.binary('*', rt.swizzle(rgb, 'r'), rt.f(0.5), 1, 'float'))
     rgb = rt.assign_swizzle(rgb, 'g', rt.binary('*', rt.swizzle(rgb, 'g'), rt.f(0.60000002384185791), 1, 'float'))
     rgb = rt.assign_swizzle(rgb, 'b', rt.binary('*', rt.swizzle(rgb, 'b'), rt.f(1), 1, 'float'))
-    __sc520 = rt.f(0.40000000596046448); rgb[0] = rt.f32(rt.binary('*', rgb[0], __sc520, 1, 'float')); rgb[1] = rt.f32(rt.binary('*', rgb[1], __sc520, 1, 'float')); rgb[2] = rt.f32(rt.binary('*', rgb[2], __sc520, 1, 'float'))
+    __sc704 = rt.f(0.40000000596046448); rgb[0] = rt.f32(rt.binary('*', rgb[0], __sc704, 1, 'float')); rgb[1] = rt.f32(rt.binary('*', rgb[1], __sc704, 1, 'float')); rgb[2] = rt.f32(rt.binary('*', rgb[2], __sc704, 1, 'float'))
     rgb.replace((rt.component_wise('mix', rt.construct(3, luma__vec3.call(rgb)), rgb, rt.f(0.69999998807907104))).map { |c| rt.f32(c) })
     return rgb
   end
@@ -396,7 +396,7 @@ run_pixel = lambda do |ctx, out|
       return
     end
     rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))
-    graded = rgb
+    graded = rt.copy(rgb, 'float')
     if rt.bool(rt.binary('==', _u_preset, rt.i(1)))
       graded.replace((lutTealOrange__vec3.call(rgb)).map { |c| rt.f32(c) })
     else

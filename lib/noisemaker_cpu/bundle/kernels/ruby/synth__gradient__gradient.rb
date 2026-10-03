@@ -117,7 +117,7 @@ run_pixel = lambda do |ctx, out|
     rotatedSt = rt.construct(2, rotate2D__vec2_float.call(st, angle))
     centered = rt.construct(2, ((st[0]) - (rt.f(0.5))), ((st[1]) - (rt.f(0.5))))
     centered = rt.assign_swizzle(centered, 'x', rt.binary('*', rt.swizzle(centered, 'x'), aspectRatio, 1, 'float'))
-    rotatedCentered = centered
+    rotatedCentered = rt.copy(centered, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
     rt.matrix_mult_assign(rotatedCentered, rt.construct(4, c, rt.unary('-', s), s, c), centered, 2)
@@ -148,7 +148,7 @@ run_pixel = lambda do |ctx, out|
       else
         if rt.bool(rt.binary('==', _u_gradientType, rt.i(2)))
           cornerSt = rt.construct(2, rotate2D__vec2_float.call(st, angle))
-          cTL = _u_color1
+          cTL = rt.copy(_u_color1, 'float')
           cTR = rt.construct(3, (rt.bool(rt.binary('>=', _u_colorCount, rt.i(3))) ? (_u_color2[0]) : (_u_color1[0])), (rt.bool(rt.binary('>=', _u_colorCount, rt.i(3))) ? (_u_color2[1]) : (_u_color1[1])), (rt.bool(rt.binary('>=', _u_colorCount, rt.i(3))) ? (_u_color2[2]) : (_u_color1[2])))
           cBL = rt.construct(3, (rt.bool(rt.binary('>=', _u_colorCount, rt.i(3))) ? (_u_color3[0]) : (_u_color2[0])), (rt.bool(rt.binary('>=', _u_colorCount, rt.i(3))) ? (_u_color3[1]) : (_u_color2[1])), (rt.bool(rt.binary('>=', _u_colorCount, rt.i(3))) ? (_u_color3[2]) : (_u_color2[2])))
           cBR = rt.construct(3, (rt.bool(rt.binary('>=', _u_colorCount, rt.i(4))) ? (_u_color4[0]) : (cBL[0])), (rt.bool(rt.binary('>=', _u_colorCount, rt.i(4))) ? (_u_color4[1]) : (cBL[1])), (rt.bool(rt.binary('>=', _u_colorCount, rt.i(4))) ? (_u_color4[2]) : (cBL[2])))

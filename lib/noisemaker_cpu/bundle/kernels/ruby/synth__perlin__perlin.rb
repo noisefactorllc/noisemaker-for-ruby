@@ -204,7 +204,7 @@ run_pixel = lambda do |ctx, out|
     _for2_first = nil; disp = nil; fi = nil; i = nil; nx = nil; ny = nil; p = nil; wFreq = nil
     wFreq = rt.component_wise('max', rt.f(0.10000000149011612), rt.binary('/', rt.f(100), rt.component_wise('max', wScale, rt.f(0.0099999997764825821)), 1, 'float'))
     disp = rt.binary('*', wIntensity, rt.f(0.019999999552965164), 1, 'float')
-    p = st
+    p = rt.copy(st, 'float')
     i = rt.i(0)
     _for2_first = true
     (0..1048575).each do |_for2|
@@ -234,7 +234,7 @@ run_pixel = lambda do |ctx, out|
     _for3_first = nil; disp = nil; fi = nil; i = nil; nx = nil; ny = nil; p = nil; wFreq = nil
     wFreq = rt.component_wise('max', rt.f(0.10000000149011612), rt.binary('/', rt.f(100), rt.component_wise('max', wScale, rt.f(0.0099999997764825821)), 1, 'float'))
     disp = rt.binary('*', wIntensity, rt.f(0.019999999552965164), 1, 'float')
-    p = st
+    p = rt.copy(st, 'float')
     i = rt.i(0)
     _for3_first = true
     (0..1048575).each do |_for3|
@@ -258,7 +258,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     __sc1984 = nil; __sc1992 = nil; __sc2000 = nil; _g = nil; b = nil; col = nil; freq = nil; globalCoord = nil; r = nil; res = nil; st = nil; timeAngle = nil; zWarp = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    res = _u_fullResolution
+    res = rt.copy(_u_fullResolution, 'float')
     if rt.bool(rt.binary('<', rt.swizzle(res, 'x'), rt.f(1)))
       res[0] = rt.f32(rt.f(1024)); res[1] = rt.f32(rt.f(1024))
     end

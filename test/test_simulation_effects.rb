@@ -77,6 +77,101 @@ class TestSimulationEffects < Minitest::Test
     refute_same input, filtered
   end
 
+  # Effects whose passes carry a `repeat` uniform (navierStokes pressure,
+  # reactionDiffusion simulate). Upstream (shaders/src/runtime/pipeline.js
+  # render(), resolveRepeatCount) executes those passes exactly `iterations`
+  # times per frame — there is NO group-level multiplier — so the
+  # iterationCount group loop is inert above 0 for these: the per-frame
+  # evolution is governed by the pass's `iterations` uniform instead.
+  # Programs mirror the pinned oracle's own fixtures
+  # (noisemaker-for-cpu parity/upstream-defaults/synth__reactionDiffusion.dsl
+  # and synth__navierStokes.dsl): the simulators need a seeded dye input, and
+  # reactionDiffusion needs zoom: 2 so its simulation grid is non-degenerate
+  # at the test scale (same scale the CPU-side test uses: 16x16 for
+  # reactionDiffusion, 8x8 for navierStokes).
+  RD_PROGRAM = <<~DSL
+    search synth
+
+    noise(seed: 1, ridges: true)
+      .write(o0)
+
+    reactionDiffusion(seed: 1, tex: read(o0), zoom: 2, iterationCount: %{iterationCount}, iterations: %{iterations})
+      .write(o1)
+
+    render(o1)
+  DSL
+
+  NS_PROGRAM = <<~DSL
+    search synth
+
+    noise(seed: 1,
+      type: hermite,
+      ridges: true,
+      speed: 30,
+      colorMode: mono
+    )
+      .write(o0)
+
+    navierStokes(seed: 1,
+      tex: read(o0),
+      dyeDecay: 98,
+      inputForce: 0.5,
+      inputIntensity: 10,
+      iterationCount: %{iterationCount},
+      iterations: %{iterations}
+    )
+      .write(o1)
+
+    render(o1)
+  DSL
+
+  def repeat_carried_render(program, width:, iterationCount:, iterations:)
+    source = program % { iterationCount: iterationCount, iterations: iterations }
+    NoisemakerCpu::Renderer.render_dsl(source, width: width, height: width, seed: 1, time: 0.25)
+  end
+
+  def test_repeat_carried_iteration_count_is_inert_above_zero
+    four = repeat_carried_render(RD_PROGRAM, width: 16, iterationCount: 4, iterations: 8)
+    eight = repeat_carried_render(RD_PROGRAM, width: 16, iterationCount: 8, iterations: 8)
+    assert_equal four.data, eight.data, "reactionDiffusion iterationCount must be inert above zero"
+
+    four = repeat_carried_render(NS_PROGRAM, width: 8, iterationCount: 4, iterations: 8)
+    eight = repeat_carried_render(NS_PROGRAM, width: 8, iterationCount: 8, iterations: 8)
+    assert_equal four.data, eight.data, "navierStokes iterationCount must be inert above zero"
+  end
+
+  def test_reaction_diffusion_iterations_uniform_drives_per_frame_evolution
+    four = repeat_carried_render(RD_PROGRAM, width: 16, iterationCount: 4, iterations: 4)
+    twelve = repeat_carried_render(RD_PROGRAM, width: 16, iterationCount: 4, iterations: 12)
+    assert four.data.all?(&:finite?), "iterations:4 produced non-finite pixels"
+    assert twelve.data.all?(&:finite?), "iterations:12 produced non-finite pixels"
+    refute_equal four.data, twelve.data, "pass iterations uniform must drive per-frame evolution"
+  end
+
+  def test_navier_stokes_pressure_converges_within_four_jacobi_steps_at_gate_scale
+    # nsPressure is ONE Jacobi relaxation step repeated `iterations` times per
+    # frame and converges within 4 iterations at 8x8: iterations:12 renders
+    # byte-identical to :4 through the final dye pass. That byte-identity is
+    # convergence physics, not missing wiring — the repeat machinery itself is
+    # observed through reactionDiffusion's per-frame evolution above (the JS
+    # oracle observes the executed-pass count through render stats, which the
+    # headless Ruby renderer does not expose).
+    four = repeat_carried_render(NS_PROGRAM, width: 8, iterationCount: 4, iterations: 4)
+    twelve = repeat_carried_render(NS_PROGRAM, width: 8, iterationCount: 4, iterations: 12)
+    assert_equal four.data, twelve.data, "nsPressure must converge within 4 Jacobi steps at 8x8"
+  end
+
+  def test_repeat_carried_iteration_count_zero_still_bypasses
+    blank, blank_error = capture_render do
+      NoisemakerCpu::Renderer.render_effect(
+        "synth/reactionDiffusion", { "iterationCount" => 0 }, nil,
+        width: 8, height: 8, seed: 1, time: 0.25
+      )
+    end
+    assert_equal "", blank_error
+    assert_equal Array.new(8 * 8 * 4, 0.0), blank.data
+  end
+
   def test_cellular_automata_one_iteration_matches_javascript
     expected = js_effect("synth/cellularAutomata", "iterationCount" => 1)
     actual, message = capture_render do

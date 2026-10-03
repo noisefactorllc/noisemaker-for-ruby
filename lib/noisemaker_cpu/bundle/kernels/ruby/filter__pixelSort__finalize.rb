@@ -47,8 +47,8 @@ run_pixel = lambda do |ctx, out|
     originalColor = rt.construct(4, (rt.texture(_u_originalTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')))[0], (rt.texture(_u_originalTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')))[1], (rt.texture(_u_originalTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')))[2], (rt.texture(_u_originalTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float')))[3])
     wrappedUV = rt.construct(2, applyWrap__vec2_vec2.call(srcCoord, texSize))
     sortedColor = rt.construct(4, (rt.texture(_u_inputTex, wrappedUV))[0], (rt.texture(_u_inputTex, wrappedUV))[1], (rt.texture(_u_inputTex, wrappedUV))[2], (rt.texture(_u_inputTex, wrappedUV))[3])
-    working_source = originalColor
-    working_sorted = sortedColor
+    working_source = rt.copy(originalColor, 'float')
+    working_sorted = rt.copy(sortedColor, 'float')
     cpu_vector_assignment_1 = rt.construct(4, 0.0)
     cpu_vector_assignment_2 = rt.construct(4, 0.0)
     if rt.bool(_u_darkest)

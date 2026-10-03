@@ -105,7 +105,7 @@ run_pixel = lambda do |ctx, out|
     value = rt.f(0)
     amplitude = rt.f(1)
     totalAmp = rt.f(0)
-    pOct = p
+    pOct = rt.copy(p, 'float')
     i = rt.i(0)
     _for3_first = true
     (0..1048575).each do |_for3|

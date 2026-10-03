@@ -219,8 +219,8 @@ run_pixel = lambda do |ctx, out|
   end
   sineNoise__vec2_float_float_float = lambda do |st, freq, s, blend|
     st = rt.copy(st, 'float')
-    __sc288 = nil; a = nil; b = nil; c = nil; r1 = nil; r2 = nil; x = nil; y = nil
-    __sc288 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc288, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc288, 1, 'float'))
+    __sc472 = nil; a = nil; b = nil; c = nil; r1 = nil; r2 = nil; x = nil; y = nil
+    __sc472 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc472, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc472, 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary('+', rt.swizzle(st, 'x'), s, 1, 'float'))
     a = blend
     b = blend
@@ -360,10 +360,10 @@ run_pixel = lambda do |ctx, out|
   end
   diamonds__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
-    __sc296 = nil
+    __sc480 = nil
     st.replace((rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.swizzle(_u_fullResolution, 'y'), 2, 'float')).map { |c| rt.f32(c) })
     st[0] = rt.f32(rt.binary('-', st[0], (((((rt.f(0.5)) * (rt.swizzle(_u_fullResolution, 'x')))) / (rt.swizzle(_u_fullResolution, 'y')))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
-    __sc296 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc296, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc296, 1, 'float'))
+    __sc480 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc480, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc480, 1, 'float'))
     return rt.binary('+', rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'x'), rt.f(3.1415927410125732), 1, 'float')), rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'y'), rt.f(3.1415927410125732), 1, 'float')), 1, 'float')
   end
   shape__vec2_int_float = lambda do |st, sides, blend|
@@ -522,10 +522,10 @@ run_pixel = lambda do |ctx, out|
   end
   pal__float = lambda do |_t|
     a = nil; b = nil; c = nil; color = nil; d = nil
-    a = _u_paletteOffset
-    b = _u_paletteAmp
-    c = _u_paletteFreq
-    d = _u_palettePhase
+    a = rt.copy(_u_paletteOffset, 'float')
+    b = rt.copy(_u_paletteAmp, 'float')
+    c = rt.copy(_u_paletteFreq, 'float')
+    d = rt.copy(_u_palettePhase, 'float')
     _t = rt.binary('+', rt.binary('*', _t, _u_repeatPalette, 1, 'float'), rt.binary('*', _u_rotatePalette, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float')
     color = rt.construct(3, ((a[0]) + (((b[0]) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831802368164062)) * (((((c[0]) * (_t))) + (d[0])))))))))), ((a[1]) + (((b[1]) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831802368164062)) * (((((c[1]) * (_t))) + (d[1])))))))))), ((a[2]) + (((b[2]) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831802368164062)) * (((((c[2]) * (_t))) + (d[2])))))))))))
     if rt.bool(rt.binary('==', _u_paletteMode, rt.i(1)))

@@ -913,18 +913,31 @@ class TestTranspilerPipeline < Minitest::Test
     assert_equal(-2900.0, out[0])
   end
 
-  def test_float_vector_declaration_preserves_identifier_alias
+  def test_float_vector_declaration_copies_identifier_initializer
+    # GLSL `vecN v = u;` copies. The JS generator emits a live alias unless
+    # its copy pass rewrites the statement; scripts/upstream/compile-glsl.js
+    # (CPU 390071f) now copies single-statement `var NAME = IDENT;`
+    # declarations inside function bodies, and the regenerated canonical
+    # kernels carry the copies — a later component-wise write to the copy
+    # (synth3d/fractal3d's mandelbulb `z[0] = ...` recurrence) must not
+    # destroy the initializer. This port mirrors the same value copy.
     src = transpile(<<~GLSL)
       out vec4 fragColor;
       void main() {
         vec3 original = vec3(1.0, 2.0, 3.0);
         vec3 alias = original;
-        fragColor = vec4(alias, 1.0);
+        alias[0] = 9.0;
+        fragColor = vec4(alias + original, 1.0);
       }
     GLSL
 
-    assert_includes src, "_alias = original"
+    assert_includes src, "_alias = rt.copy(original, 'float')"
     refute_includes src, "_alias = rt.construct(3, original)"
+    out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
+    # The copy keeps original at [1,2,3] while alias mutates to [9,2,3]:
+    # the sum is [10,4,6]. A live alias would destroy the initializer and
+    # collapse the sum to [18,4,6].
+    assert_equal [10.0, 4.0, 6.0, 1.0], out
   end
 
   def test_integer_vector_constructor_snaps_float_vector_expression

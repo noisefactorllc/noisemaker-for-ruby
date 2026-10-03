@@ -37,11 +37,11 @@ run_pixel = lambda do |ctx, out|
     globalUV = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     localUV = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((dims[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((dims[1]))))
     original = rt.construct(4, (rt.texture(_u_inputTex, localUV))[0], (rt.texture(_u_inputTex, localUV))[1], (rt.texture(_u_inputTex, localUV))[2], (rt.texture(_u_inputTex, localUV))[3])
-    current = original
+    current = rt.copy(original, 'float')
     if rt.bool(_u_ridges)
       current.replace((ridge_transform__vec4.call(current)).map { |c| rt.f32(c) })
     end
-    accum = current
+    accum = rt.copy(current, 'float')
     totalWeight = rt.f(1)
     weight = rt.f(0.5)
     scale = rt.f(2)

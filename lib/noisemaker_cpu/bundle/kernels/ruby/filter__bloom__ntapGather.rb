@@ -16,7 +16,7 @@ run_pixel = lambda do |ctx, out|
   g['GOLDEN_ANGLE'] = rt.f(2.3999631404876709)
   g['PI'] = rt.f(3.1415927410125732)
   main__void = lambda do
-    __sc320 = nil; _for0_first = nil; _t = nil; bloomAccum = nil; globalCoord = nil; i = nil; offset = nil; r = nil; radiusUV = nil; sampleColor = nil; sampleUV = nil; sigma = nil; tapCount = nil; texSize = nil; texelSize = nil; theta = nil; uv = nil; weight = nil; weightSum = nil
+    __sc504 = nil; _for0_first = nil; _t = nil; bloomAccum = nil; globalCoord = nil; i = nil; offset = nil; r = nil; radiusUV = nil; sampleColor = nil; sampleUV = nil; sigma = nil; tapCount = nil; texSize = nil; texelSize = nil; theta = nil; uv = nil; weight = nil; weightSum = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
     uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (texSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (texSize[1])))
@@ -50,7 +50,7 @@ run_pixel = lambda do |ctx, out|
       weightSum = rt.binary('+', weightSum, weight, 1, 'float')
     end
     if rt.bool(rt.binary('>', weightSum, rt.f(0)))
-      __sc320 = weightSum; bloomAccum[0] = rt.f32(rt.binary('/', bloomAccum[0], __sc320, 1, 'float')); bloomAccum[1] = rt.f32(rt.binary('/', bloomAccum[1], __sc320, 1, 'float')); bloomAccum[2] = rt.f32(rt.binary('/', bloomAccum[2], __sc320, 1, 'float'))
+      __sc504 = weightSum; bloomAccum[0] = rt.f32(rt.binary('/', bloomAccum[0], __sc504, 1, 'float')); bloomAccum[1] = rt.f32(rt.binary('/', bloomAccum[1], __sc504, 1, 'float')); bloomAccum[2] = rt.f32(rt.binary('/', bloomAccum[2], __sc504, 1, 'float'))
     end
     g['fragColor'].replace((rt.construct(4, bloomAccum, rt.f(1))).map { |c| rt.f32(c) })
   end

@@ -21983,7 +21983,8 @@
           "uniform": "layout",
           "ui": {
             "label": "layout",
-            "control": "dropdown"
+            "control": "dropdown",
+            "resetOnChange": true
           },
           "choices": {
             "random": 0,
@@ -22002,7 +22003,8 @@
           "uniform": "seed",
           "ui": {
             "label": "seed",
-            "control": "slider"
+            "control": "slider",
+            "resetOnChange": true
           }
         },
         "attrition": {
@@ -28879,7 +28881,8 @@
           "uniform": "density",
           "ui": {
             "label": "density",
-            "control": "slider"
+            "control": "slider",
+            "resetOnChange": true
           }
         },
         "colorMode": {

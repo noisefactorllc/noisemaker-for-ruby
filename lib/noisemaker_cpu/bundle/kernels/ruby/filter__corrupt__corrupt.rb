@@ -151,7 +151,7 @@ run_pixel = lambda do |ctx, out|
     rowHash = rt.construct(3, lineHash__float_float.call(row, _rt))
     prob = rt.binary('/', _u_intensity, rt.f(100), 1, 'float')
     isCorrupt = rt.binary('<', rt.swizzle(rowHash, 'x'), prob)
-    sampleUv = uv
+    sampleUv = rt.copy(uv, 'float')
     meltAmt = rt.binary('/', _u_melt, rt.f(100), 1, 'float')
     if rt.bool(rt.binary('>', meltAmt, rt.f(0)))
       sampleUv.replace((meltDisplace__vec2_float_float_float_float.call(sampleUv, meltAmt, _t, resX, rs)).map { |c| rt.f32(c) })

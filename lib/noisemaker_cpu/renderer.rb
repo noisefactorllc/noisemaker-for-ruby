@@ -284,6 +284,21 @@ module NoisemakerCpu
       repeat.nil? ? 1 : repeat.to_i
     end
 
+    # Upstream (shaders/src/runtime/pipeline.js render()) executes each pass
+    # exactly resolveRepeatCount(pass) times per frame — there is no group-level
+    # multiplier. For iterated effects whose passes carry a `repeat`
+    # (synth/navierStokes, synth/reactionDiffusion, synth3d/reactionDiffusion3d)
+    # the pass repeat IS the per-frame iteration count, so the group loop must
+    # not multiply it again; the documented iterationCount:0 bypass (zero
+    # passes run) is still honored. All other iterated effects keep the
+    # established `iterationCount` group loop (filter/temporalAberration
+    # requires N=60).
+    def self._iterated_count(definition, params)
+      requested = params["iterationCount"]
+      requested = [(requested || 1), 1].min if (definition["passes"] || []).any? { |pass| pass["repeat"] }
+      requested.is_a?(Numeric) ? requested : 60
+    end
+
     def self._pass_uniforms(pass, params, base_uniforms)
       uniforms = base_uniforms.dup
       (pass["uniforms"] || {}).each do |uniform_name, source|
@@ -587,7 +602,7 @@ module NoisemakerCpu
       state = _initialize_iteration_state(eff, params, inputs, seed, width, height)
       states = [state]
       group_resources = {}
-      count = state["params"]["iterationCount"] || 60
+      count = _iterated_count(eff, state["params"])
       if count <= 0
         unless typed
           input = inputs["inputTex"]
@@ -962,7 +977,7 @@ module NoisemakerCpu
         )
       end
 
-      count = owner_state["params"]["iterationCount"] || 60
+      count = _iterated_count(owner_step["definition"], owner_state["params"])
       if count <= 0 && group_input
         bundle = _chain_bundle(group_input)
         return group_input.clone unless _chain_bundle?(group_input)

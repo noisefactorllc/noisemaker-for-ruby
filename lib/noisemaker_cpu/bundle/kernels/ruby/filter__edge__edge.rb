@@ -91,7 +91,7 @@ run_pixel = lambda do |ctx, out|
     return rt.construct(3, (rt.bool(rt.swizzle(crossing, 'r')) ? (rt.f(0)) : (rt.f(1))), (rt.bool(rt.swizzle(crossing, 'g')) ? (rt.f(0)) : (rt.f(1))), (rt.bool(rt.swizzle(crossing, 'b')) ? (rt.f(0)) : (rt.f(1))))
   end
   main__void = lambda do
-    __hoist440 = nil; __sc448 = nil; __sc456 = nil; _for0_first = nil; _for1_first = nil; blendMode = nil; blended = nil; centerSample = nil; centerWeight = nil; conv = nil; doInvert = nil; dx = nil; dy = nil; edge = nil; edgeColor = nil; kernelType = nil; localUV = nil; m = nil; mask = nil; origColor = nil; radius = nil; resolution = nil; s = nil; sampleCoord = nil; texSize = nil; texelSize = nil; thresh = nil; useLuma = nil; w = nil
+    __hoist624 = nil; __sc632 = nil; __sc640 = nil; _for0_first = nil; _for1_first = nil; blendMode = nil; blended = nil; centerSample = nil; centerWeight = nil; conv = nil; doInvert = nil; dx = nil; dy = nil; edge = nil; edgeColor = nil; kernelType = nil; localUV = nil; m = nil; mask = nil; origColor = nil; radius = nil; resolution = nil; s = nil; sampleCoord = nil; texSize = nil; texelSize = nil; thresh = nil; useLuma = nil; w = nil
     texSize = rt.texture_size(_u_inputTex)
     resolution = rt.construct(2, rt.construct(2, texSize))
     texelSize = rt.construct(2, ((rt.f(1)) / (resolution[0])), ((rt.f(1)) / (resolution[1])))
@@ -141,7 +141,7 @@ run_pixel = lambda do |ctx, out|
           localUV = rt.construct(2, ((sampleCoord[0]) * (texelSize[0])), ((sampleCoord[1]) * (texelSize[1])))
           s = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, localUV), 'r'), rt.swizzle(rt.texture(_u_inputTex, localUV), 'g'), rt.swizzle(rt.texture(_u_inputTex, localUV), 'b'))
           if rt.bool(useLuma)
-            __hoist440 = rt.binary('*', rt.construct(3, rt.dot(s, g['LUMA'])), w, 3, 'float'); conv[0] = rt.f32(rt.binary('+', conv[0], __hoist440[0], 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], __hoist440[1], 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], __hoist440[2], 1, 'float'))
+            __hoist624 = rt.binary('*', rt.construct(3, rt.dot(s, g['LUMA'])), w, 3, 'float'); conv[0] = rt.f32(rt.binary('+', conv[0], __hoist624[0], 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], __hoist624[1], 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], __hoist624[2], 1, 'float'))
           else
             conv[0] = rt.f32(rt.binary('+', conv[0], ((s[0]) * (w)), 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], ((s[1]) * (w)), 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], ((s[2]) * (w)), 1, 'float'))
           end
@@ -154,7 +154,7 @@ run_pixel = lambda do |ctx, out|
       end
       conv[0] = rt.f32(rt.binary('+', conv[0], ((centerSample[0]) * (centerWeight)), 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], ((centerSample[1]) * (centerWeight)), 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], ((centerSample[2]) * (centerWeight)), 1, 'float'))
     end
-    __sc448 = rt.binary('/', _u_amount, rt.f(50), 1, 'float'); conv[0] = rt.f32(rt.binary('*', conv[0], __sc448, 1, 'float')); conv[1] = rt.f32(rt.binary('*', conv[1], __sc448, 1, 'float')); conv[2] = rt.f32(rt.binary('*', conv[2], __sc448, 1, 'float'))
+    __sc632 = rt.binary('/', _u_amount, rt.f(50), 1, 'float'); conv[0] = rt.f32(rt.binary('*', conv[0], __sc632, 1, 'float')); conv[1] = rt.f32(rt.binary('*', conv[1], __sc632, 1, 'float')); conv[2] = rt.f32(rt.binary('*', conv[2], __sc632, 1, 'float'))
     conv.replace((rt.component_wise('clamp', conv, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     edge = rt.f(0.0)
     mask = rt.f(0.0)
@@ -168,7 +168,7 @@ run_pixel = lambda do |ctx, out|
         edge = rt.dot(conv, g['LUMA'])
       end
       mask = rt.component_wise('smoothstep', rt.binary('-', thresh, rt.f(0.0099999997764825821), 1, 'float'), rt.binary('+', thresh, rt.f(0.0099999997764825821), 1, 'float'), edge)
-      __sc456 = mask; conv[0] = rt.f32(rt.binary('*', conv[0], __sc456, 1, 'float')); conv[1] = rt.f32(rt.binary('*', conv[1], __sc456, 1, 'float')); conv[2] = rt.f32(rt.binary('*', conv[2], __sc456, 1, 'float'))
+      __sc640 = mask; conv[0] = rt.f32(rt.binary('*', conv[0], __sc640, 1, 'float')); conv[1] = rt.f32(rt.binary('*', conv[1], __sc640, 1, 'float')); conv[2] = rt.f32(rt.binary('*', conv[2], __sc640, 1, 'float'))
     end
     if rt.bool(doInvert)
       conv.replace((rt.binary('-', rt.f(1), conv, 3, 'float')).map { |c| rt.f32(c) })

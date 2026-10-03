@@ -71,7 +71,7 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('*', accum, rt.f(0.20000000298023224), 1, 'float')
   end
   main__void = lambda do
-    __hoist1624 = nil; agentId = nil; agentRand = nil; alive = nil; attritionRate = nil; candidate = nil; coord = nil; frameSeed = nil; gridDims = nil; here = nil; inputCoord = nil; inputDims = nil; inputDir = nil; inputVal = nil; inputW = nil; local = nil; nearby = nil; needsRespawn = nil; pos = nil; proximity = nil; randomDir = nil; rgba = nil; seed = nil; stateDims = nil; stepDir = nil; stepSize = nil; stuck = nil; texel = nil; vel = nil; xyz = nil
+    __hoist1808 = nil; agentId = nil; agentRand = nil; alive = nil; attritionRate = nil; candidate = nil; coord = nil; frameSeed = nil; gridDims = nil; here = nil; inputCoord = nil; inputDims = nil; inputDir = nil; inputVal = nil; inputW = nil; local = nil; nearby = nil; needsRespawn = nil; pos = nil; proximity = nil; randomDir = nil; rgba = nil; seed = nil; stateDims = nil; stepDir = nil; stepSize = nil; stuck = nil; texel = nil; vel = nil; xyz = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateDims = rt.texture_size(_u_xyzTex)
     xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
@@ -99,7 +99,7 @@ run_pixel = lambda do |ctx, out|
     proximity = rt.component_wise('smoothstep', rt.f(0.014999999664723873), rt.f(0.11999999731779099), local)
     randomDir = rt.construct(2, (begin _retc, seed = randomDirection__float.call(seed); _retc end))
     inputW = rt.binary('/', _u_inputWeight, rt.f(100), 1, 'float')
-    stepDir = randomDir
+    stepDir = rt.copy(randomDir, 'float')
     inputCoord = rt.construct(2, 0.0, 'int')
     inputDims = rt.construct(2, 0.0, 'int')
     inputDir = rt.construct(2, 0.0)
@@ -115,7 +115,7 @@ run_pixel = lambda do |ctx, out|
       end
     end
     stepSize = rt.binary('*', rt.binary('*', rt.binary('/', _u_stride, rt.f(10), 1, 'float'), texel, 1, 'float'), rt.component_wise('mix', rt.f(3), rt.f(0.5), proximity), 1, 'float')
-    __hoist1624 = rt.binary('*', (begin _retc, seed = randomDirection__float.call(seed); _retc end), rt.f(0.30000001192092896), 2, 'float'); stepDir[0] = rt.f32(rt.binary('+', stepDir[0], __hoist1624[0], 1, 'float')); stepDir[1] = rt.f32(rt.binary('+', stepDir[1], __hoist1624[1], 1, 'float'))
+    __hoist1808 = rt.binary('*', (begin _retc, seed = randomDirection__float.call(seed); _retc end), rt.f(0.30000001192092896), 2, 'float'); stepDir[0] = rt.f32(rt.binary('+', stepDir[0], __hoist1808[0], 1, 'float')); stepDir[1] = rt.f32(rt.binary('+', stepDir[1], __hoist1808[1], 1, 'float'))
     stepDir.replace((rt.normalize(stepDir)).map { |c| rt.f32(c) })
     candidate = rt.construct(2, wrap01__vec2.call(rt.construct(2, ((pos[0]) + (((stepDir[0]) * (stepSize)))), ((pos[1]) + (((stepDir[1]) * (stepSize)))))))
     here = sampleGrid__vec2.call(candidate)

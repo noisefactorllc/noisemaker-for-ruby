@@ -554,6 +554,20 @@ module NoisemakerCpu
               elsif Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"] && dc["init"]["k"] != "id"
                 init_code = "rt.construct(#{t["width"]}, #{init_code})"
               end
+              # GLSL `vecN v = u;` copies. The JS generator emits a live alias
+              # (`var z = pos;`) unless its copy pass rewrites the statement;
+              # scripts/upstream/compile-glsl.js (CPU 390071f) now copies
+              # single-statement `var NAME = IDENT;` declarations inside
+              # function bodies (scalars and self-references pass through,
+              # multi-declarator lines do not match), and the regenerated
+              # canonical kernels carry the copies. Mirror the same value copy
+              # here for vector/matrix declarations: a later component-wise
+              # write to the copy (mandelbulb's `z[0] = ...` recurrence in
+              # synth3d/fractal3d) must not destroy the initializer.
+              if s["declarators"].length == 1 && dc["init"]["k"] == "id" &&
+                 dc["init"]["name"] != dc["name"] && (Codegen.width_of(t) > 1 || t["mat"])
+                init_code = "rt.copy(#{init_code}, #{Codegen.rq(Codegen.base_of(t))})"
+              end
               out << "#{pad}#{e["py"]} = #{init_code}"
             elsif !dc["array"].nil?
               n_code = dc["array"].is_a?(Hash) ? expr(dc["array"], scope)[0] : "0"

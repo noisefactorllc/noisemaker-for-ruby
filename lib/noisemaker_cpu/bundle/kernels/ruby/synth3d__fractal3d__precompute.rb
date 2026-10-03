@@ -22,7 +22,7 @@ run_pixel = lambda do |ctx, out|
   mandelbulb__vec3_float_int_float = lambda do |pos, n, maxIter, bail|
     pos = rt.copy(pos, 'float')
     _for0_first = nil; dist = nil; dr = nil; i = nil; iter = nil; newPhi = nil; newTheta = nil; phi = nil; r = nil; theta = nil; trap = nil; z = nil; zr = nil
-    z = pos
+    z = rt.copy(pos, 'float')
     dr = rt.f(1)
     r = rt.f(0)
     trap = rt.f(10000000000)
@@ -59,7 +59,7 @@ run_pixel = lambda do |ctx, out|
     pos = rt.copy(pos, 'float')
     c = rt.copy(c, 'float')
     _for1_first = nil; dist = nil; dr = nil; i = nil; iter = nil; newPhi = nil; newTheta = nil; phi = nil; r = nil; theta = nil; trap = nil; z = nil; zr = nil
-    z = pos
+    z = rt.copy(pos, 'float')
     dr = rt.f(1)
     r = rt.f(0)
     trap = rt.f(10000000000)
@@ -99,7 +99,7 @@ run_pixel = lambda do |ctx, out|
   mandelcube__vec3_float_int_float = lambda do |pos, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
     __sc2136 = nil; __sc2144 = nil; _for2_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
-    z = pos
+    z = rt.copy(pos, 'float')
     dr = rt.f(1)
     trap = rt.f(10000000000)
     iter = rt.f(0)
@@ -148,7 +148,7 @@ run_pixel = lambda do |ctx, out|
     pos = rt.copy(pos, 'float')
     c = rt.copy(c, 'float')
     __sc2152 = nil; __sc2160 = nil; _for3_first = nil; dist = nil; dr = nil; factor = nil; fixedR2 = nil; fixedRadius = nil; foldingLimit = nil; i = nil; iter = nil; minR2 = nil; minRadius = nil; r = nil; r2 = nil; trap = nil; z = nil
-    z = pos
+    z = rt.copy(pos, 'float')
     dr = rt.f(1)
     trap = rt.f(10000000000)
     iter = rt.f(0)

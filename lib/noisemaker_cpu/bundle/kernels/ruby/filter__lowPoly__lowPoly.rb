@@ -149,12 +149,12 @@ run_pixel = lambda do |ctx, out|
     borderMask = rt.f(0.0)
     modeResult = rt.construct(3, 0.0)
     if rt.bool((rt.bool(rt.binary('>', _u__LP_BORDER, rt.i(0))) || rt.bool(rt.binary('>', _u__LP_LIGHT, rt.i(0))) ? 1 : 0))
-      modeResult = result
+      modeResult = rt.copy(result, 'float')
       borderMask = rt.f(0)
     end
     if rt.bool(rt.binary('>', _u__LP_BORDER, rt.i(0)))
-      borderNearestPoint = nearestPoint
-      borderNearestCell = nearestCell
+      borderNearestPoint = rt.copy(nearestPoint, 'float')
+      borderNearestCell = rt.copy(nearestCell, 'int')
       borderNearestDist = minDist
       dy = rt.unary('-', rt.i(2))
       _for2_first = true

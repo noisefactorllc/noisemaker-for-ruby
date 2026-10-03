@@ -27,7 +27,7 @@ run_pixel = lambda do |ctx, out|
     angle = nil; aspect = nil; size = nil
     rot = map__float_float_float_float_float.call(rot, rt.unary('-', rt.f(180)), rt.f(180), rt.f(0.5), rt.unary('-', rt.f(0.5)))
     angle = rt.binary('*', rt.binary('*', rot, rt.f(6.2831854820251465), 1, 'float'), rt.unary('-', rt.f(1)), 1, 'float')
-    size = _u_imageSize
+    size = rt.copy(_u_imageSize, 'float')
     aspect = rt.binary('/', rt.swizzle(size, 'x'), rt.swizzle(size, 'y'), 1, 'float')
     st[0] = rt.f32(rt.binary('-', st[0], (((rt.f(0.5)) * (aspect))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
     rt.matrix_mult_assign(st, rt.construct(4, rt.component_wise('cos', angle), rt.unary('-', rt.component_wise('sin', angle)), rt.component_wise('sin', angle), rt.component_wise('cos', angle)), st, 2)
@@ -72,7 +72,7 @@ run_pixel = lambda do |ctx, out|
   getImage__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
     __sc1944 = nil; scale = nil; size = nil; text = nil
-    size = _u_imageSize
+    size = rt.copy(_u_imageSize, 'float')
     st.replace((rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), size, 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.f(1), rt.swizzle(st, 'y'), 1, 'float'))
     scale = rt.binary('/', rt.f(100), _u_scaleAmt, 1, 'float')

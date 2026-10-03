@@ -56,7 +56,7 @@ run_pixel = lambda do |ctx, out|
       return
     end
     texSize = rt.texture_size(_u_inputTex)
-    tileOrigin = fragCoord
+    tileOrigin = rt.copy(fragCoord, 'int')
     minValue = g['F32_MAX']
     maxValue = g['F32_MIN']
     oy = rt.i(0)

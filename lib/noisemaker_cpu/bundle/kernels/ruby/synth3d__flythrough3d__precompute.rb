@@ -111,7 +111,7 @@ run_pixel = lambda do |ctx, out|
     pos = rt.copy(pos, 'float')
     _for0_first = nil; dr = nil; i = nil; iter = nil; newPhi = nil; newTheta = nil; phi = nil; r = nil; result = nil; theta = nil; trap = nil; z = nil; zr = nil
     result = rt.construct(3, 0.0)
-    z = pos
+    z = rt.copy(pos, 'float')
     dr = rt.f(1)
     r = rt.f(0)
     trap = rt.f(10000000000)
@@ -154,7 +154,7 @@ run_pixel = lambda do |ctx, out|
     pos = rt.copy(pos, 'float')
     __sc2120 = nil; __sc2128 = nil; _for1_first = nil; dr = nil; factor = nil; fixedRadius2 = nil; foldLimit = nil; i = nil; iter = nil; minRadius2 = nil; planeTrap = nil; r = nil; r2 = nil; result = nil; trap = nil; z = nil
     result = rt.construct(3, 0.0)
-    z = pos
+    z = rt.copy(pos, 'float')
     dr = rt.f(1)
     trap = rt.f(10000000000)
     iter = rt.f(0)

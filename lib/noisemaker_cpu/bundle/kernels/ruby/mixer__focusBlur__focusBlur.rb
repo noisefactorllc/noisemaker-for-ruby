@@ -27,7 +27,7 @@ run_pixel = lambda do |ctx, out|
   end
   applyFocusBlur__sampler2D_sampler2D_vec2 = lambda do |sceneTex, depthTex, uv|
     uv = rt.copy(uv, 'float')
-    _GOLDEN = nil; __hoist1592 = nil; _for0_first = nil; blurRadius = nil; color = nil; depth = nil; depthSample = nil; i = nil; offset = nil; r = nil; theta = nil
+    _GOLDEN = nil; __hoist1776 = nil; _for0_first = nil; blurRadius = nil; color = nil; depth = nil; depthSample = nil; i = nil; offset = nil; r = nil; theta = nil
     depthSample = rt.construct(4, (rt.texture(depthTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(depthTex)), 2, 'float')))[0], (rt.texture(depthTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(depthTex)), 2, 'float')))[1], (rt.texture(depthTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(depthTex)), 2, 'float')))[2], (rt.texture(depthTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(depthTex)), 2, 'float')))[3])
     depth = getLuminosity__vec3.call(rt.swizzle(depthSample, 'rgb'))
     blurRadius = rt.binary('*', computeBlurFactor__float.call(depth), _u_sampleBias, 1, 'float')
@@ -46,7 +46,7 @@ run_pixel = lambda do |ctx, out|
       r = rt.component_wise('sqrt', rt.binary('/', rt.construct(1, i), rt.f(64), 1, 'float'))
       theta = rt.binary('*', rt.construct(1, i), _GOLDEN, 1, 'float')
       offset = rt.construct(2, (((((((rt.component_wise('cos', theta))) * (r))) * (blurRadius))) / (_u_resolution[0])), (((((((rt.component_wise('sin', theta))) * (r))) * (blurRadius))) / (_u_resolution[1])))
-      __hoist1592 = rt.texture(sceneTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, offset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(sceneTex)), 2, 'float')); color[0] = rt.f32(rt.binary('+', color[0], __hoist1592[0], 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], __hoist1592[1], 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], __hoist1592[2], 1, 'float')); color[3] = rt.f32(rt.binary('+', color[3], __hoist1592[3], 1, 'float'))
+      __hoist1776 = rt.texture(sceneTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, offset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(sceneTex)), 2, 'float')); color[0] = rt.f32(rt.binary('+', color[0], __hoist1776[0], 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], __hoist1776[1], 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], __hoist1776[2], 1, 'float')); color[3] = rt.f32(rt.binary('+', color[3], __hoist1776[3], 1, 'float'))
     end
     return rt.construct(4, ((color[0]) / (rt.f(64))), ((color[1]) / (rt.f(64))), ((color[2]) / (rt.f(64))), ((color[3]) / (rt.f(64))))
   end

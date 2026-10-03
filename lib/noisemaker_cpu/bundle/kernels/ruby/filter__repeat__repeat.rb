@@ -20,7 +20,7 @@ run_pixel = lambda do |ctx, out|
     globalCoord = nil; globalUV = nil; localUV = nil; st = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     globalUV = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    st = globalUV
+    st = rt.copy(globalUV, 'float')
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     st.replace((rt.binary('+', rt.binary('*', st, rt.construct(2, _u_x, _u_y), 2, 'float'), rt.construct(2, rt.binary('*', _u_offsetX, _u_aspect, 1, 'float'), _u_offsetY), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary('/', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))

@@ -33,7 +33,7 @@ run_pixel = lambda do |ctx, out|
     return rt.texture(_u_inputTex, localUV)
   end
   main__void = lambda do
-    __sc888 = nil; _for0_first = nil; _t = nil; dispPixels = nil; f = nil; globalCoord = nil; i = nil; isTileRendering = nil; maxDispPixels = nil; prevF = nil; prevUV = nil; rayUV = nil; shift = nil; stepSize = nil; uv = nil; v = nil; w = nil
+    __sc1072 = nil; _for0_first = nil; _t = nil; dispPixels = nil; f = nil; globalCoord = nil; i = nil; isTileRendering = nil; maxDispPixels = nil; prevF = nil; prevUV = nil; rayUV = nil; shift = nil; stepSize = nil; uv = nil; v = nil; w = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     v = rt.construct(3, (rt.bool(rt.binary('>', rt.length(_u_direction), rt.f(0))) ? ((rt.normalize(_u_direction))[0]) : ((rt.f(0)))), (rt.bool(rt.binary('>', rt.length(_u_direction), rt.f(0))) ? ((rt.normalize(_u_direction))[1]) : ((rt.f(0)))), (rt.bool(rt.binary('>', rt.length(_u_direction), rt.f(0))) ? ((rt.normalize(_u_direction))[2]) : ((rt.f(1)))))
@@ -45,7 +45,7 @@ run_pixel = lambda do |ctx, out|
       maxDispPixels = rt.f(256)
       dispPixels = rt.length(rt.binary('*', shift, _u_fullResolution, 2, 'float'))
       if rt.bool(rt.binary('>', dispPixels, maxDispPixels))
-        __sc888 = rt.binary('/', maxDispPixels, dispPixels, 1, 'float'); shift[0] = rt.f32(rt.binary('*', shift[0], __sc888, 1, 'float')); shift[1] = rt.f32(rt.binary('*', shift[1], __sc888, 1, 'float'))
+        __sc1072 = rt.binary('/', maxDispPixels, dispPixels, 1, 'float'); shift[0] = rt.f32(rt.binary('*', shift[0], __sc1072, 1, 'float')); shift[1] = rt.f32(rt.binary('*', shift[1], __sc1072, 1, 'float'))
       end
     end
     _t = rt.f(1)
@@ -65,7 +65,7 @@ run_pixel = lambda do |ctx, out|
           break
         end
         prevF = f
-        prevUV = rayUV
+        prevUV = rt.copy(rayUV, 'float')
         _t = rt.binary('-', rt.f(1), rt.binary('*', rt.construct(1, i), stepSize, 1, 'float'), 1, 'float')
         rayUV.replace((rt.binary('+', uv, rt.binary('*', shift, rt.binary('-', _t, _u_pivot, 1, 'float'), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
         f = rt.binary('-', _t, getHeight__vec2.call(rayUV), 1, 'float')

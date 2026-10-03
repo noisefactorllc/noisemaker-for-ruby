@@ -11,7 +11,7 @@ run_pixel = lambda do |ctx, out|
   _u_smoothness = u.key?('smoothness') ? u['smoothness'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
-    __hoist1120 = nil; _for0_first = nil; _for1_first = nil; blurred = nil; src = nil; sum = nil; texel = nil; uv = nil; w = nil; wsum = nil; x = nil; y = nil
+    __hoist1304 = nil; _for0_first = nil; _for1_first = nil; blurred = nil; src = nil; sum = nil; texel = nil; uv = nil; w = nil; wsum = nil; x = nil; y = nil
     uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
     texel = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
     src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
@@ -38,7 +38,7 @@ run_pixel = lambda do |ctx, out|
           break
         end
         w = rt.binary('*', rt.binary('-', rt.f(2), rt.component_wise('abs', rt.construct(1, x)), 1, 'float'), rt.binary('-', rt.f(2), rt.component_wise('abs', rt.construct(1, y)), 1, 'float'), 1, 'float')
-        __hoist1120 = rt.binary('*', rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.construct(2, rt.construct(1, x), rt.construct(1, y)), texel, 2, 'float'), 2, 'float')), w, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1120[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1120[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1120[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1120[3], 1, 'float'))
+        __hoist1304 = rt.binary('*', rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.construct(2, rt.construct(1, x), rt.construct(1, y)), texel, 2, 'float'), 2, 'float')), w, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1304[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1304[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1304[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1304[3], 1, 'float'))
         wsum = rt.binary('+', wsum, w, 1, 'float')
       end
     end

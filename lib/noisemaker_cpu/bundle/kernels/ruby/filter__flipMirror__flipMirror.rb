@@ -15,7 +15,7 @@ run_pixel = lambda do |ctx, out|
     texSize = rt.texture_size(_u_inputTex)
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     globalUV = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    warpedUV = globalUV
+    warpedUV = rt.copy(globalUV, 'float')
     if rt.bool(rt.binary('==', _u_flipMode, rt.i(1)))
       warpedUV = rt.assign_swizzle(warpedUV, 'x', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'x'), 1, 'float'))
       warpedUV = rt.assign_swizzle(warpedUV, 'y', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'y'), 1, 'float'))

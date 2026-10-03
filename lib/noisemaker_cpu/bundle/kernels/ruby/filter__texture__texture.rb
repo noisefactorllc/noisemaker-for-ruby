@@ -98,7 +98,7 @@ run_pixel = lambda do |ctx, out|
   height_paper__vec2_vec2_float = lambda do |uv, base_freq, motion|
     uv = rt.copy(uv, 'float')
     base_freq = rt.copy(base_freq, 'float')
-    __sc1344 = nil; _for0_first = nil; accum = nil; amplitude = nil; freq = nil; octave = nil; ridged = nil; salt = nil; samp = nil; total = nil
+    __sc1528 = nil; _for0_first = nil; accum = nil; amplitude = nil; freq = nil; octave = nil; ridged = nil; salt = nil; samp = nil; total = nil
     freq = rt.construct(2, rt.component_wise('max', base_freq[0], (rt.f(1))), rt.component_wise('max', base_freq[1], (rt.f(1))))
     amplitude = rt.f(0.5)
     accum = rt.f(0)
@@ -118,7 +118,7 @@ run_pixel = lambda do |ctx, out|
       ridged = rt.binary('-', rt.f(1), rt.component_wise('abs', rt.binary('-', rt.binary('*', samp, rt.f(2), 1, 'float'), rt.f(1), 1, 'float')), 1, 'float')
       accum = rt.binary('+', accum, rt.binary('*', ridged, amplitude, 1, 'float'), 1, 'float')
       total = rt.binary('+', total, amplitude, 1, 'float')
-      __sc1344 = rt.f(2); freq[0] = rt.f32(rt.binary('*', freq[0], __sc1344, 1, 'float')); freq[1] = rt.f32(rt.binary('*', freq[1], __sc1344, 1, 'float'))
+      __sc1528 = rt.f(2); freq[0] = rt.f32(rt.binary('*', freq[0], __sc1528, 1, 'float')); freq[1] = rt.f32(rt.binary('*', freq[1], __sc1528, 1, 'float'))
       amplitude = rt.binary('*', amplitude, rt.f(0.55000001192092896), 1, 'float')
     end
     return (rt.bool(rt.binary('>', total, rt.f(0))) ? (clamp01__float.call(rt.binary('/', accum, total, 1, 'float'))) : (clamp01__float.call(accum)))
@@ -126,7 +126,7 @@ run_pixel = lambda do |ctx, out|
   height_stucco__vec2_vec2_float = lambda do |uv, base_freq, motion|
     uv = rt.copy(uv, 'float')
     base_freq = rt.copy(base_freq, 'float')
-    __sc1352 = nil; _for1_first = nil; accum = nil; amplitude = nil; freq = nil; octave = nil; salt = nil; samp = nil; total = nil
+    __sc1536 = nil; _for1_first = nil; accum = nil; amplitude = nil; freq = nil; octave = nil; salt = nil; samp = nil; total = nil
     freq = rt.construct(2, rt.component_wise('max', base_freq[0], (rt.f(1))), rt.component_wise('max', base_freq[1], (rt.f(1))))
     amplitude = rt.f(0.5)
     accum = rt.f(0)
@@ -145,7 +145,7 @@ run_pixel = lambda do |ctx, out|
       samp = value_noise__vec2_vec2_float_uint.call(uv, freq, rt.binary('+', motion, rt.binary('*', rt.construct(1, octave), rt.f(0.37000000476837158), 1, 'float'), 1, 'float'), salt)
       accum = rt.binary('+', accum, rt.binary('*', samp, amplitude, 1, 'float'), 1, 'float')
       total = rt.binary('+', total, amplitude, 1, 'float')
-      __sc1352 = rt.f(2); freq[0] = rt.f32(rt.binary('*', freq[0], __sc1352, 1, 'float')); freq[1] = rt.f32(rt.binary('*', freq[1], __sc1352, 1, 'float'))
+      __sc1536 = rt.f(2); freq[0] = rt.f32(rt.binary('*', freq[0], __sc1536, 1, 'float')); freq[1] = rt.f32(rt.binary('*', freq[1], __sc1536, 1, 'float'))
       amplitude = rt.binary('*', amplitude, rt.f(0.5), 1, 'float')
     end
     return (rt.bool(rt.binary('>', total, rt.f(0))) ? (clamp01__float.call(rt.binary('/', accum, total, 1, 'float'))) : (clamp01__float.call(accum)))

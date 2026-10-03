@@ -64,7 +64,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     __sc1976 = nil; _t = nil; freq = nil; globalCoord = nil; res = nil; rotRad = nil; scaledTime = nil; scrollOffset = nil; scrolledPos = nil; spatialPhase = nil; spatialPos = nil; st = nil; timeNoise = nil; timePhase = nil; val = nil; valueNoise = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    res = _u_fullResolution
+    res = rt.copy(_u_fullResolution, 'float')
     if rt.bool(rt.binary('<', rt.swizzle(res, 'x'), rt.f(1)))
       res[0] = rt.f32(rt.f(1024)); res[1] = rt.f32(rt.f(1024))
     end
