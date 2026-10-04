@@ -43,6 +43,8 @@
 #   arithmetic explicitly numifies through _to_number where Perl's operators
 #   would do so implicitly.
 
+require_relative "automation"
+
 module NoisemakerCpu
   module DSL
     KEYWORDS = %w[search let render true false].each_with_object({}) { |k, h| h[k] = true }.freeze
@@ -515,6 +517,14 @@ module NoisemakerCpu
             return { "kind" => "vector", "width" => Integer(name[-1], 10), "values" => values,
                       "loc" => DSL._location(token) }
           end
+          # `osc(...)` is the one value-position call the DSL supports (oscillator
+          # automation, matching upstream's parser); it parses as a regular call and
+          # the compiler turns it into an Oscillator automation value. Every other
+          # call in a value position stays a parse error via the dangling '('.
+          if name == "osc" && peek["lexeme"] == "("
+            @current -= 1
+            return parse_call
+          end
           path = name
           while match(".")
             path += ".#{identifier('Expected enum member')['lexeme']}"
@@ -550,6 +560,90 @@ module NoisemakerCpu
     # into value params (handed to render_effect, which coerces + fills
     # defaults) and surface bindings, applying each surface param's own
     # default ("inputTex"/"none") exactly as the JS engine does.
+
+    # Mirrors upstream std_enums.js oscKind (sine..noise2d; noise/noise1d alias
+    # kind 5, noise2d is the two-stage periodic noise added upstream at
+    # eabb537e). Port of the CPU compiler's compileOscillator (dsl/compiler.js).
+    OSC_KINDS = {
+      "sine" => 0, "tri" => 1, "saw" => 2, "sawInv" => 3, "square" => 4,
+      "noise" => 5, "noise1d" => 5, "noise2d" => 6,
+    }.freeze
+    OSC_PARAM_ORDER = %w[type min max speed offset seed].freeze
+    MAX_AUTOMATION_DEPTH = 8
+
+    # Compiles an `osc(...)` value-position call into the automation value shape the
+    # runtime evaluator consumes ({"type" => "Oscillator", "oscType" =>, "min" =>,
+    # "max" =>, "speed" =>, "offset" =>, "seed" =>}), mirroring upstream's parser
+    # transformOscInvocation plus the validator's compileAutomationDescriptor:
+    # positional args fill type/min/max/speed/offset/seed in order, kwargs select
+    # by name, every field defaults as upstream defaults, min/max clamp into
+    # [0,1], nested osc() fields are allowed, and the oscType resolves from an
+    # integer 0..6 or an oscKind name (bare or oscKind-qualified). Invalid
+    # programs raise a located Error, as everywhere else in this compiler.
+    def self._compile_oscillator(call, bindings, depth)
+      if depth > MAX_AUTOMATION_DEPTH
+        _throw("Automation nesting exceeds the maximum depth of #{MAX_AUTOMATION_DEPTH}", call["loc"])
+      end
+      fields = {}
+      if call["argMode"] == "named"
+        call["args"].each do |arg|
+          unless OSC_PARAM_ORDER.include?(arg["name"])
+            _throw("osc() unknown parameter '#{arg['name']}'; valid: #{OSC_PARAM_ORDER.join(', ')}", call["loc"])
+          end
+          fields[arg["name"]] = arg["value"]
+        end
+      else
+        call["args"].each_with_index do |arg, index|
+          fields[OSC_PARAM_ORDER[index]] = arg["value"] if index < OSC_PARAM_ORDER.length
+        end
+      end
+
+      raw_type = fields.key?("type") ? _evaluate_value(fields["type"], bindings, depth + 1) : 0
+      osc_type =
+        if raw_type.is_a?(Numeric) && raw_type.to_f.finite? && raw_type == raw_type.to_i
+          unless raw_type.to_i >= 0 && raw_type.to_i <= 6
+            _throw("osc() type must resolve to a supported oscKind value (0-6)", call["loc"])
+          end
+          raw_type.to_i
+        elsif raw_type.is_a?(String)
+          kind_name = raw_type.start_with?("oscKind.") ? raw_type["oscKind.".length..] : raw_type
+          unless OSC_KINDS.key?(kind_name)
+            _throw("osc() type must resolve to a supported oscKind value; got \"#{raw_type}\"", call["loc"])
+          end
+          OSC_KINDS[kind_name]
+        else
+          _throw("osc() type must resolve to a supported oscKind value", call["loc"])
+        end
+
+      number_field = lambda do |node, name, fallback, clamp|
+        return fallback if node.nil?
+
+        value = _evaluate_value(node, bindings, depth + 1)
+        return value if Automation.automation_value?(value)
+        return 1 if value == true
+        return 0 if value == false
+
+        unless value.is_a?(Numeric) && value.to_f.finite?
+          _throw("osc() #{name} must be a number or a nested osc()", call["loc"])
+        end
+        clamp ? _clamp01(value) : value
+      end
+
+      {
+        "type" => "Oscillator",
+        "oscType" => osc_type,
+        "min" => number_field.call(fields["min"], "min", 0, true),
+        "max" => number_field.call(fields["max"], "max", 1, true),
+        "speed" => number_field.call(fields["speed"], "speed", 1, false),
+        "offset" => number_field.call(fields["offset"], "offset", 0, false),
+        "seed" => number_field.call(fields["seed"], "seed", 1, false),
+      }
+    end
+
+    # Math.max(0, Math.min(1, value)) for an already-validated finite number.
+    def self._clamp01(value)
+      [[value, 1.0].min, 0.0].max
+    end
 
     # Perl's Scalar::Util::looks_like_number, approximated: signed
     # int/float/exponent forms plus Inf/Infinity/NaN (any case), optional
@@ -589,7 +683,8 @@ module NoisemakerCpu
       end
     end
 
-    def self._evaluate_value(value, bindings)
+    def self._evaluate_value(value, bindings, osc_depth = 0)
+      # JS's Array branch recurses without the depth argument (mirrored).
       return value.map { |item| _evaluate_value(item, bindings) } if value.is_a?(Array)
       return value unless value.is_a?(Hash)
 
@@ -597,6 +692,13 @@ module NoisemakerCpu
       case kind
       when "surface"
         value
+      when "Call"
+        # `osc(...)` is the one value-position call the DSL supports; every
+        # other call stays the unsupported-value error (dsl/compiler.js).
+        if value["name"] == "osc"
+          return _compile_oscillator(value, bindings, osc_depth)
+        end
+        _throw("Unsupported DSL value #{kind} \"#{value['name']}\"", value["loc"])
       when "identifier"
         name = value["name"]
         if bindings.key?(name)
@@ -609,6 +711,9 @@ module NoisemakerCpu
           name
         end
       when "vector"
+        # JS's evaluateValue recursion here resets the osc depth (vector,
+        # unary and binary operands call evaluateValue without the depth
+        # argument); mirror that exactly.
         components = value["values"].map { |item| _evaluate_value(item, bindings) }
         width = value["width"]
         if components.length != width || components.any? { |c| !_is_number(c) }
@@ -824,7 +929,10 @@ module NoisemakerCpu
 
         value = binding["value"]
         bindings[binding["name"]] =
-          if value.is_a?(Hash) && value["kind"] == "Call"
+          # A Call binding stays an effect partial -- except `osc(...)`, which
+          # compiles into an Oscillator automation VALUE (reusable via the
+          # binding), matching the CPU compiler's `name !== 'osc'` guard.
+          if value.is_a?(Hash) && value["kind"] == "Call" && value["name"] != "osc"
             { "kind" => "partial", "call" => value.merge("args" => _resolve_args(value["args"], bindings)) }
           else
             { "kind" => "value", "value" => _evaluate_value(value, bindings) }

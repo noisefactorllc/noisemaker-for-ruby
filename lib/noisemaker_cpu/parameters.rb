@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "transpiler/shared_enums"
+require_relative "automation"
 
 module NoisemakerCpu
   # The API, CLI and DSL all use the same value conversions. Metadata min/max
@@ -41,6 +42,12 @@ module NoisemakerCpu
     def self.coerce(spec, value)
       value = spec["default"] if value.nil?
       type = spec["type"]
+      # An `osc(...)` automation value (numeric params only, matching the
+      # upstream uniformSpecs contract) is kept as-is here and resolved to a
+      # concrete number per render in Renderer (see Automation). Other types
+      # keep rejecting it below.
+      return value if Automation.automation_value?(value) && (type == "float" || type == "int")
+
       case type
       when "float"
         number(value.nil? ? 0 : value)

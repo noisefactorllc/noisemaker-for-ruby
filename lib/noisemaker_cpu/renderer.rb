@@ -19,6 +19,7 @@ require_relative "draw_ops"
 require_relative "external_input"
 require_relative "mesh_render"
 require_relative "overlay_gen"
+require_relative "automation"
 
 require_relative "dsl"
 require_relative "runtime"
@@ -117,6 +118,51 @@ module NoisemakerCpu
       Parameters.coerce(spec, value)
     end
 
+    # The consumer-range spec upstream's expander builds for automation scaling
+    # (shaders/src/runtime/expander.js uniformSpecs): a float/int parameter without
+    # choices scales the 0..1 automation output into its declared min..max (0..100
+    # when undeclared); an int parameter with choices (a conditional selector) is
+    # only rounded to the selected integer, scaled into its declared range when it
+    # declares one. Everything else gets no spec, so an automation value resolves
+    # unscaled.
+    def self._automation_param_spec(spec)
+      return nil unless spec.is_a?(Hash)
+
+      type = spec["type"]
+      if (type == "float" || type == "int") && !spec["choices"]
+        return {
+          "min" => spec["min"].nil? ? 0 : spec["min"],
+          "max" => spec["max"].nil? ? 100 : spec["max"],
+        }
+      end
+      if type == "int" && spec["choices"]
+        result = { "type" => "int" }
+        if spec["min"].is_a?(Numeric) && spec["min"].finite? &&
+           spec["max"].is_a?(Numeric) && spec["max"].finite?
+          result["min"] = spec["min"]
+          result["max"] = spec["max"]
+        end
+        return result
+      end
+      nil
+    end
+
+    # Resolves an `osc(...)` automation value to a concrete number for this
+    # render, using the render's normalized time (the same normalized time the
+    # canonical kernels receive). Non-automation values coerce as before. The
+    # resolved float takes the same Parameters.number f32 rounding an
+    # explicitly written numeric parameter takes, so an osc() parameter and
+    # its resolved numeric value are interchangeable in the kernel input; a
+    # rounded int selector stays an exact Integer (upstream rounds, and the
+    # selector contract bypasses the choices re-validation a literal would
+    # get, matching the reference engine).
+    def self._coerce_param(spec, value, time)
+      return _coerce(spec, value) unless Automation.automation_value?(value)
+
+      resolved = Automation.resolve_automation_uniform(value, time, _automation_param_spec(spec))
+      resolved.is_a?(Float) ? Parameters.number(resolved) : resolved
+    end
+
     # Pack synth/remap's std140 data[267] block from the bound uniforms --
     # port of the reference remapUniformData. At zoneCount=0 this yields the
     # background color for every pixel.
@@ -177,7 +223,7 @@ module NoisemakerCpu
       inputs["inputTex"] if spec["default"] == "inputTex"
     end
 
-    def self._normalize_iteration_params(eff, params, inputs, seed)
+    def self._normalize_iteration_params(eff, params, inputs, seed, time: 0.0)
       params = Parameters.normalize(eff, params)
       normalized = {}
       effect_uniforms = {}
@@ -197,7 +243,7 @@ module NoisemakerCpu
         value = if pname == "seed" && !params.key?("seed")
                   _coerce(spec, seed)
                 else
-                  _coerce(spec, params[pname])
+                  _coerce_param(spec, params[pname], time)
                 end
         normalized[pname] = value
         effect_uniforms[spec["uniform"]] = value unless spec["uniform"].nil?
@@ -313,9 +359,11 @@ module NoisemakerCpu
       uniforms
     end
 
-    def self._initialize_iteration_state(eff, params, inputs, seed, width, height, owner_state_size: nil)
+    def self._initialize_iteration_state(eff, params, inputs, seed, width, height, owner_state_size: nil,
+      time: 0.0)
       params = _inherit_volume_size(eff, params, _input_bundle(inputs))
-      normalized, effect_uniforms, surface_params = _normalize_iteration_params(eff, params, inputs, seed)
+      normalized, effect_uniforms, surface_params = _normalize_iteration_params(eff, params, inputs, seed,
+                                                                                time: time)
       if !owner_state_size.nil? && (eff["params"] || {}).key?("stateSize")
         normalized["stateSize"] = owner_state_size
         state_size_spec = eff["params"]["stateSize"]
@@ -330,6 +378,12 @@ module NoisemakerCpu
         "effect_uniforms" => effect_uniforms,
         "resources" => resources,
         "self_surface" => nil,
+        # The un-normalized params the state was built from (automation values
+        # still unresolved), kept so automation-driven params can re-resolve
+        # against each iteration's own time (see _refresh_automation_params).
+        "raw_params" => params,
+        "inputs" => inputs,
+        "owner_state_size" => owner_state_size,
       }
       reads_self = (eff["passes"] || []).any? do |pass|
         (pass["inputs"] || {}).values.any? { |name| name == "selfTex" || name == "feedback" }
@@ -341,6 +395,27 @@ module NoisemakerCpu
         state["resources"]["feedback"] = state["self_surface"]
       end
       state
+    end
+
+    # Automation-driven params (`osc(...)`) re-resolve against each iteration's own
+    # normalized time: the iteration loop rewinds time to emulate the upstream
+    # frames the persistent-texture feedback accumulated, so an osc param must read
+    # the same per-iteration time the kernels receive. Returns nil when the step
+    # carries no automation, leaving the init-time params object authoritative.
+    def self._refresh_automation_params(state, input_bundle, seed, time)
+      raw = state["raw_params"]
+      return nil if raw.nil? || !raw.any? { |_name, value| Automation.automation_value?(value) }
+
+      eff = state["effect"]
+      params = _inherit_volume_size(eff, raw, input_bundle)
+      normalized, effect_uniforms, = _normalize_iteration_params(eff, params, state["inputs"], seed, time: time)
+      owner = state["owner_state_size"]
+      if !owner.nil? && (eff["params"] || {}).key?("stateSize")
+        normalized["stateSize"] = owner
+        state_size_spec = eff["params"]["stateSize"]
+        effect_uniforms[state_size_spec["uniform"]] = owner unless state_size_spec["uniform"].nil?
+      end
+      [normalized, effect_uniforms]
     end
 
     def self._seed_typed_resources(state, input_bundle, width, height)
@@ -422,6 +497,11 @@ module NoisemakerCpu
       resources["inputTex"] = input_bundle["image"] unless input_bundle["image"].nil?
       resources["inputTex3d"] = input_bundle["volume"] unless input_bundle["volume"].nil?
       resources["inputGeo"] = input_bundle["geometry"] unless input_bundle["geometry"].nil?
+      refreshed = _refresh_automation_params(state, input_bundle, seed, time)
+      if refreshed
+        state["params"] = refreshed[0]
+        state["effect_uniforms"] = refreshed[1]
+      end
       _seed_typed_resources(state, input_bundle, width, height)
       _ensure_iteration_resources(state, width, height)
       base_uniforms = _canonical_uniforms(
@@ -599,7 +679,7 @@ module NoisemakerCpu
       typed = %w[volume-generator volume-filter volume-renderer].include?(eff["domain"]) ||
         !input_bundle["volume"].nil? || !input_bundle["geometry"].nil?
       params = _inherit_volume_size(eff, params, input_bundle)
-      state = _initialize_iteration_state(eff, params, inputs, seed, width, height)
+      state = _initialize_iteration_state(eff, params, inputs, seed, width, height, time: time)
       states = [state]
       group_resources = {}
       count = _iterated_count(eff, state["params"])
@@ -646,7 +726,7 @@ module NoisemakerCpu
     def self._render_typed_effect(eff, params, inputs, width:, height:, seed:, time:)
       input_bundle = _input_bundle(inputs)
       params = _inherit_volume_size(eff, params, input_bundle)
-      state = _initialize_iteration_state(eff, params, inputs, seed, width, height)
+      state = _initialize_iteration_state(eff, params, inputs, seed, width, height, time: time)
       _run_iteration_step(
         state, input_bundle, states: [state], group_resources: {},
         width: width, height: height, seed: seed, time: time, frame: 0, delta_time: 0.0
@@ -690,7 +770,7 @@ module NoisemakerCpu
             # unlock in the Python port).
             _coerce(spec, seed)
           else
-            _coerce(spec, params[pname])
+            _coerce_param(spec, params[pname], time)
           end
         effect_uniforms[spec["uniform"]] = val unless spec["uniform"].nil?
         effect_uniforms[spec["define"]] = val unless spec["define"].nil?
@@ -787,7 +867,7 @@ module NoisemakerCpu
             next unless eff["params"].key?(pn)
 
             gp = eff["params"][pn]
-            gen[pn] = (pn == "seed" && !params.key?("seed")) ? _coerce(gp, seed) : _coerce(gp, params[pn])
+            gen[pn] = (pn == "seed" && !params.key?("seed")) ? _coerce(gp, seed) : _coerce_param(gp, params[pn], time)
           end
           attachments[tname] = NoisemakerCpu::OverlayGen.render_worm_overlay(effect_id, width, height, gen)
         end
@@ -966,14 +1046,15 @@ module NoisemakerCpu
       owner_step = group["steps"][0]
       owner_inputs = _iteration_step_inputs(owner_step, group_input, surfaces, external_textures)
       owner_state = _initialize_iteration_state(
-        owner_step["definition"], owner_step["params"], owner_inputs, seed, width, height
+        owner_step["definition"], owner_step["params"], owner_inputs, seed, width, height, time: time
       )
       owner_size = owner_state["params"]["stateSize"] if group["steps"].length > 1
       states = [owner_state]
       group["steps"].drop(1).each do |step|
         inputs = _iteration_step_inputs(step, group_input, surfaces, external_textures)
         states << _initialize_iteration_state(
-          step["definition"], step["params"], inputs, seed, width, height, owner_state_size: owner_size
+          step["definition"], step["params"], inputs, seed, width, height,
+          owner_state_size: owner_size, time: time
         )
       end
 
