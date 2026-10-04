@@ -427,14 +427,14 @@ module NoisemakerCpu
 
       # Slice the bundle down to the definition region (before the shaders object).
       def self._definition_region(bundle)
-        m = bundle.match(/(\w+)\s*:\s*\{\s*glsl\s*:\s*`/)
+        m = bundle.match(/(?<!\w)(\w+)\s*:\s*\{\s*glsl\s*:\s*`/)
         m ? bundle[0, m.begin(0)] : bundle
       end
 
       # Extract every program's GLSL template literal.
       def self._extract_programs(bundle)
         programs = {}
-        re = /(\w+)\s*:\s*\{\s*glsl\s*:\s*`/
+        re = /(?<!\w)(\w+)\s*:\s*\{\s*glsl\s*:\s*`/
         pos = 0
         while (m = re.match(bundle, pos))
           program = m[1]

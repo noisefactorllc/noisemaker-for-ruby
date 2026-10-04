@@ -130,6 +130,47 @@ module NoisemakerCpu
         t && t["base"] ? t["base"] : "float"
       end
 
+      # Linear-time equivalent of
+      #   /\Art\.[a-z_0-9]+__\w+\.call\b/.match?(code)
+      # (the adjacent [a-z_0-9]+ / __ / \w+ runs overlap, so that regex
+      # backtracks quadratically on long underscore runs). The \w run before
+      # ".call" is the whole holder name; the earliest "__" at index >= 1 is
+      # the split that leaves the shortest (hence easiest) lowercase prefix and
+      # the longest suffix.
+      def self.hoisted_holder_call?(code)
+        m = /\Art\.(\w+)\.call\b/.match(code)
+        return false unless m
+
+        name = m[1]
+        split = name.index("__", 1)
+        return false if split.nil? || split + 2 >= name.length
+
+        name[0, split].match?(/\A[a-z_0-9]+\z/)
+      end
+
+      # Linear-time equivalent of
+      #   /\Art\.matrix_mult\((.*), (.*), (\d+)\)\z/m.match(code)
+      # returning [first, second, third] or nil. The final ", <digits>)" is the
+      # last ", " of the call; the greedy first group then ends at the last ", "
+      # before it.
+      def self.split_matrix_mult(code)
+        prefix = "rt.matrix_mult("
+        return nil unless code.start_with?(prefix) && code.end_with?(")")
+
+        inner = code[prefix.length...-1]
+        last = inner.rindex(", ")
+        return nil if last.nil?
+
+        count = inner[(last + 2)..]
+        return nil unless count.match?(/\A\d+\z/)
+
+        head = inner[0, last]
+        mid = head.rindex(", ")
+        return nil if mid.nil?
+
+        [head[0, mid], head[(mid + 2)..], count]
+      end
+
       # Perl: `($t && $t->{width}) ? $t->{width} : 1` -- width CAN legitimately
       # be 0 (the void type), which is falsy in Perl (so `width_of(void)` is
       # 1, not 0) but truthy in Ruby -- so this needs an explicit `!= 0`,
@@ -1126,8 +1167,8 @@ module NoisemakerCpu
             # matrix_mult_assign stores component-by-component with exactly
             # that visibility; for the non-aliased case it reduces to the
             # same f32-per-component result as matrix_mult.
-            if (mm = /\Art\.matrix_mult\((.*), (.*), (\d+)\)\z/m.match(rhs))
-              return ["rt.matrix_mult_assign(#{tcode}, #{mm[1]}, #{mm[2]}, #{mm[3]})", tt]
+            if (mm = Codegen.split_matrix_mult(rhs))
+              return ["rt.matrix_mult_assign(#{tcode}, #{mm[0]}, #{mm[1]}, #{mm[2]})", tt]
             end
             # Compound vector op-assign (`p -= 2.0*max(dot(k1,p),0)*k1`,
             # shapeMask's sdfStar5): the oracle decomposes to
@@ -1211,7 +1252,7 @@ module NoisemakerCpu
             # component reads already-stored ones.
             if base_op.nil? && Codegen.base_of(tt) == "float" &&
                rhs.match?(/\b#{Regexp.escape(tcode)}\b/) &&
-               !rhs.match?(/\Art\.[a-z_0-9]+__\w+\.call\b|\Art\.texture\b|\bcall\(|\(begin /)
+               !Codegen.hoisted_holder_call?(rhs) && !rhs.match?(/\Art\.texture\b|\bcall\(|\(begin /)
               # JS evaluates the whole array literal against the OLD target
               # (cpu_vector_assignment_N), then stores element-wise — a slot
               # referencing the target must see pre-assignment values

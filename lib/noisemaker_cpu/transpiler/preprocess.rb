@@ -26,8 +26,23 @@ module NoisemakerCpu
       # Remove block and line comments before preprocessing (a // comment
       # trailing a #define value would otherwise be captured into the macro).
       def self._strip_comments(source)
-        source = source.gsub(%r{/\*.*?\*/}m, " ")
+        source = _strip_block_comments(source)
         source.gsub(%r{//[^\n]*}, "")
+      end
+
+      # Linear-time equivalent of source.gsub(%r{/\*.*?\*/}m, " "): the lazy
+      # regex rescans to end of input from every unterminated "/*".
+      def self._strip_block_comments(source)
+        out = +""
+        pos = 0
+        while (open_idx = source.index("/*", pos))
+          close_idx = source.index("*/", open_idx + 2)
+          break if close_idx.nil?
+
+          out << source[pos...open_idx] << " "
+          pos = close_idx + 2
+        end
+        out << source[pos..]
       end
 
       def self.normalize(source, runtime_defines = nil)
@@ -107,7 +122,7 @@ module NoisemakerCpu
           case head
           when "define"
             if _emitting(stack) != 0 && d !~ /\Adefine\s+\w+\(/ # object-like only
-              m = /\Adefine\s+(\w+)(?:\s+(.*))?\z/.match(d)
+              m = /\Adefine\s+(\w+)(?:\s(.*))?\z/.match(d)
               if m
                 val = (m[2] || "").strip
                 defines[m[1]] = val

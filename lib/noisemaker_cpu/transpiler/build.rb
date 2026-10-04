@@ -114,6 +114,21 @@ module NoisemakerCpu
         end
       end
 
+      # Linear-time equivalent of source.sub(/struct FractalResult \{.*?^\};\n/m, ""):
+      # the lazy regex rescans to end of input from every repeated opener when
+      # no closing "};" line exists. A missing terminator after the first opener
+      # means none exists after any later opener either, so nothing is removed.
+      def self._strip_fractal_result_struct(source)
+        opener = "struct FractalResult {"
+        start = source.index(opener)
+        return source if start.nil?
+
+        close = /^\};\n/.match(source, start + opener.length)
+        return source if close.nil?
+
+        source[0, start] + source[close.end(0)..]
+      end
+
       def self._adapt_source(effect_id, program, source)
         # The generator's preserveVectorAssignmentReads (compile-glsl.js
         # ~199-207) rewrites ONLY single-line `target = vecN(...)` statements
@@ -184,8 +199,7 @@ module NoisemakerCpu
           )
         end
         if effect_id == "synth3d/flythrough3d" && program == "precompute"
-          return source
-            .sub(/struct FractalResult \{.*?^\};\n/m, "")
+          return _strip_fractal_result_struct(source)
             .gsub(/\bFractalResult\b/, "vec3")
             .gsub(/\.dist\b/, ".x")
             .gsub(/\.trap\b/, ".y")

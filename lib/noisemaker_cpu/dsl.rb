@@ -554,7 +554,7 @@ module NoisemakerCpu
     # Perl's Scalar::Util::looks_like_number, approximated: signed
     # int/float/exponent forms plus Inf/Infinity/NaN (any case), optional
     # surrounding whitespace.
-    NUMBER_STRING_RE = /\A\s*[+-]?(?:\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?|inf(?:inity)?|nan)\s*\z/i
+    NUMBER_STRING_RE = /\A\s*[+-]?(?:\d+(?:\.\d*)?(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?|inf(?:inity)?|nan)\s*\z/i
 
     def self._looks_like_number(str)
       !!(str =~ NUMBER_STRING_RE)

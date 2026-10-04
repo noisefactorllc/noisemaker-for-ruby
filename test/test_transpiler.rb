@@ -423,9 +423,13 @@ class TestTranspilerPipeline < Minitest::Test
     # this codegen emits must route through rt.bool(...), never a raw
     # comparison or plain variable (Ruby trap #1 -- 0 is truthy in Ruby).
     src.each_line do |line|
-      next unless line =~ /^\s*(if|unless)\s+(.*)$/
+      # Linear scan (a /^\s*(if|unless)\s+(.*)$/ regex backtracks on long
+      # whitespace runs): leading whitespace, keyword, whitespace, condition.
+      stripped = line.lstrip
+      keyword = stripped[/\A(?:if|unless)(?=\s)/]
+      next unless keyword
 
-      cond = Regexp.last_match(2).strip
+      cond = stripped[keyword.length..].strip
       assert_match(/\Art\.bool\(/, cond, "condition line not wrapped in rt.bool: #{line.inspect}")
     end
   end
@@ -1085,5 +1089,44 @@ class TestTranspilerPipeline < Minitest::Test
     out = [0.0, 0.0, 0.0, 0.0]
     result[:kernel].call(ctx, out)
     [out, result[:uses_derivatives]]
+  end
+
+  public
+
+  # ---- Linear-time scanners (replaced polynomial-backtracking regexes) ----
+
+  def test_block_comment_stripping_matches_lazy_regex_semantics
+    assert_equal "a   b", Preprocess._strip_comments("a /* x */ b")
+    assert_equal "a   b", Preprocess._strip_comments("a /**/ b")
+    assert_equal "a /* never closed", Preprocess._strip_comments("a /* never closed")
+    assert_equal "x   y   z", Preprocess._strip_comments("x /* 1 */ y /* 2\n3 */ z")
+    # Unterminated openers must not rescan the remainder once per opener.
+    hostile = "/*" + ("a/*" * 50_000)
+    assert_equal hostile, Preprocess._strip_comments(hostile)
+  end
+
+  def test_hoisted_holder_call_detection
+    assert Codegen.hoisted_holder_call?("rt.foo__bar.call(1)")
+    assert Codegen.hoisted_holder_call?("rt.__x__y.call")
+    refute Codegen.hoisted_holder_call?("rt.foo__.call(1)")
+    refute Codegen.hoisted_holder_call?("rt.Foo__bar.call(1)")
+    refute Codegen.hoisted_holder_call?("rt.foo__bar.callx")
+    refute Codegen.hoisted_holder_call?("x rt.foo__bar.call")
+    refute Codegen.hoisted_holder_call?("rt." + ("0__" * 50_000))
+  end
+
+  def test_split_matrix_mult
+    assert_equal ["m", "v", "3"], Codegen.split_matrix_mult("rt.matrix_mult(m, v, 3)")
+    assert_equal ["f(a, b)", "v", "2"], Codegen.split_matrix_mult("rt.matrix_mult(f(a, b), v, 2)")
+    assert_equal ["", "", "1"], Codegen.split_matrix_mult("rt.matrix_mult(, , 1)")
+    assert_nil Codegen.split_matrix_mult("rt.matrix_mult(m, v, x)")
+    assert_nil Codegen.split_matrix_mult("rt.matrix_mult(m, 3)")
+    assert_nil Codegen.split_matrix_mult("rt.matrix_mult(m, v, 3) + 1")
+    assert_nil Codegen.split_matrix_mult("rt.matrix_mult(" + (", a" * 50_000))
+  end
+
+  def test_define_line_with_long_whitespace_run
+    out = Preprocess.normalize("#define N 0#{"  " * 50_000}\nfloat y = N;\n")
+    assert_includes out["source"], "float y = 0;"
   end
 end
