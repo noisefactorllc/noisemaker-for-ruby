@@ -116,4 +116,41 @@ class TestBundleBuild < Minitest::Test
     lock = JSON.parse(after.fetch("bundle-lock.json"))
     assert_equal Digest::SHA256.hexdigest(@effect["programs"]["probe"]), lock["hashes"]["synth/probe:probe"]
   end
+
+  # The pinned GLSL declares two different `uint hash_uint(uint)` bodies. Like
+  # noisemaker-for-cpu 5b686a4, route them by body: the LCG-seeded mix goes to
+  # rt.hash_uint_lcg, the murmur finalizer stays on rt.hash_uint.
+  LCG_HASH_GLSL = <<~GLSL
+    uint hash_uint(uint seed) {
+        uint state = seed * 747796405u + 2891336453u;
+        uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+        return (word >> 22u) ^ word;
+    }
+    float hash(uint seed) { return float(hash_uint(seed)) / 4294967295.0; }
+  GLSL
+  MURMUR_HASH_GLSL = <<~GLSL
+    uint hash_uint(uint x) {
+        x ^= x >> 16u; x *= 0x7feb352du; x ^= x >> 15u; x *= 0x846ca68bu; x ^= x >> 16u;
+        return x;
+    }
+    float hash(uint seed) { return float(hash_uint(seed)) / 4294967295.0; }
+  GLSL
+
+  def test_hash_uint_routes_by_body
+    lcg = Build._adapt_source("render/pointsEmit", "init", LCG_HASH_GLSL)
+    assert_match(/uint hash_uint_lcg\(uint seed\)/, lcg)
+    assert_match(/float\(hash_uint_lcg\(seed\)\)/, lcg)
+    refute_match(/\bhash_uint\(/, lcg)
+    murmur = Build._adapt_source("filter/texture", "texture", MURMUR_HASH_GLSL)
+    assert_match(/float\(hash_uint\(seed\)\)/, murmur)
+    refute_match(/hash_uint_lcg/, murmur)
+
+    kernels = File.join(__dir__, "..", "lib", "noisemaker_cpu", "bundle", "kernels", "ruby")
+    %w[render__pointsEmit__init points__buddhabrot__agent filter3d__flow3d__agent].each do |name|
+      kernel = File.read(File.join(kernels, "#{name}.rb"))
+      assert_match(/rt\.hash_uint_lcg\(/, kernel, name)
+      refute_match(/rt\.hash_uint\(/, kernel, name)
+    end
+    assert_match(/rt\.hash_uint\(/, File.read(File.join(kernels, "filter__texture__texture.rb")))
+  end
 end

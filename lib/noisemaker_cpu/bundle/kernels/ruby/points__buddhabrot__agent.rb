@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint__uint = hash__uint = complexToScreen__vec2 = inMandelbrotInterior__float_float = main__void = nil
+  hash_uint_lcg__uint = hash__uint = complexToScreen__vec2 = inMandelbrotInterior__float_float = main__void = nil
   _retc = nil
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
@@ -19,14 +19,14 @@ run_pixel = lambda do |ctx, out|
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
-  hash_uint__uint = lambda do |s|
+  hash_uint_lcg__uint = lambda do |s|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', s, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
     word = rt.binary('*', rt.binary('^', rt.binary('>>', state, rt.binary('+', rt.binary('>>', state, rt.i(28), 1, 'uint'), rt.i(4), 1, 'uint'), 1, 'uint'), state, 1, 'uint'), rt.i(277803737), 1, 'uint')
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |s|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(s)), rt.f(4294967296), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint_lcg(s)), rt.f(4294967296), 1, 'float')
   end
   complexToScreen__vec2 = lambda do |z|
     z = rt.copy(z, 'float')
@@ -56,7 +56,7 @@ run_pixel = lambda do |ctx, out|
       g['outRGBA'].replace((col).map { |c| rt.f32(c) })
       return
     end
-    agentSeed = rt.binary('^', rt.binary('^', rt.hash_uint(rt.construct(1, rt.binary('+', rt.swizzle(coord, 'x'), rt.binary('*', rt.swizzle(coord, 'y'), stateSize, 1, 'int'), 1, 'int'), 'uint')), rt.construct(1, rt.binary('*', _u_time, rt.f(65536), 1, 'float'), 'uint'), 1, 'uint'), rt.construct(1, rt.binary('*', rt.swizzle(vel, 'z'), rt.f(137), 1, 'float'), 'uint'), 1, 'uint')
+    agentSeed = rt.binary('^', rt.binary('^', rt.hash_uint_lcg(rt.construct(1, rt.binary('+', rt.swizzle(coord, 'x'), rt.binary('*', rt.swizzle(coord, 'y'), stateSize, 1, 'int'), 1, 'int'), 'uint')), rt.construct(1, rt.binary('*', _u_time, rt.f(65536), 1, 'float'), 'uint'), 1, 'uint'), rt.construct(1, rt.binary('*', rt.swizzle(vel, 'z'), rt.f(137), 1, 'float'), 'uint'), 1, 'uint')
     needsInit = rt.binary('<', rt.swizzle(pos, 'z'), rt.f(0.25))
     brightness = rt.f(0.0)
     cIm = rt.f(0.0)

@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint__uint = hash__uint = hash_f__float = wrapPosition__vec2 = luminance__vec3 = sampleTrail__vec2 = sampleExternalField__vec2_float = main__void = nil
+  hash_uint_lcg__uint = hash__uint = hash_f__float = wrapPosition__vec2 = luminance__vec3 = sampleTrail__vec2 = sampleExternalField__vec2_float = main__void = nil
   _retc = nil
   _u_xyzTex = ctx.texture_binding('xyzTex')
   _u_velTex = ctx.texture_binding('velTex')
@@ -21,17 +21,17 @@ run_pixel = lambda do |ctx, out|
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
   g['TAU'] = rt.f(6.2831854820251465)
-  hash_uint__uint = lambda do |seed|
+  hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
     word = rt.binary('*', rt.binary('^', rt.binary('>>', state, rt.binary('+', rt.binary('>>', state, rt.i(28), 1, 'uint'), rt.i(4), 1, 'uint'), 1, 'uint'), state, 1, 'uint'), rt.i(277803737), 1, 'uint')
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint_lcg(seed)), rt.f(4294967296), 1, 'float')
   end
   hash_f__float = lambda do |n|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(rt.float_bits_to_uint(n))), rt.f(4294967296), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint_lcg(rt.float_bits_to_uint(n))), rt.f(4294967296), 1, 'float')
   end
   wrapPosition__vec2 = lambda do |pos|
     pos = rt.copy(pos, 'float')

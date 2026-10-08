@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint__uint = hash__uint = rand__float = randomDirection__float = wrap01__vec2 = sampleGrid__vec2 = neighborhood__vec2_float = main__void = nil
+  hash_uint_lcg__uint = hash__uint = rand__float = randomDirection__float = wrap01__vec2 = sampleGrid__vec2 = neighborhood__vec2_float = main__void = nil
   _retc = nil
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
@@ -21,21 +21,21 @@ run_pixel = lambda do |ctx, out|
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
-  hash_uint__uint = lambda do |seed|
+  hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
     word = rt.binary('*', rt.binary('^', rt.binary('>>', state, rt.binary('+', rt.binary('>>', state, rt.i(28), 1, 'uint'), rt.i(4), 1, 'uint'), 1, 'uint'), state, 1, 'uint'), rt.i(277803737), 1, 'uint')
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint_lcg(seed)), rt.f(4294967296), 1, 'float')
   end
   rand__float = lambda do |seed|
     bits = nil
     bits = rt.float_bits_to_uint(seed)
-    bits = rt.hash_uint(bits)
+    bits = rt.hash_uint_lcg(bits)
     seed = rt.binary('-', rt.uint_bits_to_float(rt.binary('|', bits, rt.i(1065353216), 1, 'uint')), rt.f(1), 1, 'float')
-    bits = rt.hash_uint(rt.binary('+', bits, rt.i(1), 1, 'uint'))
+    bits = rt.hash_uint_lcg(rt.binary('+', bits, rt.i(1), 1, 'uint'))
     seed = rt.binary('-', rt.uint_bits_to_float(rt.binary('|', rt.binary('&', bits, rt.i(8388607), 1, 'uint'), rt.i(1065353216), 1, 'uint')), rt.f(1), 1, 'float')
     return [seed, seed]
     return [nil, seed]
@@ -85,7 +85,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('<=', seed, rt.f(0)))
       seed = rt.binary('+', hash__uint.call(agentId), rt.f(0.0010000000474974513), 1, 'float')
     end
-    frameSeed = rt.hash_uint(rt.binary('+', rt.binary('*', agentId, rt.i(31), 1, 'uint'), rt.float_bits_to_uint(seed), 1, 'uint'))
+    frameSeed = rt.hash_uint_lcg(rt.binary('+', rt.binary('*', agentId, rt.i(31), 1, 'uint'), rt.float_bits_to_uint(seed), 1, 'uint'))
     seed = rt.binary('-', rt.uint_bits_to_float(rt.binary('|', rt.binary('&', frameSeed, rt.i(8388607), 1, 'uint'), rt.i(1065353216), 1, 'uint')), rt.f(1), 1, 'float')
     if rt.bool(rt.binary('<', alive, rt.f(0.5)))
       g['outXYZ'].replace((xyz).map { |c| rt.f32(c) })

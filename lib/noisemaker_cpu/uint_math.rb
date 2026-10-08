@@ -170,6 +170,16 @@ module NoisemakerCpu
       r
     end
 
+    # LCG-seeded xor-shift-multiply mix (hashUintLcg in glsl-runtime.js): the
+    # other pinned `uint hash_uint(uint)` body, used by render/pointsEmit init,
+    # the points/* agents and filter3d/flow3d. The murmur finalizer above
+    # shares the GLSL name, so the build routes the two by body.
+    def self.hash_uint_lcg(x)
+      state = uadd(umul(u32(x), 747_796_405), 2_891_336_453)
+      word = umul(uxor(ushr(state, ushr(state, 28) + 4), state), 277_803_737)
+      uxor(ushr(word, 22), word)
+    end
+
     # stdlib.hashUint is a bare alias for hashUint32 in glsl-runtime.js.
     class << self
       alias_method :hash_uint, :hash_uint32

@@ -1682,6 +1682,7 @@ module NoisemakerCpu
         "cpu_umul" => ->(_g, c, _a) { ["rt.binary('*', #{c[0]}, #{c[1]}, 1, 'uint')", TYPE["uint"]] },
         "hashUint" => ->(_g, c, _a) { ["rt.hash_uint(#{c[0]})", TYPE["uint"]] },
         "hash_uint" => ->(_g, c, _a) { ["rt.hash_uint(#{c[0]})", TYPE["uint"]] },
+        "hash_uint_lcg" => ->(_g, c, _a) { ["rt.hash_uint_lcg(#{c[0]})", TYPE["uint"]] },
         "floatBitsToUint" => ->(_g, c, _a) { ["rt.float_bits_to_uint(#{c[0]})", TYPE["uint"]] },
         "uintBitsToFloat" => ->(_g, c, _a) { ["rt.uint_bits_to_float(#{c[0]})", FLOAT] },
         "packHalf2x16" => ->(_g, c, _a) { ["rt.pack_half_2x16(#{c[0]})", TYPE["uint"]] },

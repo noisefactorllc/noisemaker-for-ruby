@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint__uint = hash__uint = hash3__uint = wrap_float__float_float = wrap_int__int_int = atlasTexel__ivec3_int = sampleVoxel__ivec3_int = srgb_to_linear__float = cube_root__float = oklab_l__vec3 = normalized_sine__float = computeRotationBias__float_float_float_int_int = main__void = nil
+  hash_uint_lcg__uint = hash__uint = hash3__uint = wrap_float__float_float = wrap_int__int_int = atlasTexel__ivec3_int = sampleVoxel__ivec3_int = srgb_to_linear__float = cube_root__float = oklab_l__vec3 = normalized_sine__float = computeRotationBias__float_float_float_int_int = main__void = nil
   _retc = nil
   _u__BEHAVIOR = u.key?('BEHAVIOR') ? u['BEHAVIOR'] : 0
   _u_stateTex1 = ctx.texture_binding('stateTex1')
@@ -23,14 +23,14 @@ run_pixel = lambda do |ctx, out|
   g['TAU'] = rt.f(6.2831854820251465)
   g['PI'] = rt.f(3.1415927410125732)
   g['RIGHT_ANGLE'] = rt.f(1.5707963705062866)
-  hash_uint__uint = lambda do |seed|
+  hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
     word = rt.binary('*', rt.binary('^', rt.binary('>>', state, rt.binary('+', rt.binary('>>', state, rt.i(28), 1, 'uint'), rt.i(4), 1, 'uint'), 1, 'uint'), state, 1, 'uint'), rt.i(277803737), 1, 'uint')
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint_lcg(seed)), rt.f(4294967296), 1, 'float')
   end
   hash3__uint = lambda do |seed|
     return rt.construct(3, hash__uint.call(seed), hash__uint.call(rt.binary('+', seed, rt.i(1), 1, 'uint')), hash__uint.call(rt.binary('+', seed, rt.i(2), 1, 'uint')))

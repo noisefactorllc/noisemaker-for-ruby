@@ -86,6 +86,22 @@ class TestUintMath < Minitest::Test
     end
   end
 
+  def test_hash_uint_lcg
+    # Values from hashUintLcg in noisemaker-for-cpu 5b686a4's
+    # src/csl/glsl-runtime.js.
+    [
+      [0, 129708002],
+      [1, 2831084092],
+      [63, 2778298601],
+      [65536, 688544357],
+      [123456789, 4272394698],
+      [2147483648, 566699590],
+      [4294967295, 3861530882],
+    ].each do |input, expected|
+      assert_equal expected, UM.hash_uint_lcg(input), "hash_uint_lcg(#{input})"
+    end
+  end
+
   def test_float_bits_to_uint
     [
       [0.0, 0],

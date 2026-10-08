@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint__uint = hash__uint = srgb_to_linear__float = cube_root__float = oklab_l__vec3 = normalized_sine__float = computeRotationBias__int_float_float_float_int_int = main__void = nil
+  hash_uint_lcg__uint = hash__uint = srgb_to_linear__float = cube_root__float = oklab_l__vec3 = normalized_sine__float = computeRotationBias__int_float_float_float_int_int = main__void = nil
   _retc = nil
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
@@ -22,14 +22,14 @@ run_pixel = lambda do |ctx, out|
   g['outRGBA'] = rt.construct(4, 0.0)
   g['TAU'] = rt.f(6.2831854820251465)
   g['RIGHT_ANGLE'] = rt.f(1.5707963705062866)
-  hash_uint__uint = lambda do |seed|
+  hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
     word = rt.binary('*', rt.binary('^', rt.binary('>>', state, rt.binary('+', rt.binary('>>', state, rt.i(28), 1, 'uint'), rt.i(4), 1, 'uint'), 1, 'uint'), state, 1, 'uint'), rt.i(277803737), 1, 'uint')
     return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
   end
   hash__uint = lambda do |seed|
-    return rt.binary('/', rt.construct(1, rt.hash_uint(seed)), rt.f(4294967296), 1, 'float')
+    return rt.binary('/', rt.construct(1, rt.hash_uint_lcg(seed)), rt.f(4294967296), 1, 'float')
   end
   srgb_to_linear__float = lambda do |value|
     if rt.bool(rt.binary('<=', value, rt.f(0.040449999272823334)))

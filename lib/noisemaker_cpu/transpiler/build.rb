@@ -166,6 +166,16 @@ module NoisemakerCpu
             "uvec3 #{fname}(uvec3 value) { return pcg3d(value); }"
           )
         end
+        # Two different pinned `uint hash_uint(uint)` bodies share one name.
+        # noisemaker-for-cpu 5b686a4 routes them by BODY (compile-glsl
+        # lowerUnsignedJavaScript): the murmur finalizer (7feb352d/846ca68b)
+        # keeps stdlib.hashUint, the LCG-seeded mix (747796405; pointsEmit
+        # init, the points/* agents, flow3d) goes to stdlib.hashUintLcg.
+        # hash_uint routes by name here, so give the LCG body its own name.
+        if source.match?(/\buint\s+hash_uint\s*\(\s*uint\b/) && !source.match?(/7feb352d|846ca68b/) &&
+           source.include?("747796405")
+          source = source.gsub(/\bhash_uint\s*\(/, "hash_uint_lcg(")
+        end
         # Match canonical CPU float32 hash and pigment storage boundaries.
         # The oracle's adaptCanonicalSource applies the float32 hash
         # boundary patch to EVERY effect except filter/scatter; restricting

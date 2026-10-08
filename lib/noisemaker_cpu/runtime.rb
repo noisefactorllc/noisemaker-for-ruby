@@ -662,6 +662,10 @@ module NoisemakerCpu
       NoisemakerCpu::UintMath.hash_uint32(x.to_i & U32)
     end
 
+    def hash_uint_lcg(x)
+      NoisemakerCpu::UintMath.hash_uint_lcg(x.to_i & U32)
+    end
+
     def float_bits_to_uint(x)
       NoisemakerCpu::UintMath.float_bits_to_uint(x.to_f)
     end
