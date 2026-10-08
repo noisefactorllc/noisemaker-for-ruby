@@ -38,7 +38,7 @@ run_pixel = lambda do |ctx, out|
   end
   cellAvgColor3x3__vec2 = lambda do |centerPx|
     centerPx = rt.copy(centerPx, 'float')
-    __hoist544 = nil; _for0_first = nil; _for1_first = nil; i = nil; j = nil; p = nil; sp = nil; sum = nil
+    __hoistv2 = nil; _for0_first = nil; _for1_first = nil; i = nil; j = nil; p = nil; sp = nil; sum = nil
     sp = rt.binary('*', _u_size, rt.f(0.25), 1, 'float')
     sum = rt.construct(4, rt.construct(4, rt.f(0)))
     j = rt.unary('-', rt.i(1))
@@ -62,7 +62,7 @@ run_pixel = lambda do |ctx, out|
           break
         end
         p = rt.construct(2, ((centerPx[0]) + (((((i))) * (sp)))), ((centerPx[1]) + (((((j))) * (sp)))))
-        __hoist544 = rt.texture(_u_inputTex, toSampleUV__vec2.call(p)); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist544[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist544[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist544[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist544[3], 1, 'float'))
+        __hoistv2 = rt.texture(_u_inputTex, toSampleUV__vec2.call(p)); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv2[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv2[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv2[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoistv2[3], 1, 'float'))
       end
     end
     return rt.construct(4, ((sum[0]) * (rt.f(0.1111111119389534))), ((sum[1]) * (rt.f(0.1111111119389534))), ((sum[2]) * (rt.f(0.1111111119389534))), ((sum[3]) * (rt.f(0.1111111119389534))))

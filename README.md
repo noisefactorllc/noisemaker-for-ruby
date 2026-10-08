@@ -24,7 +24,7 @@ Effect kernels are **transpiled directly from the upstream GLSL** served by the 
 - GL texture sampling.
 
 The bundle includes 210 catalog effects (295 kernels), transpiled from published
-engine `1.0.266` (Noisemaker `15c9114e`). The parity harness
+engine `1.0.271` (Noisemaker `5976b7a6`). The parity harness
 compares exact RGBA8 output with a pinned JavaScript reference. It uses 8×8
 images, seed 1, time 0.25, small volume atlases, and identical explicit scenes
 for particle consumers. These checks cover the catalog, not every parameter,
@@ -134,7 +134,7 @@ ruby scripts/build-bundle.rb --all
 ```
 
 To move to a newer engine release, name it and accept the new sources:
-`NM_SHADER_VERSION=1.0.266 ruby scripts/build-bundle.rb --all --update-lock`.
+`NM_SHADER_VERSION=1.0.271 ruby scripts/build-bundle.rb --all --update-lock`.
 
 Builds are staged and validated before replacing the installed bundle. Fetch,
 compile, or lock-drift errors leave the previous bundle intact. An intentional

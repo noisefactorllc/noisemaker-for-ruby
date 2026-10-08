@@ -1,6 +1,6 @@
 {
   "source": "https://shaders.noisedeck.app",
-  "version": "1.0.266",
+  "version": "1.0.271",
   "hashes": {
     "classicNoisedeck/bitEffects:bitEffects": "adf44e902e12ef9395076470a65ada857ecc1a057ee1a5e978d143906606a191",
     "classicNoisedeck/caustic:caustic": "6e48eab04db32697b04d478f33323e4bb32f6a6b17289b6a0f32d3177992af3e",
@@ -147,7 +147,7 @@
     "filter/snow:snow": "ae057787cc101755743c17b4cdf46b51d70ed8b9896fed9535a058c8b252f48a",
     "filter/sobel:sobel": "cbe7b6bdd554dd1846037203bddee51c47644cf3868ee4b6278272f3218b7acf",
     "filter/spatter:spatter": "48b0c208f7d52f99b0f33c140a63db3901deaa601d83efc90ff9274c607c7c26",
-    "filter/spinBlur:spinBlur": "954ae3ea8909cfa16dbb265318e772097dc4daedeeb6c6ddb655aaad47c3bc79",
+    "filter/spinBlur:spinBlur": "9101c94a134c4a77f1f627b9061a3c2f4e8c486a280ead603aa7534eec535ef2",
     "filter/spiral:spiral": "6c841e8fe289caf0b304bbb57793faa76b7710b63f6a49a53a9cdb62f67f334f",
     "filter/spookyTicker:spookyTicker": "f7db18bcbf2910bdbc78afa23332ab3c66b630e6b9e1daf38e9b5a2db8361592",
     "filter/stamp:stBlurH": "8e5527e8ab1d97e0d4c0129982b17a44487b4e1d6439211a7c5008676d843871",

@@ -351,7 +351,7 @@ module NoisemakerCpu
         @globals = [] # [{name, type, init, array}]
         @structs = {} # name -> [ [fieldtype, fieldname], ... ]
         @loop_id = 0
-        @scalar_assign_n = 0 # numbers hoisted compound-assign temporaries per program
+        @scalar_assign_n = 0 # numbers hoisted compound-assign temporaries per program (__sc, __hoistv)
         @uses_deriv = false
         @cur_out = [] # out/inout param rbnames of the function being emitted
         @declared = nil # per-function set of hoisted local names
@@ -1220,7 +1220,7 @@ module NoisemakerCpu
               full, full_t = expr(node["value"], scope)
               if calls && !refs_target && Codegen.base_of(full_t) == "float" &&
                  Codegen.width_of(full_t) == Codegen.width_of(tt)
-                h = _local("__hoist#{node.object_id.abs % 100_000}")
+                h = _local("__hoistv#{@scalar_assign_n += 1}")
                 joined = stores.each_with_index.map do |(cc, _), i|
                   b = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
                   "#{tcode}[#{i}] = rt.f32(rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{h}[#{i}], 1, #{Codegen.rq(b)}))"

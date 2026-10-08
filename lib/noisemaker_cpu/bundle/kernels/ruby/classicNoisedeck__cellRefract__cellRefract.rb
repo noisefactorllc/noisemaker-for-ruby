@@ -428,9 +428,9 @@ run_pixel = lambda do |ctx, out|
   end
   cells__vec2_float_float = lambda do |st, freq, cellSize|
     st = rt.copy(st, 'float')
-    __hoist408 = nil; __hoist416 = nil; __sc3 = nil; _for1_first = nil; _for2_first = nil; d = nil; diff = nil; dist = nil; f = nil; i = nil; n = nil; point = nil; r1 = nil; r2 = nil; spd = nil; wrap = nil; x = nil; y = nil
+    __hoistv4 = nil; __hoistv5 = nil; __sc3 = nil; _for1_first = nil; _for2_first = nil; d = nil; diff = nil; dist = nil; f = nil; i = nil; n = nil; point = nil; r1 = nil; r2 = nil; spd = nil; wrap = nil; x = nil; y = nil
     __sc3 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc3, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc3, 1, 'float'))
-    __hoist408 = rt.swizzle(prng__vec3.call(rt.construct(3, ((_u_seed)), ((_u_seed)), ((_u_seed)))), 'xy'); st[0] = rt.f32(rt.binary('+', st[0], __hoist408[0], 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __hoist408[1], 1, 'float'))
+    __hoistv4 = rt.swizzle(prng__vec3.call(rt.construct(3, ((_u_seed)), ((_u_seed)), ((_u_seed)))), 'xy'); st[0] = rt.f32(rt.binary('+', st[0], __hoistv4[0], 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __hoistv4[1], 1, 'float'))
     i = rt.construct(2, rt.component_wise('floor', st[0]), rt.component_wise('floor', st[1]))
     f = rt.construct(2, rt.component_wise('fract', st[0]), rt.component_wise('fract', st[1]))
     d = rt.f(1)
@@ -460,7 +460,7 @@ run_pixel = lambda do |ctx, out|
         r1 = rt.construct(3, rt.binary('-', rt.binary('*', prng__vec3.call(rt.construct(3, ((_u_seed)), (rt.swizzle(wrap, 'x')), (rt.swizzle(wrap, 'y')))), rt.f(0.5), 3, 'float'), rt.f(0.25), 3, 'float'))
         r2 = rt.construct(3, rt.binary('-', rt.binary('*', prng__vec3.call(rt.construct(3, (rt.swizzle(wrap, 'x')), (rt.swizzle(wrap, 'y')), ((_u_seed)))), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'))
         spd = rt.component_wise('floor', _u_speed)
-        __hoist416 = rt.construct(2, rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float'), rt.swizzle(r2, 'x'), 1, 'float')), rt.swizzle(r1, 'x'), 1, 'float'), rt.binary('*', rt.component_wise('cos', rt.binary('+', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float'), rt.swizzle(r2, 'y'), 1, 'float')), rt.swizzle(r1, 'y'), 1, 'float')); point[0] = rt.f32(rt.binary('+', point[0], __hoist416[0], 1, 'float')); point[1] = rt.f32(rt.binary('+', point[1], __hoist416[1], 1, 'float'))
+        __hoistv5 = rt.construct(2, rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float'), rt.swizzle(r2, 'x'), 1, 'float')), rt.swizzle(r1, 'x'), 1, 'float'), rt.binary('*', rt.component_wise('cos', rt.binary('+', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float'), rt.swizzle(r2, 'y'), 1, 'float')), rt.swizzle(r1, 'y'), 1, 'float')); point[0] = rt.f32(rt.binary('+', point[0], __hoistv5[0], 1, 'float')); point[1] = rt.f32(rt.binary('+', point[1], __hoistv5[1], 1, 'float'))
         diff = rt.construct(2, ((((n[0]) + (point[0]))) - (f[0])), ((((n[1]) + (point[1]))) - (f[1])))
         dist = rt.f(0.0)
         if rt.bool(rt.binary('==', _u__SHAPE, rt.i(1)))

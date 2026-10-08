@@ -13,7 +13,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   tent3x3__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
-    __hoist1120 = nil; _for0_first = nil; _for1_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
+    __hoistv1 = nil; _for0_first = nil; _for1_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
     px = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
     sum = rt.construct(3, rt.construct(3, rt.f(0)))
     wsum = rt.f(0)
@@ -38,7 +38,7 @@ run_pixel = lambda do |ctx, out|
           break
         end
         w = rt.binary('*', (rt.bool(rt.binary('==', dx, rt.i(0))) ? (rt.f(2)) : (rt.f(1))), (rt.bool(rt.binary('==', dy, rt.i(0))) ? (rt.f(2)) : (rt.f(1))), 1, 'float')
-        __hoist1120 = rt.binary('*', rt.swizzle(rt.texture(_u_smearTex, rt.binary('+', uv, rt.binary('*', rt.construct(2, rt.construct(1, dx), rt.construct(1, dy)), px, 2, 'float'), 2, 'float')), 'rgb'), w, 3, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1120[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1120[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1120[2], 1, 'float'))
+        __hoistv1 = rt.binary('*', rt.swizzle(rt.texture(_u_smearTex, rt.binary('+', uv, rt.binary('*', rt.construct(2, rt.construct(1, dx), rt.construct(1, dy)), px, 2, 'float'), 2, 'float')), 'rgb'), w, 3, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv1[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv1[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv1[2], 1, 'float'))
         wsum = rt.binary('+', wsum, w, 1, 'float')
       end
     end
