@@ -51,4 +51,19 @@ class TestExportKit < Minitest::Test
       assert_match(/Rendered 8x8/, out)
     end
   end
+
+  # The kit README guides developers to a maintained Ruby, names 3.2 only as
+  # the compatibility floor, and cites the official branch page. The gemspec
+  # floor matches the documented floor.
+  def test_kit_readme_names_maintained_ruby_and_the_official_branch_page
+    root = File.expand_path("..", __dir__)
+    template = File.read(File.join(root, "export-kit/kit/README.template.md"), encoding: "UTF-8")
+    assert template.include?("https://www.ruby-lang.org/en/downloads/branches/"),
+           "kit README must reference the official Ruby branch page"
+    assert_match(/\*\*Ruby 3\.4 or 4\.0\*\*/, template)
+    assert_match(/Ruby 3\.2, its compatibility floor/, template)
+    gemspec = File.read(File.join(root, "noisemaker-for-ruby.gemspec"), encoding: "UTF-8")
+    assert_match(/required_ruby_version = ">= 3\.2"/, gemspec,
+                 "gemspec floor must match the documented 3.2 floor")
+  end
 end

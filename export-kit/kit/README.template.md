@@ -6,7 +6,7 @@ This export requires no install step, including `bundle install`. It is a slow w
 
 ## Run it
 
-You need **Ruby 3.4 or 4.0**, both maintained, and no other dependencies. The engine also runs on Ruby 3.2, its compatibility floor, but 3.2 reached end of life on 2026-04-01. Unzip this folder. Open a terminal in it. Start with a small image:
+You need **Ruby 3.4 or 4.0**, both maintained, and no other dependencies. The engine also runs on Ruby 3.2, its compatibility floor, but 3.2 reached end of life on 2026-04-01. The official [Ruby maintenance branches](https://www.ruby-lang.org/en/downloads/branches/) page lists the maintained branches. Unzip this folder. Open a terminal in it. Start with a small image:
 
 ```sh
 ruby run.rb program.dsl --width 64 --height 64 --output out.png
