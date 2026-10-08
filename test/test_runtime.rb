@@ -220,4 +220,28 @@ class TestRuntime < Minitest::Test
     assert_equal [1.0, 0.5, 1.0], palette[1]
     veq @rt.copy(@rt.construct(3, 1.0, 2.0, 3.0)), [1.0, 2.0, 3.0], "flat copy"
   end
+
+  # `st = mat2(c, -s, s, c) * st` passes st as both destination and source.
+  # Every component must read the original vector: the oracle evaluates the
+  # whole product first (python matches it; classicNoisedeck/noise's
+  # kaleidoscope rotates by 90 degrees whenever kaleido > 1).
+  def test_matrix_mult_assign_reads_an_aliased_source_before_storing
+    rotate90 = [0.0, -1.0, 1.0, 0.0] # columns (c, -s), (s, c) with c = 0, s = 1
+    st = [1.0, 0.0]
+    @rt.matrix_mult_assign(st, rotate90, st, 2)
+    assert_equal [0.0, -1.0], st
+
+    src = [1.0, 0.0]
+    dst = [9.0, 9.0]
+    @rt.matrix_mult_assign(dst, rotate90, src, 2)
+    assert_equal [0.0, -1.0], dst
+    assert_equal [1.0, 0.0], src, "a distinct source is left unchanged"
+
+    m = [1.0, 2.0, 3.0, 4.0]
+    expected = [1.0, 2.0, 3.0, 4.0].dup
+    other = [1.0, 2.0, 3.0, 4.0]
+    @rt.matrix_mult_assign(expected, other, [1.0, 2.0, 3.0, 4.0], 2)
+    @rt.matrix_mult_assign(m, m, m.dup, 2)
+    assert_equal expected, m, "an aliased matrix operand is read before it is overwritten"
+  end
 end

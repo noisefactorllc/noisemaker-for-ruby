@@ -848,6 +848,10 @@ module NoisemakerCpu
     # with rotatedCentered === centered). Compute sequentially with live
     # reads to reproduce that aliasing exactly.
     def matrix_mult_assign(dst, mat, src, dim)
+      # `v = M * v` and `m = m * n` pass the destination as an operand; read
+      # from a snapshot so no product reads a component it already overwrote.
+      src = src.dup if src.equal?(dst)
+      mat = mat.dup if mat.equal?(dst)
       n = dim.to_i
       vec = dst.length == n
       if vec
