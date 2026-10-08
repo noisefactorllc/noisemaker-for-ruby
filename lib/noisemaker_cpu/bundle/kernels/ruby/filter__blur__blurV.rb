@@ -13,7 +13,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   g['PI'] = rt.f(3.1415927410125732)
   main__void = lambda do
-    __hoist520 = nil; _for0_first = nil; globalCoord = nil; i = nil; offset = nil; radius = nil; sigma = nil; sigma2 = nil; sum = nil; texSize = nil; texelSize = nil; uv = nil; weight = nil; weightSum = nil; x = nil
+    __hoist456 = nil; _for0_first = nil; globalCoord = nil; i = nil; offset = nil; radius = nil; sigma = nil; sigma2 = nil; sum = nil; texSize = nil; texelSize = nil; uv = nil; weight = nil; weightSum = nil; x = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     texSize = rt.texture_size(_u_inputTex)
     uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
@@ -40,7 +40,7 @@ run_pixel = lambda do |ctx, out|
       x = rt.construct(1, i)
       weight = rt.component_wise('exp', rt.binary('/', rt.unary('-', rt.binary('*', x, x, 1, 'float')), rt.binary('*', rt.f(2), sigma2, 1, 'float'), 1, 'float'))
       offset = rt.construct(2, rt.construct(2, rt.f(0), rt.binary('*', rt.construct(1, i), rt.swizzle(texelSize, 'y'), 1, 'float')))
-      __hoist520 = rt.binary('*', rt.texture(_u_inputTex, rt.binary('+', uv, offset, 2, 'float')), weight, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist520[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist520[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist520[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist520[3], 1, 'float'))
+      __hoist456 = rt.binary('*', rt.texture(_u_inputTex, rt.binary('+', uv, offset, 2, 'float')), weight, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist456[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist456[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist456[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist456[3], 1, 'float'))
       weightSum = rt.binary('+', weightSum, weight, 1, 'float')
     end
     g['fragColor'].replace((rt.binary('/', sum, weightSum, 4, 'float')).map { |c| rt.f32(c) })

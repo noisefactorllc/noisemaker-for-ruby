@@ -29,8 +29,12 @@ module NoisemakerCpu
   module Transpiler
     module CDN
       CDN_BASE = (ENV["NM_SHADER_CDN"] || "https://shaders.noisedeck.app").sub(%r{/+\z}, "")
-      # The "1.0" minor channel is the current release (rolling tag).
-      CDN_VERSION = ENV["NM_SHADER_VERSION"] || "1.0"
+      BUNDLE_LOCK = File.expand_path("../bundle/bundle-lock.json", __dir__)
+      # Default to the exact build recorded in the committed bundle lock: every
+      # dot release is immutable, so a rebuild reproduces the committed bundle.
+      # To move to a newer engine, run with NM_SHADER_VERSION=<exact version>
+      # and --update-lock.
+      CDN_VERSION = ENV["NM_SHADER_VERSION"] || JSON.parse(File.read(BUNDLE_LOCK)).fetch("version")
 
       RENDER_ALLOWLIST = %w[
         loopBegin loopEnd meshLoader meshRender pointsEmit pointsRender pointsBillboardRender

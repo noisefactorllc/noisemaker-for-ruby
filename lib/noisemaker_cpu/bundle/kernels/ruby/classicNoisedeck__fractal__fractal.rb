@@ -199,10 +199,10 @@ run_pixel = lambda do |ctx, out|
   end
   newton__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
-    __hoist368 = nil; __sc360 = nil; _for1_first = nil; i = nil; iter = nil; n = nil; offX = nil; offY = nil; s = nil; tst = nil
+    __hoist432 = nil; __sc1 = nil; _for1_first = nil; i = nil; iter = nil; n = nil; offX = nil; offY = nil; s = nil; tst = nil
     st.replace((rotate2D__vec2_float.call(st, rt.binary('+', _u_rotation, rt.f(90), 1, 'float'))).map { |c| rt.f32(c) })
     st[0] = rt.f32(rt.binary('-', st[0], (((((rt.f(0.5)) * (rt.swizzle(_u_fullResolution, 'x')))) / (rt.swizzle(_u_fullResolution, 'y')))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
-    __sc360 = map__float_float_float_float_float.call(_u_zoomAmt, rt.f(0), rt.f(130), rt.f(1), rt.f(0.0099999997764825821)); st[0] = rt.f32(rt.binary('*', st[0], __sc360, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc360, 1, 'float'))
+    __sc1 = map__float_float_float_float_float.call(_u_zoomAmt, rt.f(0), rt.f(130), rt.f(1), rt.f(0.0099999997764825821)); st[0] = rt.f32(rt.binary('*', st[0], __sc1, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1, 1, 'float'))
     s = map__float_float_float_float_float.call(_u_speed, rt.f(0), rt.f(100), rt.f(0), rt.f(1))
     offX = map__float_float_float_float_float.call(_u_offsetX, rt.unary('-', rt.f(100)), rt.f(100), rt.unary('-', rt.f(0.25)), rt.f(0.25))
     offY = map__float_float_float_float_float.call(_u_offsetY, rt.unary('-', rt.f(100)), rt.f(100), rt.unary('-', rt.f(0.25)), rt.f(0.25))
@@ -222,7 +222,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       tst.replace((divide__vec2_vec2.call(fx__vec2.call(n), fpx__vec2.call(n))).map { |c| rt.f32(c) })
-      __hoist368 = rt.binary('*', rt.binary('*', rt.construct(2, rt.component_wise('sin', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float')), rt.component_wise('cos', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'))), rt.f(0.10000000149011612), 2, 'float'), s, 2, 'float'); tst[0] = rt.f32(rt.binary('+', tst[0], __hoist368[0], 1, 'float')); tst[1] = rt.f32(rt.binary('+', tst[1], __hoist368[1], 1, 'float'))
+      __hoist432 = rt.binary('*', rt.binary('*', rt.construct(2, rt.component_wise('sin', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float')), rt.component_wise('cos', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'))), rt.f(0.10000000149011612), 2, 'float'), s, 2, 'float'); tst[0] = rt.f32(rt.binary('+', tst[0], __hoist432[0], 1, 'float')); tst[1] = rt.f32(rt.binary('+', tst[1], __hoist432[1], 1, 'float'))
       tst[0] = rt.f32(rt.binary('+', tst[0], (offX), 1, 'float')); tst[1] = rt.f32(rt.binary('+', tst[1], (offY), 1, 'float'))
       if rt.bool(rt.binary('<', rt.length(tst), rt.f(0.0010000000474974513)))
         break
@@ -286,7 +286,7 @@ run_pixel = lambda do |ctx, out|
   end
   mandelbrot__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
-    __hoist376 = nil; _for3_first = nil; c = nil; i = nil; s = nil; speedy = nil; z = nil; zoom = nil
+    __hoist440 = nil; _for3_first = nil; c = nil; i = nil; s = nil; speedy = nil; z = nil; zoom = nil
     zoom = map__float_float_float_float_float.call(_u_zoomAmt, rt.f(0), rt.f(100), rt.f(2), rt.f(0.5))
     speedy = map__float_float_float_float_float.call(_u_speed, rt.f(0), rt.f(100), rt.f(0), rt.f(1))
     s = rt.component_wise('mix', rt.binary('*', speedy, rt.f(0.05000000074505806), 1, 'float'), rt.binary('*', speedy, rt.f(0.125), 1, 'float'), speedy)
@@ -295,7 +295,7 @@ run_pixel = lambda do |ctx, out|
     st = rt.assign_swizzle(st, 'x', rt.binary('-', rt.binary('*', rt.swizzle(st, 'x'), rt.f(2), 1, 'float'), rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), 1, 'float'))
     z = rt.construct(2, rt.construct(2, rt.f(0)))
     c = rt.construct(2, ((((zoom) * (st[0]))) - ((((((_u_centerX) + (rt.f(50))))) * (rt.f(0.0099999997764825821))))), ((((zoom) * (st[1]))) - ((((_u_centerY)) * (rt.f(0.0099999997764825821))))))
-    __hoist376 = rt.binary('*', rt.construct(2, rt.component_wise('sin', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float')), rt.component_wise('cos', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'))), s, 2, 'float'); z[0] = rt.f32(rt.binary('+', z[0], __hoist376[0], 1, 'float')); z[1] = rt.f32(rt.binary('+', z[1], __hoist376[1], 1, 'float'))
+    __hoist440 = rt.binary('*', rt.construct(2, rt.component_wise('sin', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float')), rt.component_wise('cos', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'))), s, 2, 'float'); z[0] = rt.f32(rt.binary('+', z[0], __hoist440[0], 1, 'float')); z[1] = rt.f32(rt.binary('+', z[1], __hoist440[1], 1, 'float'))
     i = rt.f(0)
     i = rt.f(0)
     _for3_first = true

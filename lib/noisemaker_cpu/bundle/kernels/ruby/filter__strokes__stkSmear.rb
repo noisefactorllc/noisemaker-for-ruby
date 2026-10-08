@@ -16,9 +16,9 @@ run_pixel = lambda do |ctx, out|
   g['MAX_TAPS'] = rt.i(24)
   hash12__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    __sc1488 = nil; p3 = nil
+    __sc1 = nil; p3 = nil
     p3 = rt.construct(3, rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * (rt.f(0.1031000018119812))))))
-    __sc1488 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1488, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1488, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1488, 1, 'float'))
+    __sc1 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1, 1, 'float'))
     return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')))
   end
   valueNoise2__vec2 = lambda do |p|
@@ -31,9 +31,9 @@ run_pixel = lambda do |ctx, out|
   end
   hash22__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    __sc1496 = nil; p3 = nil
+    __sc2 = nil; p3 = nil
     p3 = rt.construct(3, rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * ((rt.f(0.1031000018119812)))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * ((rt.f(0.10300000011920929)))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * ((rt.f(0.097300000488758087)))))))
-    __sc1496 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1496, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1496, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1496, 1, 'float'))
+    __sc2 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc2, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc2, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc2, 1, 'float'))
     return rt.component_wise('fract', rt.construct(2, rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')), rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'z'), 1, 'float')), rt.swizzle(p3, 'y'), 1, 'float'))))
   end
   lum__vec3 = lambda do |c|
@@ -74,7 +74,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     gc = rt.copy(gc, 'float')
     dirUnit = rt.copy(dirUnit, 'float')
-    __hoist1504 = nil; _for0_first = nil; _for1_first = nil; aa = nil; across = nil; angle = nil; baseCell = nil; body = nil; bristle = nil; capsule = nil; cell = nil; center = nil; centerGlobal = nil; centerUV = nil; co = nil; cx = nil; cy = nil; delta = nil; field = nil; halfLength = nil; halfWidth = nil; jitter = nil; local = nil; mark = nil; oriented = nil; pigment = nil; pigmentSum = nil; pigmentWeight = nil; si = nil; spacing = nil
+    __hoist1104 = nil; _for0_first = nil; _for1_first = nil; aa = nil; across = nil; angle = nil; baseCell = nil; body = nil; bristle = nil; capsule = nil; cell = nil; center = nil; centerGlobal = nil; centerUV = nil; co = nil; cx = nil; cy = nil; delta = nil; field = nil; halfLength = nil; halfWidth = nil; jitter = nil; local = nil; mark = nil; oriented = nil; pigment = nil; pigmentSum = nil; pigmentWeight = nil; si = nil; spacing = nil
     across = rt.construct(2, rt.construct(2, rt.unary('-', rt.swizzle(dirUnit, 'y')), rt.swizzle(dirUnit, 'x')))
     oriented = rt.construct(2, rt.construct(2, rt.dot(gc, dirUnit), rt.dot(gc, across)))
     spacing = rt.construct(2, rt.construct(2, rt.component_wise('max', rt.binary('*', runBase, rt.f(0.69999998807907104), 1, 'float'), rt.f(4)), rt.f(4.5)))
@@ -119,7 +119,7 @@ run_pixel = lambda do |ctx, out|
         mark = rt.binary('*', body, bristle, 1, 'float')
         centerGlobal = rt.construct(2, ((((dirUnit[0]) * (rt.swizzle(center, 'x')))) + (((across[0]) * (rt.swizzle(center, 'y'))))), ((((dirUnit[1]) * (rt.swizzle(center, 'x')))) + (((across[1]) * (rt.swizzle(center, 'y'))))))
         centerUV = rt.construct(2, ((uv[0]) + (((((centerGlobal[0]) - (gc[0]))) / (_u_resolution[0])))), ((uv[1]) + (((((centerGlobal[1]) - (gc[1]))) / (_u_resolution[1])))))
-        __hoist1504 = rt.construct(3, rt.binary('*', rt.swizzle(srcSample__vec2.call(centerUV), 'rgb'), mark, 3, 'float')); pigmentSum[0] = rt.f32(rt.binary('+', pigmentSum[0], __hoist1504[0], 1, 'float')); pigmentSum[1] = rt.f32(rt.binary('+', pigmentSum[1], __hoist1504[1], 1, 'float')); pigmentSum[2] = rt.f32(rt.binary('+', pigmentSum[2], __hoist1504[2], 1, 'float'))
+        __hoist1104 = rt.construct(3, rt.binary('*', rt.swizzle(srcSample__vec2.call(centerUV), 'rgb'), mark, 3, 'float')); pigmentSum[0] = rt.f32(rt.binary('+', pigmentSum[0], __hoist1104[0], 1, 'float')); pigmentSum[1] = rt.f32(rt.binary('+', pigmentSum[1], __hoist1104[1], 1, 'float')); pigmentSum[2] = rt.f32(rt.binary('+', pigmentSum[2], __hoist1104[2], 1, 'float'))
         pigmentWeight = rt.binary('+', pigmentWeight, mark, 1, 'float')
         field = rt.component_wise('max', field, mark)
       end
@@ -156,7 +156,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     gc = rt.copy(gc, 'float')
     dirUnit = rt.copy(dirUnit, 'float')
-    __hoist1512 = nil; _for2_first = nil; fi = nil; i = nil; jn = nil; jp = nil; px = nil; sampN = nil; sampP = nil; sum = nil; w = nil; wsum = nil
+    __hoist1112 = nil; _for2_first = nil; fi = nil; i = nil; jn = nil; jp = nil; px = nil; sampN = nil; sampP = nil; sum = nil; w = nil; wsum = nil
     px = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
     sum = rt.construct(4, srcSample__vec2.call(uv))
     wsum = rt.f(1)
@@ -183,7 +183,7 @@ run_pixel = lambda do |ctx, out|
       end
       sampP = rt.construct(2, ((((uv[0]) + (((((dirUnit[0]) * (fi))) * (px[0]))))) + (((jp[0]) * (px[0])))), ((((uv[1]) + (((((dirUnit[1]) * (fi))) * (px[1]))))) + (((jp[1]) * (px[1])))))
       sampN = rt.construct(2, ((((uv[0]) - (((((dirUnit[0]) * (fi))) * (px[0]))))) + (((jn[0]) * (px[0])))), ((((uv[1]) - (((((dirUnit[1]) * (fi))) * (px[1]))))) + (((jn[1]) * (px[1])))))
-      __hoist1512 = rt.binary('*', rt.binary('+', srcSample__vec2.call(sampP), srcSample__vec2.call(sampN), 4, 'float'), w, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1512[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1512[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1512[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1512[3], 1, 'float'))
+      __hoist1112 = rt.binary('*', rt.binary('+', srcSample__vec2.call(sampP), srcSample__vec2.call(sampN), 4, 'float'), w, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoist1112[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoist1112[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoist1112[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoist1112[3], 1, 'float'))
       wsum = rt.binary('+', wsum, rt.binary('*', rt.f(2), w, 1, 'float'), 1, 'float')
     end
     return rt.construct(4, ((sum[0]) / (wsum)), ((sum[1]) / (wsum)), ((sum[2]) / (wsum)), ((sum[3]) / (wsum)))

@@ -173,7 +173,7 @@ echo "scripts/test: using $($RUBY_BIN -v)" >&2
 # On the all-pass path there must be no not-in-bundle warning, so a changed
 # denominator with all cases passing also fails. Any difference, runtime or
 # oracle error, or unknown id still fails. When the authority manifest or the
-# bundle changes, update this check together with the GAP-001 record.
+# bundle changes, update RECORDED_EXPECTED below.
 RECORDED_EXPECTED=210
 OUT=$(./scripts/parity-summary 2>&1) && RC=0 || RC=$?
 printf '%s\n' "$OUT"

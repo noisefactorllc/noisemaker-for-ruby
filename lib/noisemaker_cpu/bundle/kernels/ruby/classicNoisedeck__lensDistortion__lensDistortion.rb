@@ -96,7 +96,7 @@ run_pixel = lambda do |ctx, out|
   end
   hsv2rgb2__vec3 = lambda do |hsv|
     hsv = rt.copy(hsv, 'float')
-    __sc408 = nil; c = nil; m = nil; rgb = nil; x = nil
+    __sc1 = nil; c = nil; m = nil; rgb = nil; x = nil
     rgb = rt.construct(3, rt.construct(3, rt.f(0)))
     c = rt.binary('*', rt.swizzle(hsv, 'z'), rt.swizzle(hsv, 'y'), 1, 'float')
     x = rt.binary('*', c, rt.binary('-', rt.f(1), rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('*', rt.swizzle(hsv, 'x'), rt.f(6), 1, 'float'), rt.f(2)), rt.f(1), 1, 'float')), 1, 'float'), 1, 'float')
@@ -122,7 +122,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    __sc408 = m; rgb[0] = rt.f32(rt.binary('+', rgb[0], __sc408, 1, 'float')); rgb[1] = rt.f32(rt.binary('+', rgb[1], __sc408, 1, 'float')); rgb[2] = rt.f32(rt.binary('+', rgb[2], __sc408, 1, 'float'))
+    __sc1 = m; rgb[0] = rt.f32(rt.binary('+', rgb[0], __sc1, 1, 'float')); rgb[1] = rt.f32(rt.binary('+', rgb[1], __sc1, 1, 'float')); rgb[2] = rt.f32(rt.binary('+', rgb[2], __sc1, 1, 'float'))
     return rgb
   end
   rgb2hsv2__vec3 = lambda do |rgb|

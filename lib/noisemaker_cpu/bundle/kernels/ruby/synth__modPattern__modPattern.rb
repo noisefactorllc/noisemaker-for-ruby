@@ -56,7 +56,7 @@ run_pixel = lambda do |ctx, out|
     return rt.construct(3, smoothFract__float.call(rt.swizzle(v, 'x')), smoothFract__float.call(rt.swizzle(v, 'y')), smoothFract__float.call(rt.swizzle(v, 'z')))
   end
   main__void = lambda do
-    __hoist1952 = nil; anim = nil; color = nil; globalCoord = nil; n1 = nil; n2 = nil; n3 = nil; osc1 = nil; osc2 = nil; osc3 = nil; p = nil; phase1 = nil; phase2 = nil; phase3 = nil; s1 = nil; s2 = nil; s3 = nil; shift = nil; spd = nil; uv = nil; val = nil
+    __hoist1368 = nil; anim = nil; color = nil; globalCoord = nil; n1 = nil; n2 = nil; n3 = nil; osc1 = nil; osc2 = nil; osc3 = nil; p = nil; phase1 = nil; phase2 = nil; phase3 = nil; s1 = nil; s2 = nil; s3 = nil; shift = nil; spd = nil; uv = nil; val = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     uv = rt.construct(2, ((((globalCoord[0]) - (((_u_fullResolution[0]) * (rt.f(0.5)))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))), ((((globalCoord[1]) - (((_u_fullResolution[1]) * (rt.f(0.5)))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))))
     spd = rt.component_wise('floor', _u_speed)
@@ -91,7 +91,7 @@ run_pixel = lambda do |ctx, out|
     osc3 = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_animMode, rt.i(1)))
       osc3 = rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float')), rt.f(0.15000000596046448), 1, 'float')
-      __hoist1952 = rt.construct(2, rt.unary('-', osc3), rt.f(0)); p[0] = rt.f32(rt.binary('+', p[0], __hoist1952[0], 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __hoist1952[1], 1, 'float'))
+      __hoist1368 = rt.construct(2, rt.unary('-', osc3), rt.f(0)); p[0] = rt.f32(rt.binary('+', p[0], __hoist1368[0], 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __hoist1368[1], 1, 'float'))
     end
     n3 = shape__int_vec2.call(_u_shape3, p)
     shift = (rt.bool(rt.binary('==', _u_animMode, rt.i(0))) ? (anim) : (rt.f(0)))

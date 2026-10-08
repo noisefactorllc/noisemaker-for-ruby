@@ -28,7 +28,7 @@ run_pixel = lambda do |ctx, out|
   g['TAU'] = rt.f(6.2831854820251465)
   g['BAILOUT'] = rt.f(256)
   g['LOG2'] = rt.f(0.69314718246459961)
-  g['MAX_ITER'] = rt.i(500)
+  g['MAX_ITER'] = rt.i(2048)
   df64_quick_two_sum__float_float = lambda do |a, b|
     e = nil; s = nil
     s = rt.binary('+', a, b, 1, 'float')

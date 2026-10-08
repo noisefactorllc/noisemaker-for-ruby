@@ -29,7 +29,7 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('/', rt.binary('*', _G, rt.binary('*', rt.unary('-', rt.f(2)), rt.binary('-', _u, mu, 1, 'float'), 1, 'float'), 1, 'float'), rt.binary('*', sigma, sigma, 1, 'float'), 1, 'float')
   end
   main__void = lambda do
-    _U = nil; _Ux_minus = nil; _Ux_plus = nil; _Uy_minus = nil; _Uy_plus = nil; __sc1824 = nil; age = nil; alive = nil; coord = nil; dGdU = nil; fieldSize = nil; force = nil; forceMag = nil; gradG = nil; gradR = nil; gradU = nil; newPos = nil; rgba = nil; stateSize = nil; texelSize = nil; uv = nil; vel = nil; velocity = nil; worldScale = nil; xyz = nil
+    _U = nil; _Ux_minus = nil; _Ux_plus = nil; _Uy_minus = nil; _Uy_plus = nil; __sc1 = nil; age = nil; alive = nil; coord = nil; dGdU = nil; fieldSize = nil; force = nil; forceMag = nil; gradG = nil; gradR = nil; gradU = nil; newPos = nil; rgba = nil; stateSize = nil; texelSize = nil; uv = nil; vel = nil; velocity = nil; worldScale = nil; xyz = nil
     stateSize = rt.texture_size(_u_xyzTex)
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
@@ -52,7 +52,7 @@ run_pixel = lambda do |ctx, out|
     _Uy_minus = rt.swizzle(rt.texture(_u_fieldTex, rt.component_wise('fract', rt.construct(2, ((uv[0]) - ((rt.f(0)))), ((uv[1]) - ((rt.swizzle(texelSize, 'y'))))))), 'r')
     gradU = rt.construct(2, rt.construct(2, rt.binary('/', rt.binary('-', _Ux_plus, _Ux_minus, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texelSize, 'x'), 1, 'float'), 1, 'float'), rt.binary('/', rt.binary('-', _Uy_plus, _Uy_minus, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texelSize, 'y'), 1, 'float'), 1, 'float')))
     worldScale = rt.binary('*', rt.component_wise('min', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y')), rt.f(0.05000000074505806), 1, 'float')
-    __sc1824 = worldScale; gradU[0] = rt.f32(rt.binary('/', gradU[0], __sc1824, 1, 'float')); gradU[1] = rt.f32(rt.binary('/', gradU[1], __sc1824, 1, 'float'))
+    __sc1 = worldScale; gradU[0] = rt.f32(rt.binary('/', gradU[0], __sc1, 1, 'float')); gradU[1] = rt.f32(rt.binary('/', gradU[1], __sc1, 1, 'float'))
     dGdU = growthDerivative__float_float_float.call(_U, _u_muG, _u_sigmaG)
     gradG = rt.construct(2, ((dGdU) * (gradU[0])), ((dGdU) * (gradU[1])))
     gradR = rt.construct(2, ((_u_repulsion) * (gradU[0])), ((_u_repulsion) * (gradU[1])))

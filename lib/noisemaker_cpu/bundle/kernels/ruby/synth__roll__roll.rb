@@ -18,7 +18,7 @@ run_pixel = lambda do |ctx, out|
   _u_noteGridTex = ctx.texture_binding('noteGridTex')
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
-    __sc2088 = nil; _for0_first = nil; brightness = nil; channel = nil; col = nil; dk = nil; edgeWidth = nil; globalCoord = nil; gridUv = nil; k = nil; key = nil; keyExact = nil; keyFrac = nil; keyLow = nil; keyRange = nil; keysPerPixel = nil; laneEdge = nil; laneF = nil; laneLocal = nil; lanePixels = nil; laneSep = nil; maxVel = nil; noteData = nil; noteVal = nil; prev = nil; prevBright = nil; scrollAmount = nil; scrollUv = nil; spread = nil; uv = nil
+    __sc1 = nil; _for0_first = nil; brightness = nil; channel = nil; col = nil; dk = nil; edgeWidth = nil; globalCoord = nil; gridUv = nil; k = nil; key = nil; keyExact = nil; keyFrac = nil; keyLow = nil; keyRange = nil; keysPerPixel = nil; laneEdge = nil; laneF = nil; laneLocal = nil; lanePixels = nil; laneSep = nil; maxVel = nil; noteData = nil; noteVal = nil; prev = nil; prevBright = nil; scrollAmount = nil; scrollUv = nil; spread = nil; uv = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     scrollAmount = rt.binary('*', rt.binary('*', _u_speed, _u_deltaTime, 1, 'float'), rt.f(0.5), 1, 'float')
@@ -26,7 +26,7 @@ run_pixel = lambda do |ctx, out|
     prev = rt.construct(4, rt.construct(4, rt.f(0)))
     if rt.bool(rt.binary('>=', rt.swizzle(scrollUv, 'x'), rt.f(0)))
       prev.replace((rt.texture(_u_feedbackTex, scrollUv)).map { |c| rt.f32(c) })
-      __sc2088 = rt.f(0.99699997901916504); prev[0] = rt.f32(rt.binary('*', prev[0], __sc2088, 1, 'float')); prev[1] = rt.f32(rt.binary('*', prev[1], __sc2088, 1, 'float')); prev[2] = rt.f32(rt.binary('*', prev[2], __sc2088, 1, 'float')); prev[3] = rt.f32(rt.binary('*', prev[3], __sc2088, 1, 'float'))
+      __sc1 = rt.f(0.99699997901916504); prev[0] = rt.f32(rt.binary('*', prev[0], __sc1, 1, 'float')); prev[1] = rt.f32(rt.binary('*', prev[1], __sc1, 1, 'float')); prev[2] = rt.f32(rt.binary('*', prev[2], __sc1, 1, 'float')); prev[3] = rt.f32(rt.binary('*', prev[3], __sc1, 1, 'float'))
     end
     laneF = rt.binary('*', rt.swizzle(uv, 'y'), rt.f(16), 1, 'float')
     channel = rt.construct(1, rt.component_wise('floor', laneF), 'int')

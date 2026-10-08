@@ -62,14 +62,14 @@ run_pixel = lambda do |ctx, out|
     return rt.component_wise('step', rt.f(0.5), rt.component_wise('fract', _t))
   end
   main__void = lambda do
-    __sc1976 = nil; _t = nil; freq = nil; globalCoord = nil; res = nil; rotRad = nil; scaledTime = nil; scrollOffset = nil; scrolledPos = nil; spatialPhase = nil; spatialPos = nil; st = nil; timeNoise = nil; timePhase = nil; val = nil; valueNoise = nil
+    __sc1 = nil; _t = nil; freq = nil; globalCoord = nil; res = nil; rotRad = nil; scaledTime = nil; scrollOffset = nil; scrolledPos = nil; spatialPhase = nil; spatialPos = nil; st = nil; timeNoise = nil; timePhase = nil; val = nil; valueNoise = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     res = rt.copy(_u_fullResolution, 'float')
     if rt.bool(rt.binary('<', rt.swizzle(res, 'x'), rt.f(1)))
       res[0] = rt.f32(rt.f(1024)); res[1] = rt.f32(rt.f(1024))
     end
     st = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (res[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (res[1])))
-    __sc1976 = rt.f(0.5); st[0] = rt.f32(rt.binary('-', st[0], __sc1976, 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __sc1976, 1, 'float'))
+    __sc1 = rt.f(0.5); st[0] = rt.f32(rt.binary('-', st[0], __sc1, 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __sc1, 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     rotRad = rt.binary('/', rt.binary('*', _u_rotation, g['PI'], 1, 'float'), rt.f(180), 1, 'float')
     st.replace((rotate2D__vec2_float.call(st, rotRad)).map { |c| rt.f32(c) })

@@ -14,9 +14,9 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   hash12__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    __sc1648 = nil; p3 = nil
+    __sc1 = nil; p3 = nil
     p3 = rt.construct(3, rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * (rt.f(0.1031000018119812))))))
-    __sc1648 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1648, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1648, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1648, 1, 'float'))
+    __sc1 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1, 1, 'float'))
     return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')))
   end
   vnoise__vec2 = lambda do |p|
@@ -46,7 +46,7 @@ run_pixel = lambda do |ctx, out|
     return rt.construct(2, rt.binary('-', rt.binary('-', rt.binary('-', rt.binary('+', rt.binary('+', tr, rt.binary('*', rt.f(2), r, 1, 'float'), 1, 'float'), br, 1, 'float'), tl, 1, 'float'), rt.binary('*', rt.f(2), l, 1, 'float'), 1, 'float'), bl, 1, 'float'), rt.binary('-', rt.binary('-', rt.binary('-', rt.binary('+', rt.binary('+', tl, rt.binary('*', rt.f(2), _t, 1, 'float'), 1, 'float'), tr, 1, 'float'), bl, 1, 'float'), rt.binary('*', rt.f(2), b, 1, 'float'), 1, 'float'), br, 1, 'float'))
   end
   main__void = lambda do
-    __sc1656 = nil; __sc1664 = nil; c = nil; edge = nil; flatness = nil; gc = nil; pool = nil; simplified = nil; src = nil; uv = nil
+    __sc2 = nil; __sc3 = nil; c = nil; edge = nil; flatness = nil; gc = nil; pool = nil; simplified = nil; src = nil; uv = nil
     uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
     src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
     simplified = rt.construct(3, rt.swizzle(rt.texture(_u_simplifiedTex, uv), 'r'), rt.swizzle(rt.texture(_u_simplifiedTex, uv), 'g'), rt.swizzle(rt.texture(_u_simplifiedTex, uv), 'b'))
@@ -54,11 +54,11 @@ run_pixel = lambda do |ctx, out|
     pool = rt.binary('*', rt.binary('*', rt.binary('/', _u_shadowIntensity, rt.f(100), 1, 'float'), rt.f(0.69999998807907104), 1, 'float'), rt.component_wise('smoothstep', rt.f(0.05000000074505806), rt.f(0.40000000596046448), edge), 1, 'float')
     c = rt.construct(3, ((simplified[0]) * (((rt.f(1)) - (pool)))), ((simplified[1]) * (((rt.f(1)) - (pool)))), ((simplified[2]) * (((rt.f(1)) - (pool)))))
     gc = rt.construct(2, ((rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'x'))) + (_u_tileOffset[0])), ((rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'y'))) + (_u_tileOffset[1])))
-    __sc1656 = rt.component_wise('mix', rt.f(1), rt.binary('+', rt.f(0.92000001668930054), rt.binary('*', rt.f(0.079999998211860657), vnoise__vec2.call(rt.construct(2, ((gc[0]) / (rt.f(3.5))), ((gc[1]) / (rt.f(3.5))))), 1, 'float'), 1, 'float'), rt.binary('/', rt.component_wise('clamp', _u_paperTexture, rt.f(0), rt.f(100)), rt.f(100), 1, 'float')); c[0] = rt.f32(rt.binary('*', c[0], __sc1656, 1, 'float')); c[1] = rt.f32(rt.binary('*', c[1], __sc1656, 1, 'float')); c[2] = rt.f32(rt.binary('*', c[2], __sc1656, 1, 'float'))
+    __sc2 = rt.component_wise('mix', rt.f(1), rt.binary('+', rt.f(0.92000001668930054), rt.binary('*', rt.f(0.079999998211860657), vnoise__vec2.call(rt.construct(2, ((gc[0]) / (rt.f(3.5))), ((gc[1]) / (rt.f(3.5))))), 1, 'float'), 1, 'float'), rt.binary('/', rt.component_wise('clamp', _u_paperTexture, rt.f(0), rt.f(100)), rt.f(100), 1, 'float')); c[0] = rt.f32(rt.binary('*', c[0], __sc2, 1, 'float')); c[1] = rt.f32(rt.binary('*', c[1], __sc2, 1, 'float')); c[2] = rt.f32(rt.binary('*', c[2], __sc2, 1, 'float'))
     c.replace((rt.component_wise('mix', c, rt.construct(3, ((c[0]) * ((rt.f(1.0199999809265137)))), ((c[1]) * ((rt.f(1)))), ((c[2]) * ((rt.f(0.94999998807907104))))), rt.binary('/', _u_paperTexture, rt.f(100), 1, 'float'))).map { |c| rt.f32(c) })
     flatness = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0), rt.f(0.15000000596046448), edge), 1, 'float')
     c.replace((rt.component_wise('mix', c, rt.construct(3, lum__vec3.call(c)), rt.binary('*', flatness, rt.f(0.11999999731779099), 1, 'float'))).map { |c| rt.f32(c) })
-    __sc1664 = rt.binary('+', rt.f(1), rt.binary('*', flatness, rt.f(0.05000000074505806), 1, 'float'), 1, 'float'); c[0] = rt.f32(rt.binary('*', c[0], __sc1664, 1, 'float')); c[1] = rt.f32(rt.binary('*', c[1], __sc1664, 1, 'float')); c[2] = rt.f32(rt.binary('*', c[2], __sc1664, 1, 'float'))
+    __sc3 = rt.binary('+', rt.f(1), rt.binary('*', flatness, rt.f(0.05000000074505806), 1, 'float'), 1, 'float'); c[0] = rt.f32(rt.binary('*', c[0], __sc3, 1, 'float')); c[1] = rt.f32(rt.binary('*', c[1], __sc3, 1, 'float')); c[2] = rt.f32(rt.binary('*', c[2], __sc3, 1, 'float'))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', c, rt.f(0), rt.f(1)), rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

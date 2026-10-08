@@ -5,10 +5,6 @@
 
 # noisemaker-for-ruby
 
-Current measured support: [compatibility report](docs/COMPATIBILITY.md).
-
-Current qualification limits: [completion gaps](docs/COMPLETION_GAPS.md).
-
 > This package supports the "Export Shader Pipeline" feature in Noisedeck.app. The feature runs shader compositions on other platforms. Noise Factor derives this package from the upstream Noisemaker Engine project and tests it for pixel-level parity.
 
 This is not a classic noise library. This is a new effort centered around
@@ -27,7 +23,8 @@ Effect kernels are **transpiled directly from the upstream GLSL** served by the 
 - Screen-space derivatives.
 - GL texture sampling.
 
-The bundle includes 210 catalog effects (295 kernels). The parity harness
+The bundle includes 210 catalog effects (295 kernels), transpiled from published
+engine `1.0.266` (Noisemaker `15c9114e`). The parity harness
 compares exact RGBA8 output with a pinned JavaScript reference. It uses 8×8
 images, seed 1, time 0.25, small volume atlases, and identical explicit scenes
 for particle consumers. These checks cover the catalog, not every parameter,
@@ -128,12 +125,16 @@ compositions, including particle and volume pipelines. Methods prefixed with
 ## Regenerating the bundle
 
 The vendored kernels + metadata under `lib/noisemaker_cpu/bundle/` are
-generated from the CDN (cached to `.cdn-cache/`, sha256-locked in
-`bundle-lock.json`):
+generated from the CDN at the exact engine version recorded in
+`bundle-lock.json` (cached to `.cdn-cache/`, sha256-locked). A rebuild
+reproduces the committed bundle byte for byte:
 
 ```bash
 ruby scripts/build-bundle.rb --all
 ```
+
+To move to a newer engine release, name it and accept the new sources:
+`NM_SHADER_VERSION=1.0.266 ruby scripts/build-bundle.rb --all --update-lock`.
 
 Builds are staged and validated before replacing the installed bundle. Fetch,
 compile, or lock-drift errors leave the previous bundle intact. An intentional
@@ -167,10 +168,13 @@ bundle exec ruby scripts/parity.rb --only synth/curl,filter/lighting
 ```
 
 The harness fails on any pixel difference, runtime failure, missing oracle,
-or unknown selection. Required CI checks run Ruby 3.2, 3.3, 3.4 and 4.0 on
-Linux, Ruby 4.0 on macOS, archive installation under Bundler, C-locale
-rendering, video frame counts, and all 210 reference comparisons. Export-kit
-publication waits for those checks. Live CDN checks are separate from this
+or unknown selection. Every push runs the standalone tests on Ruby 3.2, 3.3,
+3.4 and 4.0 on Linux and Ruby 4.0 on macOS, including archive installation
+under Bundler and C-locale rendering. A weekly run (or a manual
+workflow_dispatch) adds the integration tests against the pinned reference,
+video frame counts, and `scripts/parity-summary` over all 210 reference
+comparisons on Linux, plus the standalone tests and `scripts/parity-summary` on
+Windows with Ruby 4.0; an export kit is released only after that run passes. Live CDN checks are separate from this
 reproducible gate and may require `NOISEMAKER_PERL_LOCK` for cross-port lock checks.
 
 ## License

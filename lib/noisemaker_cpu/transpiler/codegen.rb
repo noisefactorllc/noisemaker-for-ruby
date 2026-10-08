@@ -351,6 +351,7 @@ module NoisemakerCpu
         @globals = [] # [{name, type, init, array}]
         @structs = {} # name -> [ [fieldtype, fieldname], ... ]
         @loop_id = 0
+        @scalar_assign_n = 0 # numbers hoisted compound-assign temporaries per program
         @uses_deriv = false
         @cur_out = [] # out/inout param rbnames of the function being emitted
         @declared = nil # per-function set of hoisted local names
@@ -843,8 +844,8 @@ module NoisemakerCpu
       # scalar int local) when BOTH operands are int-typed GLSL identifiers
       # (and they differ). The CPU repo measured and REJECTED broader
       # expression-level rewrites (filter/spookyTicker's authority bytes
-      # contradict the pinned GLSL's int-division semantics; see its GAP-003
-      # record) -- do not widen this rule. filter/spookyTicker is exempt
+      # contradict the pinned GLSL's int-division semantics, as measured in
+      # noisemaker-for-cpu) -- do not widen this rule. filter/spookyTicker is exempt
       # from the scalar/scalar form: its pinned authority capture matches
       # the untruncated lowering, so truncating it regresses the gate.
       def _restore_integer_division(init, scope)
@@ -1191,7 +1192,7 @@ module NoisemakerCpu
               # (shapes3d's `p -= 2*max(dot(k1,p),0)*k1` — a genuine
               # comma-assign where later slots see earlier stores).
               if Codegen.width_of(v_t) == 1
-                hv = _local("__sc#{node.object_id.abs % 100_000}")
+                hv = _local("__sc#{@scalar_assign_n += 1}")
                 stores = "#{hv} = #{v_code}; " +
                          (0...Codegen.width_of(tt)).map do |i|
                            b2 = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")

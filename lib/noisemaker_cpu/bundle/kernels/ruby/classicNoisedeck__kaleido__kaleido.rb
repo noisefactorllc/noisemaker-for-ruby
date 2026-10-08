@@ -87,9 +87,9 @@ run_pixel = lambda do |ctx, out|
   end
   diamonds__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
-    __sc384 = nil
+    __sc1 = nil
     st = rt.assign_swizzle(st, 'x', rt.binary('-', rt.swizzle(st, 'x'), rt.binary('/', rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), 1, 'float'))
-    __sc384 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc384, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc384, 1, 'float'))
+    __sc1 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc1, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1, 1, 'float'))
     return rt.binary('+', rt.component_wise('sin', rt.binary('*', rt.swizzle(st, 'x'), rt.f(3.1415927410125732), 1, 'float')), rt.component_wise('sin', rt.binary('*', rt.swizzle(st, 'y'), rt.f(3.1415927410125732), 1, 'float')), 1, 'float')
   end
   pcg__uvec3 = lambda do |value|
@@ -505,7 +505,7 @@ run_pixel = lambda do |ctx, out|
   derivatives__vec3_vec2_bool = lambda do |color, uv, divide|
     color = rt.copy(color, 'float')
     uv = rt.copy(uv, 'float')
-    __sc392 = nil; dcolor = nil; deriv_x = nil; deriv_y = nil; dist = nil; s1 = nil; s2 = nil
+    __sc2 = nil; dcolor = nil; deriv_x = nil; deriv_y = nil; dist = nil; s1 = nil; s2 = nil
     dcolor = rt.construct(3, desaturate__vec3.call(color))
     deriv_x = rt.new_array(rt.i(9), 1)
     deriv_x[(rt.i(0)).to_i] = rt.f(0)
@@ -530,13 +530,13 @@ run_pixel = lambda do |ctx, out|
     s1 = rt.construct(3, convolve__vec2_float_bool.call(uv, deriv_x, divide))
     s2 = rt.construct(3, convolve__vec2_float_bool.call(uv, deriv_y, divide))
     dist = rt.distance(s1, s2)
-    __sc392 = dist; color[0] = rt.f32(rt.binary('*', color[0], __sc392, 1, 'float')); color[1] = rt.f32(rt.binary('*', color[1], __sc392, 1, 'float')); color[2] = rt.f32(rt.binary('*', color[2], __sc392, 1, 'float'))
+    __sc2 = dist; color[0] = rt.f32(rt.binary('*', color[0], __sc2, 1, 'float')); color[1] = rt.f32(rt.binary('*', color[1], __sc2, 1, 'float')); color[2] = rt.f32(rt.binary('*', color[2], __sc2, 1, 'float'))
     return color
   end
   sobel__vec3_vec2 = lambda do |color, uv|
     color = rt.copy(color, 'float')
     uv = rt.copy(uv, 'float')
-    __sc400 = nil; dcolor = nil; dist = nil; s1 = nil; s2 = nil; sobel_x = nil; sobel_y = nil
+    __sc3 = nil; dcolor = nil; dist = nil; s1 = nil; s2 = nil; sobel_x = nil; sobel_y = nil
     dcolor = rt.construct(3, desaturate__vec3.call(color))
     sobel_x = rt.new_array(rt.i(9), 1)
     sobel_x[(rt.i(0)).to_i] = rt.f(1)
@@ -561,7 +561,7 @@ run_pixel = lambda do |ctx, out|
     s1 = rt.construct(3, convolve__vec2_float_bool.call(uv, sobel_x, 0))
     s2 = rt.construct(3, convolve__vec2_float_bool.call(uv, sobel_y, 0))
     dist = rt.distance(s1, s2)
-    __sc400 = dist; color[0] = rt.f32(rt.binary('*', color[0], __sc400, 1, 'float')); color[1] = rt.f32(rt.binary('*', color[1], __sc400, 1, 'float')); color[2] = rt.f32(rt.binary('*', color[2], __sc400, 1, 'float'))
+    __sc3 = dist; color[0] = rt.f32(rt.binary('*', color[0], __sc3, 1, 'float')); color[1] = rt.f32(rt.binary('*', color[1], __sc3, 1, 'float')); color[2] = rt.f32(rt.binary('*', color[2], __sc3, 1, 'float'))
     return color
   end
   outline__vec3_vec2 = lambda do |color, uv|

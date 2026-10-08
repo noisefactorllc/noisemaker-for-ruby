@@ -16,7 +16,16 @@ require "noisemaker_cpu"
 
 options = { width: 512, height: 512, seed: 1, time: 0.0, output: "art.png" }
 
-OptionParser.new do |opts|
+# Report a failure the way the installed `noisemaker-rb` CLI does: the message
+# alone, no backtrace, and exit 2 for invalid input (an unknown effect or
+# parameter, a bad value or size) or 1 for anything else.
+def fail_with(error)
+  warn error.message
+  invalid_input = [ArgumentError, OptionParser::ParseError, NoisemakerCpu::DSL::Error].any? { |kind| error.is_a?(kind) }
+  exit(invalid_input ? 2 : 1)
+end
+
+parser = OptionParser.new do |opts|
   opts.banner = "Usage: ruby run.rb [PROGRAM.dsl] [options]"
   opts.on("--width N", Integer, "output width in pixels (default: 512)") { |v| options[:width] = v }
   opts.on("--height N", Integer, "output height in pixels (default: 512)") { |v| options[:height] = v }
@@ -27,7 +36,15 @@ OptionParser.new do |opts|
     puts opts
     exit 0
   end
-end.parse!(ARGV)
+end
+begin
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError => e
+  fail_with(e)
+end
+%i[width height].each do |key|
+  fail_with(ArgumentError.new("--#{key} must be a positive integer")) unless options[key].positive?
+end
 
 program = ARGV.shift || "program.dsl"
 source = begin
@@ -39,13 +56,16 @@ rescue SystemCallError => e
   abort "cannot read #{program}: #{e.message.split(' @ ').first}"
 end
 
-surface = NoisemakerCpu::Renderer.render_dsl(
-  source,
-  width: options[:width],
-  height: options[:height],
-  seed: options[:seed],
-  time: options[:time]
-)
-
-File.binwrite(options[:output], NoisemakerCpu::PNG.encode_png(surface))
+begin
+  surface = NoisemakerCpu::Renderer.render_dsl(
+    source,
+    width: options[:width],
+    height: options[:height],
+    seed: options[:seed],
+    time: options[:time]
+  )
+  File.binwrite(options[:output], NoisemakerCpu::PNG.encode_png(surface))
+rescue StandardError => e
+  fail_with(e)
+end
 puts "Rendered #{surface.width}x#{surface.height} -> #{options[:output]}"

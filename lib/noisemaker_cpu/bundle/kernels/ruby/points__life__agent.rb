@@ -114,7 +114,7 @@ run_pixel = lambda do |ctx, out|
     return v
   end
   main__void = lambda do
-    __sc1832 = nil; __sc1840 = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; age = nil; alive = nil; angle = nil; cellSeed = nil; checkCell = nil; coord = nil; curveShape = nil; data = nil; diff = nil; dist = nil; dx = nil; dy = nil; forceDir = nil; forceMag = nil; forceParams = nil; initSeed = nil; mass = nil; myCell = nil; myType = nil; neighborCount = nil; otherAlive = nil; otherData = nil; otherPos = nil; otherType = nil; otherXyz = nil; particleId = nil; pos = nil; prefDist = nil; px = nil; py = nil; rgba = nil; s = nil; sampleIdx = nil; sampleSeed = nil; seed = nil; speed = nil; stateSize = nil; strength = nil; sx = nil; sy = nil; totalForce = nil; totalParticles = nil; typeId = nil; vel = nil; velocity = nil; vx = nil; vy = nil; xyz = nil
+    __sc1 = nil; __sc2 = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; age = nil; alive = nil; angle = nil; cellSeed = nil; checkCell = nil; coord = nil; curveShape = nil; data = nil; diff = nil; dist = nil; dx = nil; dy = nil; forceDir = nil; forceMag = nil; forceParams = nil; initSeed = nil; mass = nil; myCell = nil; myType = nil; neighborCount = nil; otherAlive = nil; otherData = nil; otherPos = nil; otherType = nil; otherXyz = nil; particleId = nil; pos = nil; prefDist = nil; px = nil; py = nil; rgba = nil; s = nil; sampleIdx = nil; sampleSeed = nil; seed = nil; speed = nil; stateSize = nil; strength = nil; sx = nil; sy = nil; totalForce = nil; totalParticles = nil; typeId = nil; vel = nil; velocity = nil; vx = nil; vy = nil; xyz = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
     xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
@@ -235,9 +235,9 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    __sc1832 = mass; totalForce[0] = rt.f32(rt.binary('/', totalForce[0], __sc1832, 1, 'float')); totalForce[1] = rt.f32(rt.binary('/', totalForce[1], __sc1832, 1, 'float'))
+    __sc1 = mass; totalForce[0] = rt.f32(rt.binary('/', totalForce[0], __sc1, 1, 'float')); totalForce[1] = rt.f32(rt.binary('/', totalForce[1], __sc1, 1, 'float'))
     velocity[0] = rt.f32(rt.binary('+', velocity[0], totalForce[0], 1, 'float')); velocity[1] = rt.f32(rt.binary('+', velocity[1], totalForce[1], 1, 'float'))
-    __sc1840 = rt.binary('-', rt.f(1), _u_friction, 1, 'float'); velocity[0] = rt.f32(rt.binary('*', velocity[0], __sc1840, 1, 'float')); velocity[1] = rt.f32(rt.binary('*', velocity[1], __sc1840, 1, 'float'))
+    __sc2 = rt.binary('-', rt.f(1), _u_friction, 1, 'float'); velocity[0] = rt.f32(rt.binary('*', velocity[0], __sc2, 1, 'float')); velocity[1] = rt.f32(rt.binary('*', velocity[1], __sc2, 1, 'float'))
     velocity.replace((limitVec__vec2_float.call(velocity, _u_maxSpeed)).map { |c| rt.f32(c) })
     pos[0] = rt.f32(rt.binary('+', pos[0], velocity[0], 1, 'float')); pos[1] = rt.f32(rt.binary('+', pos[1], velocity[1], 1, 'float'))
     if rt.bool(rt.binary('==', _u_boundaryMode, rt.i(0)))

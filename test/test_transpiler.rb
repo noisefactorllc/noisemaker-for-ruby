@@ -983,7 +983,7 @@ class TestTranspilerPipeline < Minitest::Test
 
   def test_scalar_int_division_rewrite_is_exempt_for_spookyTicker
     # filter/spookyTicker's pinned M4/Metal authority capture matches the
-    # untruncated lowering (measured, see its GAP-003 record), so the
+    # untruncated lowering (measured in noisemaker-for-cpu), so the
     # scalar/scalar rewrite must be exempt for that effect id. The
     # component-selected form still applies everywhere.
     source = <<~GLSL

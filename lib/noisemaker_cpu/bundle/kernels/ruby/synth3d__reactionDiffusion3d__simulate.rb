@@ -22,10 +22,10 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   hash3__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    __sc2168 = nil
+    __sc1 = nil
     p.replace((rt.binary('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     p.replace((rt.component_wise('fract', rt.construct(3, ((p[0]) * ((rt.f(0.1031000018119812)))), ((p[1]) * ((rt.f(0.10300000011920929)))), ((p[2]) * ((rt.f(0.097300000488758087))))))).map { |c| rt.f32(c) })
-    __sc2168 = rt.dot(p, rt.binary('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float')); p[0] = rt.f32(rt.binary('+', p[0], __sc2168, 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __sc2168, 1, 'float')); p[2] = rt.f32(rt.binary('+', p[2], __sc2168, 1, 'float'))
+    __sc1 = rt.dot(p, rt.binary('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float')); p[0] = rt.f32(rt.binary('+', p[0], __sc1, 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __sc1, 1, 'float')); p[2] = rt.f32(rt.binary('+', p[2], __sc1, 1, 'float'))
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'))
   end
   atlasTexel__ivec3_int = lambda do |p, volSize|

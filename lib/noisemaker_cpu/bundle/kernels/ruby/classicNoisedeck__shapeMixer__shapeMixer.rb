@@ -220,10 +220,10 @@ run_pixel = lambda do |ctx, out|
   end
   diamonds__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
-    __sc456 = nil
+    __sc1 = nil
     st.replace((rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.swizzle(_u_fullResolution, 'y'), 2, 'float')).map { |c| rt.f32(c) })
     st[0] = rt.f32(rt.binary('-', st[0], (((((rt.f(0.5)) * (rt.swizzle(_u_fullResolution, 'x')))) / (rt.swizzle(_u_fullResolution, 'y')))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
-    __sc456 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc456, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc456, 1, 'float'))
+    __sc1 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc1, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1, 1, 'float'))
     return rt.binary('+', rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'x'), rt.f(3.1415927410125732), 1, 'float')), rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'y'), rt.f(3.1415927410125732), 1, 'float')), 1, 'float')
   end
   shape__vec2_int_float = lambda do |st, sides, blend|
@@ -422,9 +422,9 @@ run_pixel = lambda do |ctx, out|
   end
   sineNoise__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
-    __sc464 = nil; offA = nil; offB = nil; r1 = nil; r2 = nil; scaleA = nil; scaleB = nil; scaleC = nil; scaleD = nil
+    __sc2 = nil; offA = nil; offB = nil; r1 = nil; r2 = nil; scaleA = nil; scaleB = nil; scaleC = nil; scaleD = nil
     st[0] = rt.f32(rt.binary('-', st[0], (((((rt.swizzle(_u_fullResolution, 'x')) / (rt.swizzle(_u_fullResolution, 'y')))) * (rt.f(0.5)))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
-    __sc464 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc464, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc464, 1, 'float'))
+    __sc2 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc2, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc2, 1, 'float'))
     st[0] = rt.f32(rt.binary('+', st[0], (((((rt.swizzle(_u_fullResolution, 'x')) / (rt.swizzle(_u_fullResolution, 'y')))) * (rt.f(0.5)))), 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], (rt.f(0.5)), 1, 'float'))
     r1 = rt.construct(3, prng__vec3.call(rt.construct(3, ((_u_seed)), ((_u_seed)), ((_u_seed)))))
     r2 = rt.construct(3, prng__vec3.call(rt.construct(3, ((((_u_seed)) + (rt.f(10)))), ((((_u_seed)) + (rt.f(10)))), ((((_u_seed)) + (rt.f(10)))))))

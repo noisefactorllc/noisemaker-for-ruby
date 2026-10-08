@@ -4,9 +4,16 @@ name: Ruby CI and export kit
 # export-kit-release.yml, which builds this repo's export kit at this exact
 # SHA and ships it to kits.noisedeck.app. See scaffold
 # docs/runbook/export-kits.md.
+#
+# Pushes and pull requests run the fast standalone tests. The weekly run and
+# workflow_dispatch also run the oracle integration tests and the whole-port
+# PARITY-SUMMARY against the pinned noisemaker-for-cpu (on Linux and Windows),
+# then release a kit, unless the SHA already carries a kit tag.
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '23 7 * * 1'
   push:
     branches: [main]
     # Inert documentation does not build. README.md stays in: the gem ships
@@ -35,7 +42,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: export-kit-${{ github.ref }}
+  group: export-kit-${{ github.ref }}-${{ (github.event_name == 'push' || github.event_name == 'pull_request') && 'gate' || 'full' }}
   cancel-in-progress: false
 
 jobs:
@@ -67,7 +74,8 @@ jobs:
 
   parity:
     name: Pinned JavaScript parity and integration
-    timeout-minutes: 45
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
@@ -90,49 +98,84 @@ jobs:
           path: oracle
           persist-credentials: false
       - name: Install video test tools
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        timeout-minutes: 15
+        run: |
+          for attempt in 1 2 3; do
+            sudo timeout 300 apt-get update && sudo timeout 600 apt-get install -y ffmpeg && exit 0
+            echo "apt attempt $attempt failed; retrying" >&2
+          done
+          exit 1
       - name: Required integration tests
         env:
           NOISEMAKER_CPU_DIR: ${{ github.workspace }}/oracle
           NOISEMAKER_REQUIRE_ORACLE: '1'
           LC_ALL: C
         run: bundle exec rake test
-      - name: All 205 effects, exact RGBA8 comparison
+      - name: Whole-port PARITY-SUMMARY, exact RGBA8 comparison
         env:
           NOISEMAKER_CPU_DIR: ${{ github.workspace }}/oracle
-        run: bundle exec ruby scripts/parity.rb
+        run: ./scripts/parity-summary
 
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      release: ${{ steps.paths.outputs.release }}
+  windows:
+    name: Windows standalone tests and PARITY-SUMMARY
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 90
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
-          fetch-depth: 0
           persist-credentials: false
-      - name: Check existing export-kit publication paths
-        id: paths
+      - uses: ruby/setup-ruby@e8944e80fb94b20106697132f8c20c665fab29e9 # v1
+        with:
+          ruby-version: '4.0'
+          bundler-cache: true
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '22'
+      - name: Read oracle revision
+        id: oracle
+        run: ruby -rjson -e 'puts "revision=#{JSON.parse(File.read("scripts/oracle-lock.json")).fetch("revision")}"' >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          repository: noisefactorllc/noisemaker-for-cpu
+          ref: ${{ steps.oracle.outputs.revision }}
+          path: oracle
+          persist-credentials: false
+      - name: Standalone tests
         env:
-          BEFORE: ${{ github.event.before }}
-          EVENT_NAME: ${{ github.event_name }}
-        run: |
-          ruby -ropen3 -e '
-            before = ENV.fetch("BEFORE", "")
-            args = before.match?(/\A[0-9a-f]{40}\z/) && before != "0" * 40 ?
-              ["diff", "--name-only", before, ENV.fetch("GITHUB_SHA"), "--"] : ["ls-files"]
-            out, status = Open3.capture2("git", *args)
-            abort "could not inspect changed files" unless status.success?
-            changed = out.lines.any? { |path| path.strip.match?(%r{\A(?:export-kit/|lib/|exe/noisemaker-rb$|LICENSE$|\.github/workflows/export-kit\.yml$)}) }
-            puts "release=#{ENV["EVENT_NAME"] == "workflow_dispatch" || changed}"
-          ' >> "$GITHUB_OUTPUT"
+          NOISEMAKER_CPU_DIR: /no-oracle-in-standalone-tests
+        run: bundle exec rake test
+      - name: Whole-port PARITY-SUMMARY, exact RGBA8 comparison
+        env:
+          NOISEMAKER_CPU_DIR: ${{ github.workspace }}/oracle
+        run: ./scripts/parity-summary
 
   dispatch:
-    needs: [test, parity, changes]
-    if: github.event_name != 'pull_request' && needs.changes.outputs.release == 'true' && github.ref == 'refs/heads/main'
+    needs: [test, parity, windows]
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      # scaffold mints a new kit version for every dispatch, so a weekly run on
+      # an unchanged main must not release the same SHA again.
+      - name: Skip a SHA that is already released
+        id: released
+        env:
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          tags=$(git ls-remote --tags "https://github.com/$REPO.git" 'refs/tags/kit-*')
+          if printf '%s\n' "$tags" | awk '$2 ~ /\^\{\}$/ { print $1 }' | grep -qx "$SHA"; then
+            echo "$SHA already carries a kit tag; nothing to release."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Mint scaffold-dispatch token
+        if: steps.released.outputs.released == 'false'
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -142,6 +185,7 @@ jobs:
           repositories: scaffold
 
       - name: Dispatch export-kit-release
+        if: steps.released.outputs.released == 'false'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |

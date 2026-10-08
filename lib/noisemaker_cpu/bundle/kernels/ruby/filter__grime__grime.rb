@@ -67,7 +67,7 @@ run_pixel = lambda do |ctx, out|
   simple_multires__vec2_vec2_float = lambda do |uv, base_freq, s|
     uv = rt.copy(uv, 'float')
     base_freq = rt.copy(base_freq, 'float')
-    __sc712 = nil; _for0_first = nil; accum = nil; amp = nil; freq = nil; i = nil; off = nil; os = nil; total = nil
+    __sc1 = nil; _for0_first = nil; accum = nil; amp = nil; freq = nil; i = nil; off = nil; os = nil; total = nil
     freq = rt.copy(base_freq, 'float')
     amp = rt.f(0.5)
     total = rt.f(0)
@@ -86,7 +86,7 @@ run_pixel = lambda do |ctx, out|
       off = rt.construct(2, rt.binary('/', seed_offset__float.call(os), freq, 2, 'float'))
       accum = rt.binary('+', accum, rt.binary('*', value_noise__vec2_float.call(rt.construct(2, ((((uv[0]) * (freq[0]))) + (off[0])), ((((uv[1]) * (freq[1]))) + (off[1]))), os), amp, 1, 'float'), 1, 'float')
       total = rt.binary('+', total, amp, 1, 'float')
-      __sc712 = rt.f(2); freq[0] = rt.f32(rt.binary('*', freq[0], __sc712, 1, 'float')); freq[1] = rt.f32(rt.binary('*', freq[1], __sc712, 1, 'float'))
+      __sc1 = rt.f(2); freq[0] = rt.f32(rt.binary('*', freq[0], __sc1, 1, 'float')); freq[1] = rt.f32(rt.binary('*', freq[1], __sc1, 1, 'float'))
       amp = rt.binary('*', amp, rt.f(0.5), 1, 'float')
     end
     return clamp01__float.call(rt.binary('/', accum, rt.component_wise('max', total, rt.f(0.0010000000474974513)), 1, 'float'))
@@ -136,7 +136,7 @@ run_pixel = lambda do |ctx, out|
     return clamp01__float.call(rt.binary('*', rt.binary('+', base, warped, 1, 'float'), rt.f(0.5), 1, 'float'))
   end
   main__void = lambda do
-    __sc720 = nil; base_color = nil; blend_mask = nil; dropout = nil; dusty = nil; final_rgb = nil; freq_mask = nil; freq_specks = nil; globalCoord = nil; globalUV = nil; mask_gradient = nil; mask_power = nil; mask_refracted = nil; mask_value = nil; px = nil; s = nil; sparse_mask = nil; sparse_noise = nil; specks = nil; specks_field = nil; str = nil; tileSize = nil; trimmed = nil
+    __sc2 = nil; base_color = nil; blend_mask = nil; dropout = nil; dusty = nil; final_rgb = nil; freq_mask = nil; freq_specks = nil; globalCoord = nil; globalUV = nil; mask_gradient = nil; mask_power = nil; mask_refracted = nil; mask_value = nil; px = nil; s = nil; sparse_mask = nil; sparse_noise = nil; specks = nil; specks_field = nil; str = nil; tileSize = nil; trimmed = nil
     tileSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
     globalCoord = rt.construct(2, ((((ctx.uv[0]) * (tileSize[0]))) + (_u_tileOffset[0])), ((((ctx.uv[1]) * (tileSize[1]))) + (_u_tileOffset[1])))
     globalUV = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
@@ -158,7 +158,7 @@ run_pixel = lambda do |ctx, out|
     sparse_mask = (rt.bool(rt.binary('<', hash21__vec2.call(rt.construct(2, ((((globalUV[0]) * (_u_fullResolution[0]))) + ((((s) + (rt.f(113)))))), ((((globalUV[1]) * (_u_fullResolution[1]))) + ((((s) + (rt.f(171)))))))), rt.f(0.25))) ? (rt.f(1)) : (rt.f(0)))
     sparse_noise = rt.binary('*', exponential_noise__vec2_vec2_float.call(globalUV, _u_fullResolution, rt.binary('+', s, rt.f(131), 1, 'float')), sparse_mask, 1, 'float')
     dusty.replace((rt.component_wise('mix', dusty, rt.construct(3, sparse_noise), rt.f(0.15000000596046448))).map { |c| rt.f32(c) })
-    __sc720 = specks; dusty[0] = rt.f32(rt.binary('*', dusty[0], __sc720, 1, 'float')); dusty[1] = rt.f32(rt.binary('*', dusty[1], __sc720, 1, 'float')); dusty[2] = rt.f32(rt.binary('*', dusty[2], __sc720, 1, 'float'))
+    __sc2 = specks; dusty[0] = rt.f32(rt.binary('*', dusty[0], __sc2, 1, 'float')); dusty[1] = rt.f32(rt.binary('*', dusty[1], __sc2, 1, 'float')); dusty[2] = rt.f32(rt.binary('*', dusty[2], __sc2, 1, 'float'))
     blend_mask = clamp01__float.call(rt.binary('*', mask_value, str, 1, 'float'))
     final_rgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(base_color, 'r'), dusty[0], blend_mask), rt.component_wise('mix', rt.swizzle(base_color, 'g'), dusty[1], blend_mask), rt.component_wise('mix', rt.swizzle(base_color, 'b'), dusty[2], blend_mask))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', final_rgb, rt.f(0), rt.f(1)), rt.swizzle(base_color, 'a'))).map { |c| rt.f32(c) })

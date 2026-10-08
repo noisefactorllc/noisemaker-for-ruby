@@ -27,7 +27,7 @@ run_pixel = lambda do |ctx, out|
     return rt.component_wise('max', rt.swizzle(centered, 'x'), rt.swizzle(centered, 'y'))
   end
   main__void = lambda do
-    __hoist1608 = nil; _for0_first = nil; _t = nil; a = nil; bloomed = nil; blurAccum = nil; blurred = nil; boosted = nil; edgeBlended = nil; edgeMask = nil; finalRgb = nil; fullRes = nil; globalCoord = nil; globalUV = nil; i = nil; offset = nil; original = nil; r = nil; radiusUV = nil; sampleGlobalUV = nil; sampleLocalUV = nil; sigma = nil; sourceClamped = nil; texelSize = nil; theta = nil; uv = nil; weight = nil; weightSum = nil
+    __hoist1176 = nil; _for0_first = nil; _t = nil; a = nil; bloomed = nil; blurAccum = nil; blurred = nil; boosted = nil; edgeBlended = nil; edgeMask = nil; finalRgb = nil; fullRes = nil; globalCoord = nil; globalUV = nil; i = nil; offset = nil; original = nil; r = nil; radiusUV = nil; sampleGlobalUV = nil; sampleLocalUV = nil; sigma = nil; sourceClamped = nil; texelSize = nil; theta = nil; uv = nil; weight = nil; weightSum = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (_u_resolution[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (_u_resolution[1])))
@@ -60,7 +60,7 @@ run_pixel = lambda do |ctx, out|
       weight = rt.component_wise('exp', rt.binary('/', rt.binary('*', rt.unary('-', rt.f(0.5)), rt.binary('*', r, r, 1, 'float'), 1, 'float'), rt.binary('*', sigma, sigma, 1, 'float'), 1, 'float'))
       sampleGlobalUV = rt.construct(2, rt.component_wise('clamp', rt.f32(((uv[0]) + (((offset[0]) * (radiusUV[0]))))), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.f32(((uv[1]) + (((offset[1]) * (radiusUV[1]))))), (rt.f(0)), (rt.f(1))))
       sampleLocalUV = rt.construct(2, ((((((sampleGlobalUV[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((sampleGlobalUV[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
-      __hoist1608 = rt.binary('*', rt.swizzle(rt.texture(_u_inputTex, sampleLocalUV), 'rgb'), weight, 3, 'float'); blurAccum[0] = rt.f32(rt.binary('+', blurAccum[0], __hoist1608[0], 1, 'float')); blurAccum[1] = rt.f32(rt.binary('+', blurAccum[1], __hoist1608[1], 1, 'float')); blurAccum[2] = rt.f32(rt.binary('+', blurAccum[2], __hoist1608[2], 1, 'float'))
+      __hoist1176 = rt.binary('*', rt.swizzle(rt.texture(_u_inputTex, sampleLocalUV), 'rgb'), weight, 3, 'float'); blurAccum[0] = rt.f32(rt.binary('+', blurAccum[0], __hoist1176[0], 1, 'float')); blurAccum[1] = rt.f32(rt.binary('+', blurAccum[1], __hoist1176[1], 1, 'float')); blurAccum[2] = rt.f32(rt.binary('+', blurAccum[2], __hoist1176[2], 1, 'float'))
       weightSum = rt.binary('+', weightSum, weight, 1, 'float')
     end
     blurred = rt.construct(3, ((blurAccum[0]) / (weightSum)), ((blurAccum[1]) / (weightSum)), ((blurAccum[2]) / (weightSum)))

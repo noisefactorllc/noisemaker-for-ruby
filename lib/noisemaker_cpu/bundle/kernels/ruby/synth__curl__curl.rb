@@ -31,10 +31,10 @@ run_pixel = lambda do |ctx, out|
   end
   simplex3D__vec3 = lambda do |v|
     v = rt.copy(v, 'float')
-    _C = nil; _D = nil; __sc1888 = nil; __sc1896 = nil; __sc1904 = nil; __sc1912 = nil; __sc1920 = nil; _g = nil; a0 = nil; a1 = nil; b0 = nil; b1 = nil; h = nil; i = nil; i1 = nil; i2 = nil; j = nil; l = nil; m = nil; n_ = nil; norm = nil; ns = nil; p = nil; p0 = nil; p1 = nil; p2 = nil; p3 = nil; s0 = nil; s1 = nil; sh = nil; x = nil; x0 = nil; x1 = nil; x2 = nil; x3 = nil; x_ = nil; y = nil; y_ = nil
+    _C = nil; _D = nil; __sc1 = nil; __sc2 = nil; __sc3 = nil; __sc4 = nil; __sc5 = nil; _g = nil; a0 = nil; a1 = nil; b0 = nil; b1 = nil; h = nil; i = nil; i1 = nil; i2 = nil; j = nil; l = nil; m = nil; n_ = nil; norm = nil; ns = nil; p = nil; p0 = nil; p1 = nil; p2 = nil; p3 = nil; s0 = nil; s1 = nil; sh = nil; x = nil; x0 = nil; x1 = nil; x2 = nil; x3 = nil; x_ = nil; y = nil; y_ = nil
     _C = rt.construct(2, rt.construct(2, rt.f(0.1666666716337204), rt.f(0.3333333432674408)))
     _D = rt.construct(4, rt.construct(4, rt.f(0), rt.f(0.5), rt.f(1), rt.f(2)))
-    __sc1888 = rt.binary('*', rt.construct(1, _u_seed), rt.f(0.12710000574588776), 1, 'float'); v[0] = rt.f32(rt.binary('+', v[0], __sc1888, 1, 'float')); v[1] = rt.f32(rt.binary('+', v[1], __sc1888, 1, 'float')); v[2] = rt.f32(rt.binary('+', v[2], __sc1888, 1, 'float'))
+    __sc1 = rt.binary('*', rt.construct(1, _u_seed), rt.f(0.12710000574588776), 1, 'float'); v[0] = rt.f32(rt.binary('+', v[0], __sc1, 1, 'float')); v[1] = rt.f32(rt.binary('+', v[1], __sc1, 1, 'float')); v[2] = rt.f32(rt.binary('+', v[2], __sc1, 1, 'float'))
     i = rt.construct(3, rt.component_wise('floor', rt.f32(((v[0]) + (rt.dot(v, rt.swizzle(_C, 'yyy')))))), rt.component_wise('floor', rt.f32(((v[1]) + (rt.dot(v, rt.swizzle(_C, 'yyy')))))), rt.component_wise('floor', rt.f32(((v[2]) + (rt.dot(v, rt.swizzle(_C, 'yyy')))))))
     x0 = rt.construct(3, ((((v[0]) - (i[0]))) + (rt.dot(i, rt.swizzle(_C, 'xxx')))), ((((v[1]) - (i[1]))) + (rt.dot(i, rt.swizzle(_C, 'xxx')))), ((((v[2]) - (i[2]))) + (rt.dot(i, rt.swizzle(_C, 'xxx')))))
     _g = rt.construct(3, rt.component_wise('step', rt.swizzle(x0, 'y'), rt.swizzle(x0, 'x')), rt.component_wise('step', rt.swizzle(x0, 'z'), rt.swizzle(x0, 'y')), rt.component_wise('step', rt.swizzle(x0, 'x'), rt.swizzle(x0, 'z')))
@@ -66,10 +66,10 @@ run_pixel = lambda do |ctx, out|
     p2 = rt.construct(3, rt.construct(3, rt.swizzle(a1, 'xy'), rt.swizzle(h, 'z')))
     p3 = rt.construct(3, rt.construct(3, rt.swizzle(a1, 'zw'), rt.swizzle(h, 'w')))
     norm = rt.construct(4, taylorInvSqrt__vec4.call(rt.construct(4, (rt.dot(p0, p0)), (rt.dot(p1, p1)), (rt.dot(p2, p2)), (rt.dot(p3, p3)))))
-    __sc1896 = rt.swizzle(norm, 'x'); p0[0] = rt.f32(rt.binary('*', p0[0], __sc1896, 1, 'float')); p0[1] = rt.f32(rt.binary('*', p0[1], __sc1896, 1, 'float')); p0[2] = rt.f32(rt.binary('*', p0[2], __sc1896, 1, 'float'))
-    __sc1904 = rt.swizzle(norm, 'y'); p1[0] = rt.f32(rt.binary('*', p1[0], __sc1904, 1, 'float')); p1[1] = rt.f32(rt.binary('*', p1[1], __sc1904, 1, 'float')); p1[2] = rt.f32(rt.binary('*', p1[2], __sc1904, 1, 'float'))
-    __sc1912 = rt.swizzle(norm, 'z'); p2[0] = rt.f32(rt.binary('*', p2[0], __sc1912, 1, 'float')); p2[1] = rt.f32(rt.binary('*', p2[1], __sc1912, 1, 'float')); p2[2] = rt.f32(rt.binary('*', p2[2], __sc1912, 1, 'float'))
-    __sc1920 = rt.swizzle(norm, 'w'); p3[0] = rt.f32(rt.binary('*', p3[0], __sc1920, 1, 'float')); p3[1] = rt.f32(rt.binary('*', p3[1], __sc1920, 1, 'float')); p3[2] = rt.f32(rt.binary('*', p3[2], __sc1920, 1, 'float'))
+    __sc2 = rt.swizzle(norm, 'x'); p0[0] = rt.f32(rt.binary('*', p0[0], __sc2, 1, 'float')); p0[1] = rt.f32(rt.binary('*', p0[1], __sc2, 1, 'float')); p0[2] = rt.f32(rt.binary('*', p0[2], __sc2, 1, 'float'))
+    __sc3 = rt.swizzle(norm, 'y'); p1[0] = rt.f32(rt.binary('*', p1[0], __sc3, 1, 'float')); p1[1] = rt.f32(rt.binary('*', p1[1], __sc3, 1, 'float')); p1[2] = rt.f32(rt.binary('*', p1[2], __sc3, 1, 'float'))
+    __sc4 = rt.swizzle(norm, 'z'); p2[0] = rt.f32(rt.binary('*', p2[0], __sc4, 1, 'float')); p2[1] = rt.f32(rt.binary('*', p2[1], __sc4, 1, 'float')); p2[2] = rt.f32(rt.binary('*', p2[2], __sc4, 1, 'float'))
+    __sc5 = rt.swizzle(norm, 'w'); p3[0] = rt.f32(rt.binary('*', p3[0], __sc5, 1, 'float')); p3[1] = rt.f32(rt.binary('*', p3[1], __sc5, 1, 'float')); p3[2] = rt.f32(rt.binary('*', p3[2], __sc5, 1, 'float'))
     m = rt.construct(4, rt.component_wise('max', rt.f32(((rt.f(0.60000002384185791)) - ((rt.dot(x0, x0))))), rt.f(0)), rt.component_wise('max', rt.f32(((rt.f(0.60000002384185791)) - ((rt.dot(x1, x1))))), rt.f(0)), rt.component_wise('max', rt.f32(((rt.f(0.60000002384185791)) - ((rt.dot(x2, x2))))), rt.f(0)), rt.component_wise('max', rt.f32(((rt.f(0.60000002384185791)) - ((rt.dot(x3, x3))))), rt.f(0)))
     m.replace((rt.binary('*', m, m, 4, 'float')).map { |c| rt.f32(c) })
     return rt.binary('*', rt.f(42), rt.dot(rt.binary('*', m, m, 4, 'float'), rt.construct(4, rt.dot(p0, x0), rt.dot(p1, x1), rt.dot(p2, x2), rt.dot(p3, x3))), 1, 'float')

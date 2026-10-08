@@ -1,6 +1,6 @@
 {
   "source": "https://shaders.noisedeck.app",
-  "version": "1.0",
+  "version": "1.0.266",
   "hashes": {
     "classicNoisedeck/bitEffects:bitEffects": "adf44e902e12ef9395076470a65ada857ecc1a057ee1a5e978d143906606a191",
     "classicNoisedeck/caustic:caustic": "6e48eab04db32697b04d478f33323e4bb32f6a6b17289b6a0f32d3177992af3e",
@@ -9,7 +9,7 @@
     "classicNoisedeck/coalesce:coalesce": "bdfeb9d6dd3bf2dca59bec6a1e71cebd4d5e9b814e26a6d189c74874008287cb",
     "classicNoisedeck/colorLab:colorLab": "9df136417f022f65b55b2a6fb7fcdaa86d1638d98593e2fc0b6b6ca353573279",
     "classicNoisedeck/composite:composite": "fddb1c73c44fac55f7f43615125a93628119313b06c4e484c0a5d1e45998fb4d",
-    "classicNoisedeck/effects:effects": "6f0aaab0ccfa9b484fd5e807ed1062cb19dc86cf6bbb671d1a6606dbc2de9312",
+    "classicNoisedeck/effects:effects": "14fe38cc6b3d9fc1fd7d85a991e0366a02202e9a4069f04c57847e2a4b354d72",
     "classicNoisedeck/fractal:fractal": "d041e8b1fc4e9aff5b674fff5a42db40510b0af4412c23e2f5f4224dcfdf91db",
     "classicNoisedeck/glitch:glitch": "06b0deadf6ebf0b9eab6ae8523dc1b1d7099c649dd77a32b6d0470a8ee3d4bad",
     "classicNoisedeck/kaleido:kaleido": "18a201e5189430578a2cd1d03cea911957a08f3bd7f3e74e78b97eb9f946ed52",
@@ -130,7 +130,7 @@
     "filter/reverb:reverb": "4dde4b901aded65365d0d46145a7d50dcd2b8d279e32c3d1e7bf02cfc7f78bcb",
     "filter/ridge:ridge": "7034ce4b9e21abd1a92dcbeb4f4de977778779d232af80dcd27100d30e4463dc",
     "filter/rotate:rot": "14a7bba1b448f5f0c97c56316aa110fe63215dfb8ee96bb71b8733abdb24f0e1",
-    "filter/scale:scale": "a45f000ee12c498d7a11a04ecc56e911c9fc804ad9cde60cc7cea47533a19ce3",
+    "filter/scale:scale": "e0902531c605af1fefd15fe7f1df7e53d892647531df8df58b3c707637b70d27",
     "filter/scanlineError:scanlineError": "91646e936d7bb142ab9ac14370c8434bf7122959debc8a00bd8518b555b08372",
     "filter/scatter:scatterJitter": "94704b2a7051954d4dd043bc386a3eee46d029d68354b18045e9e398dc70830f",
     "filter/scatter:scatterSmooth": "5a805ba355d7fc90068a5476d42445c4d7c6e82ac32a742934b1d4e0b1ab364b",
@@ -259,7 +259,7 @@
     "synth/gradient:gradient": "f086d2bfff9fdf90952003f42554c2a4837f517096752748c28dbb8c86b4ff79",
     "synth/julia:julia": "0cd2d41832934d1eb957a3fe99ac5c46e1b67e47f6a538d75ed1694f68750a42",
     "synth/mandala:mandala": "9845a5e7fc71209668d53c9d35fe028e1b53ff69714f790692807293c3a4aaa9",
-    "synth/mandelbrot:mandelbrot": "0f2acd1bf1335f1f8c3f1741f28de21467a7d6ee4dbe26c1e922696f6ac9f418",
+    "synth/mandelbrot:mandelbrot": "151abc350f93f011ba272adfbd1caf435eccb3ac5ef188dcdbac85bd6b2c662d",
     "synth/media:mediaInput": "68bacdb76940f91100e3d4a1e2bdfe8c70cb8565ccffbdfdfbc101262c05ab3b",
     "synth/mnca:mncaFb": "cb459d25b9abac36224c4760175d1e533e0efc321e9a24302b9bf8160ff09360",
     "synth/mnca:mnca": "f72b2b4b8010466562d9ec344c457180230137e9515d85cc7bc19b303386880a",
@@ -293,7 +293,7 @@
     "synth3d/cellularAutomata3d:simulate": "d5533f317f8ffe545386591fa317750bdca679402d027740b2d2488978575482",
     "synth3d/flythrough3d:precompute": "2694825664eef632449b197e1bce585f7878c6358a4d5260c72729b015d02a62",
     "synth3d/fractal3d:precompute": "8ab3dfe63e16d4406deee719c1f822d405c712bae21bd1348ae5b75b79a14d41",
-    "synth3d/heightmap3d:precompute": "7a583bbbcf0b8742b9568d22896ed4969205a886b38f80b13767cd02060934be",
+    "synth3d/heightmap3d:precompute": "85d3d98f08181500765e54b01153163ac6a18a1db7766e88a32fa7de0628e0dc",
     "synth3d/noise3d:precompute": "a34609b241a33e51d1d0fd60ea94b6ef681b37a196efa101c2af4a4f1239b208",
     "synth3d/reactionDiffusion3d:simulate": "2a234e02d3efc396cdd09eb876d01c37e225bbf6e4dd7781e4795fa0da0c6bcd",
     "synth3d/shape3d:precompute": "53b240191c2f0d2e61b5dacecb532ecd3b8aad3973bbf8e38d8712073d50d14f"

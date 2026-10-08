@@ -52,7 +52,7 @@ run_pixel = lambda do |ctx, out|
     return rt.construct(2, (((((r) * (rt.component_wise('cos', a))))) + (rt.f(0.5))), (((((r) * (rt.component_wise('sin', a))))) + (rt.f(0.5))))
   end
   main__void = lambda do
-    __sc1544 = nil; aspect = nil; effectiveScale = nil; globalCoord = nil; globalUV = nil; local = nil; localUV = nil; rep = nil; st = nil
+    __sc1 = nil; aspect = nil; effectiveScale = nil; globalCoord = nil; globalUV = nil; local = nil; localUV = nil; rep = nil; st = nil
     globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
     globalUV = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
     aspect = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
@@ -64,7 +64,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(_u_aspectLens)
       st = rt.assign_swizzle(st, 'x', rt.binary('/', rt.swizzle(st, 'x'), aspect, 1, 'float'))
     end
-    __sc1544 = rt.f(0.5); st[0] = rt.f32(rt.binary('+', st[0], __sc1544, 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __sc1544, 1, 'float'))
+    __sc1 = rt.f(0.5); st[0] = rt.f32(rt.binary('+', st[0], __sc1, 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __sc1, 1, 'float'))
     rep = rt.construct(2, (rt.bool(_u_aspectLens) ? ((((_u_repeat) * (aspect)))) : ((_u_repeat))), (rt.bool(_u_aspectLens) ? ((_u_repeat)) : ((_u_repeat))))
     effectiveScale = rt.f(0.0)
     local = rt.construct(2, 0.0)
