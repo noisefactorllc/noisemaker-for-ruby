@@ -19,7 +19,8 @@
 #
 # Usage:
 #   ruby scripts/parity-sweep.rb [--report PATH] [--only id,id]
-#                                [--no-case NAME,...] [--all-params] [--jobs N]
+#                                [--skip-case NAME,...] [--all-params]
+#                                [--shard I/M] [--merge FILE,...]
 #
 # --all-params drops the 3-parameter cap and renders a nondefault case for
 # every parameter with a deterministic nondefault value (opt-in; the default

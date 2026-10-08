@@ -104,7 +104,15 @@ class TestCli < Minitest::Test
 
   def test_executable_exists_and_is_executable
     assert File.file?(NOISEMAKER_RB), "exe/noisemaker-rb should exist"
-    assert File.executable?(NOISEMAKER_RB), "exe/noisemaker-rb should be executable"
+    if Gem.win_platform?
+      # Windows has no executable permission bit (RubyGems installs a .bat
+      # stub for each gemspec executable), so check the mode git records,
+      # which POSIX checkouts and the built gem receive.
+      mode = IO.popen(["git", "ls-files", "-s", "--", NOISEMAKER_RB], &:read).split.first
+      assert_equal "100755", mode, "exe/noisemaker-rb should be committed executable"
+    else
+      assert File.executable?(NOISEMAKER_RB), "exe/noisemaker-rb should be executable"
+    end
   end
 
   # --- --help / --version / no-args / unknown command -----------------------
