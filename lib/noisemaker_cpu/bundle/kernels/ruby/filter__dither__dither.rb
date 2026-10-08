@@ -258,7 +258,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     c = nil; d = nil; p = nil
     p = rt.construct(2, ((uv[0]) * (scale)), ((uv[1]) * (scale)))
-    c = rt.construct(2, ((rt.component_wise('floor', p[0])) + (rt.f(0.5))), ((rt.component_wise('floor', p[1])) + (rt.f(0.5))))
+    c = rt.construct(2, rt.binary('+', rt.component_wise('floor', p), rt.f(0.5), 2, 'float'))
     d = rt.length(rt.binary('-', rt.component_wise('fract', p), rt.f(0.5), 2, 'float'))
     return rt.component_wise('smoothstep', rt.f(0.5), rt.f(0), d)
   end
@@ -316,7 +316,7 @@ run_pixel = lambda do |ctx, out|
     adjustedDither = nil; dithered = nil
     adjustedDither = rt.binary('+', rt.binary('-', ditherValue, rt.f(0.5), 1, 'float'), thresh, 1, 'float')
     dithered = rt.construct(3, ((color[0]) + (((adjustedDither) / (levels)))), ((color[1]) + (((adjustedDither) / (levels)))), ((color[2]) + (((adjustedDither) / (levels)))))
-    return rt.construct(3, ((rt.component_wise('floor', rt.f32(((dithered[0]) * (levels))))) / (((levels) - (rt.f(1))))), ((rt.component_wise('floor', rt.f32(((dithered[1]) * (levels))))) / (((levels) - (rt.f(1))))), ((rt.component_wise('floor', rt.f32(((dithered[2]) * (levels))))) / (((levels) - (rt.f(1))))))
+    return rt.binary('/', rt.component_wise('floor', rt.construct(3, ((dithered[0]) * (levels)), ((dithered[1]) * (levels)), ((dithered[2]) * (levels)))), rt.binary('-', levels, rt.f(1), 1, 'float'), 3, 'float')
   end
   colorDistance__vec3_vec3 = lambda do |a, b|
     a = rt.copy(a, 'float')
@@ -452,7 +452,7 @@ run_pixel = lambda do |ctx, out|
     maxLevel = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_palette, g['PALETTE_INPUT']))
       maxLevel = rt.binary('-', rt.construct(1, _u_levels), rt.f(1), 1, 'float')
-      return rt.construct(3, ((rt.component_wise('floor', rt.f32(((((v[0]) * (maxLevel))) + (rt.f(0.5)))))) / (maxLevel)), ((rt.component_wise('floor', rt.f32(((((v[1]) * (maxLevel))) + (rt.f(0.5)))))) / (maxLevel)), ((rt.component_wise('floor', rt.f32(((((v[2]) * (maxLevel))) + (rt.f(0.5)))))) / (maxLevel)))
+      return rt.binary('/', rt.component_wise('floor', rt.construct(3, ((((v[0]) * (maxLevel))) + (rt.f(0.5))), ((((v[1]) * (maxLevel))) + (rt.f(0.5))), ((((v[2]) * (maxLevel))) + (rt.f(0.5))))), maxLevel, 3, 'float')
     end
     return findClosestPaletteColor__vec3_int.call(v, _u_palette)
   end

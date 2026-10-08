@@ -85,7 +85,7 @@ run_pixel = lambda do |ctx, out|
     ruv = rt.copy(ruv, 'float')
     texel = rt.copy(texel, 'float')
     cellCenterGc = nil; cellId = nil; cellUV = nil
-    cellId = rt.construct(2, ((rt.component_wise('floor', ruv[0])) + (rt.f(0.5))), ((rt.component_wise('floor', ruv[1])) + (rt.f(0.5))))
+    cellId = rt.construct(2, rt.binary('+', rt.component_wise('floor', ruv), rt.f(0.5), 2, 'float'))
     cellCenterGc = rt.construct(2, rotate2D__vec2_float.call(rt.construct(2, ((cellId[0]) * (_u_frequency)), ((cellId[1]) * (_u_frequency))), rt.unary('-', angleDeg)))
     cellUV = rt.construct(2, rt.component_wise('clamp', rt.f32(((((cellCenterGc[0]) - (_u_tileOffset[0]))) / (_u_resolution[0]))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((cellCenterGc[1]) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1)))
     return boxBlur3__vec2_vec2.call(cellUV, texel)
@@ -142,10 +142,10 @@ run_pixel = lambda do |ctx, out|
       valM = rt.swizzle(rgbToCmyk__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruvM, _u_magentaAngle, texel)), 'g')
       valY = rt.swizzle(rgbToCmyk__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruvY, _u_yellowAngle, texel)), 'b')
       valK = rt.swizzle(rgbToCmyk__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruvK, _u_blackAngle, texel)), 'a')
-      inkC = roundDotCoverage__vec2_float_float.call(rt.construct(2, ((rt.component_wise('fract', ruvC[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruvC[1])) - (rt.f(0.5)))), valC, _u_sharpness)
-      inkM = roundDotCoverage__vec2_float_float.call(rt.construct(2, ((rt.component_wise('fract', ruvM[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruvM[1])) - (rt.f(0.5)))), valM, _u_sharpness)
-      inkY = roundDotCoverage__vec2_float_float.call(rt.construct(2, ((rt.component_wise('fract', ruvY[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruvY[1])) - (rt.f(0.5)))), valY, _u_sharpness)
-      inkK = roundDotCoverage__vec2_float_float.call(rt.construct(2, ((rt.component_wise('fract', ruvK[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruvK[1])) - (rt.f(0.5)))), valK, _u_sharpness)
+      inkC = roundDotCoverage__vec2_float_float.call(rt.construct(2, rt.f32(((rt.component_wise('fract', ruvC[0])) - (rt.f(0.5)))), rt.f32(((rt.component_wise('fract', ruvC[1])) - (rt.f(0.5))))), valC, _u_sharpness)
+      inkM = roundDotCoverage__vec2_float_float.call(rt.construct(2, rt.f32(((rt.component_wise('fract', ruvM[0])) - (rt.f(0.5)))), rt.f32(((rt.component_wise('fract', ruvM[1])) - (rt.f(0.5))))), valM, _u_sharpness)
+      inkY = roundDotCoverage__vec2_float_float.call(rt.construct(2, rt.f32(((rt.component_wise('fract', ruvY[0])) - (rt.f(0.5)))), rt.f32(((rt.component_wise('fract', ruvY[1])) - (rt.f(0.5))))), valY, _u_sharpness)
+      inkK = roundDotCoverage__vec2_float_float.call(rt.construct(2, rt.f32(((rt.component_wise('fract', ruvK[0])) - (rt.f(0.5)))), rt.f32(((rt.component_wise('fract', ruvK[1])) - (rt.f(0.5))))), valK, _u_sharpness)
       screened = rt.construct(3, (((((rt.f(1))) - ((inkC)))) * (((rt.f(1)) - (inkK)))), (((((rt.f(1))) - ((inkM)))) * (((rt.f(1)) - (inkK)))), (((((rt.f(1))) - ((inkY)))) * (((rt.f(1)) - (inkK)))))
       g['fragColor'].replace((rt.construct(4, screened, alpha)).map { |c| rt.f32(c) })
       return
@@ -165,7 +165,7 @@ run_pixel = lambda do |ctx, out|
       else
         ruv = rt.construct(2, rt.binary('/', rotate2D__vec2_float.call(globalCoord, _u_monoAngle), _u_frequency, 2, 'float'))
         value = rt.binary('-', rt.f(1), lum__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruv, _u_monoAngle, texel)), 1, 'float')
-        off = rt.construct(2, ((rt.component_wise('fract', ruv[0])) - (rt.f(0.5))), ((rt.component_wise('fract', ruv[1])) - (rt.f(0.5))))
+        off = rt.construct(2, rt.binary('-', rt.component_wise('fract', ruv), rt.f(0.5), 2, 'float'))
         dotOffset.replace((off).map { |c| rt.f32(c) })
         if rt.bool(rt.binary('==', _u__PATTERN, rt.i(1)))
           d = rt.component_wise('abs', rt.swizzle(off, 'y'))

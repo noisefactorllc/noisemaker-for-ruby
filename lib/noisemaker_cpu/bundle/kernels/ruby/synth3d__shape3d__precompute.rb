@@ -37,7 +37,7 @@ run_pixel = lambda do |ctx, out|
   cubeSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     d = nil
-    d = rt.construct(3, ((rt.component_wise('abs', p[0])) - ((rt.f(0.44999998807907104)))), ((rt.component_wise('abs', p[1])) - ((rt.f(0.44999998807907104)))), ((rt.component_wise('abs', p[2])) - ((rt.f(0.44999998807907104)))))
+    d = rt.construct(3, rt.binary('-', rt.component_wise('abs', p), rt.construct(3, rt.f(0.44999998807907104)), 3, 'float'))
     return rt.binary('+', rt.length(rt.component_wise('max', d, rt.f(0))), rt.component_wise('min', rt.component_wise('max', rt.swizzle(d, 'x'), rt.component_wise('max', rt.swizzle(d, 'y'), rt.swizzle(d, 'z'))), rt.f(0)), 1, 'float')
   end
   octahedronSDF__vec3 = lambda do |p|
@@ -93,7 +93,7 @@ run_pixel = lambda do |ctx, out|
   cylinderSDF__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     d = nil
-    d = rt.construct(2, ((rt.component_wise('abs', (rt.length(rt.swizzle(p, 'xz'))))) - ((rt.f(0.34999999403953552)))), ((rt.component_wise('abs', (rt.swizzle(p, 'y')))) - ((rt.f(0.44999998807907104)))))
+    d = rt.construct(2, rt.binary('-', rt.component_wise('abs', rt.construct(2, rt.length(rt.swizzle(p, 'xz')), rt.swizzle(p, 'y'))), rt.construct(2, rt.f(0.34999999403953552), rt.f(0.44999998807907104)), 2, 'float'))
     return rt.binary('+', rt.component_wise('min', rt.component_wise('max', rt.swizzle(d, 'x'), rt.swizzle(d, 'y')), rt.f(0)), rt.length(rt.component_wise('max', d, rt.f(0))), 1, 'float')
   end
   coneSDF__vec3 = lambda do |p|

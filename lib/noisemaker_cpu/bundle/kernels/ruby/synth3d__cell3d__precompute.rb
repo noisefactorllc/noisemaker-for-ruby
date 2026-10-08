@@ -68,7 +68,7 @@ run_pixel = lambda do |ctx, out|
           cellPos = rt.construct(3, ((i[0]) + (neighbor[0])), ((i[1]) + (neighbor[1])), ((i[2]) + (neighbor[2])))
           randomOffset = rt.construct(3, hash3__vec3.call(cellPos))
           jitter = rt.binary('*', _u_cellVariation, rt.f(0.0099999997764825821), 1, 'float')
-          diff = rt.construct(3, ((((neighbor[0]) + (rt.component_wise('mix', (rt.f(0.5)), randomOffset[0], jitter)))) - (f[0])), ((((neighbor[1]) + (rt.component_wise('mix', (rt.f(0.5)), randomOffset[1], jitter)))) - (f[1])), ((((neighbor[2]) + (rt.component_wise('mix', (rt.f(0.5)), randomOffset[2], jitter)))) - (f[2])))
+          diff = rt.construct(3, rt.binary('-', rt.binary('+', neighbor, rt.component_wise('mix', rt.construct(3, rt.f(0.5)), randomOffset, jitter), 3, 'float'), f, 3, 'float'))
           dist = rt.f(0.0)
           if rt.bool(rt.binary('==', _u_metric, rt.i(0)))
             dist = rt.length(diff)

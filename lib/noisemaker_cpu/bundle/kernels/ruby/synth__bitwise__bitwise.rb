@@ -25,8 +25,8 @@ run_pixel = lambda do |ctx, out|
   hsv2rgb__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     p = nil
-    p = rt.construct(3, rt.component_wise('abs', rt.f32(((((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(1))))))) * (rt.f(6)))) - (rt.f(3))))), rt.component_wise('abs', rt.f32(((((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.66666668653488159))))))) * (rt.f(6)))) - (rt.f(3))))), rt.component_wise('abs', rt.f32(((((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.3333333432674408))))))) * (rt.f(6)))) - (rt.f(3))))))
-    return rt.construct(3, ((rt.swizzle(c, 'z')) * (rt.component_wise('mix', (rt.f(1)), rt.component_wise('clamp', rt.f32(((p[0]) - (rt.f(1)))), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')))), ((rt.swizzle(c, 'z')) * (rt.component_wise('mix', (rt.f(1)), rt.component_wise('clamp', rt.f32(((p[1]) - (rt.f(1)))), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')))), ((rt.swizzle(c, 'z')) * (rt.component_wise('mix', (rt.f(1)), rt.component_wise('clamp', rt.f32(((p[2]) - (rt.f(1)))), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')))))
+    p = rt.construct(3, rt.component_wise('abs', rt.f32(rt.f32(((rt.f32(((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(1))))))) * (rt.f(6))))) - (rt.f(3)))))), rt.component_wise('abs', rt.f32(rt.f32(((rt.f32(((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.66666668653488159))))))) * (rt.f(6))))) - (rt.f(3)))))), rt.component_wise('abs', rt.f32(rt.f32(((rt.f32(((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.3333333432674408))))))) * (rt.f(6))))) - (rt.f(3)))))))
+    return rt.binary('*', rt.swizzle(c, 'z'), rt.component_wise('mix', rt.construct(3, rt.f(1)), rt.component_wise('clamp', rt.construct(3, ((p[0]) - (rt.f(1))), ((p[1]) - (rt.f(1))), ((p[2]) - (rt.f(1)))), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')), 3, 'float')
   end
   bitOp__int_int_int_int = lambda do |a, b, op, m|
     r = nil

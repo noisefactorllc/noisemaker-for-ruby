@@ -33,7 +33,7 @@ run_pixel = lambda do |ctx, out|
   end
   snow_fract_vec3__vec3 = lambda do |value|
     value = rt.copy(value, 'float')
-    return rt.construct(3, ((value[0]) - (rt.component_wise('floor', value[0]))), ((value[1]) - (rt.component_wise('floor', value[1]))), ((value[2]) - (rt.component_wise('floor', value[2]))))
+    return rt.binary('-', value, rt.component_wise('floor', value), 3, 'float')
   end
   snow_hash__vec3 = lambda do |input_sample|
     input_sample = rt.copy(input_sample, 'float')

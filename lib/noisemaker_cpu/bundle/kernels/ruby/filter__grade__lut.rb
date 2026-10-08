@@ -209,7 +209,7 @@ run_pixel = lambda do |ctx, out|
     l = rt.binary('+', rt.binary('*', rt.binary('-', l, rt.f(0.5), 1, 'float'), rt.f(1.5), 1, 'float'), rt.f(0.5), 1, 'float')
     l = rt.component_wise('clamp', l, rt.f(0), rt.f(1))
     blue = rt.construct(3, rt.construct(3, rt.f(0.89999997615814209), rt.f(0.94999998807907104), rt.f(1)))
-    mono = rt.construct(3, (((l)) * (rt.component_wise('mix', blue[0], (rt.f(1)), l))), (((l)) * (rt.component_wise('mix', blue[1], (rt.f(1)), l))), (((l)) * (rt.component_wise('mix', blue[2], (rt.f(1)), l))))
+    mono = rt.construct(3, rt.binary('*', rt.construct(3, l), rt.component_wise('mix', blue, rt.construct(3, rt.f(1)), l), 3, 'float'))
     return rt.component_wise('clamp', mono, rt.f(0), rt.f(1))
   end
   lutSepia__vec3 = lambda do |rgb|

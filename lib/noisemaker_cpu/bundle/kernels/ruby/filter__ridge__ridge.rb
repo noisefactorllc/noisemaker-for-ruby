@@ -14,7 +14,7 @@ run_pixel = lambda do |ctx, out|
     value = rt.copy(value, 'float')
     denom = nil; result = nil
     denom = rt.component_wise('max', lvl, rt.binary('-', rt.f(1), lvl, 1, 'float'))
-    result = rt.construct(4, (((rt.f(1))) - (((rt.component_wise('abs', rt.f32(((value[0]) - ((lvl)))))) / (denom)))), (((rt.f(1))) - (((rt.component_wise('abs', rt.f32(((value[1]) - ((lvl)))))) / (denom)))), (((rt.f(1))) - (((rt.component_wise('abs', rt.f32(((value[2]) - ((lvl)))))) / (denom)))), (((rt.f(1))) - (((rt.component_wise('abs', rt.f32(((value[3]) - ((lvl)))))) / (denom)))))
+    result = rt.construct(4, rt.binary('-', rt.construct(4, rt.f(1)), rt.binary('/', rt.component_wise('abs', rt.construct(4, ((value[0]) - ((lvl))), ((value[1]) - ((lvl))), ((value[2]) - ((lvl))), ((value[3]) - ((lvl))))), denom, 4, 'float'), 4, 'float'))
     return rt.component_wise('clamp', result, rt.construct(4, rt.f(0)), rt.construct(4, rt.f(1)))
   end
   main__void = lambda do

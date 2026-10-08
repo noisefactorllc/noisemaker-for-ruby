@@ -80,7 +80,7 @@ run_pixel = lambda do |ctx, out|
     linear = rt.copy(linear, 'float')
     high = nil; low = nil
     low = rt.construct(3, ((linear[0]) * (rt.f(12.920000076293945))), ((linear[1]) * (rt.f(12.920000076293945))), ((linear[2]) * (rt.f(12.920000076293945))))
-    high = rt.construct(3, ((((rt.f(1.0549999475479126)) * (rt.component_wise('pow', rt.component_wise('max', linear[0], (rt.f(0))), (rt.f(0.4166666567325592)))))) - (rt.f(0.054999999701976776))), ((((rt.f(1.0549999475479126)) * (rt.component_wise('pow', rt.component_wise('max', linear[1], (rt.f(0))), (rt.f(0.4166666567325592)))))) - (rt.f(0.054999999701976776))), ((((rt.f(1.0549999475479126)) * (rt.component_wise('pow', rt.component_wise('max', linear[2], (rt.f(0))), (rt.f(0.4166666567325592)))))) - (rt.f(0.054999999701976776))))
+    high = rt.construct(3, rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', rt.component_wise('max', linear, rt.construct(3, rt.f(0))), rt.construct(3, rt.f(0.4166666567325592))), 3, 'float'), rt.f(0.054999999701976776), 3, 'float'))
     return rt.component_wise('mix', high, low, rt.component_wise('step', linear, rt.construct(3, rt.f(0.0031308000907301903))))
   end
   oklab2rgb__vec3 = lambda do |lab|
@@ -108,7 +108,7 @@ run_pixel = lambda do |ctx, out|
     amp = rt.copy(amp, 'float')
     freq = rt.copy(freq, 'float')
     phase = rt.copy(phase, 'float')
-    return rt.component_wise('clamp', rt.construct(3, ((offset[0]) + (((amp[0]) * (rt.component_wise('cos', rt.f32(((g['TAU']) * (((((freq[0]) * (_t))) + (phase[0])))))))))), ((offset[1]) + (((amp[1]) * (rt.component_wise('cos', rt.f32(((g['TAU']) * (((((freq[1]) * (_t))) + (phase[1])))))))))), ((offset[2]) + (((amp[2]) * (rt.component_wise('cos', rt.f32(((g['TAU']) * (((((freq[2]) * (_t))) + (phase[2]))))))))))), rt.f(0), rt.f(1))
+    return rt.component_wise('clamp', rt.construct(3, rt.f32(((offset[0]) + (rt.f32(((amp[0]) * (rt.component_wise('cos', rt.f32(((g['TAU']) * (((((freq[0]) * (_t))) + (phase[0])))))))))))), rt.f32(((offset[1]) + (rt.f32(((amp[1]) * (rt.component_wise('cos', rt.f32(((g['TAU']) * (((((freq[1]) * (_t))) + (phase[1])))))))))))), rt.f32(((offset[2]) + (rt.f32(((amp[2]) * (rt.component_wise('cos', rt.f32(((g['TAU']) * (((((freq[2]) * (_t))) + (phase[2]))))))))))))), rt.f(0), rt.f(1))
   end
   main__void = lambda do
     _t = nil; amp = nil; blendedColor = nil; finalColor = nil; freq = nil; globalCoord = nil; inputColor = nil; lum = nil; offset = nil; paletteColor = nil; phase = nil; texSize = nil; uv = nil

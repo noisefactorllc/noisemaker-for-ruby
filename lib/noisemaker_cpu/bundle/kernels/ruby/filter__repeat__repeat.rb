@@ -25,7 +25,7 @@ run_pixel = lambda do |ctx, out|
     st.replace((rt.binary('+', rt.binary('*', st, rt.construct(2, _u_x, _u_y), 2, 'float'), rt.construct(2, rt.binary('*', _u_offsetX, _u_aspect, 1, 'float'), _u_offsetY), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary('/', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      st.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((st[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((st[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+      st.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((st[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((st[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         st.replace((rt.component_wise('fract', st)).map { |c| rt.f32(c) })
@@ -35,7 +35,7 @@ run_pixel = lambda do |ctx, out|
     end
     localUV = rt.construct(2, ((((((st[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((st[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      localUV.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+      localUV.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         localUV.replace((rt.component_wise('fract', localUV)).map { |c| rt.f32(c) })

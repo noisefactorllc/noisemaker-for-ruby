@@ -68,7 +68,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     freq = rt.copy(freq, 'float')
     base_cell = nil; c000 = nil; c001 = nil; c010 = nil; c011 = nil; c100 = nil; c101 = nil; c110 = nil; c111 = nil; cell_floor = nil; frac_part = nil; scaled_uv = nil; tx = nil; ty = nil; tz = nil; x00 = nil; x01 = nil; x10 = nil; x11 = nil; y0 = nil; y1 = nil; z0 = nil; z1 = nil; z_floor = nil; z_frac = nil
-    scaled_uv = rt.construct(2, ((uv[0]) * (rt.component_wise('max', freq[0], (rt.f(1))))), ((uv[1]) * (rt.component_wise('max', freq[1], (rt.f(1))))))
+    scaled_uv = rt.construct(2, rt.binary('*', uv, rt.component_wise('max', freq, rt.construct(2, rt.f(1), rt.f(1))), 2, 'float'))
     cell_floor = rt.construct(2, rt.component_wise('floor', scaled_uv[0]), rt.component_wise('floor', scaled_uv[1]))
     frac_part = rt.construct(2, rt.component_wise('fract', scaled_uv[0]), rt.component_wise('fract', scaled_uv[1]))
     base_cell = rt.construct(2, rt.construct(2, cell_floor), 'int')
@@ -166,7 +166,7 @@ run_pixel = lambda do |ctx, out|
     base_freq = rt.copy(base_freq, 'float')
     cell = nil; dot = nil; st = nil
     st = rt.construct(2, ((uv[0]) * (base_freq[0])), ((uv[1]) * (base_freq[1])))
-    cell = rt.construct(2, ((rt.component_wise('fract', st[0])) - (rt.f(0.5))), ((rt.component_wise('fract', st[1])) - (rt.f(0.5))))
+    cell = rt.construct(2, rt.binary('-', rt.component_wise('fract', st), rt.f(0.5), 2, 'float'))
     dot = rt.binary('-', rt.f(1), clamp01__float.call(rt.binary('*', rt.length(cell), rt.f(3), 1, 'float')), 1, 'float')
     return rt.binary('*', dot, dot, 1, 'float')
   end
@@ -236,7 +236,7 @@ run_pixel = lambda do |ctx, out|
     globalPixel = rt.copy(globalPixel, 'float')
     cellSize = rt.copy(cellSize, 'float')
     n = nil; n0 = nil; n1 = nil; p = nil; z0 = nil; z1 = nil; zFloor = nil
-    p = rt.construct(2, ((globalPixel[0]) / (rt.component_wise('max', cellSize[0], (rt.f(0.5))))), ((globalPixel[1]) / (rt.component_wise('max', cellSize[1], (rt.f(0.5))))))
+    p = rt.construct(2, rt.binary('/', globalPixel, rt.component_wise('max', cellSize, rt.construct(2, rt.f(0.5))), 2, 'float'))
     zFloor = rt.component_wise('floor', motion)
     z0 = rt.binary('%', rt.construct(1, zFloor, 'int'), g['Z_LOOP'], 1, 'int')
     z1 = rt.binary('%', rt.binary('+', z0, rt.i(1), 1, 'int'), g['Z_LOOP'], 1, 'int')

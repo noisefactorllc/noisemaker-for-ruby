@@ -39,7 +39,7 @@ run_pixel = lambda do |ctx, out|
       localUV.replace((rt.component_wise('clamp', localUV, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', wrapMode, rt.i(1)))
-        localUV.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+        localUV.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
       else
         localUV.replace((rt.component_wise('fract', localUV)).map { |c| rt.f32(c) })
       end

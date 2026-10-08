@@ -22,6 +22,7 @@ require_relative "../lib/noisemaker_cpu/transpiler/lexer"
 require_relative "../lib/noisemaker_cpu/transpiler/preprocess"
 require_relative "../lib/noisemaker_cpu/transpiler/parser"
 require_relative "../lib/noisemaker_cpu/transpiler/codegen"
+require_relative "../lib/noisemaker_cpu/runtime"
 
 class TestTranspilerPipeline < Minitest::Test
   Preprocess = NoisemakerCpu::Transpiler::Preprocess
@@ -706,6 +707,34 @@ class TestTranspilerPipeline < Minitest::Test
     assert_in_delta 1.0, out[1], 1e-6 # lch.y + lch.z = 0.25 + 0.75
     assert_in_delta(-1.0, out[2], 1e-6)
     assert_in_delta 1.0, out[3], 1e-6
+  end
+
+  # Simplex noise's `h = 1.0 - abs(x) - abs(y)` compiles in the oracle to
+  # vec4.subtract([], abs(x).map(_ => 1 - _), abs(y)): abs returns a pooled
+  # Float32Array, so the map rounds 1 - |x| to f32 before the subtraction,
+  # which rounds again. Both the declaration and the whole-vector assignment
+  # must round twice. These lanes are classicNoisedeck/noise3d's snoise at
+  # offsetX 100, pixel (1,2): rounding once gives 0.14285710453987122.
+  VECTOR_CALL_OPERAND_GLSL = <<~GLSL
+    uniform vec4 xs;
+    uniform vec4 ys;
+    out vec4 fragColor;
+    void main() {
+      vec4 h = 1.0 - abs(xs) - abs(ys);
+      vec4 h2 = vec4(0.0);
+      h2 = 1.0 - abs(xs) - abs(ys);
+      fragColor = vec4(h.x, h2.x, h.w, h2.w);
+    }
+  GLSL
+
+  def test_arithmetic_on_a_vector_builtin_call_rounds_each_operation
+    src = transpile(VECTOR_CALL_OPERAND_GLSL)
+    lane = [-0.07142850756645203, 0.7857143878936768]
+    ctx = StubCtx.new(NoisemakerCpu::Runtime.new, uniforms: {
+      "xs" => [lane[0], 0.0, 0.0, lane[0]], "ys" => [lane[1], 0.0, 0.0, lane[1]]
+    })
+    out, = run_kernel(src, ctx)
+    assert_equal [0.14285707473754883] * 4, out
   end
 
   def test_conditional_write_then_read_on_uppercase_local_stays_off_constant_namespace

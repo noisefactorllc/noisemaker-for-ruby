@@ -22,7 +22,7 @@ run_pixel = lambda do |ctx, out|
   end
   smod2__vec2_float = lambda do |v, m|
     v = rt.copy(v, 'float')
-    return rt.construct(2, ((m) * (((((rt.f(0.75)) - (rt.component_wise('abs', rt.f32(((rt.component_wise('fract', v[0])) - (rt.f(0.5)))))))) - (rt.f(0.25))))), ((m) * (((((rt.f(0.75)) - (rt.component_wise('abs', rt.f32(((rt.component_wise('fract', v[1])) - (rt.f(0.5)))))))) - (rt.f(0.25))))))
+    return rt.binary('*', m, rt.binary('-', rt.binary('-', rt.f(0.75), rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('fract', v[0])) - (rt.f(0.5)))), rt.f32(((rt.component_wise('fract', v[1])) - (rt.f(0.5)))))), 2, 'float'), rt.f(0.25), 2, 'float'), 2, 'float')
   end
   polarCoords__vec2_float = lambda do |uv, aspect|
     uv = rt.copy(uv, 'float')

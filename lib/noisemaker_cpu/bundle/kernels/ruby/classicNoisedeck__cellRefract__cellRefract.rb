@@ -516,7 +516,7 @@ run_pixel = lambda do |ctx, out|
     st = rt.assign_swizzle(st, 'x', rt.binary('+', rt.swizzle(st, 'x'), rt.binary('*', rt.component_wise('cos', rt.binary('*', refLen, rt.f(6.2831854820251465), 1, 'float')), ref, 1, 'float'), 1, 'float'))
     st = rt.assign_swizzle(st, 'y', rt.binary('+', rt.swizzle(st, 'y'), rt.binary('*', rt.component_wise('sin', rt.binary('*', refLen, rt.f(6.2831854820251465), 1, 'float')), ref, 1, 'float'), 1, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      st.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((st[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((st[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+      st.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((st[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((st[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         st.replace((rt.component_wise('fract', st)).map { |c| rt.f32(c) })

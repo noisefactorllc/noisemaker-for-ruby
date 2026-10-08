@@ -71,7 +71,7 @@ run_pixel = lambda do |ctx, out|
         neighbor = rt.construct(2, rt.construct(2, rt.construct(1, x), rt.construct(1, y)))
         cellId = rt.construct(2, ((cellCoord[0]) + (neighbor[0])), ((cellCoord[1]) + (neighbor[1])))
         rnd = rt.construct(3, prng__vec3.call(rt.construct(3, (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')), ((_u_seed)))))
-        wobble = rt.construct(2, ((((rt.component_wise('sin', rt.f32(((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'x')) * (g['TAU']))))))) * (rt.f(0.15000000596046448)))) * (rt.component_wise('min', spd, rt.f(1)))), ((((rt.component_wise('sin', rt.f32(((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'y')) * (g['TAU']))))))) * (rt.f(0.15000000596046448)))) * (rt.component_wise('min', spd, rt.f(1)))))
+        wobble = rt.construct(2, rt.binary('*', rt.binary('*', rt.component_wise('sin', rt.construct(2, ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'x')) * (g['TAU'])))), ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'y')) * (g['TAU'])))))), rt.f(0.15000000596046448), 2, 'float'), rt.component_wise('min', spd, rt.f(1)), 2, 'float'))
         point = rt.construct(2, ((((((neighbor[0]) + (rt.swizzle(rnd, 'x')))) + (wobble[0]))) - (cellFract[0])), ((((((neighbor[1]) + (rt.swizzle(rnd, 'y')))) + (wobble[1]))) - (cellFract[1])))
         dist = rt.dot(point, point)
         if rt.bool(rt.binary('<', dist, d1))
@@ -109,7 +109,7 @@ run_pixel = lambda do |ctx, out|
           next
         end
         rnd = rt.construct(3, prng__vec3.call(rt.construct(3, (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')), ((_u_seed)))))
-        wobble = rt.construct(2, ((((rt.component_wise('sin', rt.f32(((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'x')) * (g['TAU']))))))) * (rt.f(0.15000000596046448)))) * (rt.component_wise('min', spd, rt.f(1)))), ((((rt.component_wise('sin', rt.f32(((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'y')) * (g['TAU']))))))) * (rt.f(0.15000000596046448)))) * (rt.component_wise('min', spd, rt.f(1)))))
+        wobble = rt.construct(2, rt.binary('*', rt.binary('*', rt.component_wise('sin', rt.construct(2, ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'x')) * (g['TAU'])))), ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'y')) * (g['TAU'])))))), rt.f(0.15000000596046448), 2, 'float'), rt.component_wise('min', spd, rt.f(1)), 2, 'float'))
         point = rt.construct(2, ((((((neighbor[0]) + (rt.swizzle(rnd, 'x')))) + (wobble[0]))) - (cellFract[0])), ((((((neighbor[1]) + (rt.swizzle(rnd, 'y')))) + (wobble[1]))) - (cellFract[1])))
         mid = rt.construct(2, ((((nearestPoint[0]) + (point[0]))) * (rt.f(0.5))), ((((nearestPoint[1]) + (point[1]))) * (rt.f(0.5))))
         edge = rt.construct(2, rt.normalize(rt.binary('-', point, nearestPoint, 2, 'float')))

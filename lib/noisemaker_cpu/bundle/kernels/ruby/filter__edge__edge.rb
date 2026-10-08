@@ -46,7 +46,7 @@ run_pixel = lambda do |ctx, out|
       return rt.component_wise('abs', rt.construct(4, ((orig[0]) - (edge[0])), ((orig[1]) - (edge[1])), ((orig[2]) - (edge[2])), ((orig[3]) - (edge[3]))))
     end
     if rt.bool(rt.binary('==', mode, rt.i(3)))
-      return rt.component_wise('min', rt.construct(4, ((orig[0]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (edge[0]))), (rt.f(0.0010000000474974513))))), ((orig[1]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (edge[1]))), (rt.f(0.0010000000474974513))))), ((orig[2]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (edge[2]))), (rt.f(0.0010000000474974513))))), ((orig[3]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (edge[3]))), (rt.f(0.0010000000474974513)))))), rt.construct(4, rt.f(1)))
+      return rt.component_wise('min', rt.construct(4, rt.f32(((orig[0]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (edge[0]))), (rt.f(0.0010000000474974513)))))), rt.f32(((orig[1]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (edge[1]))), (rt.f(0.0010000000474974513)))))), rt.f32(((orig[2]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (edge[2]))), (rt.f(0.0010000000474974513)))))), rt.f32(((orig[3]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (edge[3]))), (rt.f(0.0010000000474974513))))))), rt.construct(4, rt.f(1)))
     end
     if rt.bool(rt.binary('==', mode, rt.i(4)))
       return rt.component_wise('max', orig, edge)

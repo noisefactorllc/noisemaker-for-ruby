@@ -28,7 +28,7 @@ run_pixel = lambda do |ctx, out|
   end
   smod__vec2_float = lambda do |v, m|
     v = rt.copy(v, 'float')
-    return rt.construct(2, ((m) * (((((rt.f(0.75)) - (rt.component_wise('abs', rt.f32(((rt.component_wise('fract', v[0])) - (rt.f(0.5)))))))) - (rt.f(0.25))))), ((m) * (((((rt.f(0.75)) - (rt.component_wise('abs', rt.f32(((rt.component_wise('fract', v[1])) - (rt.f(0.5)))))))) - (rt.f(0.25))))))
+    return rt.binary('*', m, rt.binary('-', rt.binary('-', rt.f(0.75), rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('fract', v[0])) - (rt.f(0.5)))), rt.f32(((rt.component_wise('fract', v[1])) - (rt.f(0.5)))))), 2, 'float'), rt.f(0.25), 2, 'float'), 2, 'float')
   end
   main__void = lambda do
     __hoistv1 = nil; __hoistv2 = nil; __hoistv3 = nil; __hoistv4 = nil; __sc5 = nil; a = nil; amt = nil; aspectRatio = nil; centerMask = nil; centered = nil; color = nil; dx = nil; dy = nil; fullRes = nil; p = nil; r = nil; texSize = nil; tileDims = nil; tunnelCoords = nil; uv = nil

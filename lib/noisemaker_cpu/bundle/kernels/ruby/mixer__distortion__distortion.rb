@@ -83,7 +83,7 @@ run_pixel = lambda do |ctx, out|
   wrapCoords__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      st.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', st[0], rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', st[1], rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+      st.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', st[0], rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', st[1], rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
       st.replace((rt.binary('-', rt.f(1), st, 2, 'float')).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))

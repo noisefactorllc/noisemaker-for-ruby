@@ -60,7 +60,7 @@ run_pixel = lambda do |ctx, out|
     mode = nil
     mode = rt.construct(1, _u_wrap, 'int')
     if rt.bool(rt.binary('==', mode, rt.i(0)))
-      return rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))
+      return rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))
     else
       if rt.bool(rt.binary('==', mode, rt.i(1)))
         return rt.component_wise('fract', uv)

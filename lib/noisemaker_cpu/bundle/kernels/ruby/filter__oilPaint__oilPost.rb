@@ -129,7 +129,7 @@ run_pixel = lambda do |ctx, out|
       else
         if rt.bool(rt.binary('==', _u__MODE, rt.i(2)))
           levels = rt.component_wise('floor', rt.binary('+', rt.component_wise('mix', rt.f(8), rt.f(3), rt.binary('/', _u_detail, rt.f(100), 1, 'float')), rt.f(0.5), 1, 'float'))
-          poster = rt.construct(3, ((rt.component_wise('floor', rt.f32(((c[0]) * (levels))))) / (levels)), ((rt.component_wise('floor', rt.f32(((c[1]) * (levels))))) / (levels)), ((rt.component_wise('floor', rt.f32(((c[2]) * (levels))))) / (levels)))
+          poster = rt.construct(3, rt.binary('/', rt.component_wise('floor', rt.construct(3, ((c[0]) * (levels)), ((c[1]) * (levels)), ((c[2]) * (levels)))), levels, 3, 'float'))
           gradMag = rt.length(lumGradientFlat__vec2.call(uv))
           edgeDarken = rt.binary('*', rt.component_wise('clamp', rt.binary('*', gradMag, rt.f(1.5), 1, 'float'), rt.f(0), rt.f(1)), rt.f(0.15000000596046448), 1, 'float')
           return rt.construct(3, ((poster[0]) * (((rt.f(1)) - (edgeDarken)))), ((poster[1]) * (((rt.f(1)) - (edgeDarken)))), ((poster[2]) * (((rt.f(1)) - (edgeDarken)))))
@@ -157,7 +157,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
     src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
     c = rt.construct(3, rt.swizzle(rt.texture(_u_flatTex, uv), 'r'), rt.swizzle(rt.texture(_u_flatTex, uv), 'g'), rt.swizzle(rt.texture(_u_flatTex, uv), 'b'))
-    globalCoord = rt.construct(2, ((rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'x'))) + (_u_tileOffset[0])), ((rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'y'))) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary('+', rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'xy')), _u_tileOffset, 2, 'float'))
     outc = rt.construct(3, modeColor__vec2_vec3_vec2.call(uv, c, globalCoord))
     grained = rt.construct(3, rt.binary('*', outc, rt.binary('+', rt.f(0.85000002384185791), rt.binary('*', rt.f(0.30000001192092896), vnoise__vec2.call(rt.construct(2, ((globalCoord[0]) / (rt.f(2))), ((globalCoord[1]) / (rt.f(2))))), 1, 'float'), 1, 'float'), 3, 'float'))
     outc.replace((rt.component_wise('mix', outc, grained, rt.binary('*', rt.binary('/', _u_textureAmount, rt.f(100), 1, 'float'), rt.f(0.5), 1, 'float'))).map { |c| rt.f32(c) })

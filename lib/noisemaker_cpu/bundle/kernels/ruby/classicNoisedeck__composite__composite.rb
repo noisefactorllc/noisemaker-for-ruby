@@ -125,7 +125,7 @@ run_pixel = lambda do |ctx, out|
             color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
           else
             if rt.bool(rt.binary('==', _u_blendMode, rt.i(4)))
-              c = rt.construct(3, ((rt.f(1)) - (rt.component_wise('step', cut, color2[0]))), ((rt.f(1)) - (rt.component_wise('step', cut, color2[1]))), ((rt.f(1)) - (rt.component_wise('step', cut, color2[2]))))
+              c = rt.construct(3, rt.binary('-', rt.f(1), rt.component_wise('step', cut, color2), 3, 'float'))
               color2.replace((rt.component_wise('mix', color1, rt.construct(3, rt.f(0)), c)).map { |c| rt.f32(c) })
               color.replace((rt.component_wise('mix', color1, color2, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
             else
@@ -150,7 +150,7 @@ run_pixel = lambda do |ctx, out|
                       color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                     else
                       if rt.bool(rt.binary('==', _u_blendMode, rt.i(9)))
-                        c = rt.construct(3, ((rt.f(1)) - (rt.component_wise('step', cut, color1[0]))), ((rt.f(1)) - (rt.component_wise('step', cut, color1[1]))), ((rt.f(1)) - (rt.component_wise('step', cut, color1[2]))))
+                        c = rt.construct(3, rt.binary('-', rt.f(1), rt.component_wise('step', cut, color1), 3, 'float'))
                         color1.replace((rt.component_wise('mix', color2, rt.construct(3, rt.f(0)), c)).map { |c| rt.f32(c) })
                         color.replace((rt.component_wise('mix', color2, color1, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
                       else

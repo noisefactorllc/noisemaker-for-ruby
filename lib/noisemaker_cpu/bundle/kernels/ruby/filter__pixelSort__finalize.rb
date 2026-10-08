@@ -21,7 +21,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.construct(2, ((coord[0]) / (size[0])), ((coord[1]) / (size[1])))
     mode = rt.construct(1, _u_wrap, 'int')
     if rt.bool(rt.binary('==', mode, rt.i(0)))
-      uv.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', mode, rt.i(1)))
         uv.replace((rt.component_wise('fract', uv)).map { |c| rt.f32(c) })

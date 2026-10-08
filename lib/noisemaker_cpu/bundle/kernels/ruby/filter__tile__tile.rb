@@ -33,8 +33,8 @@ run_pixel = lambda do |ctx, out|
     a = nil; b = nil; h = nil; s = nil
     s = rt.construct(2, rt.construct(2, rt.f(1), rt.f(1.7320507764816284)))
     h = rt.construct(2, ((s[0]) * (rt.f(0.5))), ((s[1]) * (rt.f(0.5))))
-    a = rt.construct(2, ((rt.component_wise('mod', uv[0], s[0])) - (h[0])), ((rt.component_wise('mod', uv[1], s[1])) - (h[1])))
-    b = rt.construct(2, ((rt.component_wise('mod', rt.f32(((uv[0]) + (h[0]))), s[0])) - (h[0])), ((rt.component_wise('mod', rt.f32(((uv[1]) + (h[1]))), s[1])) - (h[1])))
+    a = rt.construct(2, rt.binary('-', rt.component_wise('mod', uv, s), h, 2, 'float'))
+    b = rt.construct(2, rt.binary('-', rt.component_wise('mod', rt.construct(2, ((uv[0]) + (h[0])), ((uv[1]) + (h[1]))), s), h, 2, 'float'))
     return rt.construct(2, (rt.bool(rt.binary('<', rt.dot(a, a), rt.dot(b, b))) ? (a[0]) : (b[0])), (rt.bool(rt.binary('<', rt.dot(a, a), rt.dot(b, b))) ? (a[1]) : (b[1])))
   end
   rotationalFold__vec2_int = lambda do |uv, n|

@@ -57,7 +57,7 @@ run_pixel = lambda do |ctx, out|
   dots__vec2_float = lambda do |p, _t|
     p = rt.copy(p, 'float')
     d = nil; f = nil; radius = nil
-    f = rt.construct(2, ((rt.component_wise('fract', p[0])) - (rt.f(0.5))), ((rt.component_wise('fract', p[1])) - (rt.f(0.5))))
+    f = rt.construct(2, rt.binary('-', rt.component_wise('fract', p), rt.f(0.5), 2, 'float'))
     d = rt.length(f)
     radius = rt.binary('*', _t, rt.f(0.5), 1, 'float')
     return rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.binary('-', radius, _u_smoothness, 1, 'float'), rt.binary('+', radius, _u_smoothness, 1, 'float'), d), 1, 'float')
@@ -72,8 +72,8 @@ run_pixel = lambda do |ctx, out|
     _g = nil; a = nil; b = nil; d = nil; edge = nil; h = nil; s = nil
     s = rt.construct(2, rt.construct(2, rt.f(1), rt.f(1.7320507764816284)))
     h = rt.construct(2, ((s[0]) * (rt.f(0.5))), ((s[1]) * (rt.f(0.5))))
-    a = rt.construct(2, ((rt.component_wise('mod', p[0], s[0])) - (h[0])), ((rt.component_wise('mod', p[1], s[1])) - (h[1])))
-    b = rt.construct(2, ((rt.component_wise('mod', rt.f32(((p[0]) + (h[0]))), s[0])) - (h[0])), ((rt.component_wise('mod', rt.f32(((p[1]) + (h[1]))), s[1])) - (h[1])))
+    a = rt.construct(2, rt.binary('-', rt.component_wise('mod', p, s), h, 2, 'float'))
+    b = rt.construct(2, rt.binary('-', rt.component_wise('mod', rt.construct(2, ((p[0]) + (h[0])), ((p[1]) + (h[1]))), s), h, 2, 'float'))
     _g = rt.construct(2, (rt.bool(rt.binary('<', rt.length(a), rt.length(b))) ? (a[0]) : (b[0])), (rt.bool(rt.binary('<', rt.length(a), rt.length(b))) ? (a[1]) : (b[1])))
     d = hexDist__vec2.call(_g)
     edge = rt.binary('*', rt.f(0.5), _t, 1, 'float')
@@ -133,7 +133,7 @@ run_pixel = lambda do |ctx, out|
   hearts__vec2_float = lambda do |p, _t|
     p = rt.copy(p, 'float')
     cell = nil; d = nil; radius = nil; sm = nil
-    cell = rt.construct(2, ((rt.component_wise('fract', p[0])) - (rt.f(0.5))), ((rt.component_wise('fract', p[1])) - (rt.f(0.5))))
+    cell = rt.construct(2, rt.binary('-', rt.component_wise('fract', p), rt.f(0.5), 2, 'float'))
     cell = rt.assign_swizzle(cell, 'y', rt.binary('+', rt.swizzle(cell, 'y'), rt.f(0.25), 1, 'float'))
     d = heartSDF__vec2.call(rt.construct(2, ((cell[0]) * (rt.f(2.4000000953674316))), ((cell[1]) * (rt.f(2.4000000953674316)))))
     radius = rt.binary('-', rt.f(0.15000000596046448), rt.binary('*', _t, rt.f(0.15000000596046448), 1, 'float'), 1, 'float')

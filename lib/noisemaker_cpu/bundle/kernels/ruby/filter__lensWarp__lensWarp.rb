@@ -72,7 +72,7 @@ run_pixel = lambda do |ctx, out|
     noiseY = perlinNoise__vec2_vec2.call(rt.construct(2, ((noiseCoord[0]) + (rt.f(97))), ((noiseCoord[1]) + (rt.f(97)))), rt.construct(2, (rt.f(2)), (rt.f(2))))
     uv = rt.assign_swizzle(uv, 'x', rt.binary('+', rt.swizzle(uv, 'x'), rt.binary('*', rt.binary('*', rt.binary('-', noiseX, rt.f(0.5), 1, 'float'), clampedDisplacement, 1, 'float'), mask, 1, 'float'), 1, 'float'))
     uv = rt.assign_swizzle(uv, 'y', rt.binary('+', rt.swizzle(uv, 'y'), rt.binary('*', rt.binary('*', rt.binary('-', noiseY, rt.f(0.5), 1, 'float'), clampedDisplacement, 1, 'float'), mask, 1, 'float'), 1, 'float'))
-    uv.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+    uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
     localUV = rt.construct(2, ((((((uv[0]) * (fullRes[0]))) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((((uv[1]) * (fullRes[1]))) - (_u_tileOffset[1]))) / (_u_resolution[1])))
     localUV.replace((rt.component_wise('clamp', localUV, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     col = rt.construct(4, 0.0)

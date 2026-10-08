@@ -212,7 +212,7 @@ run_pixel = lambda do |ctx, out|
     outColor = rt.construct(4, 0.0)
     cellC = rt.construct(2, 0.0)
     if rt.bool((rt.bool(found) ? 0 : 1))
-      cellC = rt.construct(2, ((imgCenter[0]) + (((((rt.component_wise('floor', rt.f32(((((_P[0]) - (imgCenter[0]))) / (_u_size))))) + (rt.f(0.5)))) * (_u_size)))), ((imgCenter[1]) + (((((rt.component_wise('floor', rt.f32(((((_P[1]) - (imgCenter[1]))) / (_u_size))))) + (rt.f(0.5)))) * (_u_size)))))
+      cellC = rt.construct(2, rt.binary('+', imgCenter, rt.binary('*', rt.binary('+', rt.component_wise('floor', rt.construct(2, ((((_P[0]) - (imgCenter[0]))) / (_u_size)), ((((_P[1]) - (imgCenter[1]))) / (_u_size)))), rt.f(0.5), 2, 'float'), _u_size, 2, 'float'), 2, 'float'))
       outColor.replace((cellAvgColor3x3__vec2.call(cellC)).map { |c| rt.f32(c) })
     else
       _Cbl = rt.construct(2, 0.0)

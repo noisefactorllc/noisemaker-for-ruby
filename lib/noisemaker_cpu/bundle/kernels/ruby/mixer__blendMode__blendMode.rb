@@ -29,7 +29,7 @@ run_pixel = lambda do |ctx, out|
       return rt.component_wise('min', rt.construct(4, ((color1[0]) + (color2[0])), ((color1[1]) + (color2[1])), ((color1[2]) + (color2[2])), ((color1[3]) + (color2[3]))), rt.construct(4, rt.f(1)))
     end
     if rt.bool(rt.binary('==', m, rt.i(1)))
-      return rt.construct(4, ((rt.f(1)) - (rt.component_wise('min', rt.f32(((((rt.f(1)) - (color1[0]))) / (rt.component_wise('max', color2[0], (rt.f(0.0010000000474974513)))))), (rt.f(1))))), ((rt.f(1)) - (rt.component_wise('min', rt.f32(((((rt.f(1)) - (color1[1]))) / (rt.component_wise('max', color2[1], (rt.f(0.0010000000474974513)))))), (rt.f(1))))), ((rt.f(1)) - (rt.component_wise('min', rt.f32(((((rt.f(1)) - (color1[2]))) / (rt.component_wise('max', color2[2], (rt.f(0.0010000000474974513)))))), (rt.f(1))))), ((rt.f(1)) - (rt.component_wise('min', rt.f32(((((rt.f(1)) - (color1[3]))) / (rt.component_wise('max', color2[3], (rt.f(0.0010000000474974513)))))), (rt.f(1))))))
+      return rt.binary('-', rt.f(1), rt.component_wise('min', rt.construct(4, rt.f32(((((rt.f(1)) - (color1[0]))) / (rt.component_wise('max', color2[0], (rt.f(0.0010000000474974513)))))), rt.f32(((((rt.f(1)) - (color1[1]))) / (rt.component_wise('max', color2[1], (rt.f(0.0010000000474974513)))))), rt.f32(((((rt.f(1)) - (color1[2]))) / (rt.component_wise('max', color2[2], (rt.f(0.0010000000474974513)))))), rt.f32(((((rt.f(1)) - (color1[3]))) / (rt.component_wise('max', color2[3], (rt.f(0.0010000000474974513))))))), rt.construct(4, rt.f(1))), 4, 'float')
     end
     if rt.bool(rt.binary('==', m, rt.i(2)))
       return rt.component_wise('min', color1, color2)
@@ -38,7 +38,7 @@ run_pixel = lambda do |ctx, out|
       return rt.component_wise('abs', rt.construct(4, ((color1[0]) - (color2[0])), ((color1[1]) - (color2[1])), ((color1[2]) - (color2[2])), ((color1[3]) - (color2[3]))))
     end
     if rt.bool(rt.binary('==', m, rt.i(4)))
-      return rt.component_wise('min', rt.construct(4, ((color1[0]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (color2[0]))), (rt.f(0.0010000000474974513))))), ((color1[1]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (color2[1]))), (rt.f(0.0010000000474974513))))), ((color1[2]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (color2[2]))), (rt.f(0.0010000000474974513))))), ((color1[3]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (color2[3]))), (rt.f(0.0010000000474974513)))))), rt.construct(4, rt.f(1)))
+      return rt.component_wise('min', rt.construct(4, rt.f32(((color1[0]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (color2[0]))), (rt.f(0.0010000000474974513)))))), rt.f32(((color1[1]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (color2[1]))), (rt.f(0.0010000000474974513)))))), rt.f32(((color1[2]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (color2[2]))), (rt.f(0.0010000000474974513)))))), rt.f32(((color1[3]) / (rt.component_wise('max', rt.f32(((rt.f(1)) - (color2[3]))), (rt.f(0.0010000000474974513))))))), rt.construct(4, rt.f(1)))
     end
     if rt.bool(rt.binary('==', m, rt.i(5)))
       return rt.construct(4, ((((color1[0]) + (color2[0]))) - (((((rt.f(2)) * (color1[0]))) * (color2[0])))), ((((color1[1]) + (color2[1]))) - (((((rt.f(2)) * (color1[1]))) * (color2[1])))), ((((color1[2]) + (color2[2]))) - (((((rt.f(2)) * (color1[2]))) * (color2[2])))), ((((color1[3]) + (color2[3]))) - (((((rt.f(2)) * (color1[3]))) * (color2[3])))))
@@ -56,13 +56,13 @@ run_pixel = lambda do |ctx, out|
       return rt.construct(4, ((color1[0]) * (color2[0])), ((color1[1]) * (color2[1])), ((color1[2]) * (color2[2])), ((color1[3]) * (color2[3])))
     end
     if rt.bool(rt.binary('==', m, rt.i(10)))
-      return rt.construct(4, (((rt.f(1))) - (rt.component_wise('abs', rt.f32((((((rt.f(1))) - (color1[0]))) - (color2[0])))))), (((rt.f(1))) - (rt.component_wise('abs', rt.f32((((((rt.f(1))) - (color1[1]))) - (color2[1])))))), (((rt.f(1))) - (rt.component_wise('abs', rt.f32((((((rt.f(1))) - (color1[2]))) - (color2[2])))))), (((rt.f(1))) - (rt.component_wise('abs', rt.f32((((((rt.f(1))) - (color1[3]))) - (color2[3])))))))
+      return rt.binary('-', rt.construct(4, rt.f(1)), rt.component_wise('abs', rt.construct(4, (((((rt.f(1))) - (color1[0]))) - (color2[0])), (((((rt.f(1))) - (color1[1]))) - (color2[1])), (((((rt.f(1))) - (color1[2]))) - (color2[2])), (((((rt.f(1))) - (color1[3]))) - (color2[3])))), 4, 'float')
     end
     if rt.bool(rt.binary('==', m, rt.i(11)))
       return rt.construct(4, blendOverlay__float_float.call(rt.swizzle(color1, 'r'), rt.swizzle(color2, 'r')), blendOverlay__float_float.call(rt.swizzle(color1, 'g'), rt.swizzle(color2, 'g')), blendOverlay__float_float.call(rt.swizzle(color1, 'b'), rt.swizzle(color2, 'b')), rt.f(1))
     end
     if rt.bool(rt.binary('==', m, rt.i(12)))
-      return rt.construct(4, ((((rt.component_wise('min', color1[0], color2[0])) - (rt.component_wise('max', color1[0], color2[0])))) + ((rt.f(1)))), ((((rt.component_wise('min', color1[1], color2[1])) - (rt.component_wise('max', color1[1], color2[1])))) + ((rt.f(1)))), ((((rt.component_wise('min', color1[2], color2[2])) - (rt.component_wise('max', color1[2], color2[2])))) + ((rt.f(1)))), ((((rt.component_wise('min', color1[3], color2[3])) - (rt.component_wise('max', color1[3], color2[3])))) + ((rt.f(1)))))
+      return rt.binary('+', rt.binary('-', rt.component_wise('min', color1, color2), rt.component_wise('max', color1, color2), 4, 'float'), rt.construct(4, rt.f(1)), 4, 'float')
     end
     if rt.bool(rt.binary('==', m, rt.i(13)))
       return rt.construct(4, (((rt.f(1))) - ((((((rt.f(1))) - (color1[0]))) * ((((rt.f(1))) - (color2[0])))))), (((rt.f(1))) - ((((((rt.f(1))) - (color1[1]))) * ((((rt.f(1))) - (color2[1])))))), (((rt.f(1))) - ((((((rt.f(1))) - (color1[2]))) * ((((rt.f(1))) - (color2[2])))))), (((rt.f(1))) - ((((((rt.f(1))) - (color1[3]))) * ((((rt.f(1))) - (color2[3])))))))

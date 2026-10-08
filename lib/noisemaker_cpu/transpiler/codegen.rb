@@ -1039,8 +1039,9 @@ module NoisemakerCpu
           end
         # A whole-assign rhs that mixes scalar-op-call subtrees elementwise
         # (simplex `h = 1.0 - abs(x) - abs(y)` lowers to
-        # vec4.subtract(abs(x).map(_ => 1 - _), abs(y))): the map fn stays
-        # RAW (no per-element f32) and only the vec4 store rounds once.
+        # vec4.subtract(abs(x).map(_ => 1 - _), abs(y))): emit it per
+        # component. The typed map and vec4.subtract each round to f32
+        # (_materialized_vec?), and the store rounds once more.
         if @in_vec_whole_assign && was_root && base == "float" && width > 1 &&
            %w[* / + -].include?(op) && Codegen.width_of(l_t) == width &&
            Codegen.width_of(r_t) == width && _raw_elem_shape?(node)
@@ -1053,6 +1054,33 @@ module NoisemakerCpu
       end
 
       RAW_ELEM_OPS = { "+" => "+", "-" => "-", "*" => "*", "/" => "/" }.freeze
+
+      # True when the oracle holds this operand as a pooled Float32Array
+      # vector rather than per-component scalar slots: a vector-valued
+      # component-wise builtin call (its #unary/#binary/#ternary allocate
+      # one), or vector arithmetic on such a value. Arithmetic with it is a
+      # vector operation in the compiled JS -- a typed `.map` for a scalar
+      # operand (`abs(x).map(_ => 1 - _)`; Float32Array#map yields a
+      # Float32Array) or vecN.add/subtract/multiply/divide, which F32-round
+      # each component -- so every such operation rounds to f32. Simplex
+      # `h = 1.0 - abs(x) - abs(y)` rounds 1 - |x| before subtracting |y|.
+      def _materialized_vec?(node, scope)
+        case node["k"]
+        when "call"
+          name = node["name"]
+          return false if @overloads.key?(name) || ROUTED.key?(name) || DERIV_FUNCS[name] || TYPE.key?(name) || node["args"].empty?
+
+          _, t = expr(node, scope)
+          Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"]
+        when "binary"
+          return false unless RAW_ELEM_OPS.key?(node["op"])
+
+          _, t = expr(node, scope)
+          Codegen.width_of(t) > 1 && (_materialized_vec?(node["l"], scope) || _materialized_vec?(node["r"], scope))
+        else
+          false
+        end
+      end
 
       # True for elementwise trees of numeric literals, +-/* binaries and
       # single-argument component-wise calls (the scalar-op-call map form).
@@ -1078,7 +1106,8 @@ module NoisemakerCpu
           f = raw.include?(".") || raw.include?("e") || raw.downcase.include?("f") ? [raw.sub(/[fF]\z/, "").to_f].pack("e").unpack1("e") : raw.to_i
           "rt.f(#{Codegen._fmt_num(f)})"
         when "binary"
-          "(#{_raw_elem_code(node['l'], scope, i)}) #{RAW_ELEM_OPS[node['op']]} (#{_raw_elem_code(node['r'], scope, i)})"
+          raw = "(#{_raw_elem_code(node['l'], scope, i)}) #{RAW_ELEM_OPS[node['op']]} (#{_raw_elem_code(node['r'], scope, i)})"
+          _materialized_vec?(node["l"], scope) || _materialized_vec?(node["r"], scope) ? "rt.f32(#{raw})" : raw
         else # call abs
           a, = expr(node["args"][0], scope)
           "rt.component_wise('abs', rt.construct(1, (#{a})[#{i}]))[0]"
@@ -1424,8 +1453,14 @@ module NoisemakerCpu
             # f32 round at the element store. rt.binary rounds every
             # intermediate to f32 (bitEffects bitMask:
             # `st[0] -= (0.5*fullResolution[0])/fullResolution[1]` needs the
-            # raw form to match), so emit raw operators here.
-            return ["((#{l_code}) #{op} (#{r_code}))", { "base" => "float", "width" => 1 }]
+            # raw form to match), so emit raw operators here -- except where
+            # an operand is a vector builtin call (see _materialized_vec?).
+            raw = "((#{l_code}) #{op} (#{r_code}))"
+            if _materialized_vec?(node["l"], scope) || _materialized_vec?(node["r"], scope)
+              return ["rt.f32(#{raw})", { "base" => "float", "width" => 1 }]
+            end
+
+            return [raw, { "base" => "float", "width" => 1 }]
           end
           ["rt.binary(#{Codegen.rq(op)}, #{l_code}, #{r_code}, #{width}, #{Codegen.rq(base)})", { "base" => base, "width" => 1 }]
         when "cond"

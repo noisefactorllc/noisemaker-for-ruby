@@ -37,7 +37,7 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('*', rt.binary('*', rt.component_wise('pow', rt.component_wise('max', rt.f(0), rt.component_wise('cos', rt.binary('*', rt.f(6), phi, 1, 'float'))), rt.f(40)), rt.component_wise('exp', rt.binary('*', rt.unary('-', d), rt.f(5), 1, 'float')), 1, 'float'), rt.f(0.5), 1, 'float')
   end
   haloRainbow__float = lambda do |dc|
-    return rt.construct(3, ((rt.f(0.5)) + (((rt.f(0.5)) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831854820251465)) * (((((dc) * (rt.f(10)))) + ((rt.f(0)))))))))))), ((rt.f(0.5)) + (((rt.f(0.5)) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831854820251465)) * (((((dc) * (rt.f(10)))) + ((rt.f(0.33333331346511841)))))))))))), ((rt.f(0.5)) + (((rt.f(0.5)) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831854820251465)) * (((((dc) * (rt.f(10)))) + ((rt.f(0.66666668653488159)))))))))))))
+    return rt.binary('+', rt.f(0.5), rt.binary('*', rt.f(0.5), rt.component_wise('cos', rt.construct(3, ((rt.f(6.2831854820251465)) * (((((dc) * (rt.f(10)))) + ((rt.f(0)))))), ((rt.f(6.2831854820251465)) * (((((dc) * (rt.f(10)))) + ((rt.f(0.33333331346511841)))))), ((rt.f(6.2831854820251465)) * (((((dc) * (rt.f(10)))) + ((rt.f(0.66666668653488159)))))))), 3, 'float'), 3, 'float')
   end
   haloBand__float = lambda do |dc|
     return rt.binary('*', rt.component_wise('exp', rt.binary('*', rt.unary('-', rt.component_wise('abs', rt.binary('-', dc, rt.f(0.2800000011920929), 1, 'float'))), rt.f(60), 1, 'float')), rt.f(0.25), 1, 'float')

@@ -186,7 +186,7 @@ run_pixel = lambda do |ctx, out|
     c = rt.copy(_u_paletteFreq, 'float')
     d = rt.copy(_u_palettePhase, 'float')
     _t = rt.binary('+', rt.binary('*', _t, _u_repeatPalette, 1, 'float'), rt.binary('*', _u_rotatePalette, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float')
-    color = rt.construct(3, ((a[0]) + (((b[0]) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831802368164062)) * (((((c[0]) * (_t))) + (d[0])))))))))), ((a[1]) + (((b[1]) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831802368164062)) * (((((c[1]) * (_t))) + (d[1])))))))))), ((a[2]) + (((b[2]) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831802368164062)) * (((((c[2]) * (_t))) + (d[2])))))))))))
+    color = rt.construct(3, rt.binary('+', a, rt.binary('*', b, rt.component_wise('cos', rt.construct(3, ((rt.f(6.2831802368164062)) * (((((c[0]) * (_t))) + (d[0])))), ((rt.f(6.2831802368164062)) * (((((c[1]) * (_t))) + (d[1])))), ((rt.f(6.2831802368164062)) * (((((c[2]) * (_t))) + (d[2])))))), 3, 'float'), 3, 'float'))
     if rt.bool(rt.binary('==', _u_paletteMode, rt.i(1)))
       color.replace((hsv2rgb__vec3.call(color)).map { |c| rt.f32(c) })
     else
@@ -247,11 +247,11 @@ run_pixel = lambda do |ctx, out|
   end
   mod289__vec3 = lambda do |x|
     x = rt.copy(x, 'float')
-    return rt.construct(3, ((x[0]) - (((rt.component_wise('floor', rt.f32(((x[0]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))), ((x[1]) - (((rt.component_wise('floor', rt.f32(((x[1]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))), ((x[2]) - (((rt.component_wise('floor', rt.f32(((x[2]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))))
+    return rt.binary('-', x, rt.binary('*', rt.component_wise('floor', rt.construct(3, ((x[0]) * (rt.f(0.0034602077212184668))), ((x[1]) * (rt.f(0.0034602077212184668))), ((x[2]) * (rt.f(0.0034602077212184668))))), rt.f(289), 3, 'float'), 3, 'float')
   end
   mod289__vec2 = lambda do |x|
     x = rt.copy(x, 'float')
-    return rt.construct(2, ((x[0]) - (((rt.component_wise('floor', rt.f32(((x[0]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))), ((x[1]) - (((rt.component_wise('floor', rt.f32(((x[1]) * (rt.f(0.0034602077212184668)))))) * (rt.f(289))))))
+    return rt.binary('-', x, rt.binary('*', rt.component_wise('floor', rt.construct(2, ((x[0]) * (rt.f(0.0034602077212184668))), ((x[1]) * (rt.f(0.0034602077212184668))))), rt.f(289), 2, 'float'), 2, 'float')
   end
   permute__vec3 = lambda do |x|
     x = rt.copy(x, 'float')
@@ -275,8 +275,8 @@ run_pixel = lambda do |ctx, out|
     m = rt.construct(3, rt.component_wise('max', rt.f32(((rt.f(0.5)) - ((rt.dot(x0, x0))))), rt.f(0)), rt.component_wise('max', rt.f32(((rt.f(0.5)) - ((rt.dot(rt.swizzle(x12, 'xy'), rt.swizzle(x12, 'xy')))))), rt.f(0)), rt.component_wise('max', rt.f32(((rt.f(0.5)) - ((rt.dot(rt.swizzle(x12, 'zw'), rt.swizzle(x12, 'zw')))))), rt.f(0)))
     m.replace((rt.binary('*', m, m, 3, 'float')).map { |c| rt.f32(c) })
     m.replace((rt.binary('*', m, m, 3, 'float')).map { |c| rt.f32(c) })
-    x = rt.construct(3, ((((rt.f(2)) * (rt.component_wise('fract', rt.f32(((p[0]) * (rt.swizzle(_C, 'w')))))))) - (rt.f(1))), ((((rt.f(2)) * (rt.component_wise('fract', rt.f32(((p[1]) * (rt.swizzle(_C, 'w')))))))) - (rt.f(1))), ((((rt.f(2)) * (rt.component_wise('fract', rt.f32(((p[2]) * (rt.swizzle(_C, 'w')))))))) - (rt.f(1))))
-    h = rt.construct(3, ((rt.component_wise('abs', x[0])) - (rt.f(0.5))), ((rt.component_wise('abs', x[1])) - (rt.f(0.5))), ((rt.component_wise('abs', x[2])) - (rt.f(0.5))))
+    x = rt.construct(3, rt.binary('-', rt.binary('*', rt.f(2), rt.component_wise('fract', rt.construct(3, ((p[0]) * (rt.swizzle(_C, 'w'))), ((p[1]) * (rt.swizzle(_C, 'w'))), ((p[2]) * (rt.swizzle(_C, 'w'))))), 3, 'float'), rt.f(1), 3, 'float'))
+    h = rt.construct(3, rt.binary('-', rt.component_wise('abs', x), rt.f(0.5), 3, 'float'))
     ox = rt.construct(3, rt.component_wise('floor', rt.f32(((x[0]) + (rt.f(0.5))))), rt.component_wise('floor', rt.f32(((x[1]) + (rt.f(0.5))))), rt.component_wise('floor', rt.f32(((x[2]) + (rt.f(0.5))))))
     a0 = rt.construct(3, ((x[0]) - (ox[0])), ((x[1]) - (ox[1])), ((x[2]) - (ox[2])))
     m[0] = rt.f32(rt.binary('*', m[0], ((rt.f(1.7928428649902344)) - (((rt.f(0.85373473167419434)) * (((((a0[0]) * (a0[0]))) + (((h[0]) * (h[0])))))))), 1, 'float')); m[1] = rt.f32(rt.binary('*', m[1], ((rt.f(1.7928428649902344)) - (((rt.f(0.85373473167419434)) * (((((a0[1]) * (a0[1]))) + (((h[1]) * (h[1])))))))), 1, 'float')); m[2] = rt.f32(rt.binary('*', m[2], ((rt.f(1.7928428649902344)) - (((rt.f(0.85373473167419434)) * (((((a0[2]) * (a0[2]))) + (((h[2]) * (h[2])))))))), 1, 'float'))

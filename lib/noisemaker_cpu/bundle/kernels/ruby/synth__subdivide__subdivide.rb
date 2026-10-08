@@ -273,7 +273,7 @@ run_pixel = lambda do |ctx, out|
       texUv = rt.assign_swizzle(texUv, 'y', rt.binary('+', rt.swizzle(texUv, 'y'), rt.binary('*', rt.component_wise('mix', cellRand__vec2_float_float_float.call(cellMin, rt.f(0), rt.f(7), curVisualTime), cellRand__vec2_float_float_float.call(cellMin, rt.f(0), rt.f(7), nextVisualTime), visualBlend), rt.binary('-', rt.f(1), texScale, 1, 'float'), 1, 'float'), 1, 'float'))
       wrapMode = rt.construct(1, _u_wrap, 'int')
       if rt.bool(rt.binary('==', wrapMode, rt.i(0)))
-        texUv.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((texUv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((texUv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+        texUv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((texUv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((texUv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
       else
         if rt.bool(rt.binary('==', wrapMode, rt.i(1)))
           texUv.replace((rt.component_wise('mod', texUv, rt.f(1))).map { |c| rt.f32(c) })

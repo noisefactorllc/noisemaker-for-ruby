@@ -94,7 +94,7 @@ run_pixel = lambda do |ctx, out|
   end
   boxFold__vec3_float = lambda do |z, foldingLimit|
     z = rt.copy(z, 'float')
-    return rt.construct(3, ((((rt.component_wise('clamp', z[0], rt.unary('-', foldingLimit), foldingLimit)) * (rt.f(2)))) - (z[0])), ((((rt.component_wise('clamp', z[1], rt.unary('-', foldingLimit), foldingLimit)) * (rt.f(2)))) - (z[1])), ((((rt.component_wise('clamp', z[2], rt.unary('-', foldingLimit), foldingLimit)) * (rt.f(2)))) - (z[2])))
+    return rt.binary('-', rt.binary('*', rt.component_wise('clamp', z, rt.unary('-', foldingLimit), foldingLimit), rt.f(2), 3, 'float'), z, 3, 'float')
   end
   mandelcube__vec3_float_int_float = lambda do |pos, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')

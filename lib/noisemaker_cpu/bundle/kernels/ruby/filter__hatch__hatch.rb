@@ -105,7 +105,7 @@ run_pixel = lambda do |ctx, out|
     _t = nil; aa = nil; band1 = nil; band2 = nil; band3 = nil; bgGate = nil; bgMask = nil; coverage = nil; darkGain = nil; darkness = nil; edgeAngle = nil; edgeBoost = nil; f0 = nil; f1 = nil; f2 = nil; fgGate = nil; fgMask = nil; gc = nil; grad = nil; gradMag = nil; inkC = nil; inkMask = nil; level = nil; midGray = nil; outColor = nil; pb = nil; rough = nil; s = nil; s2 = nil; s45a = nil; s45b = nil; sBg = nil; sCombined = nil; sEdge = nil; shadow = nil; src = nil; stretchAmt = nil; strokeMask = nil; texture2 = nil; theta = nil; toneGate = nil; uv = nil
     uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
     src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
-    gc = rt.construct(2, ((rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'x'))) + (_u_tileOffset[0])), ((rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'y'))) + (_u_tileOffset[1])))
+    gc = rt.construct(2, rt.binary('+', rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'xy')), _u_tileOffset, 2, 'float'))
     theta = dirAngle__int.call(_u_direction)
     stretchAmt = rt.component_wise('mix', rt.f(4), rt.f(40), rt.binary('/', _u_strokeLength, rt.f(100), 1, 'float'))
     _t = rt.binary('+', lum__vec3.call(rt.swizzle(src, 'rgb')), rt.binary('/', rt.binary('-', _u_balance, rt.f(50), 1, 'float'), rt.f(100), 1, 'float'), 1, 'float')

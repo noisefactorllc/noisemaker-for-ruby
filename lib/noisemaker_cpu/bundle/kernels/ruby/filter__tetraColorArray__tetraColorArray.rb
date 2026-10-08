@@ -94,7 +94,7 @@ run_pixel = lambda do |ctx, out|
     lin = rt.copy(lin, 'float')
     high = nil; low = nil
     low = rt.construct(3, ((lin[0]) * (rt.f(12.920000076293945))), ((lin[1]) * (rt.f(12.920000076293945))), ((lin[2]) * (rt.f(12.920000076293945))))
-    high = rt.construct(3, ((((rt.f(1.0549999475479126)) * (rt.component_wise('pow', rt.component_wise('max', lin[0], (rt.f(0))), (rt.f(0.4166666567325592)))))) - (rt.f(0.054999999701976776))), ((((rt.f(1.0549999475479126)) * (rt.component_wise('pow', rt.component_wise('max', lin[1], (rt.f(0))), (rt.f(0.4166666567325592)))))) - (rt.f(0.054999999701976776))), ((((rt.f(1.0549999475479126)) * (rt.component_wise('pow', rt.component_wise('max', lin[2], (rt.f(0))), (rt.f(0.4166666567325592)))))) - (rt.f(0.054999999701976776))))
+    high = rt.construct(3, rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', rt.component_wise('max', lin, rt.construct(3, rt.f(0))), rt.construct(3, rt.f(0.4166666567325592))), 3, 'float'), rt.f(0.054999999701976776), 3, 'float'))
     return rt.component_wise('mix', high, low, rt.component_wise('step', lin, rt.construct(3, rt.f(0.0031308000907301903))))
   end
   srgb2linear__vec3 = lambda do |c|

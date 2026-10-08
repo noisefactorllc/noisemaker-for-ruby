@@ -71,7 +71,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.assign_swizzle(uv, 'x', rt.binary('+', rt.swizzle(uv, 'x'), dx, 1, 'float'))
     uv = rt.assign_swizzle(uv, 'y', rt.binary('+', rt.swizzle(uv, 'y'), dy, 1, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      uv.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         uv.replace((rt.component_wise('mod', uv, rt.f(1))).map { |c| rt.f32(c) })

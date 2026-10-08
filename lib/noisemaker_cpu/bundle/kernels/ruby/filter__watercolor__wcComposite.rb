@@ -53,7 +53,7 @@ run_pixel = lambda do |ctx, out|
     edge = rt.length(lumGradientSimplified__vec2.call(uv))
     pool = rt.binary('*', rt.binary('*', rt.binary('/', _u_shadowIntensity, rt.f(100), 1, 'float'), rt.f(0.69999998807907104), 1, 'float'), rt.component_wise('smoothstep', rt.f(0.05000000074505806), rt.f(0.40000000596046448), edge), 1, 'float')
     c = rt.construct(3, ((simplified[0]) * (((rt.f(1)) - (pool)))), ((simplified[1]) * (((rt.f(1)) - (pool)))), ((simplified[2]) * (((rt.f(1)) - (pool)))))
-    gc = rt.construct(2, ((rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'x'))) + (_u_tileOffset[0])), ((rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'y'))) + (_u_tileOffset[1])))
+    gc = rt.construct(2, rt.binary('+', rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'xy')), _u_tileOffset, 2, 'float'))
     __sc2 = rt.component_wise('mix', rt.f(1), rt.binary('+', rt.f(0.92000001668930054), rt.binary('*', rt.f(0.079999998211860657), vnoise__vec2.call(rt.construct(2, ((gc[0]) / (rt.f(3.5))), ((gc[1]) / (rt.f(3.5))))), 1, 'float'), 1, 'float'), rt.binary('/', rt.component_wise('clamp', _u_paperTexture, rt.f(0), rt.f(100)), rt.f(100), 1, 'float')); c[0] = rt.f32(rt.binary('*', c[0], __sc2, 1, 'float')); c[1] = rt.f32(rt.binary('*', c[1], __sc2, 1, 'float')); c[2] = rt.f32(rt.binary('*', c[2], __sc2, 1, 'float'))
     c.replace((rt.component_wise('mix', c, rt.construct(3, ((c[0]) * ((rt.f(1.0199999809265137)))), ((c[1]) * ((rt.f(1)))), ((c[2]) * ((rt.f(0.94999998807907104))))), rt.binary('/', _u_paperTexture, rt.f(100), 1, 'float'))).map { |c| rt.f32(c) })
     flatness = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0), rt.f(0.15000000596046448), edge), 1, 'float')

@@ -197,7 +197,7 @@ run_pixel = lambda do |ctx, out|
     d = rt.copy(_u_palettePhase, 'float')
     _t = rt.component_wise('abs', _t)
     _t = rt.binary('+', rt.binary('*', _t, _u_repeatPalette, 1, 'float'), rt.binary('*', _u_rotatePalette, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float')
-    color = rt.construct(3, ((a[0]) + (((b[0]) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831802368164062)) * (((((c[0]) * (_t))) + (d[0])))))))))), ((a[1]) + (((b[1]) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831802368164062)) * (((((c[1]) * (_t))) + (d[1])))))))))), ((a[2]) + (((b[2]) * (rt.component_wise('cos', rt.f32(((rt.f(6.2831802368164062)) * (((((c[2]) * (_t))) + (d[2])))))))))))
+    color = rt.construct(3, rt.binary('+', a, rt.binary('*', b, rt.component_wise('cos', rt.construct(3, ((rt.f(6.2831802368164062)) * (((((c[0]) * (_t))) + (d[0])))), ((rt.f(6.2831802368164062)) * (((((c[1]) * (_t))) + (d[1])))), ((rt.f(6.2831802368164062)) * (((((c[2]) * (_t))) + (d[2])))))), 3, 'float'), 3, 'float'))
     if rt.bool(rt.binary('==', _u_paletteMode, rt.i(1)))
       color.replace((hsv2rgb__vec3.call(color)).map { |c| rt.f32(c) })
     else
@@ -381,12 +381,12 @@ run_pixel = lambda do |ctx, out|
     p = rt.assign_swizzle(p, 'xz', rotate2D__vec2_vec2.call(rt.swizzle(p, 'xz'), data[0]))
     p = rt.assign_swizzle(p, 'yz', rotate2D__vec2_vec2.call(rt.swizzle(p, 'yz'), data[1]))
     if rt.bool(data[6])
-      p[0] = rt.f32(rt.binary('-', p[0], ((data[4]) * (rt.component_wise('round', rt.f32(((p[0]) / (data[4])))))), 1, 'float')); p[1] = rt.f32(rt.binary('-', p[1], ((data[4]) * (rt.component_wise('round', rt.f32(((p[1]) / (data[4])))))), 1, 'float')); p[2] = rt.f32(rt.binary('-', p[2], ((data[4]) * (rt.component_wise('round', rt.f32(((p[2]) / (data[4])))))), 1, 'float'))
+      p[0] = rt.f32(rt.binary('-', p[0], rt.f32(((data[4]) * (rt.component_wise('round', rt.f32(((p[0]) / (data[4]))))))), 1, 'float')); p[1] = rt.f32(rt.binary('-', p[1], rt.f32(((data[4]) * (rt.component_wise('round', rt.f32(((p[1]) / (data[4]))))))), 1, 'float')); p[2] = rt.f32(rt.binary('-', p[2], rt.f32(((data[4]) * (rt.component_wise('round', rt.f32(((p[2]) / (data[4]))))))), 1, 'float'))
     end
     p = rt.assign_swizzle(p, 'xz', rotate2D__vec2_vec2.call(rt.swizzle(p, 'xz'), data[2]))
     p = rt.assign_swizzle(p, 'yz', rotate2D__vec2_vec2.call(rt.swizzle(p, 'yz'), data[3]))
     if rt.bool(data[7])
-      p[0] = rt.f32(rt.binary('-', p[0], ((data[4]) * (rt.component_wise('round', rt.f32(((p[0]) / (data[4])))))), 1, 'float')); p[1] = rt.f32(rt.binary('-', p[1], ((data[4]) * (rt.component_wise('round', rt.f32(((p[1]) / (data[4])))))), 1, 'float')); p[2] = rt.f32(rt.binary('-', p[2], ((data[4]) * (rt.component_wise('round', rt.f32(((p[2]) / (data[4])))))), 1, 'float'))
+      p[0] = rt.f32(rt.binary('-', p[0], rt.f32(((data[4]) * (rt.component_wise('round', rt.f32(((p[0]) / (data[4]))))))), 1, 'float')); p[1] = rt.f32(rt.binary('-', p[1], rt.f32(((data[4]) * (rt.component_wise('round', rt.f32(((p[1]) / (data[4]))))))), 1, 'float')); p[2] = rt.f32(rt.binary('-', p[2], rt.f32(((data[4]) * (rt.component_wise('round', rt.f32(((p[2]) / (data[4]))))))), 1, 'float'))
     end
     return p
   end

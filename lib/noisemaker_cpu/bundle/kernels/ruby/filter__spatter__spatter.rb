@@ -64,7 +64,7 @@ run_pixel = lambda do |ctx, out|
     _t = nil; c = nil; f = nil; v00 = nil; v01 = nil; v10 = nil; v11 = nil
     c = rt.construct(2, rt.construct(2, rt.component_wise('floor', pos)), 'int')
     f = rt.construct(2, rt.component_wise('fract', pos[0]), rt.component_wise('fract', pos[1]))
-    _t = rt.construct(2, ((((rt.f(1)) - (rt.component_wise('cos', rt.f32(((f[0]) * (rt.f(3.1415927410125732)))))))) * (rt.f(0.5))), ((((rt.f(1)) - (rt.component_wise('cos', rt.f32(((f[1]) * (rt.f(3.1415927410125732)))))))) * (rt.f(0.5))))
+    _t = rt.construct(2, rt.binary('*', rt.binary('-', rt.f(1), rt.component_wise('cos', rt.construct(2, ((f[0]) * (rt.f(3.1415927410125732))), ((f[1]) * (rt.f(3.1415927410125732))))), 2, 'float'), rt.f(0.5), 2, 'float'))
     v00 = rt.component_wise('pow', gridVal__ivec2_uint.call(c, sd), rt.f(4))
     v10 = rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), sd), rt.f(4))
     v01 = rt.component_wise('pow', gridVal__ivec2_uint.call(rt.binary('+', c, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), sd), rt.f(4))

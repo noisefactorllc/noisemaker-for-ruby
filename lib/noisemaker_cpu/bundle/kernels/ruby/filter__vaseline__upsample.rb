@@ -23,7 +23,7 @@ run_pixel = lambda do |ctx, out|
   chebyshev_mask__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     centered = nil
-    centered = rt.construct(2, ((rt.component_wise('abs', rt.f32(((uv[0]) - ((rt.f(0.5))))))) * (rt.f(2))), ((rt.component_wise('abs', rt.f32(((uv[1]) - ((rt.f(0.5))))))) * (rt.f(2))))
+    centered = rt.construct(2, rt.binary('*', rt.component_wise('abs', rt.construct(2, ((uv[0]) - ((rt.f(0.5)))), ((uv[1]) - ((rt.f(0.5)))))), rt.f(2), 2, 'float'))
     return rt.component_wise('max', rt.swizzle(centered, 'x'), rt.swizzle(centered, 'y'))
   end
   main__void = lambda do

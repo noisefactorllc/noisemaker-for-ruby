@@ -21,7 +21,7 @@ run_pixel = lambda do |ctx, out|
     p = rt.copy(p, 'float')
     p = rt.assign_swizzle(p, 'x', rt.dot(p, rt.construct(2, rt.f(127.09999847412109), rt.f(311.70001220703125))))
     p = rt.assign_swizzle(p, 'y', rt.dot(p, rt.construct(2, rt.f(269.5), rt.f(183.30000305175781))))
-    return rt.component_wise('fract', rt.construct(2, ((rt.component_wise('sin', p[0])) * (rt.f(43758.546875))), ((rt.component_wise('sin', p[1])) * (rt.f(43758.546875)))))
+    return rt.component_wise('fract', rt.construct(2, rt.f32(((rt.component_wise('sin', p[0])) * (rt.f(43758.546875)))), rt.f32(((rt.component_wise('sin', p[1])) * (rt.f(43758.546875))))))
   end
   lum__vec3 = lambda do |c|
     c = rt.copy(c, 'float')

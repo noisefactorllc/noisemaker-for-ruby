@@ -28,7 +28,7 @@ run_pixel = lambda do |ctx, out|
     globalUV = rt.assign_swizzle(globalUV, 'x', rt.binary('/', rt.swizzle(globalUV, 'x'), _u_aspect, 1, 'float'))
     localUV = rt.construct(2, ((((((globalUV[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((globalUV[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      localUV.replace((rt.component_wise('abs', rt.construct(2, ((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))), ((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))))).map { |c| rt.f32(c) })
+      localUV.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         localUV.replace((rt.component_wise('fract', localUV)).map { |c| rt.f32(c) })
