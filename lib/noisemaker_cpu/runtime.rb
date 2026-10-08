@@ -772,8 +772,10 @@ module NoisemakerCpu
 
     def normalize(a)
       v = _snap32(a)
-      # JS normalize divides by length(), which is f32-rounded.
-      mag = f32(Math.sqrt(_dot_raw(v, v)))
+      # JS normalize divides by length(), F32(sqrt(dot)), and that dot is
+      # itself F32-rounded: the squared magnitude rounds to f32 before the
+      # sqrt, exactly as in #length.
+      mag = f32(Math.sqrt(f32(_dot_raw(v, v))))
       return Array.new(v.length, 0.0) if mag == 0.0
 
       v.map { |c| f32(c / mag) }

@@ -43,6 +43,15 @@ class TestRuntime < Minitest::Test
         [0.40824827551841736, 0.40824827551841736, 0.8164965510368347], "normalize"
   end
 
+  def test_normalize_divides_by_the_f32_length
+    # glsl-runtime normalize divides by length(), F32(sqrt(dot)), and dot is
+    # F32(sum): the squared magnitude rounds to f32 before the sqrt. Skipping
+    # that inner round moved this shapes3d getNormal vector (repetition on,
+    # pixel 0,7) by one ulp per component. Expected values are the oracle's.
+    v = @rt.construct(3, -0.0015451312065124512, -0.0015643835067749023, -0.0097536444664001465)
+    assert_equal [-0.1545376181602478, -0.15646316111087799, -0.9755191206932068], @rt.normalize(v)
+  end
+
   def test_component_wise_builtins
     a = @rt.construct(2, 0.1, 0.2)
     b = @rt.construct(2, 0.3, 0.7)
