@@ -177,6 +177,15 @@ comparisons on Linux, plus the standalone tests and `scripts/parity-summary` on
 Windows with Ruby 4.0; an export kit is released only after that run passes. Live CDN checks are separate from this
 reproducible gate and may require `NOISEMAKER_PERL_LOCK` for cross-port lock checks.
 
+## Current support and limits
+
+The live [compatibility report](https://github.com/noisefactorllc/noisemaker-for-ruby/issues/3)
+is the current measured support: the tested source and reference revisions,
+the platforms, and the parity counts. The
+[issues labelled `gap`](https://github.com/noisefactorllc/noisemaker-for-ruby/issues?q=label%3Agap)
+are the current qualification limits. Both are GitHub issues in this
+repository and are updated as results change.
+
 ## License
 
 MIT © Noise Factor LLC. See [LICENSE](LICENSE).

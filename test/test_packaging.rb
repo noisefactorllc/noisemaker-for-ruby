@@ -30,4 +30,17 @@ class TestPackaging < Minitest::Test
       assert_equal "210", output.strip
     end
   end
+
+  # The README hands developers the live reports: the compatibility report is
+  # the open issue labelled compatibility, and the gap register is the set of
+  # issues labelled gap. Repository files are not the current report.
+  def test_readme_points_to_the_live_compatibility_report_and_gap_issues
+    readme = File.read(File.expand_path("../README.md", __dir__), encoding: "UTF-8")
+    assert readme.include?("https://github.com/noisefactorllc/noisemaker-for-ruby/issues/3"),
+           "README must link the live compatibility report issue"
+    assert readme.include?("https://github.com/noisefactorllc/noisemaker-for-ruby/issues?q=label%3Agap"),
+           "README must link the issues labelled gap"
+    refute_match(/docs\/COMPATIBILITY\.md|docs\/COMPLETION_GAPS\.md/, readme,
+                 "README must not name the removed historical documents as reports")
+  end
 end
