@@ -290,18 +290,31 @@ def case_grid(eff, skip_cases, all_params = false)
     next unless spec.is_a?(Hash)
     next if pname == "volumeSize"
     value = nondefault_value(spec)
+    baseline = spec["default"]
+    iteration_count = pname == "iterationCount" && eff["iterated"] && spec["default"].is_a?(Integer) && spec["default"] > 1
+    if iteration_count
+      # Iterated cases render one iteration by default (see the case loop),
+      # so the declared iteration default is itself a nondefault case and
+      # carries the iter-3 state size. The declared maximum is not usable:
+      # filter3d/flow3d moves 262,144 agents per iteration, about a minute
+      # each in Ruby, so 10000 iterations would run for days.
+      value = spec["default"]
+      baseline = 1
+    end
     if value.nil?
       exclusions << { "param" => pname, "type" => spec["type"],
                       "reason" => %w[surface volume geometry].include?(spec["type"]) ? "bound via inputs" : "no deterministic nondefault value derivable from metadata" }
       next
     end
-    next if value == spec["default"]
+    next if value == baseline
     if !all_params && param_cases.length >= 3
       exclusions << { "param" => pname, "type" => spec["type"],
                       "reason" => "capped: at most 3 nondefault-parameter cases per effect" }
       next
     end
-    param_cases << { "name" => "param-#{pname}", "params" => { pname => renderable_value(value) },
+    case_params = { pname => renderable_value(value) }
+    case_params["stateSize"] = 64 if iteration_count && params.key?("stateSize")
+    param_cases << { "name" => "param-#{pname}", "params" => case_params,
                      "time" => 0.25, "seed" => 1, "size" => 8, "volumeSize" => 16,
                      "param" => pname, "value" => value }
   end
@@ -457,6 +470,11 @@ ids.each do |eid|
       "size" => size
     }
     row["externalTexture"] = true if ext
+    # The start line names a case that never finishes; each row records how
+    # long both renders took.
+    $stderr.print "case #{eid} #{cs['name']}\n"
+    clock = -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
+    started_at = clock.call
     js =
       begin
         js_effect.call(eid, out_png, input_png, render_params,
@@ -471,6 +489,8 @@ ids.each do |eid|
         print "ORACLE-ERROR #{eid} #{cs['name']}: #{row['error']}\n"
         next
       end
+    row["oracle_seconds"] = (clock.call - started_at).round(2)
+    started_at = clock.call
     rb =
       begin
         ruby_render.call(eid, kind, ext, render_params, size, seed, render_time, volume_size)
@@ -483,6 +503,7 @@ ids.each do |eid|
         print "RUBY-ERROR #{eid} #{cs['name']}: #{row['error']}\n"
         next
       end
+    row["ruby_seconds"] = (clock.call - started_at).round(2)
     ja = js[0].to_rgba8.unpack("C*")
     pa = rb.to_rgba8.unpack("C*")
     row["oracle_png_sha256"] = js[1]
