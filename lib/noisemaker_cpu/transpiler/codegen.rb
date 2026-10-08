@@ -1037,26 +1037,6 @@ module NoisemakerCpu
           else
             "float"
           end
-        # Whole-vector reassignment decomposes in the oracle to a JS comma-
-        # assign of RAW scalar-slot expressions, where a scalar OP a vector
-        # CALL-result coerces the Float32Array via toString and NaNs for
-        # length>1 (cubes: `p[0] - s * (round(vec3))` -> NaN). The same
-        # source shape inside a NEW-var declaration compiles to the vec3
-        # helpers / .map chains (elementwise, no coercion -- shapes'
-        # `vec3.multiply([], b, cos(vec))`). The discriminator is the
-        # ASSIGNMENT CONTEXT, which _e_assign marks via @in_vec_assign.
-        # Whole-vector assigns lower per-component too, but a DIRECT
-        # scalar-op-call rhs (curl's `color = 1.0 - abs(curl)`) compiles as
-        # an elementwise map-chain (`abs(p).map(_ => 1 - _)`, no coercion);
-        # only a NESTED scalar-op-call deeper in the expression (cubes'
-        # `p = p - s * round(p/s)`) keeps the raw string-coercion NaN.
-        nested = !was_root
-        if @in_vec_assign && (!@in_vec_whole_assign || nested) && base == "float" &&
-           %w[* / + -].include?(op) &&
-           Codegen.width_of(l_t) == 1 && width > 1 &&
-           r_code.match?(/\Art\.(component_wise|unary|normalize|cross|reflect|refract|pcg3d|matrix_mult|array_index|texture)\b|\Art\.[a-z_0-9]+__\w+\.call\b/)
-          return ["rt.scalar_vec_coerce(#{Codegen.rq(op)}, #{l_code}, #{r_code}, #{width})", { "base" => "float", "width" => width }]
-        end
         # A whole-assign rhs that mixes scalar-op-call subtrees elementwise
         # (simplex `h = 1.0 - abs(x) - abs(y)` lowers to
         # vec4.subtract(abs(x).map(_ => 1 - _), abs(y))): the map fn stays
@@ -1438,12 +1418,6 @@ module NoisemakerCpu
             else
               "float"
             end
-          # Scalar-OP-vector-call inside the comma-assign projection keeps the
-          # oracle's raw JS operator semantics: NaN (see _e_binary's note).
-          if base == "float" && %w[* / + -].include?(op) &&
-             (l_t["callvec"] || r_t["callvec"])
-            return ["rt.scalar_vec_coerce(#{Codegen.rq(op)}, #{l_code}, #{r_code}, 1)", { "base" => "float", "width" => 1 }]
-          end
           if base == "float" && %w[* / + -].include?(op)
             # The oracle's per-component comma-assign arithmetic is RAW JS:
             # f64 adds/muls/divides over the pooled f32 reads with a SINGLE

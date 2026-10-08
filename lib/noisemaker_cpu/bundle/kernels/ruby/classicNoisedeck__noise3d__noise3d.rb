@@ -331,7 +331,7 @@ run_pixel = lambda do |ctx, out|
     b = nil; q = nil; s = nil
     s = rt.f(4)
     p = rt.assign_swizzle(p, 'x', rt.binary('-', rt.swizzle(p, 'x'), rt.binary('*', s, rt.f(0.5), 1, 'float'), 1, 'float'))
-    p.replace((rt.binary('-', p, rt.scalar_vec_coerce('*', s, rt.component_wise('round', rt.construct(3, ((p[0]) / (s)), ((p[1]) / (s)), ((p[2]) / (s)))), 3), 3, 'float')).map { |c| rt.f32(c) })
+    p.replace((rt.binary('-', p, rt.binary('*', s, rt.component_wise('round', rt.construct(3, ((p[0]) / (s)), ((p[1]) / (s)), ((p[2]) / (s)))), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     b = rt.construct(3, rt.construct(3, map__float_float_float_float_float.call(_u_scale, rt.f(1), rt.f(100), rt.f(0.10000000149011612), rt.f(0.94999998807907104))))
     q = rt.construct(3, ((rt.component_wise('abs', p[0])) - (b[0])), ((rt.component_wise('abs', p[1])) - (b[1])), ((rt.component_wise('abs', p[2])) - (b[2])))
     return rt.binary('+', rt.length(rt.component_wise('max', q, rt.f(0))), rt.component_wise('min', rt.component_wise('max', rt.swizzle(q, 'x'), rt.component_wise('max', rt.swizzle(q, 'y'), rt.swizzle(q, 'z'))), rt.f(0)), 1, 'float')
