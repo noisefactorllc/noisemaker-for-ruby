@@ -174,7 +174,7 @@ under Bundler and C-locale rendering. A weekly run (or a manual
 workflow_dispatch) adds the integration tests against the pinned reference,
 video frame counts, and `scripts/parity-summary` over all 210 reference
 comparisons on Linux, plus the standalone tests and `scripts/parity-summary` on
-Windows with Ruby 4.0; an export kit is released only after that run passes. Live CDN checks are separate from this
+Windows with Ruby 4.0; an export kit is released only after that run passes. `scripts/release-gate.rb` audits a complete `scripts/parity-summary` output before a release: every authority case reported exactly once, zero MISSING cases, near and defer zero, the SKIP cases exactly the declared set and the FAIL cases exactly the accepted failures (both empty for this port — every case must render byte-exact), and the PARITY-SUMMARY counts agreeing with the per-case verdict lines. Live CDN checks are separate from this
 reproducible gate and may require `NOISEMAKER_PERL_LOCK` for cross-port lock checks.
 
 ## Current support and limits

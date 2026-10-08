@@ -13,6 +13,10 @@
 # The last output line is:
 #   PARITY-SUMMARY {"expected":N,"executed":N,"exact":N,"strict":N,"near":N,"defer":N,"skip":N,"fail":N,"missing":N}
 #
+# Before it, every requested case is reported once with a verdict line, the
+# same shapes the CPU port's summary prints (auditable by scripts/release-gate.rb):
+#   EXACT/FAIL/DEFER/MISSING <id> (<reason>)
+#
 #   expected  the authority's cases (the full authority manifest ids, or the
 #             requested subset of them)
 #   executed  cases actually rendered by both engines
@@ -141,10 +145,12 @@ abort "parity-summary: could not parse scripts/parity.rb output\n#{out}" unless 
 m = line.match(/^=== PARITY: (\d+)\/(\d+) pass \(byte-exact\)  \|  (\d+) diff  \|  (\d+) runtime-error  \|  (\d+) oracle-error ===$/)
 passed, _requested, diff_count, error_count, oracle_count = m.captures.map(&:to_i)
 
+verdicts = {}
 if diff_count.zero? && error_count.zero? && oracle_count.zero?
   exact = passed
   fail_count = 0
   defer_count = 0
+  executable_ids.each { |cid| verdicts[cid] = "EXACT" }
 else
   # Classify per case so counts stay exact instead of inferring from groups.
   exact = 0
@@ -154,12 +160,29 @@ else
     out1, ok1 = run_gate([cid])
     if out1.include?("ORACLE ERRORS")
       defer_count += 1
+      verdicts[cid] = "DEFER"
     elsif ok1
       exact += 1
+      verdicts[cid] = "EXACT"
     else
       fail_count += 1
+      verdicts[cid] = "FAIL"
     end
   end
+end
+
+# Per-case verdict lines, the same shapes the CPU port's summary prints so a
+# release gate can audit every reported id (scripts/release-gate.rb). SKIP
+# never occurs here: the port has no skip policy, every bundle case renders.
+not_bundled.each { |cid| verdicts[cid] = "MISSING" }
+reasons = {
+  "EXACT" => "byte-exact vs the pinned oracle",
+  "FAIL" => "rendered but mismatching, or a port runtime error",
+  "DEFER" => "oracle unavailable or failed",
+  "MISSING" => "not in the port bundle"
+}
+verdicts.sort.each do |cid, verdict|
+  puts "#{verdict} #{cid} (#{reasons.fetch(verdict)})"
 end
 
 expected = ids.length
