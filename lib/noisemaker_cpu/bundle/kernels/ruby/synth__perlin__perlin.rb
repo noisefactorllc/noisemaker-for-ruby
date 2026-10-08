@@ -36,18 +36,7 @@ run_pixel = lambda do |ctx, out|
   end
   hash3__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    q = nil
-    p.replace((rt.binary('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-    q = rt.construct(3, rt.binary('+', rt.construct(3, rt.construct(3, rt.binary('*', p, rt.f(1000), 3, 'float')), 'int'), rt.i(65536), 3, 'int'), 'uint')
-    q.replace(rt.binary('+', rt.binary('*', q, rt.i(1664525), 3, 'uint'), rt.i(1013904223), 3, 'uint'))
-    q = rt.assign_swizzle(q, 'x', rt.binary('+', rt.swizzle(q, 'x'), rt.binary('*', rt.swizzle(q, 'y'), rt.swizzle(q, 'z'), 1, 'uint'), 1, 'uint'))
-    q = rt.assign_swizzle(q, 'y', rt.binary('+', rt.swizzle(q, 'y'), rt.binary('*', rt.swizzle(q, 'z'), rt.swizzle(q, 'x'), 1, 'uint'), 1, 'uint'))
-    q = rt.assign_swizzle(q, 'z', rt.binary('+', rt.swizzle(q, 'z'), rt.binary('*', rt.swizzle(q, 'x'), rt.swizzle(q, 'y'), 1, 'uint'), 1, 'uint'))
-    q.replace(rt.binary('^', q, rt.binary('>>', q, rt.i(16), 3, 'uint'), 3, 'uint'))
-    q = rt.assign_swizzle(q, 'x', rt.binary('+', rt.swizzle(q, 'x'), rt.binary('*', rt.swizzle(q, 'y'), rt.swizzle(q, 'z'), 1, 'uint'), 1, 'uint'))
-    q = rt.assign_swizzle(q, 'y', rt.binary('+', rt.swizzle(q, 'y'), rt.binary('*', rt.swizzle(q, 'z'), rt.swizzle(q, 'x'), 1, 'uint'), 1, 'uint'))
-    q = rt.assign_swizzle(q, 'z', rt.binary('+', rt.swizzle(q, 'z'), rt.binary('*', rt.swizzle(q, 'x'), rt.swizzle(q, 'y'), 1, 'uint'), 1, 'uint'))
-    return rt.binary('/', rt.construct(1, rt.binary('^', rt.binary('^', rt.swizzle(q, 'x'), rt.swizzle(q, 'y'), 1, 'uint'), rt.swizzle(q, 'z'), 1, 'uint')), rt.f(4294967296), 1, 'float')
+    return rt.cpu_perlin_hash3(p, _u_seed)
   end
   grad3__vec3 = lambda do |p|
     p = rt.copy(p, 'float')

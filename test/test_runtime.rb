@@ -123,6 +123,24 @@ class TestRuntime < Minitest::Test
     end
   end
 
+  def test_cpu_perlin_hash3_matches_canonical_javascript_number_semantics
+    # synth/perlin's 3D hash3 goes through the same exact-uint rewrite as
+    # noise3d's hash4 (compile-glsl restoreUnsignedIntegerArithmetic). Without
+    # it the LCG products grow past 2^53 and the gradients come out wrong.
+    # Expected values recorded from the pinned canonicalFactory276 hash3
+    # while rendering synth/perlin dimensions 3 (seed 1).
+    cases = {
+      [998.0, 1001.0, 1.0] => 0.57245302200317383,
+      [1125.0999755859375, 1128.0999755859375, 128.10000610351562] => 0.45421421527862549,
+      [1267.5, 1270.5, 270.5] => 0.46953314542770386,
+      [999.0, 1001.0, 1.0] => 0.72455441951751709,
+    }
+
+    cases.each do |point, expected|
+      assert_equal expected, @rt.cpu_perlin_hash3(point, 1), point.inspect
+    end
+  end
+
   def test_cpu_cell3d_hash_result_divides_uint_before_float32_conversion
     q = @rt.construct(3, 504_228_936, 2_080_811_276, 3_539_994_242, "uint")
     assert_equal [0.11739994585514069, 0.48447662591934204, 0.8242191672325134],

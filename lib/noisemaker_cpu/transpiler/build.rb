@@ -214,6 +214,15 @@ module NoisemakerCpu
 
           return adapted
         end
+        if effect_id == "synth/perlin" && program == "perlin"
+          adapted = source.sub(
+            /\bfloat\s+hash3\s*\(\s*vec3\s+p\s*\)\s*\{.*?^\}/m,
+            "float hash3(vec3 p) {\n    return cpu_perlin_hash3(p, seed);\n}"
+          )
+          raise "cannot locate synth/perlin hash3 for CPU lowering\n" if adapted == source
+
+          return adapted
+        end
         if effect_id == "synth/curl"
           # The oracle's adaptCanonicalSource rewrites this line so the
           # whole-vector reassign decomposes into per-component scalar tanh

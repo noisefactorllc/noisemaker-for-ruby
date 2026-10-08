@@ -700,31 +700,43 @@ module NoisemakerCpu
     # until each later bitwise operator applies ToInt32. Reproduce that one
     # generated-kernel behavior without weakening normal GLSL uint wrapping.
     def cpu_noise3d_hash4(p, seed)
+      _exact_uint_lcg_hash(p, seed)
+    end
+
+    # synth/perlin's 3D `hash3` is the same LCG mix over a uvec3, and the
+    # oracle's compile-glsl restoreUnsignedIntegerArithmetic rewrites it the
+    # same way (cpu_umul and >>> 0 on every step), so it shares the exact
+    # lowering.
+    def cpu_perlin_hash3(p, seed)
+      _exact_uint_lcg_hash(p, seed)
+    end
+
+    # Since noisemaker-for-cpu d13b0a2 the canonical uvec hash lowering
+    # restores exact GLSL uint semantics (compile-glsl
+    # restoreUnsignedIntegerArithmetic): every LCG mix runs through cpu_umul
+    # (Math.imul >>> 0, i.e. exact mod-2^32) and every accumulate/shift/xor
+    # wraps with >>> 0, instead of the old raw-f64 operators. Mirror that
+    # exactly; the final >>> 0 makes the xor chain unsigned before the f32
+    # snap. The seed offset is raw JS arithmetic, rounded only when stored
+    # back into p. Component i mixes in q[i+1] * q[i+2] (indices mod n).
+    def _exact_uint_lcg_hash(p, seed)
       seed_offset = seed.to_f * f32(0.1)
       ps = p.map { |value| f32(value.to_f + seed_offset) }
       q = ps.map do |value|
         NoisemakerCpu::UintMath.u32(f32(value * 1000.0).to_i + 65_536)
       end
-      # Since noisemaker-for-cpu d13b0a2 the canonical hash4 lowering restores
-      # exact GLSL uint semantics (compile-glsl restoreUnsignedIntegerArithmetic):
-      # every LCG mix runs through cpu_umul (Math.imul >>> 0, i.e. exact
-      # mod-2^32) and every accumulate/shift/xor wraps with >>> 0, instead of
-      # the old raw-f64 operators. Mirror that exactly; the final >>> 0 makes
-      # the xor chain unsigned before the f32 snap.
+      n = q.length
       u32 = ->(value) { NoisemakerCpu::UintMath.u32(value) }
       umul = ->(left, right) { u32.call(_s32(left) * _s32(right)) }
+      mix = lambda do
+        (0...n).each { |i| q[i] = u32.call(q[i] + umul.call(q[(i + 1) % n], q[(i + 2) % n])) }
+      end
       q.map! { |value| u32.call(umul.call(value, 1_664_525) + 1_013_904_223) }
-      q[0] = u32.call(q[0] + umul.call(q[1], q[2]))
-      q[1] = u32.call(q[1] + umul.call(q[2], q[3]))
-      q[2] = u32.call(q[2] + umul.call(q[3], q[0]))
-      q[3] = u32.call(q[3] + umul.call(q[0], q[1]))
+      mix.call
       q.map! do |value|
         u32.call(_s32(value) ^ _s32(value >> 16))
       end
-      q[0] = u32.call(q[0] + umul.call(q[1], q[2]))
-      q[1] = u32.call(q[1] + umul.call(q[2], q[3]))
-      q[2] = u32.call(q[2] + umul.call(q[3], q[0]))
-      q[3] = u32.call(q[3] + umul.call(q[0], q[1]))
+      mix.call
       xor = q.map { |value| u32.call(_s32(value)) }
              .reduce { |left, right| u32.call(_s32(left) ^ _s32(right)) }
       f32(xor).fdiv(4_294_967_296.0)

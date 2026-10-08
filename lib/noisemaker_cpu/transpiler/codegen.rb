@@ -1678,6 +1678,7 @@ module NoisemakerCpu
         "pcg3d" => ->(_g, c, _a) { ["rt.pcg3d(#{c[0]})", TYPE["uvec3"]] },
         "cpu_cell3d_hash_result" => ->(_g, c, _a) { ["rt.cpu_cell3d_hash_result(#{c[0]})", TYPE["vec3"]] },
         "cpu_noise3d_hash4" => ->(_g, c, _a) { ["rt.cpu_noise3d_hash4(#{c[0]}, #{c[1]})", FLOAT] },
+        "cpu_perlin_hash3" => ->(_g, c, _a) { ["rt.cpu_perlin_hash3(#{c[0]}, #{c[1]})", FLOAT] },
         "cpu_umul" => ->(_g, c, _a) { ["rt.binary('*', #{c[0]}, #{c[1]}, 1, 'uint')", TYPE["uint"]] },
         "hashUint" => ->(_g, c, _a) { ["rt.hash_uint(#{c[0]})", TYPE["uint"]] },
         "hash_uint" => ->(_g, c, _a) { ["rt.hash_uint(#{c[0]})", TYPE["uint"]] },

@@ -119,6 +119,16 @@ class TestParity < Minitest::Test
     assert_equal 0, max_diff(js, rb), "synth/noise byte-exact"
   end
 
+  # three-dimensional Perlin noise (exact uint hash3 path)
+  def test_synth_perlin_3d_byte_exact
+    skip_unless_renderable
+
+    js = js_effect("synth/perlin", "--param", "dimensions=3")
+    rb = NoisemakerCpu::Renderer.render_effect("synth/perlin", { "dimensions" => 3 }, nil,
+                                               width: 8, height: 8, seed: 1, time: 0.25)
+    assert_equal 0, max_diff(js, rb), "synth/perlin dimensions 3 byte-exact"
+  end
+
   def test_parity_script_exits_nonzero_on_oracle_failure
     missing_oracle = File.join(@tmp_dir, "missing-oracle")
     stdout, _stderr, status = Open3.capture3(
