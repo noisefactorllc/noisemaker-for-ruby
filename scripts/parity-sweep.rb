@@ -116,7 +116,10 @@ js_effect = lambda do |effect_id, out, input_png, params, js_params, size, seed,
   if (external_source = EXTERNAL_INPUT_SOURCES[effect_id])
     cmd = ["node", File.expand_path("oracle-external-input.mjs", __dir__), effect_id, out,
            "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s]
-    _stdout, stderr, status = Open3.capture3(*cmd, stdin_data: external_input_source_for(effect_id, params))
+    # The module finds the oracle only through NOISEMAKER_CPU_DIR; pass the
+    # checkout located above, which may be the default sibling path.
+    _stdout, stderr, status = Open3.capture3({ "NOISEMAKER_CPU_DIR" => cpu_dir }, *cmd,
+                                             stdin_data: external_input_source_for(effect_id, params))
   else
     program = NoisemakerOracle.particle_program(NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id), params)
     cmd = ["node", cli, "effect", effect_id,

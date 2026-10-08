@@ -76,7 +76,9 @@ js_effect = lambda do |effect_id, out, input_png, params|
   if (external_source = EXTERNAL_INPUT_SOURCES[effect_id])
     cmd = ["node", File.expand_path("oracle-external-input.mjs", __dir__), effect_id, out,
            "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s]
-    _stdout, stderr, status = Open3.capture3(*cmd, stdin_data: external_source)
+    # The module finds the oracle only through NOISEMAKER_CPU_DIR; pass the
+    # checkout located above, which may be the default sibling path.
+    _stdout, stderr, status = Open3.capture3({ "NOISEMAKER_CPU_DIR" => cpu_dir }, *cmd, stdin_data: external_source)
     raise "oracle failed: #{stderr}" unless status.success?
 
     return NoisemakerCpu::PNG.decode_png(File.binread(out))
