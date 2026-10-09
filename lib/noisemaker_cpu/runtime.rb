@@ -457,6 +457,33 @@ module NoisemakerCpu
       vals[0...width]
     end
 
+    # A float-vector constructor that is an operand of fused arithmetic. The
+    # oracle's JS substitutes each component expression into the arithmetic
+    # (`vec3(a, b, c) / eps` is `[(a) / eps, ...]`), so the components stay
+    # raw f64 until the fused result is stored -- NO f32 rounding here (that
+    # single round belongs to the enclosing store; see
+    # Codegen#_fused_operand).
+    def construct_raw(width, *rest)
+      rest.pop if !rest.empty? && rest[-1].is_a?(String) && (rest[-1] == "int" || rest[-1] == "uint")
+      supplied = rest.compact
+      if supplied.length == 1 && !_is_vec(supplied[0])
+        return Array.new(width, supplied[0])
+      end
+
+      vals = []
+      supplied.each do |c|
+        if _is_vec(c)
+          vals.concat(c.to_a)
+        else
+          vals << c
+        end
+      end
+      raise "construct_raw(#{width}) with no components" if vals.empty?
+      vals += [vals[-1]] * (width - vals.length) if vals.length < width
+
+      vals[0...width]
+    end
+
     # Pass-by-value copy of a function argument, coerced to the DECLARED
     # parameter's element type. Float params force float32 (GLSL implicit
     # conversion at the call boundary); int/uint params stay integer so a
@@ -537,6 +564,23 @@ module NoisemakerCpu
       return r if !_is_vec(a) && !_is_vec(b)
 
       r.map { |c| f32(c) }
+    end
+
+    # The oracle's compiled JS keeps a float-vector arithmetic chain RAW f64
+    # when glsl-transpiler emits it as an inline pooled-array constructor or
+    # a plain-Array `.map` (no Float32Array boundary): the components
+    # accumulate f64 with a single f32 round at the next store. The codegen
+    # routes exactly those forms here (see Codegen#_vec_binary_rounds);
+    # everything that the oracle compiles to a vecN stdlib op or a
+    # Float32Array#map keeps using #binary, which rounds each component.
+    def binary_raw(op, a, b, width = nil, base = nil)
+      base = "float" if base.nil?
+      if LOGICAL_OPS.include?(op) || base == "int" || base == "uint" || BITWISE_OPS.include?(op)
+        return binary(op, a, b, width, base)
+      end
+
+      fn = BINARY_FLOAT_OPS[op] or raise "unsupported binary op '#{op}'"
+      _bc2(fn, a, b)
     end
 
     # Raw-JS scalar-OP-vector coercion inside whole-vector reassignment (the
@@ -782,8 +826,11 @@ module NoisemakerCpu
     def distance(a, b)
       av = _snap32(a)
       bv = _snap32(b)
-      d = (0...av.length).map { |idx| av[idx] - bv[idx] }
-      f32(Math.sqrt(_dot_raw(d, d)))
+      # JS distance is length(subtract(a, b)): the vector subtract ROUNDS
+      # each difference to f32 (a vecN stdlib op), and length rounds the dot
+      # before the sqrt.
+      d = (0...av.length).map { |idx| f32(av[idx] - bv[idx]) }
+      f32(Math.sqrt(f32(_dot_raw(d, d))))
     end
 
     def normalize(a)

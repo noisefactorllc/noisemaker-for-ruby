@@ -230,7 +230,11 @@ module NoisemakerCpu
                   end
 
                   def self._construct_elems(rhs)
-                    m = /\Art\.construct\((\d+), (.*)\)\z/m.match(rhs)
+                    # Both constructor spellings decompose: construct (the
+                    # rounded pooled form) and construct_raw (the fused
+                    # inline form) -- the per-component stores below wrap
+                    # each element in rt.f32 either way.
+                    m = /\Art\.construct(?:_raw)?\((\d+), (.*)\)\z/m.match(rhs)
                     return nil unless m
 
                     w = m[1].to_i
@@ -253,7 +257,7 @@ module NoisemakerCpu
                       # resolved SEQUENTIALLY, not snapshot.
                       return elems.each_with_index.map { |e, i| "#{tcode}[#{i}] = rt.f32(#{e})" }.join("; ")
                     end
-                    m = /\Art\.binary\((.*)\)\z/m.match(rhs)
+                    m = /\Art\.binary(?:_raw)?\((.*)\)\z/m.match(rhs)
                     return nil unless m
 
                     parts = split_top_args(m[1])
@@ -571,32 +575,19 @@ module NoisemakerCpu
               elsif (tid = _restore_integer_division(init, scope))
                 tid
               else
-                expr(init, scope)[0]
+                # Store the initializer exactly as the oracle's compiled JS
+                # does (see _materialized_operand): an inline arithmetic
+                # initializer is a pooled-array CONSTRUCTOR of raw scalar
+                # slots (`var u = new PooledFloat32Array([(f[0]*f[0])*(3-2*
+                # f[0]), ...])` — one f32 round at the store, craquelure's
+                # vnoise u), a vecN.op/plain initializer reaches the variable
+                # as the plain Array it is (the rounding model's kind rules),
+                # and typed/constructor initializers pass through.
+                _materialized_operand(init, scope)
               end
             e = scope.define(dc["name"], t)
             _local(e["py"])
             if !init_code.nil?
-              # A float-vector declaration whose initializer is arithmetic
-              # compiles in the oracle to a pooled-array CONSTRUCTOR of RAW
-              # scalar-slot JS expressions: `var u = new PooledFloat32Array(
-              # [(f[0]*f[0])*(3-2*f[0]), (f[1]*f[1])*(3-2*f[1])])` — f64
-              # arithmetic with a SINGLE f32 round at the store (vnoise's u).
-              # Routing the whole rhs through one rt.binary would f32-round
-              # every intermediate (1-ulp drift amplified by hash math:
-              # craquelure seed-7/size-16). Project per-component like the
-              # comma-assign path; fall back to the once-eval construct when
-              # any slot needs a whole-vector call result (runtime calls/
-              # textures are hoisted, never re-inlined per slot).
-              if Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"] && dc["init"]["k"] != "id" && dc["init"]["k"] != "construct"
-                slots = (0...Codegen.width_of(t)).map { |ci| _vec_comp(dc["init"], scope, ci) }
-                if slots.all? { |sc, st| Codegen.width_of(st) == 1 && !sc.start_with?("(begin ") && !sc.match?(/\bcall\(/) && !sc.start_with?("rt.texture") && !sc.match?(/\Art\.(?!binary\b|f\b|i\b|swizzle\b|construct\b|component_wise\b)/) }
-                  init_code = "rt.construct(#{t["width"]}, #{slots.map { |sc, _| sc }.join(", ")})"
-                else
-                  init_code = "rt.construct(#{t["width"]}, #{init_code})"
-                end
-              elsif Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"] && dc["init"]["k"] != "id"
-                init_code = "rt.construct(#{t["width"]}, #{init_code})"
-              end
               # GLSL `vecN v = u;` copies. The JS generator emits a live alias
               # (`var z = pos;`) unless its copy pass rewrites the statement;
               # scripts/upstream/compile-glsl.js (CPU 390071f) now copies
@@ -668,20 +659,15 @@ module NoisemakerCpu
           elsif val_node.nil?
             out << "#{pad}return"
           else
-            code, vt = expr(val_node, scope)
             # A float-vector RETURN of arithmetic compiles in the oracle to
             # `return new PooledFloat32Array([raw scalar slots...])` — f64
             # math per component with ONE f32 round at the array store
             # (taylorInvSqrt: 1.79284291400159 - 0.8537347208*r[k] — the
-            # product stays unrounded). Emitting the whole-expression
-            # rt.binary vector chain f32-rounds every intermediate. Project
-            # per-component like the decl-initializer path above.
-            if Codegen.base_of(vt) == "float" && Codegen.width_of(vt) > 1 && !vt["mat"] &&
-               (val_node["k"] == "binary" || val_node["k"] == "unary" || val_node["k"] == "cond")
-              slots = (0...Codegen.width_of(vt)).map { |ci| _vec_comp(val_node, scope, ci) }
-              ok = slots.all? { |sc, st| Codegen.width_of(st) == 1 && !sc.start_with?("(begin ") && !sc.match?(/\bcall\(/) && !sc.start_with?("rt.texture") && !sc.match?(/\Art\.(?!binary\b|f\b|i\b|swizzle\b|construct\b|component_wise\b|unary\b)/) }
-              code = "rt.construct(#{vt["width"]}, #{slots.map(&:first).join(", ")})" if ok
-            end
+            # product stays unrounded). Materialize by the same kind rules
+            # as the decl-initializer path (_materialized_operand), which
+            # also keeps a vecN.op/plain result raw exactly like the
+            # compiled `return vecN.op(...)` JS.
+            code = _materialized_operand(val_node, scope)
             out << "#{pad}return #{code}"
           end
         when "break"
@@ -1050,6 +1036,19 @@ module NoisemakerCpu
           end
           return ["rt.construct(#{width}, #{parts.join(', ')})", { "base" => "float", "width" => width }]
         end
+        # Round where the oracle's compiled JS rounds (see _vec_binary_rounds);
+        # otherwise the arithmetic chain stays raw f64 until its next
+        # consumption boundary. The rounding form re-materializes inline
+        # operands as pooled arrays exactly like the oracle's vecN.op call
+        # does; the raw form keeps constructors and plain-Array maps raw.
+        if base == "float" && width > 1 && %w[* / + -].include?(op)
+          if _vec_binary_rounds(node, scope)
+            code = "rt.construct(#{width}, rt.binary(#{Codegen.rq(op)}, #{_materialized_operand(node["l"], scope)}, #{_materialized_operand(node["r"], scope)}, #{width}, 'float'))"
+          else
+            code = "rt.binary_raw(#{Codegen.rq(op)}, #{_fused_operand(node["l"], scope)}, #{_fused_operand(node["r"], scope)}, #{width}, 'float')"
+          end
+          return [code, { "base" => base, "width" => width }]
+        end
         ["rt.binary(#{Codegen.rq(op)}, #{l_code}, #{r_code}, #{width}, #{Codegen.rq(base)})", { "base" => base, "width" => width }]
       end
 
@@ -1114,6 +1113,157 @@ module NoisemakerCpu
         end
       end
 
+      # ---- the oracle's vector storage-kind model ----
+      #
+      # The oracle's compiled JS holds a float vector in one of three forms,
+      # which decides where its arithmetic rounds to f32 (ported from the
+      # Perl codegen's _vec_kind, which the shared rounding-model fixture
+      # t/data/rounding-model.json settles):
+      #   inline - per-component slot expressions (variables, swizzles,
+      #            literals, constructors and arithmetic on them): raw f64,
+      #            rounded once where the value is stored;
+      #   typed  - a pooled Float32Array: a vector-valued call (builtin, user
+      #            function or sampler read) or a scalar operation on a typed
+      #            value, which compiles to Float32Array#map and rounds each
+      #            component (simplex `1.0 - abs(x)`);
+      #   plain  - the [] filled by vecN.add/subtract/multiply/divide, which
+      #            round each component; a scalar .map over a plain Array
+      #            stays raw.
+      # Vector-vector arithmetic compiles to vecN.op as soon as either
+      # operand is not inline. The kinds follow the GLSL operand types,
+      # before any splat: `call * vec2(64.0)` is vec2.multiply, not a map. A
+      # swizzle of a non-inline vector (`texture(t, uv).rgb`) and a
+      # constructor that has to spread one (`vec4(call(), 1.0)`) compile to
+      # new Float32Arrays, so they are typed; a single-vector constructor
+      # (`vec3(call())`) passes its argument through.
+      def _vec_kind(node, scope)
+        k = node["k"] || ""
+        if k == "call"
+          _, t = expr(node, scope)
+          return (Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"]) ? "typed" : "inline"
+        end
+        if k == "member" || k == "index"
+          _, t = expr(node, scope)
+          return "inline" unless Codegen.width_of(t) > 1 && !t["mat"]
+
+          return _spreads(node["obj"], scope) ? "typed" : "inline"
+        end
+        if k == "unary" && node["op"] == "-"
+          return _vec_kind(node["x"], scope)
+        end
+        if k == "construct" && node["array"].nil?
+          args = node["args"]
+          if args.length == 1
+            _, a_t = expr(args[0], scope)
+            if Codegen.width_of(a_t) > 1 && !a_t["mat"]
+              return "typed" if (args[0]["k"] || "") == "call"
+
+              return Codegen.base_of(a_t) == "float" ? _vec_kind(args[0], scope) : "inline"
+            end
+          end
+          args.each do |arg|
+            return "typed" if _spreads(arg, scope)
+
+            ak = arg["k"] || ""
+            return "typed" if (ak == "member" || ak == "index") && _spreads(arg["obj"], scope)
+          end
+          return "inline"
+        end
+        if k == "binary" && FOLDABLE_OPS.include?(node["op"])
+          _, l_t = expr(node["l"], scope)
+          _, r_t = expr(node["r"], scope)
+          if l_t["mat"] || r_t["mat"] || Codegen.base_of(l_t) != "float" || Codegen.base_of(r_t) != "float"
+            return "inline"
+          end
+
+          lk = _vec_kind(node["l"], scope)
+          rk = _vec_kind(node["r"], scope)
+          if Codegen.width_of(l_t) > 1 && Codegen.width_of(r_t) > 1
+            return (lk == "inline" && rk == "inline") ? "inline" : "plain"
+          end
+
+          return Codegen.width_of(l_t) > 1 ? lk : rk
+        end
+        "inline"
+      end
+
+      # A vector the oracle cannot expand per component: a vector-valued
+      # call of any base, or a float vector that is typed or plain.
+      def _spreads(node, scope)
+        _, t = expr(node, scope)
+        return false unless Codegen.width_of(t) > 1 && !t["mat"]
+        return true if (node["k"] || "") == "call"
+
+        Codegen.base_of(t) == "float" && _vec_kind(node, scope) != "inline"
+      end
+
+      # True when the oracle's compiled JS rounds this float-vector binary
+      # operation: a vecN.op call (either operand not inline) or a
+      # Float32Array#map (the vector side is typed). A plain-Array receiver
+      # (`(vec2.subtract([], a, b)).map(_ * eps)`) stays raw.
+      def _vec_binary_rounds(node, scope)
+        _, l_t = expr(node["l"], scope)
+        _, r_t = expr(node["r"], scope)
+        return false if l_t["mat"] || r_t["mat"]
+
+        lk = _vec_kind(node["l"], scope)
+        rk = _vec_kind(node["r"], scope)
+        if Codegen.width_of(l_t) > 1 && Codegen.width_of(r_t) > 1
+          return !(lk == "inline" && rk == "inline") # vecN.op
+        end
+
+        (Codegen.width_of(l_t) > 1 ? lk : rk) == "typed" # Float32Array#map
+      end
+
+      # An operand of vecN.add/subtract/multiply/divide, or the vector of a
+      # Float32Array#map. The oracle materializes an inline operand as a
+      # pooled Float32Array, which rounds each component before the op reads
+      # it; typed and plain operands reach the op as they are.
+      def _materialized_operand(node, scope)
+        code, t = expr(node, scope)
+        return code unless Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"]
+
+        k = node["k"] || ""
+        kind = _vec_kind(node, scope)
+        if kind == "plain" # a single-vector constructor passes the Array through
+          return code unless k == "construct"
+
+          return "rt.construct_raw(#{t["width"]}, #{expr(node["args"][0], scope)[0]})"
+        end
+        return code if kind == "typed" || k == "id" || k == "construct"
+        return code if (k == "member" || k == "index") && (node["obj"]["k"] || "") == "id"
+
+        "rt.construct(#{t["width"]}, #{code})"
+      end
+
+      # An inline operand of fused arithmetic. Its constructors keep float
+      # components raw (rt.construct_raw), including under a negation; an
+      # int or uint component still rounds, as the oracle's cpu_float
+      # conversion does.
+      def _fused_operand(node, scope)
+        code, t = expr(node, scope)
+        return code unless Codegen.base_of(t) == "float" && Codegen.width_of(t) > 1 && !t["mat"]
+
+        k = node["k"] || ""
+        if k == "construct" && node["array"].nil?
+          return code if _vec_kind(node, scope) == "typed" # a new Float32Array
+
+          args = node["args"].map do |arg|
+            a_code, a_t = expr(arg, scope)
+            if Codegen.base_of(a_t) == "float"
+              _fused_operand(arg, scope)
+            else
+              "rt.construct(#{Codegen.width_of(a_t)}, #{a_code})"
+            end
+          end
+          return "rt.construct_raw(#{t["width"]}, #{args.join(", ")})"
+        end
+        if k == "unary" && node["op"] == "-"
+          return "rt.unary('-', #{_fused_operand(node["x"], scope)})"
+        end
+        code
+      end
+
       def _e_assign(node, scope)
         op = node["op"]
         target = node["target"]
@@ -1138,7 +1288,10 @@ module NoisemakerCpu
           # assignment); only READS go through rt.array_index.
           obj_code, obj_t = expr(target["obj"], scope)
           idx_code, = expr(target["idx"], scope)
-          tt = { "base" => Codegen.base_of(obj_t), "width" => obj_t["width"], "array" => 1 }
+          # The target's own (ELEMENT) type: an array of vecN yields width-N
+          # elements; indexing a bare vector yields a scalar.
+          tt = { "base" => Codegen.base_of(obj_t), "array" => 1,
+                 "width" => obj_t["array"] ? obj_t["width"] : 1 }
           rhs =
             if base_op
               b = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
@@ -1146,6 +1299,17 @@ module NoisemakerCpu
             else
               v_code
             end
+          # An element of a float vector, or of an array of float vectors,
+          # is a pooled Float32Array in the oracle's JS, so the store rounds
+          # each component and keeps the row's identity (in-place); a float
+          # array is a plain JS Array and stores the value as-is.
+          if Codegen.base_of(tt) == "float" && !tt["mat"] && !obj_t["mat"]
+            if Codegen.width_of(tt) > 1
+              return ["#{obj_code}[(#{idx_code}).to_i].replace((#{rhs}).map { |c| rt.f32(c) })", tt]
+            end
+
+            return ["#{obj_code}[(#{idx_code}).to_i] = rt.f32(#{rhs})", tt] unless obj_t["array"]
+          end
           return ["#{obj_code}[(#{idx_code}).to_i] = #{rhs}", tt]
         end
         tcode, tt = expr(target, scope)
@@ -1338,7 +1502,16 @@ module NoisemakerCpu
               cur = "rt.swizzle(#{obj_code}, #{Codegen.rq(sw)})"
               ob = Codegen.base_of(obj_t)
               b = ob == "uint" ? "uint" : (ob == "int" ? "int" : "float")
-              "rt.binary(#{Codegen.rq(base_op)}, #{cur}, #{v_code}, #{sw.length}, #{Codegen.rq(b)})"
+              if b == "float"
+                # The oracle compiles `v.xy += rhs` as a whole-array REBUILD
+                # with raw scalar slots (`v = new Float32Array([v[0] + rhs[0],
+                # ...])`): the current components are read as stored f32, the
+                # add runs raw f64, and ONE f32 round lands at the rebuilt
+                # array store (assign_swizzle below).
+                "rt.binary_raw(#{Codegen.rq(base_op)}, #{cur}, #{v_code}, #{sw.length}, 'float')"
+              else
+                "rt.binary(#{Codegen.rq(base_op)}, #{cur}, #{v_code}, #{sw.length}, #{Codegen.rq(b)})"
+              end
             else
               v_code
             end

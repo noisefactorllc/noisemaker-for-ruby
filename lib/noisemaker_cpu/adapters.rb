@@ -442,5 +442,232 @@ module NoisemakerCpu
         out[3] = surface.data[center_offset + 3]
       end
     end)
+
+    # ---- classicNoisedeck/fractal: Julia/Newton/Mandelbrot (full
+    # reimplementation) -- the oracle renders fractal through the hand-written
+    # CPU adapter (src/effects/adapters/fractal.js), not the transpiled CDN
+    # GLSL, so the adapter is the parity target. The f64 chain matters at
+    # mode 1/2 (the Math.hypot distance feeds the palette directly); the
+    # transpiled kernel's f32 vector stores diverge over 100 iterations.
+    #
+    # V8's 2-argument Math.hypot is exactly
+    # sqrt((x/m)^2 + (y/m)^2) * m with m = max(|x|, |y|) -- verified 200k
+    # random pairs across the adapter's value range; Ruby's Math.hypot
+    # (C hypot) differs in the last bit on ~1 in 10k of those pairs.
+
+    FRACTAL_PI = 3.14159265359
+    FRACTAL_TAU = 6.28318530718
+    FRACTAL_PALETTE_TAU = 6.28318
+
+    def self._hypot2(x, y)
+      m = x.abs > y.abs ? x.abs : y.abs
+      return m if m.zero? || m == Float::INFINITY
+
+      (x.fdiv(m)**2 + y.fdiv(m)**2)**0.5 * m
+    end
+
+    def self._fmap(value, in_min, in_max, out_min, out_max)
+      out_min + ((out_max - out_min) * (value - in_min)) / (in_max - in_min)
+    end
+
+    def self._ffract(value)
+      value - value.floor
+    end
+
+    def self._fmod(value, divisor)
+      value - (divisor * (value.fdiv(divisor)).floor)
+    end
+
+    def self._frotate(x, y, rotation, aspect)
+      angle = _fmap(rotation, 0.0, 360.0, 0.0, 2.0) * FRACTAL_PI
+      px = x - (0.5 * aspect)
+      py = y - 0.5
+      cs = Math.cos(angle)
+      sn = Math.sin(angle)
+      [(cs * px) + (sn * py) + (0.5 * aspect), (-sn * px) + (cs * py) + 0.5]
+    end
+
+    def self._linear_to_srgb_f(value)
+      return value * 12.92 if value <= 0.0031308
+
+      (1.055 * (value**(1.0.fdiv(2.4)))) - 0.055
+    end
+
+    def self._fpalette(t, u)
+      color = [
+        u["paletteOffset"][0] + (u["paletteAmp"][0] * Math.cos(FRACTAL_PALETTE_TAU * ((u["paletteFreq"][0] * t) + u["palettePhase"][0]))),
+        u["paletteOffset"][1] + (u["paletteAmp"][1] * Math.cos(FRACTAL_PALETTE_TAU * ((u["paletteFreq"][1] * t) + u["palettePhase"][1]))),
+        u["paletteOffset"][2] + (u["paletteAmp"][2] * Math.cos(FRACTAL_PALETTE_TAU * ((u["paletteFreq"][2] * t) + u["palettePhase"][2])))
+      ]
+      mode = u["paletteMode"]
+      # The adapter's `color` target is a Float32Array: the palette values are
+      # f32-truncated on store before paletteMode 1/2 read them.
+      color = color.map { |value| _f32(value) }
+      color = _fhsv_to_rgb(color[0], color[1], color[2]) if mode == 1
+      if mode == 2
+        l = color[0]
+        a = (color[1] * -0.509) + 0.276
+        b = (color[2] * -0.509) + 0.198
+        l1 = l + (0.3963377774 * a) + (0.2158037573 * b)
+        m1 = l - (0.1055613458 * a) - (0.0638541728 * b)
+        s1 = l - (0.0894841775 * a) - (1.291485548 * b)
+        l3 = l1 * l1 * l1
+        m3 = m1 * m1 * m1
+        s3 = s1 * s1 * s1
+        color = [
+          _linear_to_srgb_f((4.0767245293 * l3) - (3.3072168827 * m3) + (0.2307590544 * s3)),
+          _linear_to_srgb_f((-1.2681437731 * l3) + (2.6093323231 * m3) - (0.341134429 * s3)),
+          _linear_to_srgb_f((-0.0041119885 * l3) - (0.7034763098 * m3) + (1.7068625689 * s3))
+        ]
+      end
+      color
+    end
+
+    # Mirrors the adapter's hsvToRgb (f64 chain, no per-step rounding).
+    def self._fhsv_to_rgb(h, s, v)
+      h = _ffract(h)
+      c = v * s
+      x = c * (1.0 - (_fmod(h * 6.0, 2.0) - 1.0).abs)
+      m = v - c
+      if h < 1.0.fdiv(6.0)
+        [c + m, x + m, m]
+      elsif h < 2.0.fdiv(6.0)
+        [x + m, c + m, m]
+      elsif h < 3.0.fdiv(6.0)
+        [m, c + m, x + m]
+      elsif h < 4.0.fdiv(6.0)
+        [m, x + m, c + m]
+      elsif h < 5.0.fdiv(6.0)
+        [x + m, m, c + m]
+      else
+        [c + m, m, x + m]
+      end
+    end
+
+    def self._fjulia(x, y, u, aspect)
+      zoom = _fmap(u["zoomAmt"], 0.0, 100.0, 2.0, 0.5)
+      speedy = _fmap(u["speed"], 0.0, 100.0, 0.0, 1.0)
+      speed = (speedy * 0.05) * (1.0 - speedy) + (speedy * 0.125) * speedy
+      cx = (Math.sin(u["time"] * FRACTAL_TAU) * speed) + _fmap(u["offsetX"], -100.0, 100.0, -0.5, 0.5)
+      cy = (Math.cos(u["time"] * FRACTAL_TAU) * speed) + _fmap(u["offsetY"], -100.0, 100.0, -1.0, 1.0)
+      x, y = _frotate(x, y, u["rotation"], aspect)
+      x = ((x - (0.5 * aspect)) * zoom) + _fmap(u["centerX"], -100.0, 100.0, 1.0, -1.0)
+      y = ((y - 0.5) * zoom) + _fmap(u["centerY"], -100.0, 100.0, 1.0, -1.0)
+      count = u["iterations"] * 2.0
+      iteration = 0.0
+      index = 0.0
+      while index < count
+        iteration = index
+        next_x = (x * x) - (y * y) + cx
+        next_y = (y * x) + (x * y) + cy
+        break if ((next_x * next_x) + (next_y * next_y)) > 4.0
+
+        x = next_x
+        y = next_y
+        index += 1.0
+      end
+      return 1.0 if (count - iteration) < u["cutoff"].to_i
+
+      u["mode"] == 0 ? iteration.fdiv(count) : _hypot2(x, y)
+    end
+
+    def self._fnewton(x, y, u, aspect)
+      x, y = _frotate(x, y, u["rotation"] + 90.0, aspect)
+      zoom = _fmap(u["zoomAmt"], 0.0, 130.0, 1.0, 0.01)
+      x = ((x - (0.5 * aspect)) * zoom) + (u["centerY"] * 0.01)
+      y = ((y - 0.5) * zoom) + (u["centerX"] * 0.01)
+      speed = _fmap(u["speed"], 0.0, 100.0, 0.0, 1.0)
+      offset_x = _fmap(u["offsetX"], -100.0, 100.0, -0.25, 0.25)
+      offset_y = _fmap(u["offsetY"], -100.0, 100.0, -0.25, 0.25)
+      iteration = 0.0
+      while iteration < u["iterations"]
+        fx = (x * x * x) - (3.0 * x * y * y) - 1.0
+        fy = (3.0 * x * x * y) - (y * y * y)
+        fpx = (3.0 * x * x) - (3.0 * y * y)
+        fpy = 6.0 * x * y
+        denominator = (fpx * fpx) + (fpy * fpy)
+        tx = ((fx * fpx) + (fy * fpy)).fdiv(denominator)
+        ty = ((fy * fpx) - (fx * fpy)).fdiv(denominator)
+        tx += (Math.sin(u["time"] * FRACTAL_TAU) * 0.1 * speed) + offset_x
+        ty += (Math.cos(u["time"] * FRACTAL_TAU) * 0.1 * speed) + offset_y
+        break if _hypot2(tx, ty) < 0.001
+
+        x -= tx
+        y -= ty
+        iteration += 1.0
+      end
+      u["mode"] == 0 ? iteration.fdiv(u["iterations"]) : _hypot2(x, y)
+    end
+
+    def self._fmandelbrot(x, y, u, aspect)
+      zoom = _fmap(u["zoomAmt"], 0.0, 100.0, 2.0, 0.5)
+      speedy = _fmap(u["speed"], 0.0, 100.0, 0.0, 1.0)
+      speed = (speedy * 0.05) * (1.0 - speedy) + (speedy * 0.125) * speedy
+      x, y = _frotate(x, y, u["rotation"], aspect)
+      y = (y * 2.0) - 1.0
+      x = (x * 2.0) - aspect
+      cx = (zoom * x) - ((u["centerX"] + 50.0) * 0.01)
+      cy = (zoom * y) - (u["centerY"] * 0.01)
+      x = Math.sin(u["time"] * FRACTAL_TAU) * speed
+      y = Math.cos(u["time"] * FRACTAL_TAU) * speed
+      iteration = 0.0
+      while iteration < u["iterations"]
+        next_x = (x * x) - (y * y) + cx
+        next_y = (2.0 * x * y) + cy
+        x = next_x
+        y = next_y
+        break if ((x * x) + (y * y)) > 16.0
+
+        iteration += 1.0
+      end
+      return 1.0 if iteration == u["iterations"]
+
+      u["mode"] == 0 ? iteration.fdiv(u["iterations"]) : _hypot2(x, y).fdiv(u["iterations"])
+    end
+
+    register("classicNoisedeck/fractal", "fractal", lambda do |_rt, _compiled|
+      lambda do |ctx, out|
+        u = ctx.uniforms
+        full_resolution = u["fullResolution"]
+        tile_offset = u["tileOffset"]
+        aspect = full_resolution[0].fdiv(full_resolution[1])
+        global_x = (0.0 + ctx.frag_coord[0]) + tile_offset[0]
+        global_y = (0.0 + ctx.frag_coord[1]) + tile_offset[1]
+        x = global_x.fdiv(full_resolution[1])
+        y = global_y.fdiv(full_resolution[1])
+        distance =
+          case u["type"]
+          when 1 then _fnewton(x, y, u, aspect)
+          else u["type"].zero? ? _fjulia(x, y, u, aspect) : _fmandelbrot(x, y, u, aspect)
+          end
+        if distance == 1.0
+          out[0] = u["bgColor"][0]
+          out[1] = u["bgColor"][1]
+          out[2] = u["bgColor"][2]
+          out[3] = _f32(u["bgAlpha"] * 0.01)
+          return
+        end
+        cycle = u["cyclePalette"]
+        distance -= u["time"] if cycle == -1
+        distance += u["time"] if cycle == 1
+        distance = _ffract((distance * u["repeatPalette"]) + (u["rotatePalette"] * 0.01))
+        levels = u["levels"]
+        if levels > 0
+          levels += 1
+          distance = (distance * levels).floor.fdiv(levels)
+        end
+        color =
+          case u["colorMode"]
+          when 0 then [_ffract(distance)] * 3
+          when 4 then _fpalette(distance, u)
+          when 6 then _fhsv_to_rgb((distance * u["hueRange"]) * 0.01, 1.0, 1.0)
+          else [0.0, 0.0, 1.0]
+          end
+        out[0] = _f32(color[0])
+        out[1] = _f32(color[1])
+        out[2] = _f32(color[2])
+        out[3] = 1.0
+      end
+    end)
   end
 end

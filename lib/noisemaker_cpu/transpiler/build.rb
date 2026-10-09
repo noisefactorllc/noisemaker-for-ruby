@@ -403,7 +403,10 @@ module NoisemakerCpu
                 # Mirror each component via scalar_vec_coerce (number +
                 # int-array → NaN), which already implements the JS rule.
                 if eid == "render/render3d" || eid == "render/renderCubemap3d"
-                  q0 = "voxelBounds = rt.construct(3, voxelToWorld__ivec3.call(rt.binary('+', voxel, rt.component_wise('max', step, rt.construct(3, rt.i(0), 'int')), 3, 'int')))"
+                  # The decl path no longer wraps a call-result initializer in
+                  # a redundant construct (the rounding-model materializer
+                  # passes typed results through); the site itself is intact.
+                  q0 = "voxelBounds = voxelToWorld__ivec3.call(rt.binary('+', voxel, rt.component_wise('max', step, rt.construct(3, rt.i(0), 'int')), 3, 'int'))"
                   q1 = "voxel = rt.assign_swizzle(voxel, 'x', rt.binary('+', rt.swizzle(voxel, 'x'), rt.swizzle(step, 'x'), 1, 'int'))"
                   q2 = "lastNormal[0] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'x'))))"
                   raise "render3d voxel-step quirk site not found in generated #{key}" unless ruby_src.include?(q0)
@@ -427,10 +430,12 @@ module NoisemakerCpu
                   # a discarded array, the false branch reduce-writes
                   # vec3(0) into outRGB. Net: outRGB stays [0,0,0] under
                   # blendMode 1.
-                  qb = "outRGB.replace(((rt.bool(rt.binary('>', outAlpha, rt.f(0))) ? (rt.binary('/', outRGB_pre, outAlpha, 3, 'float')) : (rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })"
+                  # The rounding model keeps both-operand id arithmetic raw
+                  # (binary_raw); the divide result is discarded either way.
+                  qb = "outRGB.replace(((rt.bool(rt.binary('>', outAlpha, rt.f(0))) ? (rt.binary_raw('/', outRGB_pre, outAlpha, 3, 'float')) : (rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })"
                   raise "pointsBillboardRender blend ternary site not found in generated #{key}" unless ruby_src.include?(qb)
 
-                  ruby_src = ruby_src.gsub(qb, "if rt.bool(rt.binary('>', outAlpha, rt.f(0)))\n        rt.binary('/', outRGB_pre, outAlpha, 3, 'float')\n      else\n        outRGB.replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })\n      end")
+                  ruby_src = ruby_src.gsub(qb, "if rt.bool(rt.binary('>', outAlpha, rt.f(0)))\n        rt.binary_raw('/', outRGB_pre, outAlpha, 3, 'float')\n      else\n        outRGB.replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })\n      end")
                 end
                 if eid == "filter/dither" && p["program"] == "dither"
                   # The oracle's error-diffusion block stores back into the
@@ -443,21 +448,39 @@ module NoisemakerCpu
                   # rightErr. Without this the accumulated error drifts by
                   # ulps and errorDiffusion quantization flips (the pinned
                   # dither digest regresses).
-                  d0 = "errRow[(i).to_i] = rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, i), stepScale, 3, 'float')"
+                  # The codegen's rounding model now emits the seed store as
+                  # the rounds-form construct-wrapped binary, and the pooled
+                  # row store as an in-place replace with f32-mapped
+                  # components -- already the oracle's 10956 semantics
+                  # (fsSeedNoise(...).map(_ * stepScale) rounds, the reduce
+                  # writes into the pooled row). The gsub stays as a
+                  # site-presence guard.
+                  d0 = "errRow[(i).to_i].replace((rt.construct(3, rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, i), stepScale, 3, 'float'))).map { |c| rt.f32(c) })"
                   raise "dither errRow seed store not found in generated #{key}" unless ruby_src.include?(d0)
-                  ruby_src = ruby_src.gsub(d0, "errRow[(i).to_i] = (rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, i), stepScale, 3, 'float')).map { |c| rt.f32(c) }")
+                  ruby_src = ruby_src.gsub(d0, "errRow[(i).to_i].replace((rt.construct(3, rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, i), stepScale, 3, 'float'))).map { |c| rt.f32(c) })")
                   d1 = "rightErr = rt.construct(3, rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, rt.binary('+', rt.binary('+', g['FS_ERR_W'], g['FS_APRON_MAX'], 1, 'int'), r, 1, 'int')), stepScale, 3, 'float'))"
                   raise "dither rightErr init not found in generated #{key}" unless ruby_src.include?(d1)
                   ruby_src = ruby_src.gsub(d1, "rightErr = rt.binary('*', fsSeedNoise__ivec2_int.call(blockOrigin, rt.binary('+', rt.binary('+', g['FS_ERR_W'], g['FS_APRON_MAX'], 1, 'int'), r, 1, 'int')), stepScale, 3, 'float')")
-                  d2 = "rightErr.replace((rt.binary('*', err, rt.f(0.4375), 3, 'float')).map { |c| rt.f32(c) })"
+                  # rightErr's stores stay RAW f64 (oracle 10971: plain array
+                  # element stores) — the raw map chain (binary_raw) feeds
+                  # the replace; the replacement drops the f32 map and keeps
+                  # the rounded product.
+                  d2 = "rightErr.replace((rt.binary_raw('*', err, rt.f(0.4375), 3, 'float')).map { |c| rt.f32(c) })"
                   raise "dither rightErr store not found in generated #{key}" unless ruby_src.include?(d2)
                   ruby_src = ruby_src.gsub(d2, "rightErr.replace(rt.binary('*', err, rt.f(0.4375), 3, 'float'))")
-                  d3 = "errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i] = rt.binary('+', errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i], rt.binary('*', err, rt.f(0.1875), 3, 'float'), 3, 'float')"
+                  # The errRow += / = diag stores are pooled-row writes: the
+                  # compound sum rounds (rt.binary '+') and the replace maps
+                  # f32 -- the oracle's 10972/10973 f32-rounding element
+                  # stores. The gsub stays as a site-presence guard.
+                  d3 = "errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i].replace((rt.binary('+', errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i], rt.binary_raw('*', err, rt.f(0.1875), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })"
                   raise "dither errRow plus store not found in generated #{key}" unless ruby_src.include?(d3)
-                  ruby_src = ruby_src.gsub(d3, "errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i] = (rt.binary('+', errRow[(rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int')).to_i], rt.binary('*', err, rt.f(0.1875), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) }")
-                  d4 = "errRow[(rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')).to_i] = rt.binary('+', diag, rt.binary('*', err, rt.f(0.3125), 3, 'float'), 3, 'float')"
+                  ruby_src = ruby_src.gsub(d3, d3)
+                  # `= diag + err*0.3125` keeps the whole sum raw (both
+                  # operands inline -- binary_raw); the row store's f32 map
+                  # is the oracle's pooled element rounding (10973).
+                  d4 = "errRow[(rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')).to_i].replace((rt.binary_raw('+', diag, rt.binary_raw('*', err, rt.f(0.3125), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })"
                   raise "dither errRow diag store not found in generated #{key}" unless ruby_src.include?(d4)
-                  ruby_src = ruby_src.gsub(d4, "errRow[(rt.binary('+', rt.binary('+', c, g['FS_APRON_MAX'], 1, 'int'), rt.i(1), 1, 'int')).to_i] = (rt.binary('+', diag, rt.binary('*', err, rt.f(0.3125), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) }")
+                  ruby_src = ruby_src.gsub(d4, d4)
                 end
                 ruby_src
               rescue StandardError => e

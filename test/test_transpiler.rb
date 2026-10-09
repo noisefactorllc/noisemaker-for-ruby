@@ -67,6 +67,23 @@ class TestTranspilerPipeline < Minitest::Test
       width == 1 ? vals[0] : vals
     end
 
+    # Fused-arithmetic constructors: like construct, but the float
+    # components stay raw f64 (no f32 rounding) -- the single round belongs
+    # to the enclosing store.
+    def construct_raw(width, *rest)
+      rest.pop if !rest.empty? && rest[-1].is_a?(String) && (rest[-1] == "int" || rest[-1] == "uint")
+      flat = rest.compact.flat_map { |r| r.is_a?(Array) ? r : [r] }
+      vals = (flat.length == 1 && width > 1) ? Array.new(width, flat[0]) : flat.first(width)
+      vals += [vals[-1]] * (width - vals.length) if vals.length < width
+      width == 1 ? vals[0] : vals
+    end
+
+    # Raw f64 arithmetic for the inline/plain-map forms (see
+    # NoisemakerCpu::Runtime#binary_raw).
+    def binary_raw(op, a, b, _width = nil, _base = nil)
+      binary(op, a, b)
+    end
+
     def array(elems)
       elems
     end
@@ -947,11 +964,10 @@ class TestTranspilerPipeline < Minitest::Test
       }
     GLSL
 
-    # Regenerated: whole-vector arithmetic inits project per component
-    # ((p[0]) + (rt.f(0.10000000149011612)) ...), each f32-snapped by the
-    # construct - the same single-boundary round the oracle's
-    # PooledFloat32Array literal applies.
-    assert_includes src, "stored = rt.construct(4, ((p[0]) + (rt.f(0.10000000149011612)))"
+    # Regenerated: the whole-vector add in a float-vector initializer stays
+    # a raw f64 chain (both operands inline -- the rounding model's
+    # binary_raw form) with the construct's single f32 round at the store.
+    assert_includes src, "stored = rt.construct(4, rt.binary_raw('+', p, rt.f(0.10000000149011612), 4, 'float'))"
     out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
     assert_equal(-2900.0, out[0])
   end
@@ -1043,7 +1059,10 @@ class TestTranspilerPipeline < Minitest::Test
       }
     GLSL
 
-    assert_includes src, "rt.construct(3, rt.construct(3, rt.binary('*', p, rt.f(1000), 3, 'float')), 'int')"
+    # The inner vec-scalar product stays a raw f64 chain (both operands
+    # inline -- the rounding model); the int conversion's construct still
+    # snaps it exactly once, at the ivec3 store.
+    assert_includes src, "rt.construct(3, rt.construct(3, rt.binary_raw('*', p, rt.f(1000), 3, 'float')), 'int')"
     out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
     assert_equal 6100.0, out[0]
   end
