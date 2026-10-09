@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Release gate over a complete `scripts/parity-summary` output. A kit release
-# runs it after the summary and releases a kit only when it exits 0.
+# Release gate over a complete `scripts/parity-summary` output. scripts/test
+# runs it over the whole-port summary; a release procedure may also run it
+# after the summary and release a kit only when it exits 0.
 #
 # The gate passes only when all of these are true:
 #   - the output ends its run with one PARITY-SUMMARY line;

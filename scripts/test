@@ -201,6 +201,26 @@ if [ "$RC" -eq 0 ]; then
   # and no not-in-bundle warning; a changed denominator with all cases
   # passing is rejected above by the EXPECTED check.
   [ -z "$WARN" ] || { echo "scripts/test: parity-summary exited 0 with an unexpected not-in-bundle warning: $WARN" >&2; exit 1; }
+  # Release gate: audit the complete summary output with scripts/release-gate.rb
+  # (this port declares no skips and accepts no failures). The gate reads the
+  # authority manifest from the pinned oracle: prefer the oracle parity-summary
+  # provisioned (its warning names the directory), else pass through
+  # NOISEMAKER_CPU_DIR; with a sibling pinned checkout the gate resolves it
+  # itself.
+  ORACLE_DIR=$(printf '%s\n' "$OUT" | sed -n 's/^scripts\/parity-summary: using provisioned oracle at //p' | tail -1)
+  if [ -n "$ORACLE_DIR" ]; then
+    export NOISEMAKER_CPU_DIR="$ORACLE_DIR"
+  elif [ -n "${NOISEMAKER_CPU_DIR:-}" ]; then
+    export NOISEMAKER_CPU_DIR
+  fi
+  GATE_LOG=$(mktemp "${TMPDIR:-/tmp}/parity-summary-release-gate.XXXXXX")
+  trap 'rm -f "$GATE_LOG"' EXIT
+  printf '%s\n' "$OUT" > "$GATE_LOG"
+  if ! "$RUBY_BIN" scripts/release-gate.rb "$GATE_LOG" \
+       --declared-skips '' --accepted-failures '' >&2; then
+    echo "scripts/test: release gate rejected the whole-port summary" >&2
+    exit 1
+  fi
   echo "scripts/test: parity gate accepted the all-pass authority state: $LINE" >&2
   exit 0
 fi
