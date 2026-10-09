@@ -8,7 +8,10 @@
 # The gate passes only when all of these are true:
 #   - the output ends its run with one PARITY-SUMMARY line;
 #   - every authority-manifest case is reported exactly once, and no other id is;
-#   - no case is MISSING and the near and defer counts are zero;
+#   - no case is MISSING, STRICT, NEAR or DEFER (this port's published
+#     contract is byte-exact, so a strict pass is a tolerated mismatch that
+#     a release rejects; upstream's gate accepts strict passes under -cpu's
+#     tolerance contract, which this port does not have);
 #   - the SKIP cases are exactly the declared skip set (an undeclared skip fails,
 #     and a declared skip that is no longer skipped fails until it is undeclared);
 #   - the FAIL cases are exactly the accepted failures;
@@ -85,10 +88,14 @@ module NoisemakerReleaseGate
     missing = by_verdict.call("MISSING")
     skips = by_verdict.call("SKIP")
     fails = by_verdict.call("FAIL")
+    strict = by_verdict.call("STRICT")
     near = by_verdict.call("NEAR")
     defer = by_verdict.call("DEFER")
 
     missing.each { |id| errors << "MISSING #{id}: a release needs zero missing cases" }
+    strict.each do |id|
+      errors << "STRICT #{id}: a release accepts no strict cases (the published contract is byte-exact)"
+    end
     near.each { |id| errors << "NEAR #{id}: a release accepts no near cases" }
     defer.each { |id| errors << "DEFER #{id}: a release accepts no deferred cases" }
 
@@ -114,12 +121,11 @@ module NoisemakerReleaseGate
 
     if summary
       exacts = by_verdict.call("EXACT")
-      stricts = by_verdict.call("STRICT")
       expected_counts = {
         "expected" => authority.length,
-        "executed" => exacts.length + stricts.length + fails.length,
+        "executed" => exacts.length + fails.length,
         "exact" => exacts.length,
-        "strict" => stricts.length,
+        "strict" => 0,
         "near" => 0,
         "defer" => 0,
         "skip" => skips.length,

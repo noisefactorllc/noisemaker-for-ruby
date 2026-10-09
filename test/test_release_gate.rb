@@ -134,9 +134,14 @@ class TestReleaseGate < Minitest::Test
     assert(evaluate(text)[:errors].first.start_with?("PARITY-SUMMARY line is not JSON"))
   end
 
-  def test_strict_passes_count_as_executed
+  def test_strict_verdicts_fail
     result = evaluate(summary_output(verdicts: { "synth/solid" => "STRICT" }))
-    assert_empty result[:errors]
+    assert_equal false, result[:ok]
+    assert(
+      result[:errors].any? { |e| e.start_with?("STRICT synth/solid: a release accepts no strict cases") },
+      result[:errors].join("\n")
+    )
+    assert_includes result[:errors], "PARITY-SUMMARY strict=1, expected 0"
   end
 
   def test_cli_requires_explicit_declarations
