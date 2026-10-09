@@ -16,11 +16,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     blur = nil; diff = nil; hp = nil; src = nil; uv = nil
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
-    blur = rt.construct(4, (rt.texture(_u_blurTex, uv))[0], (rt.texture(_u_blurTex, uv))[1], (rt.texture(_u_blurTex, uv))[2], (rt.texture(_u_blurTex, uv))[3])
-    diff = rt.construct(3, ((rt.swizzle(src, 'r')) - (rt.swizzle(blur, 'r'))), ((rt.swizzle(src, 'g')) - (rt.swizzle(blur, 'g'))), ((rt.swizzle(src, 'b')) - (rt.swizzle(blur, 'b'))))
-    hp = rt.construct(3, (rt.bool(_u_mono) ? (rt.construct(3, rt.binary('+', lum__vec3.call(diff), rt.f(0.5), 1, 'float'))) : (rt.binary('+', diff, rt.f(0.5), 3, 'float'))))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    src = rt.texture(_u_inputTex, uv)
+    blur = rt.texture(_u_blurTex, uv)
+    diff = rt.construct(3, rt.binary_raw('-', rt.swizzle(src, 'rgb'), rt.swizzle(blur, 'rgb'), 3, 'float'))
+    hp = rt.construct(3, (rt.bool(_u_mono) ? (rt.construct(3, rt.binary('+', lum__vec3.call(diff), rt.f(0.5), 1, 'float'))) : (rt.binary_raw('+', diff, rt.f(0.5), 3, 'float'))))
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', hp, rt.f(0), rt.f(1)), rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

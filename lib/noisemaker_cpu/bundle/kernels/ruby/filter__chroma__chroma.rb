@@ -15,9 +15,9 @@ run_pixel = lambda do |ctx, out|
   rgb2hsv__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     _K = nil; d = nil; e = nil; p = nil; q = nil
-    _K = rt.construct(4, rt.construct(4, rt.f(0), rt.binary('/', rt.unary('-', rt.f(1)), rt.f(3), 1, 'float'), rt.f(0.66666668653488159), rt.unary('-', rt.f(1))))
-    p = rt.construct(4, rt.component_wise('mix', (rt.swizzle(rt.swizzle(c, 'bg'), 'x')), (rt.swizzle(rt.swizzle(c, 'gb'), 'x')), rt.component_wise('step', rt.swizzle(c, 'b'), rt.swizzle(c, 'g'))), rt.component_wise('mix', (rt.swizzle(rt.swizzle(c, 'bg'), 'y')), (rt.swizzle(rt.swizzle(c, 'gb'), 'y')), rt.component_wise('step', rt.swizzle(c, 'b'), rt.swizzle(c, 'g'))), rt.component_wise('mix', (rt.swizzle(rt.swizzle(_K, 'wz'), 'x')), (rt.swizzle(rt.swizzle(_K, 'xy'), 'x')), rt.component_wise('step', rt.swizzle(c, 'b'), rt.swizzle(c, 'g'))), rt.component_wise('mix', (rt.swizzle(rt.swizzle(_K, 'wz'), 'y')), (rt.swizzle(rt.swizzle(_K, 'xy'), 'y')), rt.component_wise('step', rt.swizzle(c, 'b'), rt.swizzle(c, 'g'))))
-    q = rt.construct(4, rt.component_wise('mix', (rt.swizzle(rt.swizzle(p, 'xyw'), 'x')), (rt.swizzle(c, 'r')), rt.component_wise('step', rt.swizzle(p, 'x'), rt.swizzle(c, 'r'))), rt.component_wise('mix', (rt.swizzle(rt.swizzle(p, 'xyw'), 'y')), (rt.swizzle(rt.swizzle(p, 'yzx'), 'x')), rt.component_wise('step', rt.swizzle(p, 'x'), rt.swizzle(c, 'r'))), rt.component_wise('mix', (rt.swizzle(rt.swizzle(p, 'xyw'), 'z')), (rt.swizzle(rt.swizzle(p, 'yzx'), 'y')), rt.component_wise('step', rt.swizzle(p, 'x'), rt.swizzle(c, 'r'))), rt.component_wise('mix', (rt.swizzle(c, 'r')), (rt.swizzle(rt.swizzle(p, 'yzx'), 'z')), rt.component_wise('step', rt.swizzle(p, 'x'), rt.swizzle(c, 'r'))))
+    _K = rt.construct(4, rt.f(0), rt.binary('/', rt.unary('-', rt.f(1)), rt.f(3), 1, 'float'), rt.f(0.66666668653488159), rt.unary('-', rt.f(1)))
+    p = rt.component_wise('mix', rt.construct(4, rt.swizzle(c, 'bg'), rt.swizzle(_K, 'wz')), rt.construct(4, rt.swizzle(c, 'gb'), rt.swizzle(_K, 'xy')), rt.component_wise('step', rt.swizzle(c, 'b'), rt.swizzle(c, 'g')))
+    q = rt.component_wise('mix', rt.construct(4, rt.swizzle(p, 'xyw'), rt.swizzle(c, 'r')), rt.construct(4, rt.swizzle(c, 'r'), rt.swizzle(p, 'yzx')), rt.component_wise('step', rt.swizzle(p, 'x'), rt.swizzle(c, 'r')))
     d = rt.binary('-', rt.swizzle(q, 'x'), rt.component_wise('min', rt.swizzle(q, 'w'), rt.swizzle(q, 'y')), 1, 'float')
     e = rt.f(1.000000013351432e-10)
     return rt.construct(3, rt.component_wise('abs', rt.binary('+', rt.swizzle(q, 'z'), rt.binary('/', rt.binary('-', rt.swizzle(q, 'w'), rt.swizzle(q, 'y'), 1, 'float'), rt.binary('+', rt.binary('*', rt.f(6), d, 1, 'float'), e, 1, 'float'), 1, 'float'), 1, 'float')), rt.binary('/', d, rt.binary('+', rt.swizzle(q, 'x'), e, 1, 'float'), 1, 'float'), rt.swizzle(q, 'x'))
@@ -29,11 +29,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; dist = nil; globalCoord = nil; hsv = nil; hue = nil; inner = nil; mask = nil; outer = nil; sat = nil; texSize = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
-    color = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
-    hsv = rt.construct(3, rgb2hsv__vec3.call(rt.swizzle(color, 'rgb')))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    color = rt.texture(_u_inputTex, uv)
+    hsv = rgb2hsv__vec3.call(rt.swizzle(color, 'rgb'))
     hue = rt.swizzle(hsv, 'x')
     sat = rt.swizzle(hsv, 'y')
     dist = hueDistance__float_float.call(hue, _u_targetHue)

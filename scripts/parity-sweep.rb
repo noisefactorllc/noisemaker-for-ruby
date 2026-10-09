@@ -525,6 +525,8 @@ ids.each do |eid|
       d = x if x > d
     end
     row["maxdiff"] = d
+    row["oracle_pixel_data_sha256"] = Digest::SHA256.hexdigest(ja.pack("C*"))
+    row["ruby_pixel_data_sha256"] = Digest::SHA256.hexdigest(pa.pack("C*"))
     row["ruby_png_sha256"] = Digest::SHA256.hexdigest(NoisemakerCpu::PNG.encode_png(rb))
     if d.zero?
       row["status"] = "exact"

@@ -37,9 +37,9 @@ run_pixel = lambda do |ctx, out|
         break
       end
       if rt.bool(rt.binary('<=', srgb[(i).to_i], rt.f(0.040449999272823334)))
-        linear[(i).to_i] = rt.binary('/', srgb[(i).to_i], rt.f(12.920000076293945), 1, 'float')
+        linear[(i).to_i] = rt.f32(rt.binary('/', srgb[(i).to_i], rt.f(12.920000076293945), 1, 'float'))
       else
-        linear[(i).to_i] = rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
+        linear[(i).to_i] = rt.f32(rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316)))
       end
     end
     return linear
@@ -59,9 +59,9 @@ run_pixel = lambda do |ctx, out|
         break
       end
       if rt.bool(rt.binary('<=', linear[(i).to_i], rt.f(0.0031308000907301903)))
-        srgb[(i).to_i] = rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float'))
       else
-        srgb[(i).to_i] = rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float'))
       end
     end
     return srgb
@@ -115,15 +115,15 @@ run_pixel = lambda do |ctx, out|
       _t = rt.binary('+', h, rt.binary('/', rt.binary('-', rt.f(1), rt.construct(1, i), 1, 'float'), rt.f(3), 1, 'float'), 1, 'float')
       _t = rt.component_wise('fract', _t)
       if rt.bool(rt.binary('<', _t, rt.f(0.1666666716337204)))
-        rgb[(i).to_i] = rt.binary('+', p, rt.binary('*', rt.binary('*', rt.binary('-', q, p, 1, 'float'), rt.f(6), 1, 'float'), _t, 1, 'float'), 1, 'float')
+        rgb[(i).to_i] = rt.f32(rt.binary('+', p, rt.binary('*', rt.binary('*', rt.binary('-', q, p, 1, 'float'), rt.f(6), 1, 'float'), _t, 1, 'float'), 1, 'float'))
       else
         if rt.bool(rt.binary('<', _t, rt.f(0.5)))
-          rgb[(i).to_i] = q
+          rgb[(i).to_i] = rt.f32(q)
         else
           if rt.bool(rt.binary('<', _t, rt.f(0.66666668653488159)))
-            rgb[(i).to_i] = rt.binary('+', p, rt.binary('*', rt.binary('*', rt.binary('-', q, p, 1, 'float'), rt.binary('-', rt.f(0.66666668653488159), _t, 1, 'float'), 1, 'float'), rt.f(6), 1, 'float'), 1, 'float')
+            rgb[(i).to_i] = rt.f32(rt.binary('+', p, rt.binary('*', rt.binary('*', rt.binary('-', q, p, 1, 'float'), rt.binary('-', rt.f(0.66666668653488159), _t, 1, 'float'), 1, 'float'), rt.f(6), 1, 'float'), 1, 'float'))
           else
-            rgb[(i).to_i] = p
+            rgb[(i).to_i] = rt.f32(p)
           end
         end
       end
@@ -151,18 +151,18 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; coord = nil; correctedHsl = nil; correctedRgb = nil; globalCoord = nil; hsl = nil; matte = nil; rgb = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
-    color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
+    color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
     if rt.bool(rt.binary('==', _u_hslEnable, rt.i(0)))
       g['fragColor'].replace((color).map { |c| rt.f32(c) })
       return
     end
-    rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))
-    hsl = rt.construct(3, rgbToHsl__vec3.call(rgb))
+    rgb = srgbToLinear__vec3.call(rt.swizzle(color, 'rgb'))
+    hsl = rgbToHsl__vec3.call(rgb)
     matte = computeHslKey__vec3_float_float_float_float_float_float_float.call(hsl, _u_hslHueCenter, _u_hslHueRange, _u_hslSatMin, _u_hslSatMax, _u_hslLumMin, _u_hslLumMax, _u_hslFeather)
-    correctedHsl = rt.construct(3, applyHslCorrection__vec3_float_float_float.call(hsl, _u_hslHueShift, _u_hslSatAdjust, _u_hslLumAdjust))
-    correctedRgb = rt.construct(3, hslToRgb__vec3.call(correctedHsl))
+    correctedHsl = applyHslCorrection__vec3_float_float_float.call(hsl, _u_hslHueShift, _u_hslSatAdjust, _u_hslLumAdjust)
+    correctedRgb = hslToRgb__vec3.call(correctedHsl)
     rgb.replace((rt.component_wise('mix', rgb, correctedRgb, matte)).map { |c| rt.f32(c) })
     rgb.replace((linearToSrgb__vec3.call(rt.component_wise('max', rgb, rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })
     g['fragColor'].replace((rt.construct(4, rgb, rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })

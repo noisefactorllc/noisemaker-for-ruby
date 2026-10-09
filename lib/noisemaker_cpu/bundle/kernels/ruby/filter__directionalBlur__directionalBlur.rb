@@ -14,16 +14,16 @@ run_pixel = lambda do |ctx, out|
   hash12__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     __sc1 = nil; p3 = nil
-    p3 = rt.construct(3, rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * (rt.f(0.1031000018119812))))))
-    __sc1 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1, 1, 'float'))
+    p3 = rt.component_wise('fract', rt.construct(3, (((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * (rt.f(0.1031000018119812))), (((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * (rt.f(0.1031000018119812))), (((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * (rt.f(0.1031000018119812)))))
+    __sc1 = rt.dot(p3, rt.binary_raw('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1, 1, 'float'))
     return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')))
   end
   main__void = lambda do
     __hoistv2 = nil; _for0_first = nil; _t = nil; dir = nil; i = nil; jitter = nil; offset = nil; sum = nil; tapStep = nil
-    dir = rt.construct(2, rt.construct(2, rt.component_wise('cos', rt.component_wise('radians', _u_angle)), rt.component_wise('sin', rt.component_wise('radians', _u_angle))))
+    dir = rt.construct(2, rt.component_wise('cos', rt.component_wise('radians', _u_angle)), rt.component_wise('sin', rt.component_wise('radians', _u_angle)))
     tapStep = rt.binary('/', _u_blurDistance, rt.construct(1, rt.binary('-', g['N'], rt.i(1), 1, 'int')), 1, 'float')
     jitter = rt.binary('*', rt.binary('-', hash12__vec2.call(rt.swizzle(ctx.frag_coord, 'xy')), rt.f(0.5), 1, 'float'), tapStep, 1, 'float')
-    sum = rt.construct(4, rt.construct(4, rt.f(0)))
+    sum = rt.construct(4, rt.f(0))
     i = rt.i(0)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -35,10 +35,10 @@ run_pixel = lambda do |ctx, out|
         break
       end
       _t = rt.binary('+', rt.binary('*', rt.binary('-', rt.binary('/', rt.construct(1, i), rt.construct(1, rt.binary('-', g['N'], rt.i(1), 1, 'int')), 1, 'float'), rt.f(0.5), 1, 'float'), _u_blurDistance, 1, 'float'), jitter, 1, 'float')
-      offset = rt.construct(2, ((dir[0]) * (_t)), ((dir[1]) * (_t)))
-      __hoistv2 = rt.texture(_u_inputTex, rt.binary('/', rt.binary('+', rt.swizzle(ctx.frag_coord, 'xy'), offset, 2, 'float'), _u_resolution, 2, 'float')); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv2[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv2[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv2[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoistv2[3], 1, 'float'))
+      offset = rt.construct(2, rt.binary_raw('*', dir, _t, 2, 'float'))
+      __hoistv2 = rt.texture(_u_inputTex, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), offset, 2, 'float'), _u_resolution, 2, 'float')); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv2[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv2[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv2[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoistv2[3], 1, 'float'))
     end
-    g['fragColor'].replace((rt.binary('/', sum, rt.construct(1, g['N']), 4, 'float')).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.binary_raw('/', sum, rt.construct(1, g['N']), 4, 'float')).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

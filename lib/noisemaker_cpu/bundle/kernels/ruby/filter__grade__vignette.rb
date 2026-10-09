@@ -30,9 +30,9 @@ run_pixel = lambda do |ctx, out|
         break
       end
       if rt.bool(rt.binary('<=', srgb[(i).to_i], rt.f(0.040449999272823334)))
-        linear[(i).to_i] = rt.binary('/', srgb[(i).to_i], rt.f(12.920000076293945), 1, 'float')
+        linear[(i).to_i] = rt.f32(rt.binary('/', srgb[(i).to_i], rt.f(12.920000076293945), 1, 'float'))
       else
-        linear[(i).to_i] = rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
+        linear[(i).to_i] = rt.f32(rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316)))
       end
     end
     return linear
@@ -52,9 +52,9 @@ run_pixel = lambda do |ctx, out|
         break
       end
       if rt.bool(rt.binary('<=', linear[(i).to_i], rt.f(0.0031308000907301903)))
-        srgb[(i).to_i] = rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float'))
       else
-        srgb[(i).to_i] = rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float'))
       end
     end
     return srgb
@@ -63,7 +63,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     aspectRatio = rt.copy(aspectRatio, 'float')
     centered = nil; dist = nil; inner = nil; outer = nil; scale = nil
-    centered = rt.construct(2, ((uv[0]) - (rt.f(0.5))), ((uv[1]) - (rt.f(0.5))))
+    centered = rt.construct(2, rt.binary_raw('-', uv, rt.f(0.5), 2, 'float'))
     scale = rt.construct(2, 0.0)
     if rt.bool(rt.binary('>', roundness, rt.f(0)))
       scale.replace((rt.component_wise('mix', aspectRatio, rt.construct(2, rt.f(1)), roundness)).map { |c| rt.f32(c) })
@@ -91,26 +91,26 @@ run_pixel = lambda do |ctx, out|
       darken = rt.component_wise('mix', darken, rt.f(1), protection)
     end
     if rt.bool(rt.binary('>', amount, rt.f(0)))
-      return rt.construct(3, ((rgb[0]) * (darken)), ((rgb[1]) * (darken)), ((rgb[2]) * (darken)))
+      return rt.construct(3, rt.binary_raw('*', rgb, darken, 3, 'float'))
     else
-      return rt.construct(3, ((rt.f(1)) - (((((rt.f(1)) - (rgb[0]))) * (darken)))), ((rt.f(1)) - (((((rt.f(1)) - (rgb[1]))) * (darken)))), ((rt.f(1)) - (((((rt.f(1)) - (rgb[2]))) * (darken)))))
+      return rt.construct(3, rt.binary_raw('-', rt.f(1), rt.binary_raw('*', rt.binary_raw('-', rt.f(1), rgb, 3, 'float'), darken, 3, 'float'), 3, 'float'))
     end
   end
   main__void = lambda do
     aspectRatio = nil; color = nil; coord = nil; fullRes = nil; globalCoord = nil; globalUV = nil; rgb = nil; texSize = nil; uv = nil; vignetteMask = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (texSize[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (texSize[1])))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (texSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (texSize[1])))
-    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    texSize = rt.construct(2, rt.texture_size(_u_inputTex))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (texSize)))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
-    color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
+    color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
     if rt.bool(rt.binary('<', rt.component_wise('abs', _u_vignetteAmount), rt.f(0.0010000000474974513)))
-      g['fragColor'].replace((rt.construct(4, rt.binary('*', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
+      g['fragColor'].replace((rt.construct(4, rt.binary_raw('*', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
       return
     end
-    rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))
-    aspectRatio = rt.construct(2, rt.construct(2, rt.f(1)))
+    rgb = srgbToLinear__vec3.call(rt.swizzle(color, 'rgb'))
+    aspectRatio = rt.construct(2, rt.f(1))
     if rt.bool(rt.binary('>', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y')))
       aspectRatio[0] = rt.f32(rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')); aspectRatio[1] = rt.f32(rt.f(1))
     else
@@ -119,7 +119,7 @@ run_pixel = lambda do |ctx, out|
     vignetteMask = computeVignette__vec2_vec2_float_float_float.call(globalUV, aspectRatio, _u_vignetteMidpoint, _u_vignetteRoundness, _u_vignetteFeather)
     rgb.replace((applyVignette__vec3_float_float_float.call(rgb, vignetteMask, _u_vignetteAmount, _u_vigHiProtect)).map { |c| rt.f32(c) })
     rgb.replace((linearToSrgb__vec3.call(rt.component_wise('max', rgb, rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })
-    g['fragColor'].replace((rt.construct(4, rt.binary('*', rgb, rt.swizzle(color, 'a'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.construct(4, rt.binary_raw('*', rgb, rt.swizzle(color, 'a'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

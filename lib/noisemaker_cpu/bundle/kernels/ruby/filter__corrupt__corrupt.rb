@@ -30,7 +30,7 @@ run_pixel = lambda do |ctx, out|
     p = rt.assign_swizzle(p, 'x', (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
     p = rt.assign_swizzle(p, 'y', (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
     p = rt.assign_swizzle(p, 'z', (rt.bool(rt.binary('>=', rt.swizzle(p, 'z'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'z'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'z')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
-    return rt.construct(3, rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[0], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[1], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[2], rt.f(4294967296), 1, 'uint'))
+    return rt.construct(3, rt.binary('/', rt.construct(3, rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint'))), rt.f(4294967296), 3, 'float'))
   end
   rowTime__float_float = lambda do |row, _t|
     phase = nil
@@ -43,11 +43,11 @@ run_pixel = lambda do |ctx, out|
   pixelSort__vec2_float_float_float_float = lambda do |uv, row, sortAmt, _rt, resX|
     uv = rt.copy(uv, 'float')
     region = nil; regionHash = nil; regionPos = nil; regionSize = nil; rh = nil; sortShift = nil; threshold = nil
-    rh = rt.construct(3, lineHash__float_float.call(row, _rt))
+    rh = lineHash__float_float.call(row, _rt)
     threshold = rt.component_wise('mix', rt.f(0.80000001192092896), rt.f(0.20000000298023224), sortAmt)
     regionSize = rt.binary('+', rt.f(3), rt.binary('*', rt.swizzle(rh, 'y'), rt.f(20), 1, 'float'), 1, 'float')
     region = rt.component_wise('floor', rt.binary('/', rt.binary('*', rt.swizzle(uv, 'x'), resX, 1, 'float'), regionSize, 1, 'float'))
-    regionHash = rt.construct(3, prng__vec3.call(rt.construct(3, (region), (row), (((_u_seed) + (_rt))))))
+    regionHash = prng__vec3.call(rt.construct(3, (region), (row), (((_u_seed) + (_rt)))))
     regionPos = rt.component_wise('fract', rt.binary('/', rt.binary('*', rt.swizzle(uv, 'x'), resX, 1, 'float'), regionSize, 1, 'float'))
     sortShift = rt.binary('*', rt.binary('*', rt.binary('*', regionPos, rt.swizzle(regionHash, 'x'), 1, 'float'), sortAmt, 1, 'float'), rt.f(0.15000000596046448), 1, 'float')
     if rt.bool(rt.binary('>', rt.swizzle(regionHash, 'y'), threshold))
@@ -58,10 +58,10 @@ run_pixel = lambda do |ctx, out|
   byteShift__vec2_float_float_float_float = lambda do |uv, row, shiftAmt, _rt, resX|
     uv = rt.copy(uv, 'float')
     ch = nil; chunk = nil; chunkWidth = nil; rh = nil; shiftPx = nil; sparsity = nil
-    rh = rt.construct(3, lineHash__float_float.call(row, _rt))
+    rh = lineHash__float_float.call(row, _rt)
     chunkWidth = rt.binary('+', rt.f(8), rt.binary('*', rt.swizzle(rh, 'x'), rt.f(80), 1, 'float'), 1, 'float')
     chunk = rt.component_wise('floor', rt.binary('/', rt.binary('*', rt.swizzle(uv, 'x'), resX, 1, 'float'), chunkWidth, 1, 'float'))
-    ch = rt.construct(3, prng__vec3.call(rt.construct(3, (chunk), (((row) + (rt.f(200)))), (((_u_seed) + (_rt))))))
+    ch = prng__vec3.call(rt.construct(3, (chunk), (((row) + (rt.f(200)))), (((_u_seed) + (_rt)))))
     shiftPx = rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('*', rt.binary('-', rt.swizzle(ch, 'x'), rt.f(0.5), 1, 'float'), rt.f(2), 1, 'float'), shiftAmt, 1, 'float'), resX, 1, 'float'), rt.f(0.15000000596046448), 1, 'float')
     sparsity = rt.component_wise('mix', rt.f(0.85000002384185791), rt.f(0.30000001192092896), shiftAmt)
     if rt.bool(rt.binary('>', rt.swizzle(ch, 'y'), sparsity))
@@ -73,9 +73,9 @@ run_pixel = lambda do |ctx, out|
     color = rt.copy(color, 'float')
     uv = rt.copy(uv, 'float')
     bh = nil; bitShift = nil; levels = nil; mask = nil; px = nil; scale = nil; shiftStr = nil; xorHash = nil; xorStrength = nil
-    bh = rt.construct(3, lineHash__float_float.call(rt.binary('+', row, rt.f(400), 1, 'float'), _rt))
+    bh = lineHash__float_float.call(rt.binary('+', row, rt.f(400), 1, 'float'), _rt)
     levels = rt.component_wise('mix', rt.f(256), rt.f(2), rt.binary('*', bitAmt, bitAmt, 1, 'float'))
-    color.replace((rt.binary('/', rt.component_wise('floor', rt.construct(3, ((((color[0]) * (levels))) + (rt.f(0.5))), ((((color[1]) * (levels))) + (rt.f(0.5))), ((((color[2]) * (levels))) + (rt.f(0.5))))), levels, 3, 'float')).map { |c| rt.f32(c) })
+    color.replace((rt.construct(3, rt.binary('/', rt.component_wise('floor', rt.construct(3, ((((color[0]) * (levels))) + (rt.f(0.5))), ((((color[1]) * (levels))) + (rt.f(0.5))), ((((color[2]) * (levels))) + (rt.f(0.5))))), levels, 3, 'float'))).map { |c| rt.f32(c) })
     mask = rt.construct(3, 0.0)
     px = rt.f(0.0)
     xorHash = rt.construct(3, 0.0)
@@ -83,8 +83,8 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('>', bitAmt, rt.f(0.30000001192092896)))
       xorStrength = rt.binary('/', rt.binary('-', bitAmt, rt.f(0.30000001192092896), 1, 'float'), rt.f(0.69999998807907104), 1, 'float')
       px = rt.component_wise('floor', rt.binary('*', rt.swizzle(uv, 'x'), resX, 1, 'float'))
-      xorHash = rt.construct(3, prng__vec3.call(rt.construct(3, (px), (row), (((((_u_seed) + (_rt))) + (rt.f(500)))))))
-      mask = rt.construct(3, rt.component_wise('step', (((rt.f(1)) - (((xorStrength) * (rt.f(0.5)))))), xorHash[0]), rt.component_wise('step', (((rt.f(1)) - (((xorStrength) * (rt.f(0.5)))))), xorHash[1]), rt.component_wise('step', (((rt.f(1)) - (((xorStrength) * (rt.f(0.5)))))), xorHash[2]))
+      xorHash = prng__vec3.call(rt.construct(3, (px), (row), (((((_u_seed) + (_rt))) + (rt.f(500))))))
+      mask = rt.component_wise('step', rt.construct(3, rt.binary('-', rt.f(1), rt.binary('*', xorStrength, rt.f(0.5), 1, 'float'), 1, 'float')), xorHash)
       color.replace((rt.component_wise('mix', color, rt.construct(3, ((rt.f(1)) - (color[0])), ((rt.f(1)) - (color[1])), ((rt.f(1)) - (color[2]))), mask)).map { |c| rt.f32(c) })
     end
     bitShift = rt.f(0.0)
@@ -103,7 +103,7 @@ run_pixel = lambda do |ctx, out|
     col = nil; colPhase = nil; dripAmt = nil; dripHash = nil; dripProb = nil; gravity = nil; wobble = nil
     col = rt.component_wise('floor', rt.binary('/', rt.binary('*', rt.swizzle(uv, 'x'), resX, 1, 'float'), rt.f(3), 1, 'float'))
     colPhase = rt.swizzle(prng__vec3.call(rt.construct(3, (col), (((_u_seed) + (rt.f(601)))), (rt.f(0)))), 'x')
-    dripHash = rt.construct(3, prng__vec3.call(rt.construct(3, (col), (((_u_seed) + (rt.f(600)))), (rt.component_wise('floor', ((((_t) + (colPhase))) * (rt.f(8))))))))
+    dripHash = prng__vec3.call(rt.construct(3, (col), (((_u_seed) + (rt.f(600)))), (rt.component_wise('floor', ((((_t) + (colPhase))) * (rt.f(8)))))))
     gravity = rt.binary('*', rt.binary('-', rt.f(1), rt.swizzle(uv, 'y'), 1, 'float'), rt.binary('-', rt.f(1), rt.swizzle(uv, 'y'), 1, 'float'), 1, 'float')
     dripAmt = rt.binary('*', rt.binary('*', rt.binary('*', rt.swizzle(dripHash, 'x'), meltAmt, 1, 'float'), gravity, 1, 'float'), rt.f(0.40000000596046448), 1, 'float')
     dripProb = rt.component_wise('mix', rt.f(0.89999997615814209), rt.f(0.20000000298023224), meltAmt)
@@ -119,15 +119,15 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     tileOff = rt.copy(tileOff, 'float')
     dirHash = nil; dist = nil; phaseHash = nil; pixHash = nil; pixTime = nil; scaledCoord = nil; threshold = nil
-    scaledCoord = rt.construct(2, rt.component_wise('floor', rt.f32(((((rt.swizzle(ctx.frag_coord, 'x')) + (tileOff[0]))) / (rs)))), rt.component_wise('floor', rt.f32(((((rt.swizzle(ctx.frag_coord, 'y')) + (tileOff[1]))) / (rs)))))
-    phaseHash = rt.construct(3, prng__vec3.call(rt.construct(3, (rt.swizzle(scaledCoord, 'x')), (rt.swizzle(scaledCoord, 'y')), (((_u_seed) + (rt.f(700)))))))
+    scaledCoord = rt.component_wise('floor', rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (tileOff[0]))) / (rs)), ((((rt.swizzle(ctx.frag_coord, 'y')) + (tileOff[1]))) / (rs))))
+    phaseHash = prng__vec3.call(rt.construct(3, (rt.swizzle(scaledCoord, 'x')), (rt.swizzle(scaledCoord, 'y')), (((_u_seed) + (rt.f(700))))))
     pixTime = rt.component_wise('floor', rt.binary('*', rt.binary('+', _t, rt.swizzle(phaseHash, 'x'), 1, 'float'), rt.f(8), 1, 'float'))
-    pixHash = rt.construct(3, prng__vec3.call(rt.construct(3, (rt.swizzle(scaledCoord, 'x')), (rt.swizzle(scaledCoord, 'y')), (((pixTime) + (_u_seed))))))
+    pixHash = prng__vec3.call(rt.construct(3, (rt.swizzle(scaledCoord, 'x')), (rt.swizzle(scaledCoord, 'y')), (((pixTime) + (_u_seed)))))
     threshold = rt.component_wise('mix', rt.f(0.98000001907348633), rt.f(0.10000000149011612), rt.binary('*', scatterAmt, scatterAmt, 1, 'float'))
     dirHash = rt.construct(3, 0.0)
     dist = rt.f(0.0)
     if rt.bool(rt.binary('>', rt.swizzle(pixHash, 'x'), threshold))
-      dirHash = rt.construct(3, prng__vec3.call(rt.construct(3, (rt.swizzle(rt.binary('+', scaledCoord, rt.f(1000), 2, 'float'), 'x')), (rt.swizzle(rt.binary('+', scaledCoord, rt.f(1000), 2, 'float'), 'y')), (((pixTime) + (_u_seed))))))
+      dirHash = prng__vec3.call(rt.construct(3, (rt.swizzle(rt.binary_raw('+', scaledCoord, rt.f(1000), 2, 'float'), 'x')), (rt.swizzle(rt.binary_raw('+', scaledCoord, rt.f(1000), 2, 'float'), 'y')), (((pixTime) + (_u_seed)))))
       dist = rt.binary('*', rt.binary('*', scatterAmt, rt.f(0.15000000596046448), 1, 'float'), rt.binary('+', rt.f(0.5), rt.binary('*', rt.swizzle(pixHash, 'y'), rt.f(0.5), 1, 'float'), 1, 'float'), 1, 'float')
       uv = rt.assign_swizzle(uv, 'x', rt.component_wise('fract', rt.binary('+', rt.swizzle(uv, 'x'), rt.binary('*', rt.binary('-', rt.swizzle(dirHash, 'x'), rt.f(0.5), 1, 'float'), dist, 1, 'float'), 1, 'float')))
       uv = rt.assign_swizzle(uv, 'y', rt.component_wise('clamp', rt.binary('+', rt.swizzle(uv, 'y'), rt.binary('*', rt.binary('-', rt.swizzle(dirHash, 'y'), rt.f(0.5), 1, 'float'), dist, 1, 'float'), 1, 'float'), rt.f(0), rt.f(1)))
@@ -136,10 +136,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _rt = nil; _t = nil; bShift = nil; bUv = nil; bh = nil; chAmt = nil; chHash = nil; color = nil; globalCoord = nil; isCorrupt = nil; meltAmt = nil; prob = nil; rShift = nil; rUv = nil; rawRow = nil; resX = nil; resolution = nil; row = nil; rowHash = nil; rs = nil; sampleUv = nil; scatterAmt = nil; shiftAmt = nil; sortAmt = nil; spd = nil; tileDims = nil; uv = nil
-    tileDims = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
-    resolution = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (tileDims[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (tileDims[1])))
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    uv = rt.construct(2, ((globalCoord[0]) / (resolution[0])), ((globalCoord[1]) / (resolution[1])))
+    tileDims = rt.construct(2, rt.texture_size(_u_inputTex))
+    resolution = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', globalCoord, resolution, 2, 'float'))
     rs = rt.component_wise('max', _u_renderScale, rt.f(1))
     resX = rt.binary('/', rt.swizzle(resolution, 'x'), rs, 1, 'float')
     spd = rt.component_wise('floor', _u_speed)
@@ -148,7 +148,7 @@ run_pixel = lambda do |ctx, out|
     bh = rt.component_wise('max', rt.f(1), rt.component_wise('floor', rt.binary('*', _u_bandHeight, rt.f(0.31999999284744263), 1, 'float')))
     row = rt.component_wise('floor', rt.binary('/', rawRow, bh, 1, 'float'))
     _rt = rowTime__float_float.call(row, _t)
-    rowHash = rt.construct(3, lineHash__float_float.call(row, _rt))
+    rowHash = lineHash__float_float.call(row, _rt)
     prob = rt.binary('/', _u_intensity, rt.f(100), 1, 'float')
     isCorrupt = rt.binary('<', rt.swizzle(rowHash, 'x'), prob)
     sampleUv = rt.copy(uv, 'float')
@@ -172,7 +172,7 @@ run_pixel = lambda do |ctx, out|
         sampleUv.replace((byteShift__vec2_float_float_float_float.call(sampleUv, row, shiftAmt, _rt, resX)).map { |c| rt.f32(c) })
       end
     end
-    color = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, sampleUv), 'r'), rt.swizzle(rt.texture(_u_inputTex, sampleUv), 'g'), rt.swizzle(rt.texture(_u_inputTex, sampleUv), 'b'))
+    color = rt.swizzle(rt.texture(_u_inputTex, sampleUv), 'rgb')
     bShift = rt.f(0.0)
     bUv = rt.construct(2, 0.0)
     chAmt = rt.f(0.0)
@@ -181,11 +181,11 @@ run_pixel = lambda do |ctx, out|
     rUv = rt.construct(2, 0.0)
     if rt.bool((rt.bool(rt.binary('>', _u_channelShift, rt.f(0))) && rt.bool(isCorrupt) ? 1 : 0))
       chAmt = rt.binary('/', _u_channelShift, rt.f(100), 1, 'float')
-      chHash = rt.construct(3, lineHash__float_float.call(rt.binary('+', row, rt.f(300), 1, 'float'), _rt))
+      chHash = lineHash__float_float.call(rt.binary('+', row, rt.f(300), 1, 'float'), _rt)
       rShift = rt.binary('*', rt.binary('*', rt.binary('-', rt.swizzle(chHash, 'x'), rt.f(0.5), 1, 'float'), chAmt, 1, 'float'), rt.f(0.079999998211860657), 1, 'float')
       bShift = rt.binary('*', rt.binary('*', rt.binary('-', rt.swizzle(chHash, 'y'), rt.f(0.5), 1, 'float'), chAmt, 1, 'float'), rt.f(0.079999998211860657), 1, 'float')
-      rUv = rt.construct(2, rt.construct(2, rt.component_wise('fract', rt.binary('+', rt.swizzle(sampleUv, 'x'), rShift, 1, 'float')), rt.swizzle(sampleUv, 'y')))
-      bUv = rt.construct(2, rt.construct(2, rt.component_wise('fract', rt.binary('+', rt.swizzle(sampleUv, 'x'), bShift, 1, 'float')), rt.swizzle(sampleUv, 'y')))
+      rUv = rt.construct(2, rt.component_wise('fract', rt.binary('+', rt.swizzle(sampleUv, 'x'), rShift, 1, 'float')), rt.swizzle(sampleUv, 'y'))
+      bUv = rt.construct(2, rt.component_wise('fract', rt.binary('+', rt.swizzle(sampleUv, 'x'), bShift, 1, 'float')), rt.swizzle(sampleUv, 'y'))
       color = rt.assign_swizzle(color, 'r', rt.swizzle(rt.texture(_u_inputTex, rUv), 'r'))
       color = rt.assign_swizzle(color, 'b', rt.swizzle(rt.texture(_u_inputTex, bUv), 'b'))
     end

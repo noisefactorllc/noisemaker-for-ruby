@@ -29,7 +29,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; coord = nil; edge = nil; globalCoord = nil; gx = nil; gy = nil; idx = nil; kx = nil; ky = nil; magnitude = nil; offset = nil; sampleX = nil; sampleY = nil; samples = nil; texSize = nil; texel = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_colorTex)
     if rt.bool((rt.bool(rt.binary('==', rt.swizzle(texSize, 'x'), rt.i(0))) || rt.bool(rt.binary('==', rt.swizzle(texSize, 'y'), rt.i(0))) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
@@ -61,7 +61,7 @@ run_pixel = lambda do |ctx, out|
         end
         sampleX = wrapCoord__int_int.call(rt.binary('+', rt.swizzle(coord, 'x'), rt.binary('*', kx, offset, 1, 'int'), 1, 'int'), rt.swizzle(texSize, 'x'))
         sampleY = wrapCoord__int_int.call(rt.binary('+', rt.swizzle(coord, 'y'), rt.binary('*', ky, offset, 1, 'int'), 1, 'int'), rt.swizzle(texSize, 'y'))
-        texel = rt.construct(4, rt.texel_fetch(_u_colorTex, rt.construct(2, sampleX, sampleY, 'int'), rt.i(0)))
+        texel = rt.texel_fetch(_u_colorTex, rt.construct(2, sampleX, sampleY, 'int'), rt.i(0))
         samples[(idx).to_i] = getLuminosity__vec3.call(rt.swizzle(texel, 'rgb'))
         idx = rt.binary('+', idx, rt.i(1), 1, 'int')
       end

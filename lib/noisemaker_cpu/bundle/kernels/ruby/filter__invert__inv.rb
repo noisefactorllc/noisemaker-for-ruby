@@ -11,12 +11,12 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     color = nil; texSize = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
-    color = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    color = rt.texture(_u_inputTex, uv)
     if rt.bool(rt.binary('==', _u_mode, rt.i(1)))
       color = rt.assign_swizzle(color, 'rgb', rt.component_wise('min', rt.swizzle(color, 'rgb'), rt.construct(3, ((rt.swizzle(color, 'a')) - (rt.swizzle(color, 'r'))), ((rt.swizzle(color, 'a')) - (rt.swizzle(color, 'g'))), ((rt.swizzle(color, 'a')) - (rt.swizzle(color, 'b'))))))
     else
-      color = rt.assign_swizzle(color, 'rgb', rt.binary('-', rt.swizzle(color, 'a'), rt.swizzle(color, 'rgb'), 3, 'float'))
+      color = rt.assign_swizzle(color, 'rgb', rt.binary_raw('-', rt.swizzle(color, 'a'), rt.swizzle(color, 'rgb'), 3, 'float'))
     end
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end

@@ -52,15 +52,15 @@ run_pixel = lambda do |ctx, out|
     _PADDING = rt.construct(1, rt.binary('*', rt.construct(1, g['BASE_PADDING']), _u_renderScale, 1, 'float'), 'int')
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     texDims = rt.texture_size(_u_inputTex)
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : ((texDims[0]))), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : ((texDims[1]))))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (rt.construct(2, texDims))))
     width = rt.component_wise('max', rt.construct(1, rt.swizzle(fullRes, 'x'), 'int'), rt.i(1))
     height = rt.component_wise('max', rt.construct(1, rt.swizzle(fullRes, 'y'), 'int'), rt.i(1))
     globalCoord = rt.binary('+', coord, rt.construct(2, rt.construct(2, _u_tileOffset), 'int'), 2, 'int')
-    texel = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
+    texel = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
     blend_alpha = rt.component_wise('clamp', _u_alpha, rt.f(0), rt.f(1))
     scanlineStep = rt.component_wise('max', rt.binary('/', iScale, g['BASE_SCALE'], 1, 'int'), rt.i(1))
     scanline = rt.binary('-', rt.f(1), rt.binary('*', rt.binary('*', rt.f(0.029999999329447746), blend_alpha, 1, 'float'), rt.construct(1, rt.binary('&', rt.binary('/', rt.swizzle(globalCoord, 'y'), scanlineStep, 1, 'int'), rt.i(1), 1, 'int')), 1, 'float'), 1, 'float')
-    base_rgb = rt.construct(3, ((rt.swizzle(texel, 'r')) * (scanline)), ((rt.swizzle(texel, 'g')) * (scanline)), ((rt.swizzle(texel, 'b')) * (scanline)))
+    base_rgb = rt.construct(3, rt.binary_raw('*', rt.swizzle(texel, 'rgb'), scanline, 3, 'float'))
     if rt.bool(rt.binary('<=', blend_alpha, rt.f(0)))
       g['fragColor'].replace((rt.construct(4, base_rgb, rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
       return
@@ -125,14 +125,14 @@ run_pixel = lambda do |ctx, out|
         mask = sample_glyph__int_int_int_int.call(digit, within_glyph_x, local_y, iScale)
       end
     end
-    panel_bg = rt.construct(3, ((base_rgb[0]) * (((rt.f(1)) - (((rt.f(0.5)) * (blend_alpha)))))), ((base_rgb[1]) * (((rt.f(1)) - (((rt.f(0.5)) * (blend_alpha)))))), ((base_rgb[2]) * (((rt.f(1)) - (((rt.f(0.5)) * (blend_alpha)))))))
+    panel_bg = rt.construct(3, rt.binary_raw('*', base_rgb, rt.binary('-', rt.f(1), rt.binary('*', rt.f(0.5), blend_alpha, 1, 'float'), 1, 'float'), 3, 'float'))
     if rt.bool(rt.binary('<', mask, rt.f(0.5)))
       g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', panel_bg, rt.f(0), rt.f(1)), rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
       return
     end
-    osd_color = rt.construct(3, rt.construct(3, rt.f(0.69999998807907104), rt.f(1), rt.f(0.75)))
-    highlight = rt.construct(3, rt.component_wise('max', panel_bg[0], rt.f32(((osd_color[0]) * (mask)))), rt.component_wise('max', panel_bg[1], rt.f32(((osd_color[1]) * (mask)))), rt.component_wise('max', panel_bg[2], rt.f32(((osd_color[2]) * (mask)))))
-    blended = rt.construct(3, rt.component_wise('mix', panel_bg[0], highlight[0], blend_alpha), rt.component_wise('mix', panel_bg[1], highlight[1], blend_alpha), rt.component_wise('mix', panel_bg[2], highlight[2], blend_alpha))
+    osd_color = rt.construct(3, rt.f(0.69999998807907104), rt.f(1), rt.f(0.75))
+    highlight = rt.component_wise('max', panel_bg, rt.construct(3, ((osd_color[0]) * (mask)), ((osd_color[1]) * (mask)), ((osd_color[2]) * (mask))))
+    blended = rt.component_wise('mix', panel_bg, highlight, blend_alpha)
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', blended, rt.f(0), rt.f(1)), rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

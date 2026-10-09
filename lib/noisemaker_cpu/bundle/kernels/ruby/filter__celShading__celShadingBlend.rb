@@ -15,13 +15,13 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     celColor = nil; edgeStrength = nil; finalColor = nil; globalCoord = nil; origColor = nil; texSize = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
-    origColor = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
-    celColor = rt.construct(4, (rt.texture(_u_colorTex, uv))[0], (rt.texture(_u_colorTex, uv))[1], (rt.texture(_u_colorTex, uv))[2], (rt.texture(_u_colorTex, uv))[3])
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    origColor = rt.texture(_u_inputTex, uv)
+    celColor = rt.texture(_u_colorTex, uv)
     edgeStrength = rt.swizzle(rt.texture(_u_edgeTex, uv), 'r')
-    finalColor = rt.construct(3, rt.component_wise('mix', rt.swizzle(celColor, 'r'), _u_edgeColor[0], edgeStrength), rt.component_wise('mix', rt.swizzle(celColor, 'g'), _u_edgeColor[1], edgeStrength), rt.component_wise('mix', rt.swizzle(celColor, 'b'), _u_edgeColor[2], edgeStrength))
+    finalColor = rt.component_wise('mix', rt.swizzle(celColor, 'rgb'), _u_edgeColor, edgeStrength)
     finalColor.replace((rt.component_wise('mix', rt.swizzle(origColor, 'rgb'), finalColor, _u_mixAmount)).map { |c| rt.f32(c) })
     g['fragColor'].replace((rt.construct(4, finalColor, rt.swizzle(origColor, 'a'))).map { |c| rt.f32(c) })
   end

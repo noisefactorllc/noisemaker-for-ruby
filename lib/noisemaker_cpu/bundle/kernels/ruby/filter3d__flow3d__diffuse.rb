@@ -12,10 +12,10 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     decay = nil; texSize = nil; trailColor = nil; uv = nil
     texSize = rt.texture_size(_u_sourceTex)
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
-    trailColor = rt.construct(4, (rt.texture(_u_sourceTex, uv))[0], (rt.texture(_u_sourceTex, uv))[1], (rt.texture(_u_sourceTex, uv))[2], (rt.texture(_u_sourceTex, uv))[3])
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    trailColor = rt.texture(_u_sourceTex, uv)
     decay = rt.component_wise('clamp', rt.binary('/', _u_intensity, rt.f(100), 1, 'float'), rt.f(0), rt.f(1))
-    g['fragColor'].replace((rt.binary('*', trailColor, decay, 4, 'float')).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.binary_raw('*', trailColor, decay, 4, 'float')).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

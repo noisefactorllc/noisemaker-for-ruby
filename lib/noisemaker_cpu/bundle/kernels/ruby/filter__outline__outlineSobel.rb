@@ -45,7 +45,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; coord = nil; dimensions = nil; globalCoord = nil; gx = nil; gy = nil; idx = nil; kx = nil; ky = nil; magnitude = nil; metric = nil; normalized = nil; offset = nil; sampleX = nil; sampleY = nil; samples = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     dimensions = rt.texture_size(_u_valueTexture)
     if rt.bool((rt.bool(rt.binary('==', rt.swizzle(dimensions, 'x'), rt.i(0))) || rt.bool(rt.binary('==', rt.swizzle(dimensions, 'y'), rt.i(0))) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })

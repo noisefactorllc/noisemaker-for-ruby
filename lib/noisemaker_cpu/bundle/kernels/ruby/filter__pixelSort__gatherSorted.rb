@@ -34,7 +34,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       sampleX = rt.binary('/', rt.binary('*', s, width, 1, 'int'), _NUM_SAMPLES, 1, 'int')
-      rankData = rt.construct(4, rt.texel_fetch(_u_rankTex, rt.construct(2, sampleX, y, 'int'), rt.i(0)))
+      rankData = rt.texel_fetch(_u_rankTex, rt.construct(2, sampleX, y, 'int'), rt.i(0))
       pixelRank = rt.swizzle(rankData, 'r')
       diff = rt.component_wise('abs', rt.binary('-', pixelRank, targetRank, 1, 'float'))
       if rt.bool(rt.binary('<', diff, bestDiff))
@@ -42,7 +42,7 @@ run_pixel = lambda do |ctx, out|
         bestX = sampleX
       end
     end
-    result = rt.construct(4, rt.texel_fetch(_u_preparedTex, rt.construct(2, bestX, y, 'int'), rt.i(0)))
+    result = rt.texel_fetch(_u_preparedTex, rt.construct(2, bestX, y, 'int'), rt.i(0))
     g['fragColor'].replace((result).map { |c| rt.f32(c) })
   end
   main__void.call

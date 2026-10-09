@@ -51,7 +51,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    return rt.construct(3, ((rgb[0]) + ((m))), ((rgb[1]) + ((m))), ((rgb[2]) + ((m))))
+    return rt.construct(3, rt.binary_raw('+', rgb, rt.construct_raw(3, m), 3, 'float'))
   end
   oklab2linear__vec3 = lambda do |lab|
     lab = rt.copy(lab, 'float')
@@ -70,8 +70,8 @@ run_pixel = lambda do |ctx, out|
   linear2srgb__vec3 = lambda do |linear|
     linear = rt.copy(linear, 'float')
     high = nil; low = nil
-    low = rt.construct(3, ((linear[0]) * (rt.f(12.920000076293945))), ((linear[1]) * (rt.f(12.920000076293945))), ((linear[2]) * (rt.f(12.920000076293945))))
-    high = rt.construct(3, rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear, rt.construct(3, rt.f(0.4166666567325592))), 3, 'float'), rt.f(0.054999999701976776), 3, 'float'))
+    low = rt.construct(3, rt.binary_raw('*', linear, rt.f(12.920000076293945), 3, 'float'))
+    high = rt.construct(3, rt.binary('-', rt.construct(3, rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear, rt.construct(3, rt.f(0.4166666567325592))), 3, 'float')), rt.f(0.054999999701976776), 3, 'float'))
     return rt.component_wise('mix', high, low, rt.component_wise('step', linear, rt.construct(3, rt.f(0.0031308000907301903))))
   end
   oklab2rgb__vec3 = lambda do |lab|
@@ -79,7 +79,7 @@ run_pixel = lambda do |ctx, out|
     linear_rgb = nil
     lab = rt.assign_swizzle(lab, 'g', rt.binary('+', rt.binary('*', rt.swizzle(lab, 'g'), rt.unary('-', rt.f(0.50900000333786011)), 1, 'float'), rt.f(0.27599999308586121), 1, 'float'))
     lab = rt.assign_swizzle(lab, 'b', rt.binary('+', rt.binary('*', rt.swizzle(lab, 'b'), rt.unary('-', rt.f(0.50900000333786011)), 1, 'float'), rt.f(0.19799999892711639), 1, 'float'))
-    linear_rgb = rt.construct(3, oklab2linear__vec3.call(lab))
+    linear_rgb = oklab2linear__vec3.call(lab)
     return rt.component_wise('clamp', linear2srgb__vec3.call(linear_rgb), rt.f(0), rt.f(1))
   end
   cosinePalette__float_vec3_vec3_vec3_vec3 = lambda do |_t, amp, freq, offset, phase|
@@ -91,9 +91,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _t = nil; blendedColor = nil; entry = nil; finalColor = nil; inputColor = nil; lum = nil; mode = nil; paletteColor = nil; texSize = nil; uv = nil
-    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex3d)))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (texSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (texSize[1])))
-    inputColor = rt.construct(4, (rt.texture(_u_inputTex3d, uv))[0], (rt.texture(_u_inputTex3d, uv))[1], (rt.texture(_u_inputTex3d, uv))[2], (rt.texture(_u_inputTex3d, uv))[3])
+    texSize = rt.construct(2, rt.texture_size(_u_inputTex3d))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
+    inputColor = rt.texture(_u_inputTex3d, uv)
     if rt.bool((rt.bool(rt.binary('<=', _u_paletteIndex, rt.i(0))) || rt.bool(rt.binary('>', _u_paletteIndex, g['PALETTE_COUNT'])) ? 1 : 0))
       g['fragColor'].replace((inputColor).map { |c| rt.f32(c) })
       return
@@ -109,7 +109,7 @@ run_pixel = lambda do |ctx, out|
     end
     entry = rt.array_index(g['PALETTES'], rt.binary('-', _u_paletteIndex, rt.i(1), 1, 'int'))
     mode = rt.construct(1, rt.swizzle(entry[0], 'w'), 'int')
-    paletteColor = rt.construct(3, cosinePalette__float_vec3_vec3_vec3_vec3.call(_t, rt.swizzle(entry[0], 'xyz'), rt.swizzle(entry[1], 'xyz'), rt.swizzle(entry[2], 'xyz'), rt.swizzle(entry[3], 'xyz')))
+    paletteColor = cosinePalette__float_vec3_vec3_vec3_vec3.call(_t, rt.swizzle(entry[0], 'xyz'), rt.swizzle(entry[1], 'xyz'), rt.swizzle(entry[2], 'xyz'), rt.swizzle(entry[3], 'xyz'))
     finalColor = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', mode, g['MODE_HSV']))
       finalColor.replace((hsv2rgb__vec3.call(paletteColor)).map { |c| rt.f32(c) })
@@ -120,7 +120,7 @@ run_pixel = lambda do |ctx, out|
         finalColor.replace((paletteColor).map { |c| rt.f32(c) })
       end
     end
-    blendedColor = rt.construct(3, rt.component_wise('mix', rt.swizzle(inputColor, 'r'), finalColor[0], _u_alpha), rt.component_wise('mix', rt.swizzle(inputColor, 'g'), finalColor[1], _u_alpha), rt.component_wise('mix', rt.swizzle(inputColor, 'b'), finalColor[2], _u_alpha))
+    blendedColor = rt.component_wise('mix', rt.swizzle(inputColor, 'rgb'), finalColor, _u_alpha)
     g['fragColor'].replace((rt.construct(4, blendedColor, rt.swizzle(inputColor, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

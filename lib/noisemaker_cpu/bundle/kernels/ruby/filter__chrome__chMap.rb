@@ -17,21 +17,21 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     cycles = nil; grad = nil; h2 = nil; hB = nil; hL = nil; hR = nil; hT = nil; outColor = nil; src = nil; texel = nil; uv = nil; uv2 = nil; v = nil
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    texel = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
-    hL = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('-', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
-    hR = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
-    hB = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('-', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
-    hT = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary('+', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
-    grad = rt.construct(2, rt.construct(2, rt.binary('/', rt.binary('-', hR, hL, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texel, 'x'), 1, 'float'), 1, 'float'), rt.binary('/', rt.binary('-', hT, hB, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texel, 'y'), 1, 'float'), 1, 'float')))
-    uv2 = rt.construct(2, ((uv[0]) + (((((grad[0]) * (texel[0]))) * (((_u_distortion) / (rt.f(100))))))), ((uv[1]) + (((((grad[1]) * (texel[1]))) * (((_u_distortion) / (rt.f(100))))))))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    hL = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
+    hR = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
+    hB = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
+    hT = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
+    grad = rt.construct(2, rt.binary('/', rt.binary('-', hR, hL, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texel, 'x'), 1, 'float'), 1, 'float'), rt.binary('/', rt.binary('-', hT, hB, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texel, 'y'), 1, 'float'), 1, 'float'))
+    uv2 = rt.construct(2, rt.binary_raw('+', uv, rt.binary_raw('*', rt.binary_raw('*', grad, texel, 2, 'float'), rt.binary('/', _u_distortion, rt.f(100), 1, 'float'), 2, 'float'), 2, 'float'))
     h2 = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, uv2), 'rgb'))
     cycles = rt.component_wise('mix', rt.f(1), rt.f(7), rt.binary('/', _u_detail, rt.f(100), 1, 'float'))
     v = rt.binary('+', rt.f(0.5), rt.binary('*', rt.f(0.5), rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.binary('*', h2, cycles, 1, 'float'), rt.f(6.2831854820251465), 1, 'float'), rt.binary('*', h2, rt.f(3), 1, 'float'), 1, 'float')), 1, 'float'), 1, 'float')
     v = rt.binary('+', v, rt.binary('*', rt.component_wise('pow', v, rt.f(8)), rt.f(0.5), 1, 'float'), 1, 'float')
     v = rt.component_wise('clamp', v, rt.f(0), rt.f(1))
-    outColor = rt.construct(3, rt.component_wise('clamp', rt.f32((((v)) * ((rt.f(0.95999997854232788))))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32((((v)) * ((rt.f(0.98000001907348633))))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32((((v)) * ((rt.f(1.0199999809265137))))), rt.f(0), rt.f(1)))
-    src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    outColor = rt.component_wise('clamp', rt.construct(3, (((v)) * ((rt.f(0.95999997854232788)))), (((v)) * ((rt.f(0.98000001907348633)))), (((v)) * ((rt.f(1.0199999809265137))))), rt.f(0), rt.f(1))
+    src = rt.texture(_u_inputTex, uv)
     g['fragColor'].replace((rt.construct(4, outColor, rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

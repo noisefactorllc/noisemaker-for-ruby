@@ -28,43 +28,43 @@ run_pixel = lambda do |ctx, out|
     p = rt.copy(p, 'float')
     v = nil
     v = rt.pcg3d(rt.construct(3, rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.construct(1, (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), rt.construct(1, (rt.bool(rt.binary('>=', s, rt.f(0))) ? (rt.binary('*', s, rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', s), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))), 'uint'), 'uint'))
-    return rt.construct(2, (((rt.swizzle(v, 'x'))) / (rt.f(4294967296))), (((rt.swizzle(v, 'y'))) / (rt.f(4294967296))))
+    return rt.construct(2, rt.binary_raw('/', rt.construct_raw(2, rt.construct(2, rt.swizzle(v, 'xy'))), rt.f(4294967296), 2, 'float'))
   end
   lowPolySite__ivec2_float_float_float = lambda do |siteCell, n, s, spd|
     siteCell = rt.copy(siteCell, 'int')
     angle = nil; animRand = nil; offset = nil; radius = nil; siteCellF = nil
-    siteCellF = rt.construct(2, rt.construct(2, siteCell))
-    offset = rt.construct(2, hash2__vec2_float.call(siteCellF, s))
+    siteCellF = rt.construct(2, siteCell)
+    offset = hash2__vec2_float.call(siteCellF, s)
     angle = rt.f(0.0)
     animRand = rt.construct(2, 0.0)
     radius = rt.f(0.0)
     if rt.bool(rt.binary('>', spd, rt.f(0)))
-      animRand = rt.construct(2, hash2__vec2_float.call(siteCellF, rt.binary('+', s, rt.f(100), 1, 'float')))
+      animRand = hash2__vec2_float.call(siteCellF, rt.binary('+', s, rt.f(100), 1, 'float'))
       angle = rt.binary('+', rt.binary('*', _u_time, g['TAU'], 1, 'float'), rt.binary('*', rt.swizzle(animRand, 'x'), g['TAU'], 1, 'float'), 1, 'float')
       radius = rt.binary('*', rt.swizzle(animRand, 'y'), spd, 1, 'float')
       offset.replace((rt.component_wise('clamp', rt.construct(2, ((offset[0]) + ((((rt.component_wise('cos', angle))) * (radius)))), ((offset[1]) + ((((rt.component_wise('sin', angle))) * (radius))))), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     end
-    return rt.construct(2, ((((siteCellF[0]) + (offset[0]))) / (n)), ((((siteCellF[1]) + (offset[1]))) / (n)))
+    return rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', siteCellF, offset, 2, 'float'), n, 2, 'float'))
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; _for2_first = nil; _for3_first = nil; _for4_first = nil; _for5_first = nil; angle = nil; animRand = nil; aspect = nil; auv = nil; bisectorDistance = nil; borderFeather = nil; borderHalfWidth = nil; borderMask = nil; borderNearestCell = nil; borderNearestDist = nil; borderNearestPoint = nil; candidateCell = nil; candidateDist = nil; candidatePoint = nil; cell = nil; cellColor = nil; cellRadius = nil; d = nil; distField = nil; distToEdge = nil; dx = nil; dy = nil; edgeDist = nil; edgeFactor = nil; exposure = nil; globalCoord = nil; globalUV = nil; globalUV_sample = nil; intensity = nil; litMode = nil; litValue = nil; localUV_sample = nil; minDist = nil; modeResult = nil; n = nil; nearestCell = nil; nearestPoint = nil; neighbor = nil; neighborF = nil; offset = nil; original = nil; paneValue = nil; point = nil; radius = nil; raw = nil; resolution = nil; result = nil; s = nil; scaled = nil; secondDist = nil; selectedDist = nil; siteDistance = nil; siteVector = nil; spd = nil; texSize = nil; thirdDist = nil; tileDims = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    tileDims = rt.construct(2, rt.construct(2, texSize))
-    resolution = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (tileDims[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (tileDims[1])))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (tileDims[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (tileDims[1])))
-    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (resolution[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (resolution[1])))
+    tileDims = rt.construct(2, texSize)
+    resolution = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), tileDims, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), resolution, 2, 'float'))
     n = rt.component_wise('max', rt.binary('-', rt.f(102), _u_scale, 1, 'float'), rt.f(2))
     s = _u_seed
     spd = rt.binary('*', _u_speed, rt.f(0.30000001192092896), 1, 'float')
     aspect = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
-    auv = rt.construct(2, rt.construct(2, rt.binary('*', rt.swizzle(globalUV, 'x'), aspect, 1, 'float'), rt.swizzle(globalUV, 'y')))
-    scaled = rt.construct(2, ((auv[0]) * (n)), ((auv[1]) * (n)))
+    auv = rt.construct(2, rt.binary('*', rt.swizzle(globalUV, 'x'), aspect, 1, 'float'), rt.swizzle(globalUV, 'y'))
+    scaled = rt.construct(2, rt.binary_raw('*', auv, n, 2, 'float'))
     cell = rt.construct(2, rt.construct(2, rt.component_wise('floor', scaled)), 'int')
     minDist = rt.f(10000000000)
     secondDist = rt.f(10000000000)
     thirdDist = rt.f(10000000000)
-    nearestPoint = rt.construct(2, rt.construct(2, rt.f(0)))
+    nearestPoint = rt.construct(2, rt.f(0))
     nearestCell = rt.construct(2, 0.0, 'int')
     if rt.bool(rt.binary('>', _u__LP_BORDER, rt.i(0)))
       nearestCell = rt.construct(2, rt.i(0), 'int')
@@ -90,18 +90,18 @@ run_pixel = lambda do |ctx, out|
           break
         end
         neighbor = rt.binary('+', cell, rt.construct(2, dx, dy, 'int'), 2, 'int')
-        neighborF = rt.construct(2, rt.construct(2, neighbor))
-        offset = rt.construct(2, hash2__vec2_float.call(neighborF, s))
+        neighborF = rt.construct(2, neighbor)
+        offset = hash2__vec2_float.call(neighborF, s)
         angle = rt.f(0.0)
         animRand = rt.construct(2, 0.0)
         radius = rt.f(0.0)
         if rt.bool(rt.binary('>', spd, rt.f(0)))
-          animRand = rt.construct(2, hash2__vec2_float.call(neighborF, rt.binary('+', s, rt.f(100), 1, 'float')))
+          animRand = hash2__vec2_float.call(neighborF, rt.binary('+', s, rt.f(100), 1, 'float'))
           angle = rt.binary('+', rt.binary('*', _u_time, g['TAU'], 1, 'float'), rt.binary('*', rt.swizzle(animRand, 'x'), g['TAU'], 1, 'float'), 1, 'float')
           radius = rt.binary('*', rt.swizzle(animRand, 'y'), spd, 1, 'float')
           offset.replace((rt.component_wise('clamp', rt.construct(2, ((offset[0]) + ((((rt.component_wise('cos', angle))) * (radius)))), ((offset[1]) + ((((rt.component_wise('sin', angle))) * (radius))))), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
         end
-        point = rt.construct(2, ((((neighborF[0]) + (offset[0]))) / (n)), ((((neighborF[1]) + (offset[1]))) / (n)))
+        point = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', neighborF, offset, 2, 'float'), n, 2, 'float'))
         d = rt.distance(auv, point)
         if rt.bool(rt.binary('<', d, minDist))
           thirdDist = secondDist
@@ -123,9 +123,9 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    globalUV_sample = rt.construct(2, rt.construct(2, rt.binary('/', rt.swizzle(nearestPoint, 'x'), aspect, 1, 'float'), rt.swizzle(nearestPoint, 'y')))
-    localUV_sample = rt.construct(2, ((((((globalUV_sample[0]) * (resolution[0]))) - (_u_tileOffset[0]))) / (tileDims[0])), ((((((globalUV_sample[1]) * (resolution[1]))) - (_u_tileOffset[1]))) / (tileDims[1])))
-    cellColor = rt.construct(4, (rt.texture(_u_inputTex, localUV_sample))[0], (rt.texture(_u_inputTex, localUV_sample))[1], (rt.texture(_u_inputTex, localUV_sample))[2], (rt.texture(_u_inputTex, localUV_sample))[3])
+    globalUV_sample = rt.construct(2, rt.binary('/', rt.swizzle(nearestPoint, 'x'), aspect, 1, 'float'), rt.swizzle(nearestPoint, 'y'))
+    localUV_sample = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', rt.binary_raw('*', globalUV_sample, resolution, 2, 'float'), _u_tileOffset, 2, 'float'), tileDims, 2, 'float'))
+    cellColor = rt.texture(_u_inputTex, localUV_sample)
     result = rt.construct(3, 0.0)
     distField = rt.f(0.0)
     edgeDist = rt.f(0.0)
@@ -143,7 +143,7 @@ run_pixel = lambda do |ctx, out|
         selectedDist = (rt.bool(rt.binary('==', _u_mode, rt.i(2))) ? (secondDist) : (thirdDist))
         raw = rt.component_wise('clamp', rt.binary('*', selectedDist, n, 1, 'float'), rt.f(0), rt.f(1))
         distField = rt.component_wise('pow', raw, rt.component_wise('mix', rt.f(0.5), rt.f(3), _u_edgeStrength))
-        result.replace((rt.binary('*', rt.swizzle(cellColor, 'rgb'), distField, 3, 'float')).map { |c| rt.f32(c) })
+        result.replace((rt.binary_raw('*', rt.swizzle(cellColor, 'rgb'), distField, 3, 'float')).map { |c| rt.f32(c) })
       end
     end
     borderMask = rt.f(0.0)
@@ -177,7 +177,7 @@ run_pixel = lambda do |ctx, out|
             break
           end
           candidateCell = rt.binary('+', cell, rt.construct(2, dx, dy, 'int'), 2, 'int')
-          candidatePoint = rt.construct(2, lowPolySite__ivec2_float_float_float.call(candidateCell, n, s, spd))
+          candidatePoint = lowPolySite__ivec2_float_float_float.call(candidateCell, n, s, spd)
           candidateDist = rt.distance(auv, candidatePoint)
           if rt.bool(rt.binary('<', candidateDist, borderNearestDist))
             borderNearestDist = candidateDist
@@ -213,10 +213,10 @@ run_pixel = lambda do |ctx, out|
           siteDistance = rt.f(0.0)
           siteVector = rt.construct(2, 0.0)
           if rt.bool(rt.component_wise('any', rt.component_wise('notEqual', candidateCell, borderNearestCell)))
-            candidatePoint = rt.construct(2, lowPolySite__ivec2_float_float_float.call(candidateCell, n, s, spd))
-            siteVector = rt.construct(2, ((candidatePoint[0]) - (borderNearestPoint[0])), ((candidatePoint[1]) - (borderNearestPoint[1])))
+            candidatePoint = lowPolySite__ivec2_float_float_float.call(candidateCell, n, s, spd)
+            siteVector = rt.construct(2, rt.binary_raw('-', candidatePoint, borderNearestPoint, 2, 'float'))
             siteDistance = rt.component_wise('max', rt.length(siteVector), rt.f(9.9999999392252903e-09))
-            bisectorDistance = rt.dot(rt.binary('-', rt.binary('*', rt.binary('+', borderNearestPoint, candidatePoint, 2, 'float'), rt.f(0.5), 2, 'float'), auv, 2, 'float'), rt.binary('/', siteVector, siteDistance, 2, 'float'))
+            bisectorDistance = rt.dot(rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', borderNearestPoint, candidatePoint, 2, 'float'), rt.f(0.5), 2, 'float'), auv, 2, 'float'), rt.binary_raw('/', siteVector, siteDistance, 2, 'float'))
             distToEdge = rt.component_wise('min', distToEdge, bisectorDistance)
           end
         end
@@ -232,10 +232,10 @@ run_pixel = lambda do |ctx, out|
       paneValue = rt.component_wise('max', rt.component_wise('max', rt.swizzle(modeResult, 'r'), rt.swizzle(modeResult, 'g')), rt.swizzle(modeResult, 'b'))
       exposure = rt.component_wise('mix', rt.f(1), rt.f(2.25), intensity)
       litValue = rt.binary('-', rt.f(1), rt.component_wise('pow', rt.component_wise('max', rt.binary('-', rt.f(1), paneValue, 1, 'float'), rt.f(0)), exposure), 1, 'float')
-      litMode = rt.construct(3, (rt.bool(rt.binary('>', paneValue, rt.f(9.9999999747524271e-07))) ? (((modeResult[0]) * (((litValue) / (paneValue))))) : (modeResult[0])), (rt.bool(rt.binary('>', paneValue, rt.f(9.9999999747524271e-07))) ? (((modeResult[1]) * (((litValue) / (paneValue))))) : (modeResult[1])), (rt.bool(rt.binary('>', paneValue, rt.f(9.9999999747524271e-07))) ? (((modeResult[2]) * (((litValue) / (paneValue))))) : (modeResult[2])))
+      litMode = rt.construct(3, (rt.bool(rt.binary('>', paneValue, rt.f(9.9999999747524271e-07))) ? (rt.binary_raw('*', modeResult, rt.binary('/', litValue, paneValue, 1, 'float'), 3, 'float')) : (modeResult)))
       result.replace((rt.component_wise('mix', litMode, _u_edgeColor, borderMask)).map { |c| rt.f32(c) })
     end
-    original = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    original = rt.texture(_u_inputTex, uv)
     g['fragColor'].replace((rt.construct(4, rt.component_wise('mix', rt.swizzle(original, 'rgb'), result, _u_alpha), rt.swizzle(original, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

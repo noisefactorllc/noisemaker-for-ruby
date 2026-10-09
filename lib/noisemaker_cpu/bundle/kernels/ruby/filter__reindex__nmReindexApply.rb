@@ -56,9 +56,9 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    texel = rt.construct(4, rt.texel_fetch(_u_inputTex, pixel, rt.i(0)))
+    texel = rt.texel_fetch(_u_inputTex, pixel, rt.i(0))
     referenceValue = value_map_component__vec4.call(texel)
-    minMax = rt.construct(2, rt.swizzle(rt.texel_fetch(_u_statsTex, rt.construct(2, rt.i(0), rt.i(0), 'int'), rt.i(0)), 'x'), rt.swizzle(rt.texel_fetch(_u_statsTex, rt.construct(2, rt.i(0), rt.i(0), 'int'), rt.i(0)), 'y'))
+    minMax = rt.swizzle(rt.texel_fetch(_u_statsTex, rt.construct(2, rt.i(0), rt.i(0), 'int'), rt.i(0)), 'xy')
     range = rt.binary('-', rt.swizzle(minMax, 'y'), rt.swizzle(minMax, 'x'), 1, 'float')
     normalized = referenceValue
     if rt.bool(rt.binary('>', range, rt.f(9.9999997473787516e-05)))
@@ -70,7 +70,7 @@ run_pixel = lambda do |ctx, out|
     sampleY = rt.construct(1, rt.binary('*', rt.component_wise('fract', rt.binary('/', offsetValue, rt.construct(1, rt.swizzle(texSize, 'y')), 1, 'float')), rt.construct(1, rt.swizzle(texSize, 'y')), 1, 'float'), 'int')
     sampleX = rt.component_wise('min', sampleX, rt.binary('-', rt.swizzle(texSize, 'x'), rt.i(1), 1, 'int'))
     sampleY = rt.component_wise('min', sampleY, rt.binary('-', rt.swizzle(texSize, 'y'), rt.i(1), 1, 'int'))
-    sampled = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, sampleX, sampleY, 'int'), rt.i(0)))
+    sampled = rt.texel_fetch(_u_inputTex, rt.construct(2, sampleX, sampleY, 'int'), rt.i(0))
     g['fragColor'].replace((sampled).map { |c| rt.f32(c) })
   end
   main__void.call

@@ -39,7 +39,7 @@ run_pixel = lambda do |ctx, out|
     cmy = nil; k = nil; scale = nil
     k = rt.binary('-', rt.f(1), rt.component_wise('max', rt.component_wise('max', rt.swizzle(rgb, 'r'), rt.swizzle(rgb, 'g')), rt.swizzle(rgb, 'b')), 1, 'float')
     scale = rt.component_wise('max', rt.binary('-', rt.f(1), k, 1, 'float'), rt.f(9.9999997473787516e-06))
-    cmy = rt.construct(3, rt.component_wise('clamp', rt.f32(((((((rt.f(1)) - (rgb[0]))) - ((k)))) / (scale))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((((rt.f(1)) - (rgb[1]))) - ((k)))) / (scale))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((((rt.f(1)) - (rgb[2]))) - ((k)))) / (scale))), rt.f(0), rt.f(1)))
+    cmy = rt.component_wise('clamp', rt.construct(3, ((((((rt.f(1)) - (rgb[0]))) - ((k)))) / (scale)), ((((((rt.f(1)) - (rgb[1]))) - ((k)))) / (scale)), ((((((rt.f(1)) - (rgb[2]))) - ((k)))) / (scale))), rt.f(0), rt.f(1))
     return rt.construct(4, cmy, k)
   end
   rotate2D__vec2_float = lambda do |v, angleDeg|
@@ -48,13 +48,13 @@ run_pixel = lambda do |ctx, out|
     a = rt.component_wise('radians', angleDeg)
     co = rt.component_wise('cos', a)
     si = rt.component_wise('sin', a)
-    return rt.construct(2, (rt.matrix_mult(rt.construct(4, co, rt.unary('-', si), si, co), v, 2))[0], (rt.matrix_mult(rt.construct(4, co, rt.unary('-', si), si, co), v, 2))[1])
+    return rt.construct(2, rt.matrix_mult(rt.construct(4, co, rt.unary('-', si), si, co), v, 2))
   end
   boxBlur3__vec2_vec2 = lambda do |uv, texel|
     uv = rt.copy(uv, 'float')
     texel = rt.copy(texel, 'float')
     __hoistv1 = nil; _for0_first = nil; _for1_first = nil; o = nil; sum = nil; x = nil; y = nil
-    sum = rt.construct(3, rt.construct(3, rt.f(0)))
+    sum = rt.construct(3, rt.f(0))
     y = rt.unary('-', rt.i(1))
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -75,19 +75,19 @@ run_pixel = lambda do |ctx, out|
         unless rt.bool(rt.binary('<=', x, rt.i(1)))
           break
         end
-        o = rt.construct(2, ((((x))) * (texel[0])), ((((y))) * (texel[1])))
+        o = rt.construct(2, rt.binary_raw('*', rt.construct_raw(2, rt.construct(1, x), rt.construct(1, y)), texel, 2, 'float'))
         __hoistv1 = rt.swizzle(rt.texture(_u_inputTex, rt.component_wise('clamp', rt.construct(2, ((uv[0]) + (o[0])), ((uv[1]) + (o[1]))), rt.f(0), rt.f(1))), 'rgb'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv1[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv1[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv1[2], 1, 'float'))
       end
     end
-    return rt.construct(3, ((sum[0]) / (rt.f(9))), ((sum[1]) / (rt.f(9))), ((sum[2]) / (rt.f(9))))
+    return rt.construct(3, rt.binary_raw('/', sum, rt.f(9), 3, 'float'))
   end
   cellSampleFromRuv__vec2_float_vec2 = lambda do |ruv, angleDeg, texel|
     ruv = rt.copy(ruv, 'float')
     texel = rt.copy(texel, 'float')
     cellCenterGc = nil; cellId = nil; cellUV = nil
     cellId = rt.construct(2, rt.binary('+', rt.component_wise('floor', ruv), rt.f(0.5), 2, 'float'))
-    cellCenterGc = rt.construct(2, rotate2D__vec2_float.call(rt.construct(2, ((cellId[0]) * (_u_frequency)), ((cellId[1]) * (_u_frequency))), rt.unary('-', angleDeg)))
-    cellUV = rt.construct(2, rt.component_wise('clamp', rt.f32(((((cellCenterGc[0]) - (_u_tileOffset[0]))) / (_u_resolution[0]))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((cellCenterGc[1]) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1)))
+    cellCenterGc = rotate2D__vec2_float.call(rt.construct(2, ((cellId[0]) * (_u_frequency)), ((cellId[1]) * (_u_frequency))), rt.unary('-', angleDeg))
+    cellUV = rt.component_wise('clamp', rt.construct(2, ((((cellCenterGc[0]) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((cellCenterGc[1]) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
     return boxBlur3__vec2_vec2.call(cellUV, texel)
   end
   halftoneCoverage__float_float_float = lambda do |d, value, sharpnessPct|
@@ -113,9 +113,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     alpha = nil; center = nil; d = nil; dotOffset = nil; globalCoord = nil; ink = nil; inkC = nil; inkK = nil; inkM = nil; inkY = nil; off = nil; rd = nil; ruv = nil; ruvC = nil; ruvK = nil; ruvM = nil; ruvY = nil; screened = nil; texel = nil; uv = nil; valC = nil; valK = nil; valM = nil; valY = nil; value = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    texel = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
     alpha = rt.swizzle(rt.texture(_u_inputTex, uv), 'a')
     d = rt.f(0.0)
     dotOffset = rt.construct(2, 0.0)
@@ -146,21 +146,21 @@ run_pixel = lambda do |ctx, out|
       inkM = roundDotCoverage__vec2_float_float.call(rt.construct(2, rt.f32(((rt.component_wise('fract', ruvM[0])) - (rt.f(0.5)))), rt.f32(((rt.component_wise('fract', ruvM[1])) - (rt.f(0.5))))), valM, _u_sharpness)
       inkY = roundDotCoverage__vec2_float_float.call(rt.construct(2, rt.f32(((rt.component_wise('fract', ruvY[0])) - (rt.f(0.5)))), rt.f32(((rt.component_wise('fract', ruvY[1])) - (rt.f(0.5))))), valY, _u_sharpness)
       inkK = roundDotCoverage__vec2_float_float.call(rt.construct(2, rt.f32(((rt.component_wise('fract', ruvK[0])) - (rt.f(0.5)))), rt.f32(((rt.component_wise('fract', ruvK[1])) - (rt.f(0.5))))), valK, _u_sharpness)
-      screened = rt.construct(3, (((((rt.f(1))) - ((inkC)))) * (((rt.f(1)) - (inkK)))), (((((rt.f(1))) - ((inkM)))) * (((rt.f(1)) - (inkK)))), (((((rt.f(1))) - ((inkY)))) * (((rt.f(1)) - (inkK)))))
+      screened = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.construct_raw(3, rt.f(1)), rt.construct_raw(3, inkC, inkM, inkY), 3, 'float'), rt.binary('-', rt.f(1), inkK, 1, 'float'), 3, 'float'))
       g['fragColor'].replace((rt.construct(4, screened, alpha)).map { |c| rt.f32(c) })
       return
     else
       value = rt.f(0.0)
       d = rt.f(0.0)
-      dotOffset = rt.construct(2, rt.construct(2, rt.f(0)))
+      dotOffset = rt.construct(2, rt.f(0))
       center = rt.construct(2, 0.0)
       off = rt.construct(2, 0.0)
       rd = rt.f(0.0)
       ruv = rt.construct(2, 0.0)
       if rt.bool(rt.binary('==', _u__PATTERN, rt.i(2)))
-        center = rt.construct(2, ((_u_fullResolution[0]) * (rt.f(0.5))), ((_u_fullResolution[1]) * (rt.f(0.5))))
+        center = rt.construct(2, rt.binary_raw('*', _u_fullResolution, rt.f(0.5), 2, 'float'))
         value = rt.binary('-', rt.f(1), lum__vec3.call(boxBlur3__vec2_vec2.call(uv, texel)), 1, 'float')
-        rd = rt.binary('/', rt.length(rt.binary('-', globalCoord, center, 2, 'float')), _u_frequency, 1, 'float')
+        rd = rt.binary('/', rt.length(rt.binary_raw('-', globalCoord, center, 2, 'float')), _u_frequency, 1, 'float')
         d = rt.component_wise('abs', rt.binary('-', rt.component_wise('fract', rd), rt.f(0.5), 1, 'float'))
       else
         ruv = rt.construct(2, rt.binary('/', rotate2D__vec2_float.call(globalCoord, _u_monoAngle), _u_frequency, 2, 'float'))

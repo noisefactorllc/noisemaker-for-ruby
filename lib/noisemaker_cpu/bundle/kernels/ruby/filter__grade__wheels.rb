@@ -29,9 +29,9 @@ run_pixel = lambda do |ctx, out|
         break
       end
       if rt.bool(rt.binary('<=', srgb[(i).to_i], rt.f(0.040449999272823334)))
-        linear[(i).to_i] = rt.binary('/', srgb[(i).to_i], rt.f(12.920000076293945), 1, 'float')
+        linear[(i).to_i] = rt.f32(rt.binary('/', srgb[(i).to_i], rt.f(12.920000076293945), 1, 'float'))
       else
-        linear[(i).to_i] = rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
+        linear[(i).to_i] = rt.f32(rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316)))
       end
     end
     return linear
@@ -51,9 +51,9 @@ run_pixel = lambda do |ctx, out|
         break
       end
       if rt.bool(rt.binary('<=', linear[(i).to_i], rt.f(0.0031308000907301903)))
-        srgb[(i).to_i] = rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float'))
       else
-        srgb[(i).to_i] = rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float'))
       end
     end
     return srgb
@@ -81,9 +81,9 @@ run_pixel = lambda do |ctx, out|
     midWheel = rt.copy(midWheel, 'float')
     highWheel = rt.copy(highWheel, 'float')
     __sc1 = nil; colorShift = nil; hW = nil; highOffset = nil; luma = nil; lumaDiff = nil; mW = nil; midOffset = nil; newLuma = nil; result = nil; sW = nil; shadowOffset = nil; totalWeight = nil
-    shadowOffset = rt.construct(3, ((((shadowWheel[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((shadowWheel[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((shadowWheel[2]) - (rt.f(0.5)))) * (rt.f(2))))
-    midOffset = rt.construct(3, ((((midWheel[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((midWheel[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((midWheel[2]) - (rt.f(0.5)))) * (rt.f(2))))
-    highOffset = rt.construct(3, ((((highWheel[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((highWheel[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((highWheel[2]) - (rt.f(0.5)))) * (rt.f(2))))
+    shadowOffset = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', shadowWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
+    midOffset = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', midWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
+    highOffset = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', highWheel, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
     if rt.bool((rt.bool((rt.bool(rt.binary('<', rt.length(shadowOffset), rt.f(0.0099999997764825821))) && rt.bool(rt.binary('<', rt.length(midOffset), rt.f(0.0099999997764825821))) ? 1 : 0)) && rt.bool(rt.binary('<', rt.length(highOffset), rt.f(0.0099999997764825821))) ? 1 : 0))
       return rgb
     end
@@ -95,11 +95,11 @@ run_pixel = lambda do |ctx, out|
     sW = rt.binary('/', sW, totalWeight, 1, 'float')
     mW = rt.binary('/', mW, totalWeight, 1, 'float')
     hW = rt.binary('/', hW, totalWeight, 1, 'float')
-    colorShift = rt.construct(3, rt.construct(3, rt.f(0)))
+    colorShift = rt.construct(3, rt.f(0))
     colorShift[0] = rt.f32(rt.binary('+', colorShift[0], ((((shadowOffset[0]) * (sW))) * (rt.f(0.5))), 1, 'float')); colorShift[1] = rt.f32(rt.binary('+', colorShift[1], ((((shadowOffset[1]) * (sW))) * (rt.f(0.5))), 1, 'float')); colorShift[2] = rt.f32(rt.binary('+', colorShift[2], ((((shadowOffset[2]) * (sW))) * (rt.f(0.5))), 1, 'float'))
     colorShift[0] = rt.f32(rt.binary('+', colorShift[0], ((((midOffset[0]) * (mW))) * (rt.f(0.5))), 1, 'float')); colorShift[1] = rt.f32(rt.binary('+', colorShift[1], ((((midOffset[1]) * (mW))) * (rt.f(0.5))), 1, 'float')); colorShift[2] = rt.f32(rt.binary('+', colorShift[2], ((((midOffset[2]) * (mW))) * (rt.f(0.5))), 1, 'float'))
     colorShift[0] = rt.f32(rt.binary('+', colorShift[0], ((((highOffset[0]) * (hW))) * (rt.f(0.5))), 1, 'float')); colorShift[1] = rt.f32(rt.binary('+', colorShift[1], ((((highOffset[1]) * (hW))) * (rt.f(0.5))), 1, 'float')); colorShift[2] = rt.f32(rt.binary('+', colorShift[2], ((((highOffset[2]) * (hW))) * (rt.f(0.5))), 1, 'float'))
-    result = rt.construct(3, ((rgb[0]) + (colorShift[0])), ((rgb[1]) + (colorShift[1])), ((rgb[2]) + (colorShift[2])))
+    result = rt.construct(3, rt.binary_raw('+', rgb, colorShift, 3, 'float'))
     newLuma = rt.dot(result, g['LUMA_WEIGHTS'])
     lumaDiff = rt.binary('-', luma, newLuma, 1, 'float')
     __sc1 = rt.binary('*', lumaDiff, rt.f(0.30000001192092896), 1, 'float'); result[0] = rt.f32(rt.binary('+', result[0], __sc1, 1, 'float')); result[1] = rt.f32(rt.binary('+', result[1], __sc1, 1, 'float')); result[2] = rt.f32(rt.binary('+', result[2], __sc1, 1, 'float'))
@@ -107,10 +107,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; coord = nil; globalCoord = nil; rgb = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
-    color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
-    rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))
+    color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    rgb = srgbToLinear__vec3.call(rt.swizzle(color, 'rgb'))
     rgb.replace((applyWheels__vec3_vec3_vec3_vec3_float.call(rgb, _u_wheelShadows, _u_wheelMidtones, _u_wheelHighlights, _u_wheelBalance)).map { |c| rt.f32(c) })
     rgb.replace((linearToSrgb__vec3.call(rt.component_wise('max', rgb, rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })
     g['fragColor'].replace((rt.construct(4, rgb, rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })

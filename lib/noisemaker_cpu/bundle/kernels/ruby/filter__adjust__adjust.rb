@@ -52,7 +52,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    return rt.construct(3, ((rgb[0]) + (m)), ((rgb[1]) + (m)), ((rgb[2]) + (m)))
+    return rt.construct(3, rt.binary_raw('+', rgb, m, 3, 'float'))
   end
   rgb2hsv__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
@@ -81,8 +81,8 @@ run_pixel = lambda do |ctx, out|
   linear_srgb_from_oklab__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     lms = nil
-    lms = rt.construct(3, (rt.matrix_mult(g['fwdA'], c, 3))[0], (rt.matrix_mult(g['fwdA'], c, 3))[1], (rt.matrix_mult(g['fwdA'], c, 3))[2])
-    return rt.construct(3, (rt.matrix_mult(g['fwdB'], rt.binary('*', rt.binary('*', lms, lms, 3, 'float'), lms, 3, 'float'), 3))[0], (rt.matrix_mult(g['fwdB'], rt.binary('*', rt.binary('*', lms, lms, 3, 'float'), lms, 3, 'float'), 3))[1], (rt.matrix_mult(g['fwdB'], rt.binary('*', rt.binary('*', lms, lms, 3, 'float'), lms, 3, 'float'), 3))[2])
+    lms = rt.construct(3, rt.matrix_mult(g['fwdA'], c, 3))
+    return rt.construct(3, rt.matrix_mult(g['fwdB'], rt.binary_raw('*', rt.binary_raw('*', lms, lms, 3, 'float'), lms, 3, 'float'), 3))
   end
   linearToSrgb__vec3 = lambda do |linear|
     linear = rt.copy(linear, 'float')
@@ -99,20 +99,20 @@ run_pixel = lambda do |ctx, out|
         break
       end
       if rt.bool(rt.binary('<=', linear[(i).to_i], rt.f(0.0031308000907301903)))
-        srgb[(i).to_i] = rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float'))
       else
-        srgb[(i).to_i] = rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float'))
       end
     end
     return srgb
   end
   main__void = lambda do
     _C = nil; _H = nil; _L = nil; a = nil; b = nil; color = nil; contrastFactor = nil; globalCoord = nil; hsv = nil; texSize = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
-    color = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
-    color = rt.assign_swizzle(color, 'rgb', (rt.bool(rt.binary('>', rt.swizzle(color, 'a'), rt.f(0))) ? (rt.binary('/', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float')) : (rt.construct(3, rt.f(0)))))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    color = rt.texture(_u_inputTex, uv)
+    color = rt.assign_swizzle(color, 'rgb', (rt.bool(rt.binary('>', rt.swizzle(color, 'a'), rt.f(0))) ? (rt.binary_raw('/', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float')) : (rt.construct(3, rt.f(0)))))
     _C = rt.f(0.0)
     _H = rt.f(0.0)
     _L = rt.f(0.0)
@@ -138,14 +138,14 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    hsv = rt.construct(3, rgb2hsv__vec3.call(rt.swizzle(color, 'rgb')))
+    hsv = rgb2hsv__vec3.call(rt.swizzle(color, 'rgb'))
     hsv = rt.assign_swizzle(hsv, 'x', rt.component_wise('fract', rt.binary('+', rt.binary('*', rt.swizzle(hsv, 'x'), map__float_float_float_float_float.call(_u_hueRange, rt.f(0), rt.f(200), rt.f(0), rt.f(2)), 1, 'float'), rt.binary('/', _u_rotation, rt.f(360), 1, 'float'), 1, 'float')))
-    hsv = rt.assign_swizzle(hsv, 'y', rt.binary('*', rt.swizzle(hsv, 'y'), _u_saturation, 1, 'float'))
+    hsv = rt.assign_swizzle(hsv, 'y', rt.binary_raw('*', rt.swizzle(hsv, 'y'), _u_saturation, 1, 'float'))
     color = rt.assign_swizzle(color, 'rgb', hsv2rgb__vec3.call(hsv))
-    color = rt.assign_swizzle(color, 'rgb', rt.binary('*', rt.swizzle(color, 'rgb'), _u_brightness, 3, 'float'))
+    color = rt.assign_swizzle(color, 'rgb', rt.binary_raw('*', rt.swizzle(color, 'rgb'), _u_brightness, 3, 'float'))
     contrastFactor = rt.binary('*', _u_contrast, rt.f(2), 1, 'float')
-    color = rt.assign_swizzle(color, 'rgb', rt.binary('+', rt.binary('*', rt.binary('-', rt.swizzle(color, 'rgb'), rt.f(0.5), 3, 'float'), contrastFactor, 3, 'float'), rt.f(0.5), 3, 'float'))
-    g['fragColor'].replace((rt.construct(4, rt.binary('*', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
+    color = rt.assign_swizzle(color, 'rgb', rt.binary_raw('+', rt.binary_raw('*', rt.binary_raw('-', rt.swizzle(color, 'rgb'), rt.f(0.5), 3, 'float'), contrastFactor, 3, 'float'), rt.f(0.5), 3, 'float'))
+    g['fragColor'].replace((rt.construct(4, rt.binary_raw('*', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float'), rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

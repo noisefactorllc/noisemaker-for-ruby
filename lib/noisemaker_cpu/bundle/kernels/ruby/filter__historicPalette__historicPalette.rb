@@ -29,7 +29,7 @@ run_pixel = lambda do |ctx, out|
     b2 = rt.component_wise('smoothstep', rt.binary('-', t2, blendWidth, 1, 'float'), rt.binary('+', t2, blendWidth, 1, 'float'), lum)
     b3 = rt.component_wise('smoothstep', rt.binary('-', t3, blendWidth, 1, 'float'), rt.binary('+', t3, blendWidth, 1, 'float'), lum)
     b4 = rt.component_wise('smoothstep', rt.binary('-', t4, blendWidth, 1, 'float'), rt.binary('+', t4, blendWidth, 1, 'float'), lum)
-    result = rt.construct(3, rt.component_wise('mix', pal[0], pal[1], b1), rt.component_wise('mix', pal[0], pal[1], b1), rt.component_wise('mix', pal[0], pal[1], b1))
+    result = rt.component_wise('mix', pal[0], pal[1], b1)
     result.replace((rt.component_wise('mix', result, pal[2], b2)).map { |c| rt.f32(c) })
     result.replace((rt.component_wise('mix', result, pal[3], b3)).map { |c| rt.f32(c) })
     result.replace((rt.component_wise('mix', result, pal[4], b4)).map { |c| rt.f32(c) })
@@ -40,7 +40,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('>', blendWidth, rt.f(0)))
       d = (rt.bool(rt.binary('>', lum, rt.f(0.5))) ? (rt.binary('-', lum, rt.f(1), 1, 'float')) : (lum))
       wrapFactor = rt.component_wise('smoothstep', rt.unary('-', blendWidth), blendWidth, d)
-      wrapColor = rt.construct(3, rt.component_wise('mix', pal[4], pal[0], wrapFactor), rt.component_wise('mix', pal[4], pal[0], wrapFactor), rt.component_wise('mix', pal[4], pal[0], wrapFactor))
+      wrapColor = rt.component_wise('mix', pal[4], pal[0], wrapFactor)
       wrapMask = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0), blendWidth, rt.component_wise('abs', d)), 1, 'float')
       result.replace((rt.component_wise('mix', result, wrapColor, wrapMask)).map { |c| rt.f32(c) })
     end
@@ -48,10 +48,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _t = nil; blendedColor = nil; globalCoord = nil; idx = nil; inputColor = nil; lum = nil; pal = nil; paletteColor = nil; texSize = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (texSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (texSize[1])))
-    inputColor = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    texSize = rt.construct(2, rt.texture_size(_u_inputTex))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
+    inputColor = rt.texture(_u_inputTex, uv)
     idx = rt.component_wise('clamp', _u_paletteIndex, rt.i(0), rt.binary('-', g['PALETTE_COUNT'], rt.i(1), 1, 'int'))
     lum = rt.dot(rt.swizzle(inputColor, 'rgb'), rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
     _t = rt.binary('+', rt.binary('*', rt.binary('*', lum, rt.f(0.99989998340606689), 1, 'float'), _u_repeat, 1, 'float'), rt.binary('*', _u_offset, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float')
@@ -64,8 +64,8 @@ run_pixel = lambda do |ctx, out|
     end
     _t = rt.component_wise('fract', _t)
     pal = rt.array_index(g['PALETTES'], idx)
-    paletteColor = rt.construct(3, sampleHistoricPalette__struct1_float_float.call(pal, _t, _u_smoothness))
-    blendedColor = rt.construct(3, rt.component_wise('mix', rt.swizzle(inputColor, 'r'), paletteColor[0], _u_alpha), rt.component_wise('mix', rt.swizzle(inputColor, 'g'), paletteColor[1], _u_alpha), rt.component_wise('mix', rt.swizzle(inputColor, 'b'), paletteColor[2], _u_alpha))
+    paletteColor = sampleHistoricPalette__struct1_float_float.call(pal, _t, _u_smoothness)
+    blendedColor = rt.component_wise('mix', rt.swizzle(inputColor, 'rgb'), paletteColor, _u_alpha)
     g['fragColor'].replace((rt.construct(4, blendedColor, rt.swizzle(inputColor, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

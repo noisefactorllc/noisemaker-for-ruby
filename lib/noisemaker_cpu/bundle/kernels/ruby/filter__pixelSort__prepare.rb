@@ -17,7 +17,7 @@ run_pixel = lambda do |ctx, out|
     coord = rt.copy(coord, 'float')
     size = rt.copy(size, 'float')
     mode = nil; uv = nil
-    uv = rt.construct(2, ((coord[0]) / (size[0])), ((coord[1]) / (size[1])))
+    uv = rt.construct(2, rt.binary_raw('/', coord, size, 2, 'float'))
     mode = rt.construct(1, _u_wrap, 'int')
     if rt.bool(rt.binary('==', mode, rt.i(0)))
       uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
@@ -32,9 +32,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     angle = nil; c = nil; center = nil; color = nil; cpu_vector_assignment_1 = nil; pixelCoord = nil; rad = nil; s = nil; srcCoord = nil; texSize = nil; wrappedUV = nil
-    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
-    center = rt.construct(2, ((texSize[0]) * (rt.f(0.5))), ((texSize[1]) * (rt.f(0.5))))
-    pixelCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) - (center[0])), ((rt.swizzle(ctx.frag_coord, 'y')) - (center[1])))
+    texSize = rt.construct(2, rt.texture_size(_u_inputTex))
+    center = rt.construct(2, rt.binary_raw('*', texSize, rt.f(0.5), 2, 'float'))
+    pixelCoord = rt.construct(2, rt.binary_raw('-', rt.swizzle(ctx.frag_coord, 'xy'), center, 2, 'float'))
     angle = _u_angled
     rad = rt.binary('/', rt.binary('*', angle, g['PI'], 1, 'float'), rt.f(180), 1, 'float')
     c = rt.component_wise('cos', rad)
@@ -43,11 +43,11 @@ run_pixel = lambda do |ctx, out|
     srcCoord = rt.assign_swizzle(srcCoord, 'x', rt.binary('+', rt.binary('*', c, rt.swizzle(pixelCoord, 'x'), 1, 'float'), rt.binary('*', s, rt.swizzle(pixelCoord, 'y'), 1, 'float'), 1, 'float'))
     srcCoord = rt.assign_swizzle(srcCoord, 'y', rt.binary('+', rt.binary('*', rt.unary('-', s), rt.swizzle(pixelCoord, 'x'), 1, 'float'), rt.binary('*', c, rt.swizzle(pixelCoord, 'y'), 1, 'float'), 1, 'float'))
     srcCoord[0] = rt.f32(rt.binary('+', srcCoord[0], center[0], 1, 'float')); srcCoord[1] = rt.f32(rt.binary('+', srcCoord[1], center[1], 1, 'float'))
-    wrappedUV = rt.construct(2, applyWrap__vec2_vec2.call(srcCoord, texSize))
-    color = rt.construct(4, (rt.texture(_u_inputTex, wrappedUV))[0], (rt.texture(_u_inputTex, wrappedUV))[1], (rt.texture(_u_inputTex, wrappedUV))[2], (rt.texture(_u_inputTex, wrappedUV))[3])
+    wrappedUV = applyWrap__vec2_vec2.call(srcCoord, texSize)
+    color = rt.texture(_u_inputTex, wrappedUV)
     cpu_vector_assignment_1 = rt.construct(4, 0.0)
     if rt.bool(_u_darkest)
-      cpu_vector_assignment_1 = rt.construct(4, rt.construct(4, rt.binary('-', rt.construct(3, rt.f(1)), rt.swizzle(color, 'rgb'), 3, 'float'), rt.swizzle(color, 'a')))
+      cpu_vector_assignment_1 = rt.construct(4, rt.binary_raw('-', rt.construct_raw(3, rt.f(1)), rt.swizzle(color, 'rgb'), 3, 'float'), rt.swizzle(color, 'a'))
       color.replace((cpu_vector_assignment_1).map { |c| rt.f32(c) })
     end
     g['fragColor'].replace((color).map { |c| rt.f32(c) })

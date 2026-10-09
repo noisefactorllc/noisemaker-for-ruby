@@ -12,10 +12,10 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     a = nil; base = nil; coord = nil; overlay = nil; result = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
-    base = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
-    overlay = rt.construct(4, rt.texel_fetch(_u_overlayTex, coord, rt.i(0)))
+    base = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    overlay = rt.texel_fetch(_u_overlayTex, coord, rt.i(0))
     a = rt.binary('*', rt.swizzle(overlay, 'a'), _u_alpha, 1, 'float')
-    result = rt.construct(3, ((((rt.swizzle(base, 'r')) * (((rt.f(1)) - (a))))) + (((rt.swizzle(overlay, 'r')) * (a)))), ((((rt.swizzle(base, 'g')) * (((rt.f(1)) - (a))))) + (((rt.swizzle(overlay, 'g')) * (a)))), ((((rt.swizzle(base, 'b')) * (((rt.f(1)) - (a))))) + (((rt.swizzle(overlay, 'b')) * (a)))))
+    result = rt.construct(3, rt.binary_raw('+', rt.binary_raw('*', rt.swizzle(base, 'rgb'), rt.binary('-', rt.f(1), a, 1, 'float'), 3, 'float'), rt.binary_raw('*', rt.swizzle(overlay, 'rgb'), a, 3, 'float'), 3, 'float'))
     g['fragColor'].replace((rt.construct(4, result, rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

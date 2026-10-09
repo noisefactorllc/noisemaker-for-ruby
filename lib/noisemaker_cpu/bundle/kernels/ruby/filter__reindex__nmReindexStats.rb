@@ -87,7 +87,7 @@ run_pixel = lambda do |ctx, out|
         if rt.bool(rt.binary('>=', px, rt.swizzle(texSize, 'x')))
           break
         end
-        texel = rt.construct(4, rt.texel_fetch(_u_inputTex, rt.construct(2, px, py, 'int'), rt.i(0)))
+        texel = rt.texel_fetch(_u_inputTex, rt.construct(2, px, py, 'int'), rt.i(0))
         value = value_map_component__vec4.call(texel)
         minValue = rt.component_wise('min', minValue, value)
         maxValue = rt.component_wise('max', maxValue, value)

@@ -30,9 +30,9 @@ run_pixel = lambda do |ctx, out|
         break
       end
       if rt.bool(rt.binary('<=', srgb[(i).to_i], rt.f(0.040449999272823334)))
-        linear[(i).to_i] = rt.binary('/', srgb[(i).to_i], rt.f(12.920000076293945), 1, 'float')
+        linear[(i).to_i] = rt.f32(rt.binary('/', srgb[(i).to_i], rt.f(12.920000076293945), 1, 'float'))
       else
-        linear[(i).to_i] = rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316))
+        linear[(i).to_i] = rt.f32(rt.component_wise('pow', rt.binary('/', rt.binary('+', srgb[(i).to_i], rt.f(0.054999999701976776), 1, 'float'), rt.f(1.0549999475479126), 1, 'float'), rt.f(2.4000000953674316)))
       end
     end
     return linear
@@ -52,9 +52,9 @@ run_pixel = lambda do |ctx, out|
         break
       end
       if rt.bool(rt.binary('<=', linear[(i).to_i], rt.f(0.0031308000907301903)))
-        srgb[(i).to_i] = rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('*', linear[(i).to_i], rt.f(12.920000076293945), 1, 'float'))
       else
-        srgb[(i).to_i] = rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float')
+        srgb[(i).to_i] = rt.f32(rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', linear[(i).to_i], rt.f(0.4166666567325592)), 1, 'float'), rt.f(0.054999999701976776), 1, 'float'))
       end
     end
     return srgb
@@ -66,7 +66,7 @@ run_pixel = lambda do |ctx, out|
       return rgb
     end
     luma = rt.dot(rgb, g['LUMA_WEIGHTS'])
-    chroma = rt.construct(3, ((rgb[0]) - (luma)), ((rgb[1]) - (luma)), ((rgb[2]) - (luma)))
+    chroma = rt.construct(3, rt.binary_raw('-', rgb, luma, 3, 'float'))
     maxC = rt.component_wise('max', rt.component_wise('max', rt.swizzle(rgb, 'r'), rt.swizzle(rgb, 'g')), rt.swizzle(rgb, 'b'))
     minC = rt.component_wise('min', rt.component_wise('min', rt.swizzle(rgb, 'r'), rt.swizzle(rgb, 'g')), rt.swizzle(rgb, 'b'))
     sat = (rt.bool(rt.binary('>', maxC, rt.f(0.0010000000474974513))) ? (rt.binary('/', rt.binary('-', maxC, minC, 1, 'float'), maxC, 1, 'float')) : (rt.f(0)))
@@ -78,7 +78,7 @@ run_pixel = lambda do |ctx, out|
       skinFactor = rt.binary('+', rt.binary('*', rt.component_wise('smoothstep', rt.f(0.30000001192092896), rt.f(0.69999998807907104), sat), rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float')
     end
     finalGain = rt.component_wise('mix', rt.f(1), vibranceGain, skinFactor)
-    return rt.construct(3, ((luma) + (((chroma[0]) * (finalGain)))), ((luma) + (((chroma[1]) * (finalGain)))), ((luma) + (((chroma[2]) * (finalGain)))))
+    return rt.construct(3, rt.binary_raw('+', luma, rt.binary_raw('*', chroma, finalGain, 3, 'float'), 3, 'float'))
   end
   applyFadedFilm__vec3_float = lambda do |rgb, amount|
     rgb = rt.copy(rgb, 'float')
@@ -86,21 +86,21 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('<', amount, rt.f(0.0010000000474974513)))
       return rgb
     end
-    lifted = rt.construct(3, rt.component_wise('mix', rgb[0], (rt.f(0.20000000298023224)), ((amount) * (rt.f(0.5)))), rt.component_wise('mix', rgb[1], (rt.f(0.20000000298023224)), ((amount) * (rt.f(0.5)))), rt.component_wise('mix', rgb[2], (rt.f(0.20000000298023224)), ((amount) * (rt.f(0.5)))))
+    lifted = rt.component_wise('mix', rgb, rt.construct(3, rt.f(0.20000000298023224)), rt.binary('*', amount, rt.f(0.5), 1, 'float'))
     luma = rt.dot(lifted, g['LUMA_WEIGHTS'])
-    chroma = rt.construct(3, ((lifted[0]) - (luma)), ((lifted[1]) - (luma)), ((lifted[2]) - (luma)))
+    chroma = rt.construct(3, rt.binary_raw('-', lifted, luma, 3, 'float'))
     pivot = rt.f(0.5)
     contrastFactor = rt.binary('-', rt.f(1), rt.binary('*', amount, rt.f(0.30000001192092896), 1, 'float'), 1, 'float')
     newLuma = rt.binary('+', rt.binary('*', rt.binary('-', luma, pivot, 1, 'float'), contrastFactor, 1, 'float'), pivot, 1, 'float')
-    return rt.construct(3, ((newLuma) + (((chroma[0]) * (((rt.f(1)) - (((amount) * (rt.f(0.20000000298023224))))))))), ((newLuma) + (((chroma[1]) * (((rt.f(1)) - (((amount) * (rt.f(0.20000000298023224))))))))), ((newLuma) + (((chroma[2]) * (((rt.f(1)) - (((amount) * (rt.f(0.20000000298023224))))))))))
+    return rt.construct(3, rt.binary_raw('+', newLuma, rt.binary_raw('*', chroma, rt.binary('-', rt.f(1), rt.binary('*', amount, rt.f(0.20000000298023224), 1, 'float'), 1, 'float'), 3, 'float'), 3, 'float'))
   end
   applySplitTone__vec3_vec3_vec3_float = lambda do |rgb, shadowTint, highlightTint, balance|
     rgb = rt.copy(rgb, 'float')
     shadowTint = rt.copy(shadowTint, 'float')
     highlightTint = rt.copy(highlightTint, 'float')
     balancePoint = nil; highlightShift = nil; highlightWeight = nil; luma = nil; shadowShift = nil; shadowWeight = nil; tintedRgb = nil
-    shadowShift = rt.construct(3, ((((shadowTint[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((shadowTint[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((shadowTint[2]) - (rt.f(0.5)))) * (rt.f(2))))
-    highlightShift = rt.construct(3, ((((highlightTint[0]) - (rt.f(0.5)))) * (rt.f(2))), ((((highlightTint[1]) - (rt.f(0.5)))) * (rt.f(2))), ((((highlightTint[2]) - (rt.f(0.5)))) * (rt.f(2))))
+    shadowShift = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', shadowTint, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
+    highlightShift = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', highlightTint, rt.f(0.5), 3, 'float'), rt.f(2), 3, 'float'))
     if rt.bool((rt.bool(rt.binary('<', rt.length(shadowShift), rt.f(0.0099999997764825821))) && rt.bool(rt.binary('<', rt.length(highlightShift), rt.f(0.0099999997764825821))) ? 1 : 0))
       return rgb
     end
@@ -115,10 +115,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; coord = nil; globalCoord = nil; rgb = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
-    color = rt.construct(4, rt.texel_fetch(_u_inputTex, coord, rt.i(0)))
-    rgb = rt.construct(3, srgbToLinear__vec3.call(rt.swizzle(color, 'rgb')))
+    color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
+    rgb = srgbToLinear__vec3.call(rt.swizzle(color, 'rgb'))
     rgb.replace((applyVibrance__vec3_float.call(rgb, _u_vibrance)).map { |c| rt.f32(c) })
     rgb.replace((applyFadedFilm__vec3_float.call(rgb, _u_fadedFilm)).map { |c| rt.f32(c) })
     rgb.replace((applySplitTone__vec3_vec3_vec3_float.call(rgb, _u_shadowTint, _u_highlightTint, _u_splitToneBalance)).map { |c| rt.f32(c) })

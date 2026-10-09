@@ -36,7 +36,7 @@ run_pixel = lambda do |ctx, out|
     major = rt.copy(major, 'uint')
     b = nil; packedRg = nil; rg = nil
     packedRg = rt.binary('|', rt.binary('<<', rt.swizzle(major, 'y'), rt.i(16), 1, 'uint'), rt.binary('>>', rt.swizzle(major, 'y'), rt.i(16), 1, 'uint'), 1, 'uint')
-    rg = rt.construct(2, rt.unpack_half_2x16(packedRg))
+    rg = rt.unpack_half_2x16(packedRg)
     b = rt.swizzle(rt.unpack_half_2x16(blue), 'x')
     return rt.construct(3, rg, b)
   end
@@ -53,7 +53,7 @@ run_pixel = lambda do |ctx, out|
     blueRecords = rt.new_array(rt.i(49), 1)
     dimensions = rt.texture_size(_u_inputTex)
     center = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
-    originalRgb = rt.construct(3, rt.construct(3, rt.f(0)))
+    originalRgb = rt.construct(3, rt.f(0))
     centerAlpha = rt.f(1)
     index = rt.i(0)
     y = rt.unary('-', _u__RADIUS)
@@ -76,7 +76,7 @@ run_pixel = lambda do |ctx, out|
         unless rt.bool(rt.binary('<=', x, _u__RADIUS))
           break
         end
-        sampleColor = rt.construct(4, readRecord__ivec2_ivec2_int_int.call(center, dimensions, x, y))
+        sampleColor = readRecord__ivec2_ivec2_int_int.call(center, dimensions, x, y)
         majorRecords[(index).to_i] = packRecordMajor__vec4.call(sampleColor)
         blueRecords[(index).to_i] = packRecordBlue__vec4.call(sampleColor)
         if rt.bool((rt.bool(rt.binary('==', x, rt.i(0))) && rt.bool(rt.binary('==', y, rt.i(0))) ? 1 : 0))
@@ -133,8 +133,8 @@ run_pixel = lambda do |ctx, out|
         right = scanRight
       end
     end
-    medianRgb = rt.construct(3, unpackRecordRgb__uvec2_uint.call(rt.array_index(majorRecords, medianIndex), rt.array_index(blueRecords, medianIndex)))
-    difference = rt.construct(3, rt.component_wise('abs', rt.f32(((originalRgb[0]) - (medianRgb[0])))), rt.component_wise('abs', rt.f32(((originalRgb[1]) - (medianRgb[1])))), rt.component_wise('abs', rt.f32(((originalRgb[2]) - (medianRgb[2])))))
+    medianRgb = unpackRecordRgb__uvec2_uint.call(rt.array_index(majorRecords, medianIndex), rt.array_index(blueRecords, medianIndex))
+    difference = rt.component_wise('abs', rt.construct(3, ((originalRgb[0]) - (medianRgb[0])), ((originalRgb[1]) - (medianRgb[1])), ((originalRgb[2]) - (medianRgb[2]))))
     maxDifference = rt.component_wise('max', rt.component_wise('max', rt.swizzle(difference, 'r'), rt.swizzle(difference, 'g')), rt.swizzle(difference, 'b'))
     replaceCenter = (rt.bool(rt.binary('<=', _u_threshold, rt.f(0))) || rt.bool(rt.binary('>=', maxDifference, rt.binary('/', _u_threshold, rt.f(100), 1, 'float'))) ? 1 : 0)
     g['fragColor'].replace((rt.construct(4, (rt.bool(replaceCenter) ? (medianRgb) : (originalRgb)), centerAlpha)).map { |c| rt.f32(c) })

@@ -13,12 +13,12 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; acc = nil; hi = nil; i = nil; lo = nil; o = nil; r = nil; sD = nil; sU = nil; texel = nil; uv = nil
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    acc = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    acc = rt.texture(_u_inputTex, uv)
     r = rt.f(0.0)
     texel = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u__SHAPE, rt.i(0)))
-      texel = rt.construct(2, ((rt.f(1)) / (_u_resolution[0])), ((rt.f(1)) / (_u_resolution[1])))
+      texel = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
       r = rt.component_wise('min', _u_radius, rt.f(32))
       i = rt.i(1)
       _for0_first = true
@@ -33,11 +33,11 @@ run_pixel = lambda do |ctx, out|
         if rt.bool(rt.binary('>', rt.construct(1, i), r))
           break
         end
-        o = rt.construct(2, (((rt.f(0))) * (texel[0])), ((((i))) * (texel[1])))
-        sD = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('-', uv, o, 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('-', uv, o, 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('-', uv, o, 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('-', uv, o, 2, 'float')))[3])
-        sU = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('+', uv, o, 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('+', uv, o, 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('+', uv, o, 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('+', uv, o, 2, 'float')))[3])
-        hi = rt.construct(4, rt.component_wise('max', acc[0], rt.component_wise('max', sD[0], sU[0])), rt.component_wise('max', acc[1], rt.component_wise('max', sD[1], sU[1])), rt.component_wise('max', acc[2], rt.component_wise('max', sD[2], sU[2])), rt.component_wise('max', acc[3], rt.component_wise('max', sD[3], sU[3])))
-        lo = rt.construct(4, rt.component_wise('min', acc[0], rt.component_wise('min', sD[0], sU[0])), rt.component_wise('min', acc[1], rt.component_wise('min', sD[1], sU[1])), rt.component_wise('min', acc[2], rt.component_wise('min', sD[2], sU[2])), rt.component_wise('min', acc[3], rt.component_wise('min', sD[3], sU[3])))
+        o = rt.construct(2, rt.binary_raw('*', rt.construct_raw(2, rt.f(0), rt.construct(1, i)), texel, 2, 'float'))
+        sD = rt.texture(_u_inputTex, rt.binary_raw('-', uv, o, 2, 'float'))
+        sU = rt.texture(_u_inputTex, rt.binary_raw('+', uv, o, 2, 'float'))
+        hi = rt.component_wise('max', acc, rt.component_wise('max', sD, sU))
+        lo = rt.component_wise('min', acc, rt.component_wise('min', sD, sU))
         acc.replace((rt.component_wise('mix', hi, lo, rt.construct(1, _u_mode))).map { |c| rt.f32(c) })
       end
     end

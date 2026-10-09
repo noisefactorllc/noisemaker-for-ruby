@@ -55,19 +55,19 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, g['POINT_COUNT']))
         break
       end
-      s = rt.construct(3, rt.construct(3, seed_f, rt.binary('*', rt.construct(1, i), rt.f(7.309999942779541), 1, 'float'), rt.f(0)))
-      base = rt.construct(2, rt.swizzle(hash33__vec3.call(s), 'xy'))
-      osc = rt.construct(2, (((rt.component_wise('sin', ((((_t) * (rt.f(0.69999998807907104)))) + ((((i)) * (rt.f(1.6180000305175781)))))))) * (drift)), (((rt.component_wise('cos', ((((_t) * (rt.f(0.5)))) + ((((i)) * (rt.f(2.2360000610351562)))))))) * (drift)))
-      pt = rt.construct(2, rt.component_wise('fract', rt.f32(((base[0]) + (osc[0])))), rt.component_wise('fract', rt.f32(((base[1]) + (osc[1])))))
-      delta = rt.construct(2, rt.component_wise('abs', rt.f32(((uv[0]) - (pt[0])))), rt.component_wise('abs', rt.f32(((uv[1]) - (pt[1])))))
-      wd = rt.construct(2, rt.component_wise('min', delta[0], rt.f32(((rt.f(1)) - (delta[0])))), rt.component_wise('min', delta[1], rt.f32(((rt.f(1)) - (delta[1])))))
+      s = rt.construct(3, seed_f, rt.binary('*', rt.construct(1, i), rt.f(7.309999942779541), 1, 'float'), rt.f(0))
+      base = rt.swizzle(hash33__vec3.call(s), 'xy')
+      osc = rt.construct(2, rt.binary_raw('*', rt.construct_raw(2, rt.component_wise('sin', rt.binary('+', rt.binary('*', _t, rt.f(0.69999998807907104), 1, 'float'), rt.binary('*', rt.construct(1, i), rt.f(1.6180000305175781), 1, 'float'), 1, 'float')), rt.component_wise('cos', rt.binary('+', rt.binary('*', _t, rt.f(0.5), 1, 'float'), rt.binary('*', rt.construct(1, i), rt.f(2.2360000610351562), 1, 'float'), 1, 'float'))), drift, 2, 'float'))
+      pt = rt.component_wise('fract', rt.construct(2, ((base[0]) + (osc[0])), ((base[1]) + (osc[1]))))
+      delta = rt.component_wise('abs', rt.construct(2, ((uv[0]) - (pt[0])), ((uv[1]) - (pt[1]))))
+      wd = rt.component_wise('min', delta, rt.construct(2, ((rt.f(1)) - (delta[0])), ((rt.f(1)) - (delta[1]))))
       dist = rt.dot(wd, wd)
       if rt.bool(rt.binary('<', dist, best_dist))
         best_dist = dist
         best_index = i
       end
     end
-    s = rt.construct(3, rt.construct(3, rt.binary('+', seed_f, rt.f(100), 1, 'float'), rt.binary('*', rt.construct(1, best_index), rt.f(13.369999885559082), 1, 'float'), rt.f(5)))
+    s = rt.construct(3, rt.binary('+', seed_f, rt.f(100), 1, 'float'), rt.binary('*', rt.construct(1, best_index), rt.f(13.369999885559082), 1, 'float'), rt.f(5))
     cell_color.replace((rt.component_wise('mix', hash33__vec3.call(s), _u_color, rt.f(0.60000002384185791))).map { |c| rt.f32(c) })
     cell_dist = best_dist
     return [nil, cell_color, cell_dist]
@@ -75,18 +75,18 @@ run_pixel = lambda do |ctx, out|
   centerMask__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     centered = nil; dist = nil
-    centered = rt.construct(2, rt.component_wise('abs', rt.f32(((uv[0]) - (rt.f(0.5))))), rt.component_wise('abs', rt.f32(((uv[1]) - (rt.f(0.5))))))
+    centered = rt.component_wise('abs', rt.construct(2, ((uv[0]) - (rt.f(0.5))), ((uv[1]) - (rt.f(0.5)))))
     dist = rt.component_wise('max', rt.swizzle(centered, 'x'), rt.swizzle(centered, 'y'))
     return rt.component_wise('clamp', rt.binary('*', dist, rt.f(2), 1, 'float'), rt.f(0), rt.f(1))
   end
   main__void = lambda do
     __hoistv1 = nil; __hoistv2 = nil; __hoistv3 = nil; __hoistv4 = nil; _t = nil; angle = nil; base = nil; base_cell = nil; base_dist = nil; blend_alpha = nil; bloom_color = nil; coords = nil; final_color = nil; fullRes = nil; globalCoord = nil; glow = nil; leak = nil; luma = nil; mask = nil; masked = nil; nb0 = nil; nb1 = nil; nb2 = nil; nb3 = nil; screened = nil; seed_f = nil; soft_accum = nil; soft_w = nil; tileDims = nil; uv = nil; vaseline = nil; warp = nil; warp_cell = nil; warp_dist = nil; warped_uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     coords = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     tileDims = rt.texture_size(_u_inputTex)
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : ((tileDims[0]))), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : ((tileDims[1]))))
-    uv = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
-    base = rt.construct(4, rt.texel_fetch(_u_inputTex, coords, rt.i(0)))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (rt.construct(2, tileDims))))
+    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    base = rt.texel_fetch(_u_inputTex, coords, rt.i(0))
     blend_alpha = rt.component_wise('clamp', _u_alpha, rt.f(0), rt.f(1))
     if rt.bool(rt.binary('<=', blend_alpha, rt.f(0)))
       g['fragColor'].replace((base).map { |c| rt.f32(c) })
@@ -99,18 +99,18 @@ run_pixel = lambda do |ctx, out|
     (begin _retc, base_cell, base_dist = voronoiCell__vec2_float_float_vec3_float.call(uv, seed_f, _t, base_cell, base_dist); _retc end)
     luma = luminance__vec3.call(base_cell)
     angle = rt.binary('+', rt.binary('*', luma, g['TAU'], 1, 'float'), rt.binary('*', rt.binary('*', _t, _u_speed, 1, 'float'), rt.f(0.5), 1, 'float'), 1, 'float')
-    warp = rt.construct(2, (((rt.component_wise('cos', angle))) * (rt.f(0.25))), (((rt.component_wise('sin', angle))) * (rt.f(0.25))))
-    warped_uv = rt.construct(2, rt.component_wise('fract', rt.f32(((uv[0]) + (warp[0])))), rt.component_wise('fract', rt.f32(((uv[1]) + (warp[1])))))
+    warp = rt.construct(2, rt.binary_raw('*', rt.construct_raw(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle)), rt.f(0.25), 2, 'float'))
+    warped_uv = rt.component_wise('fract', rt.construct(2, ((uv[0]) + (warp[0])), ((uv[1]) + (warp[1]))))
     warp_cell = rt.construct(3, 0.0)
     warp_dist = rt.f(0.0)
     (begin _retc, warp_cell, warp_dist = voronoiCell__vec2_float_float_vec3_float.call(warped_uv, seed_f, _t, warp_cell, warp_dist); _retc end)
     glow = rt.component_wise('exp', rt.binary('*', rt.unary('-', warp_dist), rt.f(12), 1, 'float'))
-    bloom_color = rt.construct(3, rt.component_wise('mix', warp_cell[0], rt.f32(((warp_cell[0]) * (rt.f(1.2999999523162842)))), glow), rt.component_wise('mix', warp_cell[1], rt.f32(((warp_cell[1]) * (rt.f(1.2999999523162842)))), glow), rt.component_wise('mix', warp_cell[2], rt.f32(((warp_cell[2]) * (rt.f(1.2999999523162842)))), glow))
-    leak = rt.construct(3, rt.component_wise('clamp', rt.component_wise('mix', rt.component_wise('sqrt', rt.component_wise('clamp', warp_cell[0], (rt.f(0)), (rt.f(1)))), bloom_color[0], rt.f(0.55000001192092896)), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.component_wise('mix', rt.component_wise('sqrt', rt.component_wise('clamp', warp_cell[1], (rt.f(0)), (rt.f(1)))), bloom_color[1], rt.f(0.55000001192092896)), (rt.f(0)), (rt.f(1))), rt.component_wise('clamp', rt.component_wise('mix', rt.component_wise('sqrt', rt.component_wise('clamp', warp_cell[2], (rt.f(0)), (rt.f(1)))), bloom_color[2], rt.f(0.55000001192092896)), (rt.f(0)), (rt.f(1))))
-    screened = rt.construct(3, (((rt.f(1))) - ((((((rt.f(1))) - (rt.swizzle(base, 'r')))) * ((((rt.f(1))) - (leak[0])))))), (((rt.f(1))) - ((((((rt.f(1))) - (rt.swizzle(base, 'g')))) * ((((rt.f(1))) - (leak[1])))))), (((rt.f(1))) - ((((((rt.f(1))) - (rt.swizzle(base, 'b')))) * ((((rt.f(1))) - (leak[2])))))))
+    bloom_color = rt.component_wise('mix', warp_cell, rt.construct(3, ((warp_cell[0]) * (rt.f(1.2999999523162842))), ((warp_cell[1]) * (rt.f(1.2999999523162842))), ((warp_cell[2]) * (rt.f(1.2999999523162842)))), glow)
+    leak = rt.component_wise('clamp', rt.component_wise('mix', rt.component_wise('sqrt', rt.component_wise('clamp', warp_cell, rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1)))), bloom_color, rt.f(0.55000001192092896)), rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1)))
+    screened = rt.construct(3, rt.binary_raw('-', rt.construct_raw(3, rt.f(1)), rt.binary_raw('*', rt.binary_raw('-', rt.construct_raw(3, rt.f(1)), rt.swizzle(base, 'rgb'), 3, 'float'), rt.binary_raw('-', rt.construct_raw(3, rt.f(1)), leak, 3, 'float'), 3, 'float'), 3, 'float'))
     mask = rt.component_wise('pow', centerMask__vec2.call(uv), rt.f(4))
-    masked = rt.construct(3, rt.component_wise('mix', rt.swizzle(base, 'r'), screened[0], mask), rt.component_wise('mix', rt.swizzle(base, 'g'), screened[1], mask), rt.component_wise('mix', rt.swizzle(base, 'b'), screened[2], mask))
-    soft_accum = rt.construct(3, ((masked[0]) * (rt.f(4))), ((masked[1]) * (rt.f(4))), ((masked[2]) * (rt.f(4))))
+    masked = rt.component_wise('mix', rt.swizzle(base, 'rgb'), screened, mask)
+    soft_accum = rt.construct(3, rt.binary_raw('*', masked, rt.f(4), 3, 'float'))
     soft_w = rt.f(4)
     nb0 = rt.component_wise('clamp', rt.binary('+', coords, rt.construct(2, rt.i(2), rt.i(0), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', tileDims, rt.i(1), 2, 'int'))
     nb1 = rt.component_wise('clamp', rt.binary('+', coords, rt.construct(2, rt.unary('-', rt.i(2)), rt.i(0), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', tileDims, rt.i(1), 2, 'int'))
@@ -121,8 +121,8 @@ run_pixel = lambda do |ctx, out|
     __hoistv3 = rt.swizzle(rt.texel_fetch(_u_inputTex, nb2, rt.i(0)), 'rgb'); soft_accum[0] = rt.f32(rt.binary('+', soft_accum[0], __hoistv3[0], 1, 'float')); soft_accum[1] = rt.f32(rt.binary('+', soft_accum[1], __hoistv3[1], 1, 'float')); soft_accum[2] = rt.f32(rt.binary('+', soft_accum[2], __hoistv3[2], 1, 'float'))
     __hoistv4 = rt.swizzle(rt.texel_fetch(_u_inputTex, nb3, rt.i(0)), 'rgb'); soft_accum[0] = rt.f32(rt.binary('+', soft_accum[0], __hoistv4[0], 1, 'float')); soft_accum[1] = rt.f32(rt.binary('+', soft_accum[1], __hoistv4[1], 1, 'float')); soft_accum[2] = rt.f32(rt.binary('+', soft_accum[2], __hoistv4[2], 1, 'float'))
     soft_w = rt.binary('+', soft_w, rt.f(4), 1, 'float')
-    vaseline = rt.construct(3, ((soft_accum[0]) / (soft_w)), ((soft_accum[1]) / (soft_w)), ((soft_accum[2]) / (soft_w)))
-    final_color = rt.construct(3, rt.component_wise('mix', rt.swizzle(base, 'r'), rt.component_wise('mix', masked[0], vaseline[0], blend_alpha), blend_alpha), rt.component_wise('mix', rt.swizzle(base, 'g'), rt.component_wise('mix', masked[1], vaseline[1], blend_alpha), blend_alpha), rt.component_wise('mix', rt.swizzle(base, 'b'), rt.component_wise('mix', masked[2], vaseline[2], blend_alpha), blend_alpha))
+    vaseline = rt.construct(3, rt.binary_raw('/', soft_accum, soft_w, 3, 'float'))
+    final_color = rt.component_wise('mix', rt.swizzle(base, 'rgb'), rt.component_wise('mix', masked, vaseline, blend_alpha), blend_alpha)
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', final_color, rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))), rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

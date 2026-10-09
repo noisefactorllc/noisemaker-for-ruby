@@ -23,9 +23,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     band = nil; blur = nil; edgeGain = nil; edgeInk = nil; ink = nil; lumBlur = nil; lumSrc = nil; outColor = nil; src = nil; toneHi = nil; toneInk = nil; toneLo = nil; uv = nil
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
-    blur = rt.construct(4, (rt.texture(_u_blurTex, uv))[0], (rt.texture(_u_blurTex, uv))[1], (rt.texture(_u_blurTex, uv))[2], (rt.texture(_u_blurTex, uv))[3])
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    src = rt.texture(_u_inputTex, uv)
+    blur = rt.texture(_u_blurTex, uv)
     lumSrc = lum__vec3.call(rt.swizzle(src, 'rgb'))
     lumBlur = lum__vec3.call(rt.swizzle(blur, 'rgb'))
     band = rt.binary('-', lumSrc, lumBlur, 1, 'float')
@@ -35,7 +35,7 @@ run_pixel = lambda do |ctx, out|
     toneLo = rt.binary('-', toneHi, rt.f(0.25999999046325684), 1, 'float')
     toneInk = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', toneLo, toneHi, lumSrc), 1, 'float')
     ink = rt.component_wise('clamp', rt.component_wise('max', edgeInk, toneInk), rt.f(0), rt.f(1))
-    outColor = rt.construct(3, tonemap2__float_vec3_vec3.call(rt.binary('-', rt.f(1), ink, 1, 'float'), _u_inkColor, _u_paperColor))
+    outColor = tonemap2__float_vec3_vec3.call(rt.binary('-', rt.f(1), ink, 1, 'float'), _u_inkColor, _u_paperColor)
     g['fragColor'].replace((rt.construct(4, outColor, rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call
