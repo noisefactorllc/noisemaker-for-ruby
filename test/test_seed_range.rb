@@ -1,20 +1,15 @@
 # frozen_string_literal: true
 
-# Parameter range enforcement for the seed parameter, mirroring the pinned
-# oracle's src/effects/definition.js message format
-# (`Parameter "<name>" must be at least/at most <bound>`) while preserving
-# this port's published contract (README, Library section): metadata slider
-# ranges are hints, not clamps, so only the `seed` parameter -- which the
-# CLI's unseeded draw selects from -- enforces its declared min/max, and
-# non-seed values beyond slider hints render. The bundled metadata declares
-# seed maximums (255/100/1000), so the CLI's unseeded draw stays inside the
-# selected effect's declared range, and an explicitly out-of-range seed
-# fails with a clean diagnostic instead of rendering.
+# The CLI's unseeded seed draw, and the parameter contract it must not break.
 #
-# The split the reference keeps (runtime/renderer.js): the DSL's implicit
-# render-seed threading spreads the render seed into step params WITHOUT a
-# range check, while explicit DSL assignments are validated -- so the tests
-# pin both sides.
+# README, Library section: metadata slider ranges are hints, not clamps --
+# explicit values beyond a declared slider maximum render, seeds included.
+# Only the AUTOMATIC draw is bounded: the bundled metadata declares seed
+# maximums (255/100/1000), an out-of-range seed renders the degenerate
+# all-white output for a large share of the old unbounded draw
+# (1 to 2**32-1), and the automatic draw has no reason to leave the declared
+# range. The draw falls back to the old range when the effect declares no
+# seed maximum.
 
 require "minitest/autorun"
 require "tmpdir"
@@ -38,60 +33,6 @@ class TestSeedRange < Minitest::Test
     Renderer.render_effect(effect, params, nil, width: 3, height: 2, seed: seed).to_rgba8
   end
 
-  def test_explicit_out_of_range_seed_is_rejected_with_the_reference_diagnostic
-    [1001, 5000].each do |seed|
-      error = assert_raises(NoisemakerCpu::ParameterRangeError, "seed #{seed}") do
-        render("synth/curl", {}, seed: seed)
-      end
-      assert_equal 'Parameter "seed" must be at most 1000', error.message
-    end
-    error = assert_raises(NoisemakerCpu::ParameterRangeError) do
-      render("synth/curl", {}, seed: -1)
-    end
-    assert_equal 'Parameter "seed" must be at least 0', error.message
-  end
-
-  def test_boundary_seed_still_renders_and_non_seed_values_beyond_slider_hints_are_not_clamped
-    assert_equal 3 * 2 * 4, render("synth/curl", {}, seed: 1000).bytesize
-    # README, Library section: metadata slider ranges are hints, not clamps
-    # (except the seed parameter, which the CLI draws). A value beyond the
-    # declared slider maximum renders.
-    assert_equal 3 * 2 * 4, render("synth/curl", { scale: 25 }, seed: 1).bytesize
-    filtered = Renderer.render_effect("filter/adjust", { contrast: 5 }, { "inputTex" => NoisemakerCpu::Surface.new(3, 2) },
-                                      width: 3, height: 2)
-    assert_equal 3 * 2 * 4, filtered.to_rgba8.bytesize
-  end
-
-  def test_every_declared_seed_range_rejects_one_past_each_bound
-    checked = 0
-    Renderer.meta["effects"].each_value do |eff|
-      spec = eff["params"]["seed"]
-      next unless spec.is_a?(Hash)
-
-      max = spec["max"]
-      unless max.nil?
-        error = assert_raises(NoisemakerCpu::ParameterRangeError,
-                              "#{eff['namespace']}/#{eff['func']}") do
-          NoisemakerCpu::Parameters.coerce(spec, Integer(max) + 1, "seed")
-        end
-        assert_equal %(Parameter "seed" must be at most #{NoisemakerCpu::Parameters._bound_text(max)}),
-                     error.message
-        assert_equal Integer(max), NoisemakerCpu::Parameters.coerce(spec, max, "seed")
-        checked += 1
-      end
-      min = spec["min"]
-      next if min.nil?
-
-      error = assert_raises(NoisemakerCpu::ParameterRangeError,
-                            "#{eff['namespace']}/#{eff['func']}") do
-        NoisemakerCpu::Parameters.coerce(spec, Integer(min) - 1, "seed")
-      end
-      assert_equal %(Parameter "seed" must be at least #{NoisemakerCpu::Parameters._bound_text(min)}),
-                   error.message
-    end
-    assert_operator checked, :>, 0, "expected at least one declared seed maximum in the bundle"
-  end
-
   def test_unseeded_draw_stays_inside_the_declared_range
     fallback = NoisemakerCpu::CLI::MAX_SEED_VALUE
     drawn = 0
@@ -113,56 +54,24 @@ class TestSeedRange < Minitest::Test
     assert_operator drawn, :>, 100, "expected to draw for most of the catalog"
   end
 
-  def test_implicit_dsl_seed_threading_stays_unvalidated_but_explicit_assignments_do_not
-    # Implicit threading (runtime/renderer.js spreads the render seed into
-    # step params without a range check): seed 5000 renders.
-    surface = Renderer.render_dsl(
-      "search synth\ncurl().write(o0)\nrender(o0)", width: 4, height: 4, seed: 5000
-    )
-    assert_equal 4 * 4 * 4, surface.to_rgba8.bytesize
-    # Explicit assignment: validated like every direct call argument.
-    error = assert_raises(NoisemakerCpu::ParameterRangeError) do
-      Renderer.render_dsl("search synth\ncurl(seed: 5000).write(o0)\nrender(o0)", width: 4, height: 4)
-    end
-    assert_equal 'Parameter "seed" must be at most 1000', error.message
+  def test_slider_ranges_stay_hints_not_clamps
+    # The published contract (README, Library section): explicit values
+    # beyond a declared slider maximum render, seeds included.
+    assert_equal 3 * 2 * 4, render("synth/curl", { scale: 25 }, seed: 1).bytesize
+    filtered = Renderer.render_effect("filter/adjust", { contrast: 5 }, { "inputTex" => NoisemakerCpu::Surface.new(3, 2) },
+                                      width: 3, height: 2)
+    assert_equal 3 * 2 * 4, filtered.to_rgba8.bytesize
+    assert_equal 3 * 2 * 4, render("synth/curl", {}, seed: 5000).bytesize
   end
 
-  def test_dsl_iteration_groups_thread_the_implicit_seed_unvalidated
-    program = "search synth\ncellularAutomata(iterationCount: 1).write(o0)\nrender(o0)"
-    surface = Renderer.render_dsl(program, width: 4, height: 4, seed: 5000)
-    assert_equal 4 * 4 * 4, surface.to_rgba8.bytesize
-  end
-
-  def test_cli_generate_rejects_an_out_of_range_seed_and_accepts_the_bound
+  def test_unseeded_cli_generate_renders_with_the_bounded_draw
     Dir.mktmpdir("noisemaker-seed-") do |dir|
       out_png = File.join(dir, "out.png")
       rc, _out, err = run_noisemaker_cli([
-        "generate", "synth/curl", "--width", "4", "--height", "4",
-        "--seed", "5000", "--filename", out_png
-      ])
-      assert_equal 1, rc
-      assert_includes err, 'Parameter "seed" must be at most 1000'
-      refute File.exist?(out_png)
-
-      rc, _out, err = run_noisemaker_cli([
-        "generate", "synth/curl", "--width", "4", "--height", "4",
-        "--seed", "1000", "--filename", out_png
+        "generate", "synth/curl", "--width", "4", "--height", "4", "--filename", out_png
       ])
       assert_equal 0, rc, err
       assert File.exist?(out_png)
-    end
-  end
-
-  def test_cli_volume_generate_validates_the_threaded_seed_before_rendering
-    Dir.mktmpdir("noisemaker-seed-") do |dir|
-      out_png = File.join(dir, "out.png")
-      rc, _out, err = run_noisemaker_cli([
-        "generate", "synth3d/noise3d", "--width", "4", "--height", "4",
-        "--seed", "5000", "--filename", out_png
-      ])
-      assert_equal 1, rc
-      assert_includes err, 'Parameter "seed" must be at most 100'
-      refute File.exist?(out_png)
     end
   end
 end

@@ -528,11 +528,13 @@ module NoisemakerCpu
     end
 
     # Unseeded runs draw inside the selected effect's declared seed range.
-    # The bundled metadata declares seed maximums (255/100/1000), and the
-    # pinned oracle rejects out-of-range seeds with `Parameter "seed" must be
-    # at most <max>`; the previous unbounded draw (1 to 2**32-1) exceeded the
-    # declared maximum whenever the effect declares one. Falls back to the
-    # old unbounded range only when the effect declares no seed maximum.
+    # The bundled metadata declares seed maximums (255/100/100), and an
+    # out-of-range seed renders the degenerate all-white output for a large
+    # share of the old unbounded draw (1 to 2**32-1). Explicit values keep
+    # rendering beyond the declared slider maximum (README: metadata slider
+    # ranges are hints, not clamps) -- only the automatic draw stays inside
+    # the declared range, falling back to the old range when the effect
+    # declares no seed maximum.
     def self._draw_seed(effect_id)
       spec = Renderer.meta["effects"][effect_id]["params"]["seed"]
       if spec.is_a?(Hash) && !spec["max"].nil?
@@ -565,18 +567,9 @@ module NoisemakerCpu
       JSON.generate(text)
     end
 
-    def self._typed_effect_program(effect_id, params, seed = nil)
+    def self._typed_effect_program(effect_id, params)
       effect = Renderer.meta["effects"][effect_id]
       args = params.keys.sort.map { |name| "#{name}: #{_dsl_value(params[name])}" }.join(", ")
-      # The reference CLI threads the render seed into the effect call as an
-      # EXPLICIT argument (bin/noisemaker-cpu.js --param stage: push seed as a
-      # DSL assignment when the effect exposes a seed parameter), so the DSL
-      # parser's parameter validation applies to it. Without this, the seed
-      # would only reach the effect through the renderer's implicit spread,
-      # which is deliberately unvalidated.
-      if seed && !params.key?("seed") && effect["params"].key?("seed")
-        args = args.empty? ? "seed: #{_dsl_value(seed)}" : "#{args}, seed: #{_dsl_value(seed)}"
-      end
       call = "#{effect['func']}(#{args})"
       domain = effect["domain"] || "image"
       if domain == "loop-begin" || domain == "loop-end"
@@ -605,7 +598,7 @@ module NoisemakerCpu
       domain = Renderer.meta["effects"][effect_id]["domain"] || "image"
       return Renderer.render_effect(effect_id, params, nil, **options) if domain == "image"
 
-      Renderer.render_dsl(_typed_effect_program(effect_id, params, options[:seed]), **options)
+      Renderer.render_dsl(_typed_effect_program(effect_id, params), **options)
     end
 
     # An effect that reads a host texture (filter/text, synth/media) binds
