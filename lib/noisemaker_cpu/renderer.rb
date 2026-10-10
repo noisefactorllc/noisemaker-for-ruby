@@ -114,8 +114,8 @@ module NoisemakerCpu
       end)
     end
 
-    def self._coerce(spec, value)
-      Parameters.coerce(spec, value)
+    def self._coerce(spec, value, name = nil)
+      Parameters.coerce(spec, value, name)
     end
 
     # The consumer-range spec upstream's expander builds for automation scaling
@@ -156,8 +156,8 @@ module NoisemakerCpu
     # rounded int selector stays an exact Integer (upstream rounds, and the
     # selector contract bypasses the choices re-validation a literal would
     # get, matching the reference engine).
-    def self._coerce_param(spec, value, time)
-      return _coerce(spec, value) unless Automation.automation_value?(value)
+    def self._coerce_param(spec, value, time, name = nil)
+      return _coerce(spec, value, name) unless Automation.automation_value?(value)
 
       resolved = Automation.resolve_automation_uniform(value, time, _automation_param_spec(spec))
       resolved.is_a?(Float) ? Parameters.number(resolved) : resolved
@@ -223,7 +223,7 @@ module NoisemakerCpu
       inputs["inputTex"] if spec["default"] == "inputTex"
     end
 
-    def self._normalize_iteration_params(eff, params, inputs, seed, time: 0.0)
+    def self._normalize_iteration_params(eff, params, inputs, seed, time: 0.0, validate_implicit_seed: true)
       params = Parameters.normalize(eff, params)
       normalized = {}
       effect_uniforms = {}
@@ -241,9 +241,12 @@ module NoisemakerCpu
         end
 
         value = if pname == "seed" && !params.key?("seed")
-                  _coerce(spec, seed)
+                  # The DSL step paths thread the render seed implicitly
+                  # (validate_implicit_seed false, matching the reference's
+                  # unvalidated spread); the API/CLI path validates it.
+                  _coerce(spec, seed, validate_implicit_seed ? pname : nil)
                 else
-                  _coerce_param(spec, params[pname], time)
+                  _coerce_param(spec, params[pname], time, pname)
                 end
         normalized[pname] = value
         effect_uniforms[spec["uniform"]] = value unless spec["uniform"].nil?
@@ -360,10 +363,11 @@ module NoisemakerCpu
     end
 
     def self._initialize_iteration_state(eff, params, inputs, seed, width, height, owner_state_size: nil,
-      time: 0.0)
+      time: 0.0, validate_implicit_seed: true)
       params = _inherit_volume_size(eff, params, _input_bundle(inputs))
       normalized, effect_uniforms, surface_params = _normalize_iteration_params(eff, params, inputs, seed,
-                                                                                time: time)
+                                                                                time: time,
+        validate_implicit_seed: validate_implicit_seed)
       if !owner_state_size.nil? && (eff["params"] || {}).key?("stateSize")
         normalized["stateSize"] = owner_state_size
         state_size_spec = eff["params"]["stateSize"]
@@ -402,13 +406,14 @@ module NoisemakerCpu
     # frames the persistent-texture feedback accumulated, so an osc param must read
     # the same per-iteration time the kernels receive. Returns nil when the step
     # carries no automation, leaving the init-time params object authoritative.
-    def self._refresh_automation_params(state, input_bundle, seed, time)
+    def self._refresh_automation_params(state, input_bundle, seed, time, validate_implicit_seed: true)
       raw = state["raw_params"]
       return nil if raw.nil? || !raw.any? { |_name, value| Automation.automation_value?(value) }
 
       eff = state["effect"]
       params = _inherit_volume_size(eff, raw, input_bundle)
-      normalized, effect_uniforms, = _normalize_iteration_params(eff, params, state["inputs"], seed, time: time)
+      normalized, effect_uniforms, = _normalize_iteration_params(eff, params, state["inputs"], seed, time: time,
+        validate_implicit_seed: validate_implicit_seed)
       owner = state["owner_state_size"]
       if !owner.nil? && (eff["params"] || {}).key?("stateSize")
         normalized["stateSize"] = owner
@@ -489,7 +494,7 @@ module NoisemakerCpu
     end
 
     def self._run_iteration_step(state, input, states:, group_resources:, width:, height:, seed:, time:, frame:,
-      delta_time:)
+      delta_time:, validate_implicit_seed: true)
       eff = state["effect"]
       resources = state["resources"]
       input_was_bundle = _chain_bundle?(input)
@@ -497,7 +502,8 @@ module NoisemakerCpu
       resources["inputTex"] = input_bundle["image"] unless input_bundle["image"].nil?
       resources["inputTex3d"] = input_bundle["volume"] unless input_bundle["volume"].nil?
       resources["inputGeo"] = input_bundle["geometry"] unless input_bundle["geometry"].nil?
-      refreshed = _refresh_automation_params(state, input_bundle, seed, time)
+      refreshed = _refresh_automation_params(state, input_bundle, seed, time,
+        validate_implicit_seed: validate_implicit_seed)
       if refreshed
         state["params"] = refreshed[0]
         state["effect_uniforms"] = refreshed[1]
@@ -674,12 +680,13 @@ module NoisemakerCpu
       result
     end
 
-    def self._render_iterated_effect(eff, params, inputs, width:, height:, seed:, time:)
+    def self._render_iterated_effect(eff, params, inputs, width:, height:, seed:, time:, validate_implicit_seed: true)
       input_bundle = _input_bundle(inputs)
       typed = %w[volume-generator volume-filter volume-renderer].include?(eff["domain"]) ||
         !input_bundle["volume"].nil? || !input_bundle["geometry"].nil?
       params = _inherit_volume_size(eff, params, input_bundle)
-      state = _initialize_iteration_state(eff, params, inputs, seed, width, height, time: time)
+      state = _initialize_iteration_state(eff, params, inputs, seed, width, height, time: time,
+        validate_implicit_seed: validate_implicit_seed)
       states = [state]
       group_resources = {}
       count = _iterated_count(eff, state["params"])
@@ -717,24 +724,27 @@ module NoisemakerCpu
         result = _run_iteration_step(
           state, typed ? input_bundle : inputs["inputTex"], states: states, group_resources: group_resources,
           width: width, height: height, seed: seed,
-          time: iteration_time, frame: index, delta_time: NoisemakerCpu::Iteration::DELTA_TIME
+          time: iteration_time, frame: index, delta_time: NoisemakerCpu::Iteration::DELTA_TIME,
+          validate_implicit_seed: validate_implicit_seed
         )
       end
       result
     end
 
-    def self._render_typed_effect(eff, params, inputs, width:, height:, seed:, time:)
+    def self._render_typed_effect(eff, params, inputs, width:, height:, seed:, time:, validate_implicit_seed: true)
       input_bundle = _input_bundle(inputs)
       params = _inherit_volume_size(eff, params, input_bundle)
-      state = _initialize_iteration_state(eff, params, inputs, seed, width, height, time: time)
+      state = _initialize_iteration_state(eff, params, inputs, seed, width, height, time: time,
+        validate_implicit_seed: validate_implicit_seed)
       _run_iteration_step(
         state, input_bundle, states: [state], group_resources: {},
-        width: width, height: height, seed: seed, time: time, frame: 0, delta_time: 0.0
+        width: width, height: height, seed: seed, time: time, frame: 0, delta_time: 0.0,
+        validate_implicit_seed: validate_implicit_seed
       )
     end
 
     def self.render_effect(effect_id, params = nil, inputs = nil, width: 256, height: 256, seed: 1, time: 0.0,
-      external_inputs: nil)
+      external_inputs: nil, validate_implicit_seed: true)
       params ||= {}
       inputs ||= {}
       external_inputs = (external_inputs || {}).transform_keys(&:to_s)
@@ -742,9 +752,11 @@ module NoisemakerCpu
       raise "unknown effect '#{effect_id}' (not in bundle)" if eff.nil?
       params = Parameters.normalize(eff, params)
       inputs = inputs.transform_keys(&:to_s)
-      return _render_iterated_effect(eff, params, inputs, width: width, height: height, seed: seed, time: time) if eff["iterated"]
+      return _render_iterated_effect(eff, params, inputs, width: width, height: height, seed: seed, time: time,
+        validate_implicit_seed: validate_implicit_seed) if eff["iterated"]
       if %w[volume-generator volume-filter volume-renderer].include?(eff["domain"])
-        return _render_typed_effect(eff, params, inputs, width: width, height: height, seed: seed, time: time)
+        return _render_typed_effect(eff, params, inputs, width: width, height: height, seed: seed, time: time,
+          validate_implicit_seed: validate_implicit_seed)
       end
 
       effect_uniforms = {}
@@ -767,10 +779,13 @@ module NoisemakerCpu
             # An effect's own `seed` param shares the GLSL uniform name with
             # the canonical render seed: thread the render seed into it so
             # `seed=` actually changes the generator's look (the big parity
-            # unlock in the Python port).
-            _coerce(spec, seed)
+            # unlock in the Python port). The DSL step paths thread it
+            # implicitly without a range check (validate_implicit_seed false,
+            # matching the reference's unvalidated spread in renderer.js);
+            # the API/CLI path validates the threaded seed.
+            _coerce(spec, seed, validate_implicit_seed ? pname : nil)
           else
-            _coerce_param(spec, params[pname], time)
+            _coerce_param(spec, params[pname], time, pname)
           end
         effect_uniforms[spec["uniform"]] = val unless spec["uniform"].nil?
         effect_uniforms[spec["define"]] = val unless spec["define"].nil?
@@ -783,7 +798,7 @@ module NoisemakerCpu
           eff["params"][k].is_a?(Hash) && (eff["params"][k]["type"] || "") == "palette"
         end
         unless pal.nil?
-          idx = _coerce(eff["params"][pal], params[pal])
+          idx = _coerce(eff["params"][pal], params[pal], pal)
           table = NoisemakerCpu::PaletteData::PALETTE_DATA
           idx_s = idx.to_s
           if idx_s =~ /\A\d+\z/ && idx_s.to_i.positive? && idx_s.to_i <= table.length
@@ -867,7 +882,11 @@ module NoisemakerCpu
             next unless eff["params"].key?(pn)
 
             gp = eff["params"][pn]
-            gen[pn] = (pn == "seed" && !params.key?("seed")) ? _coerce(gp, seed) : _coerce_param(gp, params[pn], time)
+            gen[pn] = if pn == "seed" && !params.key?("seed")
+                        _coerce(gp, seed, validate_implicit_seed ? pn : nil)
+                      else
+                        _coerce_param(gp, params[pn], time, pn)
+                      end
           end
           attachments[tname] = NoisemakerCpu::OverlayGen.render_worm_overlay(effect_id, width, height, gen)
         end
@@ -1025,7 +1044,11 @@ module NoisemakerCpu
       render_effect(
         step["effect_id"], step["params"], inputs,
         width: width, height: height, seed: seed, time: time,
-        external_inputs: external_inputs
+        external_inputs: external_inputs,
+        # The DSL's implicit render-seed threading is unvalidated, matching
+        # runtime/renderer.js (explicit DSL assignments still go through the
+        # range check inside Parameters.normalize).
+        validate_implicit_seed: false
       )
     end
 
@@ -1046,7 +1069,8 @@ module NoisemakerCpu
       owner_step = group["steps"][0]
       owner_inputs = _iteration_step_inputs(owner_step, group_input, surfaces, external_textures)
       owner_state = _initialize_iteration_state(
-        owner_step["definition"], owner_step["params"], owner_inputs, seed, width, height, time: time
+        owner_step["definition"], owner_step["params"], owner_inputs, seed, width, height, time: time,
+        validate_implicit_seed: false
       )
       owner_size = owner_state["params"]["stateSize"] if group["steps"].length > 1
       states = [owner_state]
@@ -1054,7 +1078,7 @@ module NoisemakerCpu
         inputs = _iteration_step_inputs(step, group_input, surfaces, external_textures)
         states << _initialize_iteration_state(
           step["definition"], step["params"], inputs, seed, width, height,
-          owner_state_size: owner_size, time: time
+          owner_state_size: owner_size, time: time, validate_implicit_seed: false
         )
       end
 
@@ -1087,7 +1111,7 @@ module NoisemakerCpu
           step_input = _run_iteration_step(
             state, step_input, states: states, group_resources: group_resources,
             width: width, height: height, seed: seed, time: iteration_time, frame: index,
-            delta_time: NoisemakerCpu::Iteration::DELTA_TIME
+            delta_time: NoisemakerCpu::Iteration::DELTA_TIME, validate_implicit_seed: false
           )
         end
         result = step_input
