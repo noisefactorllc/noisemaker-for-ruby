@@ -7,9 +7,11 @@ module NoisemakerCpu
   # A numeric parameter value outside its declared min/max range. Mirrors the
   # pinned oracle's src/effects/definition.js, which raises
   # `RangeError('Parameter "<name>" must be at most <max>')` after coercing
-  # every numeric parameter value. A plain StandardError (not an
-  # ArgumentError): a range violation is a render-time value error, so the
-  # CLI reports it as a named cause with exit 1, not as a usage error.
+  # every numeric parameter value; this port enforces the bound for the
+  # `seed` parameter only (README: metadata slider ranges are hints, not
+  # clamps). A plain StandardError (not an ArgumentError): a range violation
+  # is a render-time value error, so the CLI reports it as a named cause with
+  # exit 1, not as a usage error.
   class ParameterRangeError < StandardError; end
 
   # The API, CLI and DSL all use the same value conversions. Metadata min/max
@@ -54,16 +56,22 @@ module NoisemakerCpu
       bound.is_a?(Float) && bound.finite? && bound == bound.to_i ? bound.to_i.to_s : bound.to_s
     end
 
-    # Enforce a numeric parameter's declared min/max range. `name == nil`
-    # skips the check: the only unvalidated call path is the DSL renderer's
-    # IMPLICIT render-seed threading, which the pinned oracle also leaves
+    # Enforce a numeric parameter's declared min/max range -- SEED ONLY.
+    #
+    # The reference oracle (src/effects/definition.js) range-checks every
+    # numeric parameter, but this port's published contract (README, Library
+    # section) deliberately keeps metadata slider ranges as hints, not
+    # clamps, for everything else. The one enforced case is the `seed`
+    # parameter: the CLI's unseeded draw selects from it, and out-of-range
+    # seeds render degenerate output rather than a clean diagnostic. `name
+    # == nil` also skips the check: the DSL renderer's IMPLICIT render-seed
+    # threading stays unvalidated, which the pinned oracle also leaves
     # unvalidated (runtime/renderer.js spreads the render seed into step
-    # params without a range check; explicit DSL assignments go through
-    # normalizeArguments' coercion and are always validated). Automation
-    # (`osc(...)`) values return from #coerce before reaching the numeric
-    # branches and stay unvalidated, like the reference.
+    # params without a range check; explicit DSL assignments are validated).
+    # Automation (`osc(...)`) values return from #coerce before reaching the
+    # numeric branches and stay unvalidated, like the reference.
     def self._check_range(spec, name, number)
-      return if name.nil?
+      return if name.nil? || name != "seed"
       return unless number.is_a?(Numeric)
 
       declared_min = spec["min"]

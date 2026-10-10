@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
-# Parameter range enforcement, mirroring the pinned oracle's
-# src/effects/definition.js: after coercion, every numeric parameter outside
-# its declared min/max is rejected with `Parameter "<name>" must be at
-# least/at most <bound>`. The bundled metadata declares seed maximums
-# (255/100/1000), so the CLI's unseeded draw stays inside the selected
-# effect's declared range, and an explicitly out-of-range seed fails with a
-# clean diagnostic instead of rendering.
+# Parameter range enforcement for the seed parameter, mirroring the pinned
+# oracle's src/effects/definition.js message format
+# (`Parameter "<name>" must be at least/at most <bound>`) while preserving
+# this port's published contract (README, Library section): metadata slider
+# ranges are hints, not clamps, so only the `seed` parameter -- which the
+# CLI's unseeded draw selects from -- enforces its declared min/max, and
+# non-seed values beyond slider hints render. The bundled metadata declares
+# seed maximums (255/100/1000), so the CLI's unseeded draw stays inside the
+# selected effect's declared range, and an explicitly out-of-range seed
+# fails with a clean diagnostic instead of rendering.
 #
 # The split the reference keeps (runtime/renderer.js): the DSL's implicit
 # render-seed threading spreads the render seed into step params WITHOUT a
@@ -48,12 +51,15 @@ class TestSeedRange < Minitest::Test
     assert_equal 'Parameter "seed" must be at least 0', error.message
   end
 
-  def test_boundary_seed_still_renders_and_float_bounds_print_without_the_fraction
+  def test_boundary_seed_still_renders_and_non_seed_values_beyond_slider_hints_are_not_clamped
     assert_equal 3 * 2 * 4, render("synth/curl", {}, seed: 1000).bytesize
-    error = assert_raises(NoisemakerCpu::ParameterRangeError) do
-      render("synth/curl", { scale: 25 }, seed: 1)
-    end
-    assert_equal 'Parameter "scale" must be at most 20', error.message
+    # README, Library section: metadata slider ranges are hints, not clamps
+    # (except the seed parameter, which the CLI draws). A value beyond the
+    # declared slider maximum renders.
+    assert_equal 3 * 2 * 4, render("synth/curl", { scale: 25 }, seed: 1).bytesize
+    filtered = Renderer.render_effect("filter/adjust", { contrast: 5 }, { "inputTex" => NoisemakerCpu::Surface.new(3, 2) },
+                                      width: 3, height: 2)
+    assert_equal 3 * 2 * 4, filtered.to_rgba8.bytesize
   end
 
   def test_every_declared_seed_range_rejects_one_past_each_bound
