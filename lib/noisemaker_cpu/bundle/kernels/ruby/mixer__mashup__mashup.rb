@@ -87,8 +87,8 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; boundary = nil; controlColor = nil; k = nil; lum = nil; n = nil; result = nil; src = nil; uv = nil; w = nil
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    controlColor = rt.construct(4, (rt.texture(_u_source, uv))[0], (rt.texture(_u_source, uv))[1], (rt.texture(_u_source, uv))[2], (rt.texture(_u_source, uv))[3])
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    controlColor = rt.texture(_u_source, uv)
     lum = getLuminosity__vec3.call(rt.swizzle(controlColor, 'rgb'))
     n = rt.component_wise('clamp', _u_layers, rt.i(2), rt.i(8))
     result = rt.construct(4, (rt.bool(rt.binary('==', layerActive__int.call(rt.i(0)), rt.i(1))) ? (sampleLayer__int_vec2.call(rt.i(0), uv)) : (controlColor)))

@@ -60,7 +60,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    return rt.construct(3, ((rgb[0]) + ((m))), ((rgb[1]) + ((m))), ((rgb[2]) + ((m))))
+    return rt.construct(3, rt.binary_raw('+', rgb, rt.construct_raw(3, m), 3, 'float'))
   end
   oklab2linear__vec3 = lambda do |lab|
     lab = rt.copy(lab, 'float')
@@ -79,8 +79,8 @@ run_pixel = lambda do |ctx, out|
   linear2srgb__vec3 = lambda do |linear|
     linear = rt.copy(linear, 'float')
     high = nil; low = nil
-    low = rt.construct(3, ((linear[0]) * (rt.f(12.920000076293945))), ((linear[1]) * (rt.f(12.920000076293945))), ((linear[2]) * (rt.f(12.920000076293945))))
-    high = rt.construct(3, rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', rt.component_wise('max', linear, rt.construct(3, rt.f(0))), rt.construct(3, rt.f(0.4166666567325592))), 3, 'float'), rt.f(0.054999999701976776), 3, 'float'))
+    low = rt.construct(3, rt.binary_raw('*', linear, rt.f(12.920000076293945), 3, 'float'))
+    high = rt.construct(3, rt.binary('-', rt.construct(3, rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', rt.component_wise('max', linear, rt.construct(3, rt.f(0))), rt.construct(3, rt.f(0.4166666567325592))), 3, 'float')), rt.f(0.054999999701976776), 3, 'float'))
     return rt.component_wise('mix', high, low, rt.component_wise('step', linear, rt.construct(3, rt.f(0.0031308000907301903))))
   end
   oklab2rgb__vec3 = lambda do |lab|
@@ -89,7 +89,7 @@ run_pixel = lambda do |ctx, out|
     _L = rt.swizzle(lab, 'x')
     a = rt.binary('*', rt.binary('-', rt.swizzle(lab, 'y'), rt.f(0.5), 1, 'float'), rt.f(0.80000001192092896), 1, 'float')
     b = rt.binary('*', rt.binary('-', rt.swizzle(lab, 'z'), rt.f(0.5), 1, 'float'), rt.f(0.80000001192092896), 1, 'float')
-    linear_rgb = rt.construct(3, oklab2linear__vec3.call(rt.construct(3, (_L), (a), (b))))
+    linear_rgb = oklab2linear__vec3.call(rt.construct(3, (_L), (a), (b)))
     return rt.component_wise('clamp', linear2srgb__vec3.call(linear_rgb), rt.f(0), rt.f(1))
   end
   oklch2rgb__vec3 = lambda do |lch|
@@ -100,7 +100,7 @@ run_pixel = lambda do |ctx, out|
     _H = rt.binary('*', rt.swizzle(lch, 'z'), g['TAU'], 1, 'float')
     a = rt.binary('*', _C, rt.component_wise('cos', _H), 1, 'float')
     b = rt.binary('*', _C, rt.component_wise('sin', _H), 1, 'float')
-    linear_rgb = rt.construct(3, oklab2linear__vec3.call(rt.construct(3, (_L), (a), (b))))
+    linear_rgb = oklab2linear__vec3.call(rt.construct(3, (_L), (a), (b)))
     return rt.component_wise('clamp', linear2srgb__vec3.call(linear_rgb), rt.f(0), rt.f(1))
   end
   cosinePalette__float_vec3_vec3_vec3_vec3 = lambda do |_t, offset, amp, freq, phase|
@@ -112,10 +112,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _t = nil; amp = nil; blendedColor = nil; finalColor = nil; freq = nil; globalCoord = nil; inputColor = nil; lum = nil; offset = nil; paletteColor = nil; phase = nil; texSize = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (texSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (texSize[1])))
-    inputColor = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    texSize = rt.construct(2, rt.texture_size(_u_inputTex))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
+    inputColor = rt.texture(_u_inputTex, uv)
     lum = rt.dot(rt.swizzle(inputColor, 'rgb'), rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
     _t = rt.binary('+', rt.binary('*', lum, _u_repeat, 1, 'float'), _u_offset, 1, 'float')
     if rt.bool(rt.binary('==', _u_rotation, rt.unary('-', rt.i(1))))
@@ -126,11 +126,11 @@ run_pixel = lambda do |ctx, out|
       end
     end
     _t = rt.component_wise('fract', _t)
-    offset = rt.construct(3, rt.construct(3, _u_offsetR, _u_offsetG, _u_offsetB))
-    amp = rt.construct(3, rt.construct(3, _u_ampR, _u_ampG, _u_ampB))
-    freq = rt.construct(3, rt.construct(3, _u_freqR, _u_freqG, _u_freqB))
-    phase = rt.construct(3, rt.construct(3, _u_phaseR, _u_phaseG, _u_phaseB))
-    paletteColor = rt.construct(3, cosinePalette__float_vec3_vec3_vec3_vec3.call(_t, offset, amp, freq, phase))
+    offset = rt.construct(3, _u_offsetR, _u_offsetG, _u_offsetB)
+    amp = rt.construct(3, _u_ampR, _u_ampG, _u_ampB)
+    freq = rt.construct(3, _u_freqR, _u_freqG, _u_freqB)
+    phase = rt.construct(3, _u_phaseR, _u_phaseG, _u_phaseB)
+    paletteColor = cosinePalette__float_vec3_vec3_vec3_vec3.call(_t, offset, amp, freq, phase)
     finalColor = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', _u_colorMode, rt.i(1)))
       finalColor.replace((hsv2rgb__vec3.call(paletteColor)).map { |c| rt.f32(c) })
@@ -145,7 +145,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    blendedColor = rt.construct(3, rt.component_wise('mix', rt.swizzle(inputColor, 'r'), finalColor[0], _u_alpha), rt.component_wise('mix', rt.swizzle(inputColor, 'g'), finalColor[1], _u_alpha), rt.component_wise('mix', rt.swizzle(inputColor, 'b'), finalColor[2], _u_alpha))
+    blendedColor = rt.component_wise('mix', rt.swizzle(inputColor, 'rgb'), finalColor, _u_alpha)
     g['fragColor'].replace((rt.construct(4, blendedColor, rt.swizzle(inputColor, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

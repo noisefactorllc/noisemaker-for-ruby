@@ -18,7 +18,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _L = nil; _Le = nil; _Ln = nil; _Ls = nil; _Lw = nil; coord = nil; edgeH = nil; edgeV = nil; globalCoord = nil; maxCoord = nil; texSize = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     if rt.bool(rt.binary('==', _u_smoothType, rt.i(0)))

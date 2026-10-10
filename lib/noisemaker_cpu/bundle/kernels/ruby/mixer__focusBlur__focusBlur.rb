@@ -28,10 +28,10 @@ run_pixel = lambda do |ctx, out|
   applyFocusBlur__sampler2D_sampler2D_vec2 = lambda do |sceneTex, depthTex, uv|
     uv = rt.copy(uv, 'float')
     _GOLDEN = nil; __hoistv1 = nil; _for0_first = nil; blurRadius = nil; color = nil; depth = nil; depthSample = nil; i = nil; offset = nil; r = nil; theta = nil
-    depthSample = rt.construct(4, (rt.texture(depthTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(depthTex)), 2, 'float')))[0], (rt.texture(depthTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(depthTex)), 2, 'float')))[1], (rt.texture(depthTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(depthTex)), 2, 'float')))[2], (rt.texture(depthTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(depthTex)), 2, 'float')))[3])
+    depthSample = rt.texture(depthTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(depthTex)), 2, 'float')))
     depth = getLuminosity__vec3.call(rt.swizzle(depthSample, 'rgb'))
     blurRadius = rt.binary('*', computeBlurFactor__float.call(depth), _u_sampleBias, 1, 'float')
-    color = rt.construct(4, rt.construct(4, rt.f(0)))
+    color = rt.construct(4, rt.f(0))
     _GOLDEN = rt.f(2.3999629020690918)
     i = rt.i(0)
     _for0_first = true
@@ -45,22 +45,22 @@ run_pixel = lambda do |ctx, out|
       end
       r = rt.component_wise('sqrt', rt.binary('/', rt.construct(1, i), rt.f(64), 1, 'float'))
       theta = rt.binary('*', rt.construct(1, i), _GOLDEN, 1, 'float')
-      offset = rt.construct(2, (((((((rt.component_wise('cos', theta))) * (r))) * (blurRadius))) / (_u_resolution[0])), (((((((rt.component_wise('sin', theta))) * (r))) * (blurRadius))) / (_u_resolution[1])))
-      __hoistv1 = rt.texture(sceneTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, offset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(sceneTex)), 2, 'float')); color[0] = rt.f32(rt.binary('+', color[0], __hoistv1[0], 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], __hoistv1[1], 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], __hoistv1[2], 1, 'float')); color[3] = rt.f32(rt.binary('+', color[3], __hoistv1[3], 1, 'float'))
+      offset = rt.construct(2, rt.binary_raw('/', rt.binary_raw('*', rt.binary_raw('*', rt.construct_raw(2, rt.component_wise('cos', theta), rt.component_wise('sin', theta)), r, 2, 'float'), blurRadius, 2, 'float'), _u_resolution, 2, 'float'))
+      __hoistv1 = rt.texture(sceneTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, offset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(sceneTex)), 2, 'float'))); color[0] = rt.f32(rt.binary('+', color[0], __hoistv1[0], 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], __hoistv1[1], 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], __hoistv1[2], 1, 'float')); color[3] = rt.f32(rt.binary('+', color[3], __hoistv1[3], 1, 'float'))
     end
-    return rt.construct(4, ((color[0]) / (rt.f(64))), ((color[1]) / (rt.f(64))), ((color[2]) / (rt.f(64))), ((color[3]) / (rt.f(64))))
+    return rt.construct(4, rt.binary_raw('/', color, rt.f(64), 4, 'float'))
   end
   main__void = lambda do
     color = nil; globalCoord = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
     color = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', _u_depthSource, rt.i(0)))
       color.replace((applyFocusBlur__sampler2D_sampler2D_vec2.call(_u_tex, _u_inputTex, uv)).map { |c| rt.f32(c) })
     else
       color.replace((applyFocusBlur__sampler2D_sampler2D_vec2.call(_u_inputTex, _u_tex, uv)).map { |c| rt.f32(c) })
     end
-    color = rt.assign_swizzle(color, 'a', rt.component_wise('max', rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'a'), rt.swizzle(rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')), 'a')))
+    color = rt.assign_swizzle(color, 'a', rt.component_wise('max', rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))), 'a'), rt.swizzle(rt.texture(_u_tex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float'))), 'a')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end
   main__void.call

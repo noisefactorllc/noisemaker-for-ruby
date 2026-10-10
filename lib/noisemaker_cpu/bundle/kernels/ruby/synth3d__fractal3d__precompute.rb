@@ -48,7 +48,7 @@ run_pixel = lambda do |ctx, out|
       zr = rt.component_wise('pow', r, n)
       newTheta = rt.binary('*', theta, n, 1, 'float')
       newPhi = rt.binary('*', phi, n, 1, 'float')
-      z.replace((rt.binary('*', zr, rt.construct(3, rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('cos', newPhi), 1, 'float'), rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('sin', newPhi), 1, 'float'), rt.component_wise('cos', newTheta)), 3, 'float')).map { |c| rt.f32(c) })
+      z.replace((rt.binary_raw('*', zr, rt.construct_raw(3, rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('cos', newPhi), 1, 'float'), rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('sin', newPhi), 1, 'float'), rt.component_wise('cos', newTheta)), 3, 'float')).map { |c| rt.f32(c) })
       z[0] = rt.f32(rt.binary('+', z[0], pos[0], 1, 'float')); z[1] = rt.f32(rt.binary('+', z[1], pos[1], 1, 'float')); z[2] = rt.f32(rt.binary('+', z[2], pos[2], 1, 'float'))
       iter = rt.binary('+', iter, rt.f(1), 1, 'float')
     end
@@ -85,7 +85,7 @@ run_pixel = lambda do |ctx, out|
       zr = rt.component_wise('pow', r, n)
       newTheta = rt.binary('*', theta, n, 1, 'float')
       newPhi = rt.binary('*', phi, n, 1, 'float')
-      z.replace((rt.binary('*', zr, rt.construct(3, rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('cos', newPhi), 1, 'float'), rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('sin', newPhi), 1, 'float'), rt.component_wise('cos', newTheta)), 3, 'float')).map { |c| rt.f32(c) })
+      z.replace((rt.binary_raw('*', zr, rt.construct_raw(3, rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('cos', newPhi), 1, 'float'), rt.binary('*', rt.component_wise('sin', newTheta), rt.component_wise('sin', newPhi), 1, 'float'), rt.component_wise('cos', newTheta)), 3, 'float')).map { |c| rt.f32(c) })
       z[0] = rt.f32(rt.binary('+', z[0], c[0], 1, 'float')); z[1] = rt.f32(rt.binary('+', z[1], c[1], 1, 'float')); z[2] = rt.f32(rt.binary('+', z[2], c[2], 1, 'float'))
       iter = rt.binary('+', iter, rt.f(1), 1, 'float')
     end
@@ -94,7 +94,7 @@ run_pixel = lambda do |ctx, out|
   end
   boxFold__vec3_float = lambda do |z, foldingLimit|
     z = rt.copy(z, 'float')
-    return rt.binary('-', rt.binary('*', rt.component_wise('clamp', z, rt.unary('-', foldingLimit), foldingLimit), rt.f(2), 3, 'float'), z, 3, 'float')
+    return rt.construct(3, rt.binary('-', rt.construct(3, rt.binary('*', rt.component_wise('clamp', z, rt.unary('-', foldingLimit), foldingLimit), rt.f(2), 3, 'float')), z, 3, 'float'))
   end
   mandelcube__vec3_float_int_float = lambda do |pos, scale, maxIter, bail|
     pos = rt.copy(pos, 'float')
@@ -132,7 +132,7 @@ run_pixel = lambda do |ctx, out|
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end
-      z.replace((rt.binary('+', rt.binary('*', z, scale, 3, 'float'), pos, 3, 'float')).map { |c| rt.f32(c) })
+      z.replace((rt.binary_raw('+', rt.binary_raw('*', z, scale, 3, 'float'), pos, 3, 'float')).map { |c| rt.f32(c) })
       dr = rt.binary('+', rt.binary('*', dr, rt.component_wise('abs', scale), 1, 'float'), rt.f(1), 1, 'float')
       trap = rt.component_wise('min', trap, rt.length(z))
       iter = rt.binary('+', iter, rt.f(1), 1, 'float')
@@ -181,7 +181,7 @@ run_pixel = lambda do |ctx, out|
           dr = rt.binary('*', dr, factor, 1, 'float')
         end
       end
-      z.replace((rt.binary('+', rt.binary('*', z, scale, 3, 'float'), c, 3, 'float')).map { |c| rt.f32(c) })
+      z.replace((rt.binary_raw('+', rt.binary_raw('*', z, scale, 3, 'float'), c, 3, 'float')).map { |c| rt.f32(c) })
       dr = rt.binary('+', rt.binary('*', dr, rt.component_wise('abs', scale), 1, 'float'), rt.f(1), 1, 'float')
       trap = rt.component_wise('min', trap, rt.length(z))
       iter = rt.binary('+', iter, rt.f(1), 1, 'float')
@@ -219,7 +219,7 @@ run_pixel = lambda do |ctx, out|
     volSize = _u_volumeSize
     scaledVolSize = rt.construct(1, rt.binary('*', rt.construct(1, volSize), _u_renderScale, 1, 'float'), 'int')
     scaledVolSizeF = rt.construct(1, scaledVolSize)
-    globalPixelCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalPixelCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     pixelCoord = rt.construct(2, rt.construct(2, globalPixelCoord), 'int')
     x = rt.construct(1, rt.component_wise('mod', rt.construct(1, rt.swizzle(pixelCoord, 'x')), scaledVolSizeF), 'int')
     y = rt.binary('%', rt.swizzle(pixelCoord, 'y'), scaledVolSize, 1, 'int')
@@ -229,9 +229,9 @@ run_pixel = lambda do |ctx, out|
       g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))
       return
     end
-    p = rt.construct(3, ((((((((((x))) / (((scaledVolSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1)))) * (rt.f(1.5))), ((((((((((y))) / (((scaledVolSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1)))) * (rt.f(1.5))), ((((((((((z))) / (((scaledVolSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1)))) * (rt.f(1.5))))
-    juliaC = rt.construct(3, (((_u_juliaX)) * (rt.f(0.0099999997764825821))), (((_u_juliaY)) * (rt.f(0.0099999997764825821))), (((_u_juliaZ)) * (rt.f(0.0099999997764825821))))
-    result = rt.construct(3, computeFractal__vec3_vec3.call(p, juliaC))
+    p = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('/', rt.construct_raw(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)), rt.binary('-', scaledVolSizeF, rt.f(1), 1, 'float'), 3, 'float'), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'), rt.f(1.5), 3, 'float'))
+    juliaC = rt.construct(3, rt.binary_raw('*', rt.construct_raw(3, _u_juliaX, _u_juliaY, _u_juliaZ), rt.f(0.0099999997764825821), 3, 'float'))
+    result = computeFractal__vec3_vec3.call(p, juliaC)
     dist = rt.swizzle(result, 'x')
     normalizedDist = rt.binary('-', rt.f(1), rt.component_wise('clamp', rt.binary('+', rt.binary('*', dist, rt.f(2), 1, 'float'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1)), 1, 'float')
     trap = rt.component_wise('clamp', rt.binary('*', rt.swizzle(result, 'y'), rt.f(0.5), 1, 'float'), rt.f(0), rt.f(1))
@@ -240,14 +240,14 @@ run_pixel = lambda do |ctx, out|
     dxp = rt.swizzle(computeFractal__vec3_vec3.call(rt.construct(3, ((p[0]) + ((eps))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((rt.f(0))))), juliaC), 'x')
     dyp = rt.swizzle(computeFractal__vec3_vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((eps))), ((p[2]) + ((rt.f(0))))), juliaC), 'x')
     dzp = rt.swizzle(computeFractal__vec3_vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((eps)))), juliaC), 'x')
-    gradient = rt.construct(3, (((((dxp) - (dist)))) / (eps)), (((((dyp) - (dist)))) / (eps)), (((((dzp) - (dist)))) / (eps)))
-    normal = rt.construct(3, rt.normalize(rt.binary('+', gradient, rt.construct(3, rt.f(9.9999999747524271e-07)), 3, 'float')))
+    gradient = rt.construct(3, rt.binary_raw('/', rt.construct_raw(3, rt.binary('-', dxp, dist, 1, 'float'), rt.binary('-', dyp, dist, 1, 'float'), rt.binary('-', dzp, dist, 1, 'float')), eps, 3, 'float'))
+    normal = rt.normalize(rt.binary_raw('+', gradient, rt.construct_raw(3, rt.f(9.9999999747524271e-07)), 3, 'float'))
     if rt.bool(rt.binary('==', _u_colorMode, rt.i(0)))
       g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(normalizedDist); g['fragColor'][2] = rt.f32(normalizedDist); g['fragColor'][3] = rt.f32(rt.f(1))
     else
       g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(trap); g['fragColor'][2] = rt.f32(iterRatio); g['fragColor'][3] = rt.f32(rt.f(1))
     end
-    g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), normalizedDist)).map { |c| rt.f32(c) })
+    g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), normalizedDist)).map { |c| rt.f32(c) })
   end
   main__void.call
   c0 = g['fragColor']

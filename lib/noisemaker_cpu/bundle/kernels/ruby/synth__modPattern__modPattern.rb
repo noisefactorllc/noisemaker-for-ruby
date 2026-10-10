@@ -57,12 +57,12 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     __hoistv1 = nil; anim = nil; color = nil; globalCoord = nil; n1 = nil; n2 = nil; n3 = nil; osc1 = nil; osc2 = nil; osc3 = nil; p = nil; phase1 = nil; phase2 = nil; phase3 = nil; s1 = nil; s2 = nil; s3 = nil; shift = nil; spd = nil; uv = nil; val = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    uv = rt.construct(2, ((((globalCoord[0]) - (((_u_fullResolution[0]) * (rt.f(0.5)))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))), ((((globalCoord[1]) - (((_u_fullResolution[1]) * (rt.f(0.5)))))) / (rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', globalCoord, rt.binary_raw('*', _u_fullResolution, rt.f(0.5), 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
     spd = rt.component_wise('floor', _u_speed)
     anim = rt.binary('*', _u_time, spd, 1, 'float')
     s1 = rt.binary('-', rt.f(20.100000381469727), _u_scale1, 1, 'float')
-    p = rt.construct(2, rt.component_wise('abs', rt.f32(rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) * (s1))), rt.f(2))) - (rt.f(1)))))), rt.component_wise('abs', rt.f32(rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) * (s1))), rt.f(2))) - (rt.f(1)))))))
+    p = rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) * (s1))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) * (s1))), rt.f(2))) - (rt.f(1))))))
     osc1 = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_animMode, rt.i(1)))
       osc1 = rt.binary('*', rt.component_wise('sin', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float')), rt.f(0.029999999329447746), 1, 'float')

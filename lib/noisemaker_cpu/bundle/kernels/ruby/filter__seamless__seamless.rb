@@ -29,18 +29,18 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     c00 = nil; c01 = nil; c10 = nil; c11 = nil; mx0 = nil; mx1 = nil; result = nil; st = nil; texSize = nil; uv = nil; wx = nil; wy = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
-    st = rt.construct(2, ((uv[0]) * (_u_repeat)), ((uv[1]) * (_u_repeat)))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    st = rt.construct(2, rt.binary_raw('*', uv, _u_repeat, 2, 'float'))
     st.replace((rt.component_wise('fract', st)).map { |c| rt.f32(c) })
     wx = edgeWeight__float_float.call(rt.swizzle(st, 'x'), _u_blend)
     wy = edgeWeight__float_float.call(rt.swizzle(st, 'y'), _u_blend)
-    c00 = rt.construct(4, (rt.texture(_u_inputTex, st))[0], (rt.texture(_u_inputTex, st))[1], (rt.texture(_u_inputTex, st))[2], (rt.texture(_u_inputTex, st))[3])
-    c10 = rt.construct(4, (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0))))))))[0], (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0))))))))[1], (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0))))))))[2], (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0))))))))[3])
-    c01 = rt.construct(4, (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0)))), ((st[1]) + ((rt.f(0.5))))))))[0], (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0)))), ((st[1]) + ((rt.f(0.5))))))))[1], (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0)))), ((st[1]) + ((rt.f(0.5))))))))[2], (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0)))), ((st[1]) + ((rt.f(0.5))))))))[3])
-    c11 = rt.construct(4, (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0.5))))))))[0], (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0.5))))))))[1], (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0.5))))))))[2], (rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0.5))))))))[3])
-    mx0 = rt.construct(4, rt.component_wise('mix', c00[0], c10[0], wx), rt.component_wise('mix', c00[1], c10[1], wx), rt.component_wise('mix', c00[2], c10[2], wx), rt.component_wise('mix', c00[3], c10[3], wx))
-    mx1 = rt.construct(4, rt.component_wise('mix', c01[0], c11[0], wx), rt.component_wise('mix', c01[1], c11[1], wx), rt.component_wise('mix', c01[2], c11[2], wx), rt.component_wise('mix', c01[3], c11[3], wx))
-    result = rt.construct(4, rt.component_wise('mix', mx0[0], mx1[0], wy), rt.component_wise('mix', mx0[1], mx1[1], wy), rt.component_wise('mix', mx0[2], mx1[2], wy), rt.component_wise('mix', mx0[3], mx1[3], wy))
+    c00 = rt.texture(_u_inputTex, st)
+    c10 = rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0)))))))
+    c01 = rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0)))), ((st[1]) + ((rt.f(0.5)))))))
+    c11 = rt.texture(_u_inputTex, rt.component_wise('fract', rt.construct(2, ((st[0]) + ((rt.f(0.5)))), ((st[1]) + ((rt.f(0.5)))))))
+    mx0 = rt.component_wise('mix', c00, c10, wx)
+    mx1 = rt.component_wise('mix', c01, c11, wx)
+    result = rt.component_wise('mix', mx0, mx1, wy)
     g['fragColor'].replace((rt.construct(4, rt.swizzle(result, 'rgb'), rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

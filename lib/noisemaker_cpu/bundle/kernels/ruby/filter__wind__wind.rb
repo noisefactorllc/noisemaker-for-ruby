@@ -22,9 +22,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; accumColor = nil; accumWeight = nil; activation = nil; alongRun = nil; amount = nil; baseLum = nil; blendAmount = nil; candidate = nil; contrast = nil; decayRate = nil; density = nil; densityRate = nil; distancePx = nil; edge = nil; endTaper = nil; globalCoord = nil; i = nil; integrated = nil; marchDir = nil; methodGain = nil; reach = nil; sampleDistance = nil; sampleUV = nil; src = nil; staggerPhase = nil; streak = nil; taperStart = nil; uv = nil; weight = nil
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    src = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    src = rt.texture(_u_inputTex, uv)
     amount = rt.component_wise('clamp', rt.binary('/', _u_strength, rt.f(100), 1, 'float'), rt.f(0), rt.f(1))
     if rt.bool(rt.binary('<=', amount, rt.f(0)))
       g['fragColor'].replace((src).map { |c| rt.f32(c) })
@@ -36,7 +36,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', _u__METHOD, rt.i(2)))
       staggerPhase = rt.binary('*', rt.binary('+', rt.f(0.5), rt.binary('*', rt.f(0.5), rt.component_wise('sin', rt.binary('*', rt.swizzle(globalCoord, 'y'), rt.f(0.2199999988079071), 1, 'float')), 1, 'float'), 1, 'float'), rt.component_wise('min', rt.f(12), rt.binary('*', reach, rt.f(0.18000000715255737), 1, 'float')), 1, 'float')
     end
-    accumColor = rt.construct(3, rt.construct(3, rt.f(0)))
+    accumColor = rt.construct(3, rt.f(0))
     accumWeight = rt.f(0)
     baseLum = lum__vec3.call(rt.swizzle(src, 'rgb'))
     edge = rt.binary('/', _u_threshold, rt.f(100), 1, 'float')
@@ -55,8 +55,8 @@ run_pixel = lambda do |ctx, out|
         break
       end
       sampleDistance = rt.binary('+', distancePx, staggerPhase, 1, 'float')
-      sampleUV = rt.construct(2, rt.component_wise('clamp', rt.f32(((((rt.swizzle(ctx.frag_coord, 'x')) + ((((marchDir) * (sampleDistance)))))) / (_u_resolution[0]))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((rt.swizzle(ctx.frag_coord, 'y')) + ((rt.f(0))))) / (_u_resolution[1]))), rt.f(0), rt.f(1)))
-      candidate = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, sampleUV), 'r'), rt.swizzle(rt.texture(_u_inputTex, sampleUV), 'g'), rt.swizzle(rt.texture(_u_inputTex, sampleUV), 'b'))
+      sampleUV = rt.component_wise('clamp', rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + ((((marchDir) * (sampleDistance)))))) / (_u_resolution[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + ((rt.f(0))))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
+      candidate = rt.swizzle(rt.texture(_u_inputTex, sampleUV), 'rgb')
       contrast = rt.binary('-', rt.binary('-', lum__vec3.call(candidate), baseLum, 1, 'float'), edge, 1, 'float')
       activation = rt.component_wise('smoothstep', rt.f(0), rt.f(0.079999998211860657), contrast)
       alongRun = rt.binary('/', distancePx, rt.component_wise('max', reach, rt.f(1)), 1, 'float')
@@ -81,7 +81,7 @@ run_pixel = lambda do |ctx, out|
       accumColor[0] = rt.f32(rt.binary('+', accumColor[0], ((candidate[0]) * (weight)), 1, 'float')); accumColor[1] = rt.f32(rt.binary('+', accumColor[1], ((candidate[1]) * (weight)), 1, 'float')); accumColor[2] = rt.f32(rt.binary('+', accumColor[2], ((candidate[2]) * (weight)), 1, 'float'))
       accumWeight = rt.binary('+', accumWeight, weight, 1, 'float')
     end
-    integrated = rt.construct(3, ((accumColor[0]) / (rt.component_wise('max', accumWeight, rt.f(9.9999997473787516e-06)))), ((accumColor[1]) / (rt.component_wise('max', accumWeight, rt.f(9.9999997473787516e-06)))), ((accumColor[2]) / (rt.component_wise('max', accumWeight, rt.f(9.9999997473787516e-06)))))
+    integrated = rt.construct(3, rt.binary_raw('/', accumColor, rt.component_wise('max', accumWeight, rt.f(9.9999997473787516e-06)), 3, 'float'))
     densityRate = rt.f(0.0)
     if rt.bool(rt.binary('==', _u__METHOD, rt.i(1)))
       densityRate = rt.f(0.11999999731779099)
@@ -96,7 +96,7 @@ run_pixel = lambda do |ctx, out|
       methodGain = rt.f(0.87999999523162842)
     end
     blendAmount = rt.component_wise('clamp', rt.binary('*', rt.binary('*', density, amount, 1, 'float'), methodGain, 1, 'float'), rt.f(0), rt.f(1))
-    streak = rt.construct(3, rt.component_wise('mix', rt.swizzle(src, 'r'), integrated[0], blendAmount), rt.component_wise('mix', rt.swizzle(src, 'g'), integrated[1], blendAmount), rt.component_wise('mix', rt.swizzle(src, 'b'), integrated[2], blendAmount))
+    streak = rt.component_wise('mix', rt.swizzle(src, 'rgb'), integrated, blendAmount)
     g['fragColor'].replace((rt.construct(4, rt.component_wise('max', rt.swizzle(src, 'rgb'), streak), rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

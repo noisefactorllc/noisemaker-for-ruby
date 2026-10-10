@@ -39,27 +39,27 @@ run_pixel = lambda do |ctx, out|
     c0 = nil; c00 = nil; c000 = nil; c001 = nil; c01 = nil; c010 = nil; c011 = nil; c1 = nil; c10 = nil; c100 = nil; c101 = nil; c11 = nil; c110 = nil; c111 = nil; frac = nil; i0 = nil; i1 = nil; texelFloor = nil; texelPos = nil; uvw = nil; volSize = nil; volSizeF = nil
     volSize = _u_volumeSize
     volSizeF = rt.construct(1, volSize)
-    uvw = rt.construct(3, ((((worldPos[0]) * (rt.f(0.5)))) + (rt.f(0.5))), ((((worldPos[1]) * (rt.f(0.5)))) + (rt.f(0.5))), ((((worldPos[2]) * (rt.f(0.5)))) + (rt.f(0.5))))
+    uvw = rt.construct(3, rt.binary_raw('+', rt.binary_raw('*', worldPos, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'))
     uvw.replace((rt.component_wise('clamp', uvw, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
-    texelPos = rt.construct(3, ((uvw[0]) * (((volSizeF) - (rt.f(1))))), ((uvw[1]) * (((volSizeF) - (rt.f(1))))), ((uvw[2]) * (((volSizeF) - (rt.f(1))))))
-    texelFloor = rt.construct(3, rt.component_wise('floor', texelPos[0]), rt.component_wise('floor', texelPos[1]), rt.component_wise('floor', texelPos[2]))
-    frac = rt.construct(3, ((texelPos[0]) - (texelFloor[0])), ((texelPos[1]) - (texelFloor[1])), ((texelPos[2]) - (texelFloor[2])))
+    texelPos = rt.construct(3, rt.binary_raw('*', uvw, rt.binary('-', volSizeF, rt.f(1), 1, 'float'), 3, 'float'))
+    texelFloor = rt.component_wise('floor', texelPos)
+    frac = rt.construct(3, rt.binary_raw('-', texelPos, texelFloor, 3, 'float'))
     i0 = rt.construct(3, rt.construct(3, texelFloor), 'int')
     i1 = rt.component_wise('min', rt.binary('+', i0, rt.i(1), 3, 'int'), rt.binary('-', volSize, rt.i(1), 1, 'int'))
-    c000 = rt.construct(4, rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i0, 'x'), rt.swizzle(i0, 'y'), rt.swizzle(i0, 'z'), 'int'), volSize), rt.i(0)))
-    c100 = rt.construct(4, rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i1, 'x'), rt.swizzle(i0, 'y'), rt.swizzle(i0, 'z'), 'int'), volSize), rt.i(0)))
-    c010 = rt.construct(4, rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i0, 'x'), rt.swizzle(i1, 'y'), rt.swizzle(i0, 'z'), 'int'), volSize), rt.i(0)))
-    c110 = rt.construct(4, rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i1, 'x'), rt.swizzle(i1, 'y'), rt.swizzle(i0, 'z'), 'int'), volSize), rt.i(0)))
-    c001 = rt.construct(4, rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i0, 'x'), rt.swizzle(i0, 'y'), rt.swizzle(i1, 'z'), 'int'), volSize), rt.i(0)))
-    c101 = rt.construct(4, rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i1, 'x'), rt.swizzle(i0, 'y'), rt.swizzle(i1, 'z'), 'int'), volSize), rt.i(0)))
-    c011 = rt.construct(4, rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i0, 'x'), rt.swizzle(i1, 'y'), rt.swizzle(i1, 'z'), 'int'), volSize), rt.i(0)))
-    c111 = rt.construct(4, rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i1, 'x'), rt.swizzle(i1, 'y'), rt.swizzle(i1, 'z'), 'int'), volSize), rt.i(0)))
-    c00 = rt.construct(4, rt.component_wise('mix', c000[0], c100[0], rt.swizzle(frac, 'x')), rt.component_wise('mix', c000[1], c100[1], rt.swizzle(frac, 'x')), rt.component_wise('mix', c000[2], c100[2], rt.swizzle(frac, 'x')), rt.component_wise('mix', c000[3], c100[3], rt.swizzle(frac, 'x')))
-    c10 = rt.construct(4, rt.component_wise('mix', c010[0], c110[0], rt.swizzle(frac, 'x')), rt.component_wise('mix', c010[1], c110[1], rt.swizzle(frac, 'x')), rt.component_wise('mix', c010[2], c110[2], rt.swizzle(frac, 'x')), rt.component_wise('mix', c010[3], c110[3], rt.swizzle(frac, 'x')))
-    c01 = rt.construct(4, rt.component_wise('mix', c001[0], c101[0], rt.swizzle(frac, 'x')), rt.component_wise('mix', c001[1], c101[1], rt.swizzle(frac, 'x')), rt.component_wise('mix', c001[2], c101[2], rt.swizzle(frac, 'x')), rt.component_wise('mix', c001[3], c101[3], rt.swizzle(frac, 'x')))
-    c11 = rt.construct(4, rt.component_wise('mix', c011[0], c111[0], rt.swizzle(frac, 'x')), rt.component_wise('mix', c011[1], c111[1], rt.swizzle(frac, 'x')), rt.component_wise('mix', c011[2], c111[2], rt.swizzle(frac, 'x')), rt.component_wise('mix', c011[3], c111[3], rt.swizzle(frac, 'x')))
-    c0 = rt.construct(4, rt.component_wise('mix', c00[0], c10[0], rt.swizzle(frac, 'y')), rt.component_wise('mix', c00[1], c10[1], rt.swizzle(frac, 'y')), rt.component_wise('mix', c00[2], c10[2], rt.swizzle(frac, 'y')), rt.component_wise('mix', c00[3], c10[3], rt.swizzle(frac, 'y')))
-    c1 = rt.construct(4, rt.component_wise('mix', c01[0], c11[0], rt.swizzle(frac, 'y')), rt.component_wise('mix', c01[1], c11[1], rt.swizzle(frac, 'y')), rt.component_wise('mix', c01[2], c11[2], rt.swizzle(frac, 'y')), rt.component_wise('mix', c01[3], c11[3], rt.swizzle(frac, 'y')))
+    c000 = rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i0, 'x'), rt.swizzle(i0, 'y'), rt.swizzle(i0, 'z'), 'int'), volSize), rt.i(0))
+    c100 = rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i1, 'x'), rt.swizzle(i0, 'y'), rt.swizzle(i0, 'z'), 'int'), volSize), rt.i(0))
+    c010 = rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i0, 'x'), rt.swizzle(i1, 'y'), rt.swizzle(i0, 'z'), 'int'), volSize), rt.i(0))
+    c110 = rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i1, 'x'), rt.swizzle(i1, 'y'), rt.swizzle(i0, 'z'), 'int'), volSize), rt.i(0))
+    c001 = rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i0, 'x'), rt.swizzle(i0, 'y'), rt.swizzle(i1, 'z'), 'int'), volSize), rt.i(0))
+    c101 = rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i1, 'x'), rt.swizzle(i0, 'y'), rt.swizzle(i1, 'z'), 'int'), volSize), rt.i(0))
+    c011 = rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i0, 'x'), rt.swizzle(i1, 'y'), rt.swizzle(i1, 'z'), 'int'), volSize), rt.i(0))
+    c111 = rt.texel_fetch(_u_volumeCache, atlasTexel__ivec3_int.call(rt.construct(3, rt.swizzle(i1, 'x'), rt.swizzle(i1, 'y'), rt.swizzle(i1, 'z'), 'int'), volSize), rt.i(0))
+    c00 = rt.component_wise('mix', c000, c100, rt.swizzle(frac, 'x'))
+    c10 = rt.component_wise('mix', c010, c110, rt.swizzle(frac, 'x'))
+    c01 = rt.component_wise('mix', c001, c101, rt.swizzle(frac, 'x'))
+    c11 = rt.component_wise('mix', c011, c111, rt.swizzle(frac, 'x'))
+    c0 = rt.component_wise('mix', c00, c10, rt.swizzle(frac, 'y'))
+    c1 = rt.component_wise('mix', c01, c11, rt.swizzle(frac, 'y'))
     return rt.component_wise('mix', c0, c1, rt.swizzle(frac, 'z'))
   end
   getField__vec3 = lambda do |p|
@@ -84,15 +84,15 @@ run_pixel = lambda do |ctx, out|
     worldPos = rt.copy(worldPos, 'float')
     uvw = nil; volSize = nil
     volSize = _u_volumeSize
-    uvw = rt.construct(3, ((((worldPos[0]) * (rt.f(0.5)))) + (rt.f(0.5))), ((((worldPos[1]) * (rt.f(0.5)))) + (rt.f(0.5))), ((((worldPos[2]) * (rt.f(0.5)))) + (rt.f(0.5))))
+    uvw = rt.construct(3, rt.binary_raw('+', rt.binary_raw('*', worldPos, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'))
     return rt.construct(3, rt.construct(3, rt.component_wise('floor', rt.construct(3, ((uvw[0]) * ((volSize))), ((uvw[1]) * ((volSize))), ((uvw[2]) * ((volSize)))))), 'int')
   end
   voxelToWorld__ivec3 = lambda do |voxel|
     voxel = rt.copy(voxel, 'int')
     uvw = nil; volSize = nil
     volSize = _u_volumeSize
-    uvw = rt.construct(3, (((((voxel[0])) + (rt.f(0.5)))) / ((volSize))), (((((voxel[1])) + (rt.f(0.5)))) / ((volSize))), (((((voxel[2])) + (rt.f(0.5)))) / ((volSize))))
-    return rt.construct(3, ((((uvw[0]) * (rt.f(2)))) - (rt.f(1))), ((((uvw[1]) * (rt.f(2)))) - (rt.f(1))), ((((uvw[2]) * (rt.f(2)))) - (rt.f(1))))
+    uvw = rt.construct(3, rt.binary_raw('/', rt.binary_raw('+', rt.construct_raw(3, rt.construct(3, voxel)), rt.f(0.5), 3, 'float'), rt.construct(1, volSize), 3, 'float'))
+    return rt.construct(3, rt.binary_raw('-', rt.binary_raw('*', uvw, rt.f(2), 3, 'float'), rt.f(1), 3, 'float'))
   end
   voxelTrace__vec3_vec3 = lambda do |ro, rd|
     ro = rt.copy(ro, 'float')
@@ -104,25 +104,25 @@ run_pixel = lambda do |ctx, out|
     result[2].replace(rt.construct(3, rt.i(0), 'int'))
     volSize = _u_volumeSize
     voxelSize = rt.binary('/', rt.f(2), rt.construct(1, volSize), 1, 'float')
-    invRd = rt.construct(3, ((rt.f(1)) / (rd[0])), ((rt.f(1)) / (rd[1])), ((rt.f(1)) / (rd[2])))
-    t0 = rt.construct(3, ((((rt.unary('-', rt.f(1))) - (ro[0]))) * (invRd[0])), ((((rt.unary('-', rt.f(1))) - (ro[1]))) * (invRd[1])), ((((rt.unary('-', rt.f(1))) - (ro[2]))) * (invRd[2])))
-    t1 = rt.construct(3, ((((rt.f(1)) - (ro[0]))) * (invRd[0])), ((((rt.f(1)) - (ro[1]))) * (invRd[1])), ((((rt.f(1)) - (ro[2]))) * (invRd[2])))
-    tmin = rt.construct(3, rt.component_wise('min', t0[0], t1[0]), rt.component_wise('min', t0[1], t1[1]), rt.component_wise('min', t0[2], t1[2]))
-    tmax = rt.construct(3, rt.component_wise('max', t0[0], t1[0]), rt.component_wise('max', t0[1], t1[1]), rt.component_wise('max', t0[2], t1[2]))
+    invRd = rt.construct(3, rt.binary_raw('/', rt.f(1), rd, 3, 'float'))
+    t0 = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.unary('-', rt.f(1)), ro, 3, 'float'), invRd, 3, 'float'))
+    t1 = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.f(1), ro, 3, 'float'), invRd, 3, 'float'))
+    tmin = rt.component_wise('min', t0, t1)
+    tmax = rt.component_wise('max', t0, t1)
     tEnter = rt.component_wise('max', rt.component_wise('max', rt.swizzle(tmin, 'x'), rt.swizzle(tmin, 'y')), rt.swizzle(tmin, 'z'))
     tExit = rt.component_wise('min', rt.component_wise('min', rt.swizzle(tmax, 'x'), rt.swizzle(tmax, 'y')), rt.swizzle(tmax, 'z'))
     if rt.bool((rt.bool(rt.binary('>', tEnter, tExit)) || rt.bool(rt.binary('<', tExit, rt.f(0))) ? 1 : 0))
       return result
     end
     tStart = rt.component_wise('max', rt.binary('+', tEnter, rt.f(0.0010000000474974513), 1, 'float'), rt.f(0))
-    pos = rt.construct(3, ((ro[0]) + (((rd[0]) * (tStart)))), ((ro[1]) + (((rd[1]) * (tStart)))), ((ro[2]) + (((rd[2]) * (tStart)))))
+    pos = rt.construct(3, rt.binary_raw('+', ro, rt.binary_raw('*', rd, tStart, 3, 'float'), 3, 'float'))
     voxel = worldToVoxel__vec3.call(pos)
     voxel.replace(rt.component_wise('clamp', voxel, rt.construct(3, rt.i(0), 'int'), rt.construct(3, rt.binary('-', volSize, rt.i(1), 1, 'int'), 'int')))
     step = rt.construct(3, rt.construct(3, rt.component_wise('sign', rd)), 'int')
     voxelBounds = rt.construct(3, rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'x'), rt.component_wise('max', step, rt.construct(3, rt.i(0), 'int')), 1), rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'y'), rt.component_wise('max', step, rt.construct(3, rt.i(0), 'int')), 1), rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'z'), rt.component_wise('max', step, rt.construct(3, rt.i(0), 'int')), 1))
-    tMaxVec = rt.construct(3, ((((voxelBounds[0]) - (ro[0]))) * (invRd[0])), ((((voxelBounds[1]) - (ro[1]))) * (invRd[1])), ((((voxelBounds[2]) - (ro[2]))) * (invRd[2])))
-    tDelta = rt.construct(3, rt.component_wise('abs', rt.f32(((voxelSize) * (invRd[0])))), rt.component_wise('abs', rt.f32(((voxelSize) * (invRd[1])))), rt.component_wise('abs', rt.f32(((voxelSize) * (invRd[2])))))
-    lastNormal = rt.construct(3, rt.construct(3, rt.f(0)))
+    tMaxVec = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', voxelBounds, ro, 3, 'float'), invRd, 3, 'float'))
+    tDelta = rt.component_wise('abs', rt.construct(3, ((voxelSize) * (invRd[0])), ((voxelSize) * (invRd[1])), ((voxelSize) * (invRd[2]))))
+    lastNormal = rt.construct(3, rt.f(0))
     i = rt.i(0)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -155,24 +155,24 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('<', rt.swizzle(tMaxVec, 'x'), rt.swizzle(tMaxVec, 'y')))
         if rt.bool(rt.binary('<', rt.swizzle(tMaxVec, 'x'), rt.swizzle(tMaxVec, 'z')))
           tStart = rt.swizzle(tMaxVec, 'x')
-          tMaxVec = rt.assign_swizzle(tMaxVec, 'x', rt.binary('+', rt.swizzle(tMaxVec, 'x'), rt.swizzle(tDelta, 'x'), 1, 'float'))
+          tMaxVec = rt.assign_swizzle(tMaxVec, 'x', rt.binary_raw('+', rt.swizzle(tMaxVec, 'x'), rt.swizzle(tDelta, 'x'), 1, 'float'))
           voxel = rt.assign_swizzle(voxel, 'x', rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'x'), step, 1))
           lastNormal[0] = rt.scalar_vec_coerce('-', rt.f(0), step, 1); lastNormal[1] = rt.f32(rt.f(0)); lastNormal[2] = rt.f32(rt.f(0))
         else
           tStart = rt.swizzle(tMaxVec, 'z')
-          tMaxVec = rt.assign_swizzle(tMaxVec, 'z', rt.binary('+', rt.swizzle(tMaxVec, 'z'), rt.swizzle(tDelta, 'z'), 1, 'float'))
+          tMaxVec = rt.assign_swizzle(tMaxVec, 'z', rt.binary_raw('+', rt.swizzle(tMaxVec, 'z'), rt.swizzle(tDelta, 'z'), 1, 'float'))
           voxel = rt.assign_swizzle(voxel, 'z', rt.binary('+', rt.swizzle(voxel, 'z'), rt.swizzle(step, 'z'), 1, 'int'))
           lastNormal[0] = rt.f32(rt.f(0)); lastNormal[1] = rt.f32(rt.f(0)); lastNormal[2] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'z'))))
         end
       else
         if rt.bool(rt.binary('<', rt.swizzle(tMaxVec, 'y'), rt.swizzle(tMaxVec, 'z')))
           tStart = rt.swizzle(tMaxVec, 'y')
-          tMaxVec = rt.assign_swizzle(tMaxVec, 'y', rt.binary('+', rt.swizzle(tMaxVec, 'y'), rt.swizzle(tDelta, 'y'), 1, 'float'))
+          tMaxVec = rt.assign_swizzle(tMaxVec, 'y', rt.binary_raw('+', rt.swizzle(tMaxVec, 'y'), rt.swizzle(tDelta, 'y'), 1, 'float'))
           voxel = rt.assign_swizzle(voxel, 'y', rt.binary('+', rt.swizzle(voxel, 'y'), rt.swizzle(step, 'y'), 1, 'int'))
           lastNormal[0] = rt.f32(rt.f(0)); lastNormal[1] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'y')))); lastNormal[2] = rt.f32(rt.f(0))
         else
           tStart = rt.swizzle(tMaxVec, 'z')
-          tMaxVec = rt.assign_swizzle(tMaxVec, 'z', rt.binary('+', rt.swizzle(tMaxVec, 'z'), rt.swizzle(tDelta, 'z'), 1, 'float'))
+          tMaxVec = rt.assign_swizzle(tMaxVec, 'z', rt.binary_raw('+', rt.swizzle(tMaxVec, 'z'), rt.swizzle(tDelta, 'z'), 1, 'float'))
           voxel = rt.assign_swizzle(voxel, 'z', rt.binary('+', rt.swizzle(voxel, 'z'), rt.swizzle(step, 'z'), 1, 'int'))
           lastNormal[0] = rt.f32(rt.f(0)); lastNormal[1] = rt.f32(rt.f(0)); lastNormal[2] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'z'))))
         end
@@ -190,12 +190,12 @@ run_pixel = lambda do |ctx, out|
     dx = rt.binary('-', getField__vec3.call(rt.construct(3, ((p[0]) + ((eps))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((rt.f(0)))))), getField__vec3.call(rt.construct(3, ((p[0]) - ((eps))), ((p[1]) - ((rt.f(0)))), ((p[2]) - ((rt.f(0)))))), 1, 'float')
     dy = rt.binary('-', getField__vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((eps))), ((p[2]) + ((rt.f(0)))))), getField__vec3.call(rt.construct(3, ((p[0]) - ((rt.f(0)))), ((p[1]) - ((eps))), ((p[2]) - ((rt.f(0)))))), 1, 'float')
     dz = rt.binary('-', getField__vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((eps))))), getField__vec3.call(rt.construct(3, ((p[0]) - ((rt.f(0)))), ((p[1]) - ((rt.f(0)))), ((p[2]) - ((eps))))), 1, 'float')
-    n = rt.construct(3, rt.construct(3, dx, dy, dz))
+    n = rt.construct(3, dx, dy, dz)
     len = rt.length(n)
     if rt.bool(rt.binary('<', len, rt.f(9.9999997473787516e-05)))
       return rt.construct(3, rt.f(0), rt.f(1), rt.f(0))
     end
-    return rt.construct(3, ((n[0]) / (len)), ((n[1]) / (len)), ((n[2]) / (len)))
+    return rt.construct(3, rt.binary_raw('/', n, len, 3, 'float'))
   end
   isosurfaceTrace__vec3_vec3 = lambda do |ro, rd|
     ro = rt.copy(ro, 'float')
@@ -205,11 +205,11 @@ run_pixel = lambda do |ctx, out|
     result[2] = 0
     result[0] = rt.unary('-', rt.f(1))
     result[1].replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })
-    invRd = rt.construct(3, ((rt.f(1)) / (rd[0])), ((rt.f(1)) / (rd[1])), ((rt.f(1)) / (rd[2])))
-    t0 = rt.construct(3, ((((rt.unary('-', rt.f(1))) - (ro[0]))) * (invRd[0])), ((((rt.unary('-', rt.f(1))) - (ro[1]))) * (invRd[1])), ((((rt.unary('-', rt.f(1))) - (ro[2]))) * (invRd[2])))
-    t1 = rt.construct(3, ((((rt.f(1)) - (ro[0]))) * (invRd[0])), ((((rt.f(1)) - (ro[1]))) * (invRd[1])), ((((rt.f(1)) - (ro[2]))) * (invRd[2])))
-    tmin = rt.construct(3, rt.component_wise('min', t0[0], t1[0]), rt.component_wise('min', t0[1], t1[1]), rt.component_wise('min', t0[2], t1[2]))
-    tmax = rt.construct(3, rt.component_wise('max', t0[0], t1[0]), rt.component_wise('max', t0[1], t1[1]), rt.component_wise('max', t0[2], t1[2]))
+    invRd = rt.construct(3, rt.binary_raw('/', rt.f(1), rd, 3, 'float'))
+    t0 = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.unary('-', rt.f(1)), ro, 3, 'float'), invRd, 3, 'float'))
+    t1 = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.f(1), ro, 3, 'float'), invRd, 3, 'float'))
+    tmin = rt.component_wise('min', t0, t1)
+    tmax = rt.component_wise('max', t0, t1)
     tEnter = rt.component_wise('max', rt.component_wise('max', rt.swizzle(tmin, 'x'), rt.swizzle(tmin, 'y')), rt.swizzle(tmin, 'z'))
     tExit = rt.component_wise('min', rt.component_wise('min', rt.swizzle(tmax, 'x'), rt.swizzle(tmax, 'y')), rt.swizzle(tmax, 'z'))
     if rt.bool((rt.bool(rt.binary('>', tEnter, tExit)) || rt.bool(rt.binary('<', tExit, rt.f(0))) ? 1 : 0))
@@ -222,7 +222,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('<', prevField, rt.f(0)))
       result[2] = 1
       result[0] = tStart
-      result[1].replace((rt.binary('+', ro, rt.binary('*', rd, tStart, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+      result[1].replace((rt.binary_raw('+', ro, rt.binary_raw('*', rd, tStart, 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
       return result
     end
     i = rt.i(0)
@@ -239,7 +239,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>', _t, tExit))
         break
       end
-      p = rt.construct(3, ((ro[0]) + (((rd[0]) * (_t)))), ((ro[1]) + (((rd[1]) * (_t)))), ((ro[2]) + (((rd[2]) * (_t)))))
+      p = rt.construct(3, rt.binary_raw('+', ro, rt.binary_raw('*', rd, _t, 3, 'float'), 3, 'float'))
       field = getField__vec3.call(p)
       tHi = rt.f(0.0)
       tLo = rt.f(0.0)
@@ -267,7 +267,7 @@ run_pixel = lambda do |ctx, out|
         end
         result[2] = 1
         result[0] = rt.binary('*', rt.binary('+', tLo, tHi, 1, 'float'), rt.f(0.5), 1, 'float')
-        result[1].replace((rt.binary('+', ro, rt.binary('*', rd, result[0], 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+        result[1].replace((rt.binary_raw('+', ro, rt.binary_raw('*', rd, result[0], 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
         return result
       end
       prevField = field
@@ -278,20 +278,20 @@ run_pixel = lambda do |ctx, out|
     p = rt.copy(p, 'float')
     rd = rt.copy(rd, 'float')
     amb = nil; baseColor = nil; colorVariance = nil; diff = nil; halfVec = nil; lightDir = nil; n = nil; rim = nil; spec = nil; volColor = nil
-    n = rt.construct(3, calcNormal__vec3.call(p))
-    lightDir = rt.construct(3, rt.normalize(rt.construct(3, rt.f(1), rt.f(1), rt.unary('-', rt.f(1)))))
+    n = calcNormal__vec3.call(p)
+    lightDir = rt.normalize(rt.construct(3, rt.f(1), rt.f(1), rt.unary('-', rt.f(1))))
     diff = rt.component_wise('max', rt.dot(n, lightDir), rt.f(0))
     amb = rt.f(0.15000000596046448)
-    halfVec = rt.construct(3, rt.normalize(rt.binary('-', lightDir, rd, 3, 'float')))
+    halfVec = rt.normalize(rt.binary_raw('-', lightDir, rd, 3, 'float'))
     spec = rt.component_wise('pow', rt.component_wise('max', rt.dot(n, halfVec), rt.f(0)), rt.f(32))
     rim = rt.component_wise('pow', rt.binary('-', rt.f(1), rt.component_wise('max', rt.dot(n, rt.unary('-', rd)), rt.f(0)), 1, 'float'), rt.f(3))
-    volColor = rt.construct(4, sampleVolume__vec3.call(p))
-    baseColor = rt.construct(3, rt.swizzle(volColor, 'r'), rt.swizzle(volColor, 'g'), rt.swizzle(volColor, 'b'))
-    colorVariance = rt.length(rt.binary('-', rt.swizzle(volColor, 'rgb'), rt.construct(3, rt.swizzle(volColor, 'r')), 3, 'float'))
+    volColor = sampleVolume__vec3.call(p)
+    baseColor = rt.swizzle(volColor, 'rgb')
+    colorVariance = rt.length(rt.binary_raw('-', rt.swizzle(volColor, 'rgb'), rt.construct_raw(3, rt.swizzle(volColor, 'r')), 3, 'float'))
     if rt.bool(rt.binary('<', colorVariance, rt.f(0.0099999997764825821)))
       baseColor.replace((rt.construct(3, rt.f(0.75))).map { |c| rt.f32(c) })
     end
-    return rt.construct(3, ((((((baseColor[0]) * (((amb) + (((diff) * (rt.f(0.69999998807907104)))))))) + (((spec) * (rt.f(0.20000000298023224)))))) + (((rim) * (rt.f(0.15000000596046448))))), ((((((baseColor[1]) * (((amb) + (((diff) * (rt.f(0.69999998807907104)))))))) + (((spec) * (rt.f(0.20000000298023224)))))) + (((rim) * (rt.f(0.15000000596046448))))), ((((((baseColor[2]) * (((amb) + (((diff) * (rt.f(0.69999998807907104)))))))) + (((spec) * (rt.f(0.20000000298023224)))))) + (((rim) * (rt.f(0.15000000596046448))))))
+    return rt.construct(3, rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('*', baseColor, rt.binary('+', amb, rt.binary('*', diff, rt.f(0.69999998807907104), 1, 'float'), 1, 'float'), 3, 'float'), rt.binary('*', spec, rt.f(0.20000000298023224), 1, 'float'), 3, 'float'), rt.binary('*', rim, rt.f(0.15000000596046448), 1, 'float'), 3, 'float'))
   end
   shadeVoxel__vec3_vec3_vec3_ivec3 = lambda do |p, rd, n, voxel|
     p = rt.copy(p, 'float')
@@ -299,37 +299,37 @@ run_pixel = lambda do |ctx, out|
     n = rt.copy(n, 'float')
     voxel = rt.copy(voxel, 'int')
     amb = nil; baseColor = nil; colorVariance = nil; diff = nil; faceShade = nil; lightDir = nil; volColor = nil
-    lightDir = rt.construct(3, rt.normalize(rt.construct(3, rt.f(1), rt.f(1), rt.unary('-', rt.f(1)))))
+    lightDir = rt.normalize(rt.construct(3, rt.f(1), rt.f(1), rt.unary('-', rt.f(1))))
     diff = rt.component_wise('max', rt.dot(n, lightDir), rt.f(0))
     amb = rt.f(0.30000001192092896)
-    volColor = rt.construct(4, sampleVoxel__ivec3.call(voxel))
-    baseColor = rt.construct(3, rt.swizzle(volColor, 'r'), rt.swizzle(volColor, 'g'), rt.swizzle(volColor, 'b'))
-    colorVariance = rt.length(rt.binary('-', rt.swizzle(volColor, 'rgb'), rt.construct(3, rt.swizzle(volColor, 'r')), 3, 'float'))
+    volColor = sampleVoxel__ivec3.call(voxel)
+    baseColor = rt.swizzle(volColor, 'rgb')
+    colorVariance = rt.length(rt.binary_raw('-', rt.swizzle(volColor, 'rgb'), rt.construct_raw(3, rt.swizzle(volColor, 'r')), 3, 'float'))
     faceShade = rt.f(0.0)
     if rt.bool(rt.binary('<', colorVariance, rt.f(0.0099999997764825821)))
       faceShade = rt.binary('+', rt.binary('+', rt.binary('*', rt.component_wise('abs', rt.swizzle(n, 'x')), rt.f(0.89999997615814209), 1, 'float'), rt.binary('*', rt.component_wise('abs', rt.swizzle(n, 'y')), rt.f(1), 1, 'float'), 1, 'float'), rt.binary('*', rt.component_wise('abs', rt.swizzle(n, 'z')), rt.f(0.85000002384185791), 1, 'float'), 1, 'float')
       baseColor.replace((rt.construct(3, rt.binary('*', rt.f(0.69999998807907104), faceShade, 1, 'float'))).map { |c| rt.f32(c) })
     end
-    return rt.construct(3, ((baseColor[0]) * (((amb) + (((diff) * (rt.f(0.69999998807907104))))))), ((baseColor[1]) * (((amb) + (((diff) * (rt.f(0.69999998807907104))))))), ((baseColor[2]) * (((amb) + (((diff) * (rt.f(0.69999998807907104))))))))
+    return rt.construct(3, rt.binary_raw('*', baseColor, rt.binary('+', amb, rt.binary('*', diff, rt.f(0.69999998807907104), 1, 'float'), 1, 'float'), 3, 'float'))
   end
   main__void = lambda do
     alpha = nil; angle = nil; camDist = nil; color = nil; depth = nil; forward = nil; fullRes = nil; globalCoord = nil; hit = nil; lookAt = nil; normal = nil; p = nil; rd = nil; right = nil; ro = nil; up = nil; uv = nil
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (_u_resolution[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (_u_resolution[1])))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
     if rt.bool(rt.binary('<', rt.swizzle(fullRes, 'x'), rt.f(1)))
       fullRes[0] = rt.f32(rt.f(1024)); fullRes[1] = rt.f32(rt.f(1024))
     end
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    uv = rt.construct(2, ((((globalCoord[0]) - (((rt.f(0.5)) * (fullRes[0]))))) / (rt.swizzle(fullRes, 'y'))), ((((globalCoord[1]) - (((rt.f(0.5)) * (fullRes[1]))))) / (rt.swizzle(fullRes, 'y'))))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', globalCoord, rt.binary_raw('*', rt.f(0.5), fullRes, 2, 'float'), 2, 'float'), rt.swizzle(fullRes, 'y'), 2, 'float'))
     camDist = rt.f(3.5)
     angle = rt.binary('*', rt.binary('*', _u_time, g['TAU'], 1, 'float'), rt.construct(1, _u_orbitSpeed), 1, 'float')
-    ro = rt.construct(3, rt.construct(3, rt.binary('*', rt.component_wise('sin', angle), camDist, 1, 'float'), rt.f(0.5), rt.binary('*', rt.component_wise('cos', angle), camDist, 1, 'float')))
-    lookAt = rt.construct(3, rt.construct(3, rt.f(0)))
-    forward = rt.construct(3, rt.normalize(rt.binary('-', lookAt, ro, 3, 'float')))
-    right = rt.construct(3, rt.normalize(rt.cross(rt.construct(3, rt.f(0), rt.f(1), rt.f(0)), forward)))
-    up = rt.construct(3, rt.cross(forward, right))
-    rd = rt.construct(3, rt.normalize(rt.binary('+', rt.binary('+', forward, rt.binary('*', rt.swizzle(uv, 'x'), right, 3, 'float'), 3, 'float'), rt.binary('*', rt.swizzle(uv, 'y'), up, 3, 'float'), 3, 'float')))
+    ro = rt.construct(3, rt.binary('*', rt.component_wise('sin', angle), camDist, 1, 'float'), rt.f(0.5), rt.binary('*', rt.component_wise('cos', angle), camDist, 1, 'float'))
+    lookAt = rt.construct(3, rt.f(0))
+    forward = rt.normalize(rt.binary_raw('-', lookAt, ro, 3, 'float'))
+    right = rt.normalize(rt.cross(rt.construct(3, rt.f(0), rt.f(1), rt.f(0)), forward))
+    up = rt.cross(forward, right)
+    rd = rt.normalize(rt.binary_raw('+', rt.binary_raw('+', forward, rt.binary_raw('*', rt.swizzle(uv, 'x'), right, 3, 'float'), 3, 'float'), rt.binary_raw('*', rt.swizzle(uv, 'y'), up, 3, 'float'), 3, 'float'))
     color = rt.construct(3, 0.0)
-    normal = rt.construct(3, rt.construct(3, rt.f(0), rt.f(0), rt.f(1)))
+    normal = rt.construct(3, rt.f(0), rt.f(0), rt.f(1))
     depth = rt.f(1)
     alpha = rt.f(1)
     hit = [rt.f(0.0), rt.construct(3, 0.0), 0]
@@ -337,7 +337,7 @@ run_pixel = lambda do |ctx, out|
       hit = voxelTrace__vec3_vec3.call(ro, rd)
       p = rt.construct(3, 0.0)
       if rt.bool(rt.binary('>', hit[0], rt.f(0)))
-        p = rt.construct(3, ((ro[0]) + (((rd[0]) * (hit[0])))), ((ro[1]) + (((rd[1]) * (hit[0])))), ((ro[2]) + (((rd[2]) * (hit[0])))))
+        p = rt.construct(3, rt.binary_raw('+', ro, rt.binary_raw('*', rd, hit[0], 3, 'float'), 3, 'float'))
         color.replace((shadeVoxel__vec3_vec3_vec3_ivec3.call(p, rd, hit[1], hit[2])).map { |c| rt.f32(c) })
         normal.replace((hit[1]).map { |c| rt.f32(c) })
         depth = rt.binary('/', hit[0], g['MAX_DIST'], 1, 'float')
@@ -358,7 +358,7 @@ run_pixel = lambda do |ctx, out|
     end
     color.replace((rt.component_wise('pow', color, rt.construct(3, rt.f(0.45454543828964233)))).map { |c| rt.f32(c) })
     g['fragColor'].replace((rt.construct(4, color, alpha)).map { |c| rt.f32(c) })
-    g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), depth)).map { |c| rt.f32(c) })
+    g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), depth)).map { |c| rt.f32(c) })
   end
   main__void.call
   c0 = g['fragColor']

@@ -22,7 +22,7 @@ run_pixel = lambda do |ctx, out|
   columnHeight__ivec2 = lambda do |column|
     column = rt.copy(column, 'int')
     luminance = nil; rgb = nil
-    rgb = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_heightTex, imageTexel__ivec2_ivec2.call(column, rt.texture_size(_u_heightTex)), rt.i(0)), 'rgb'))
+    rgb = rt.swizzle(rt.texel_fetch(_u_heightTex, imageTexel__ivec2_ivec2.call(column, rt.texture_size(_u_heightTex)), rt.i(0)), 'rgb')
     luminance = rt.dot(rgb, rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
     return rt.component_wise('floor', rt.binary('+', rt.binary('*', rt.component_wise('clamp', rt.binary('+', rt.binary('*', luminance, _u_heightScale, 1, 'float'), _u_baseHeight, 1, 'float'), rt.f(0), rt.f(1)), rt.construct(1, _u_volumeSize), 1, 'float'), rt.f(0.5), 1, 'float'))
   end
@@ -43,11 +43,11 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', occupied, rt.f(0)))
       return
     end
-    color = rt.construct(3, rt.swizzle(rt.texel_fetch(_u_tex, imageTexel__ivec2_ivec2.call(rt.swizzle(p, 'xz'), rt.texture_size(_u_tex)), rt.i(0)), 'rgb'))
+    color = rt.swizzle(rt.texel_fetch(_u_tex, imageTexel__ivec2_ivec2.call(rt.swizzle(p, 'xz'), rt.texture_size(_u_tex)), rt.i(0)), 'rgb')
     g['fragColor'].replace((rt.construct(4, color, occupied)).map { |c| rt.f32(c) })
-    normal = rt.construct(3, rt.construct(3, rt.binary('-', density__ivec3.call(rt.binary('-', p, rt.construct(3, rt.i(1), rt.i(0), rt.i(0), 'int'), 3, 'int')), density__ivec3.call(rt.binary('+', p, rt.construct(3, rt.i(1), rt.i(0), rt.i(0), 'int'), 3, 'int')), 1, 'float'), rt.binary('-', density__ivec3.call(rt.binary('-', p, rt.construct(3, rt.i(0), rt.i(1), rt.i(0), 'int'), 3, 'int')), density__ivec3.call(rt.binary('+', p, rt.construct(3, rt.i(0), rt.i(1), rt.i(0), 'int'), 3, 'int')), 1, 'float'), rt.binary('-', density__ivec3.call(rt.binary('-', p, rt.construct(3, rt.i(0), rt.i(0), rt.i(1), 'int'), 3, 'int')), density__ivec3.call(rt.binary('+', p, rt.construct(3, rt.i(0), rt.i(0), rt.i(1), 'int'), 3, 'int')), 1, 'float')))
+    normal = rt.construct(3, rt.binary('-', density__ivec3.call(rt.binary('-', p, rt.construct(3, rt.i(1), rt.i(0), rt.i(0), 'int'), 3, 'int')), density__ivec3.call(rt.binary('+', p, rt.construct(3, rt.i(1), rt.i(0), rt.i(0), 'int'), 3, 'int')), 1, 'float'), rt.binary('-', density__ivec3.call(rt.binary('-', p, rt.construct(3, rt.i(0), rt.i(1), rt.i(0), 'int'), 3, 'int')), density__ivec3.call(rt.binary('+', p, rt.construct(3, rt.i(0), rt.i(1), rt.i(0), 'int'), 3, 'int')), 1, 'float'), rt.binary('-', density__ivec3.call(rt.binary('-', p, rt.construct(3, rt.i(0), rt.i(0), rt.i(1), 'int'), 3, 'int')), density__ivec3.call(rt.binary('+', p, rt.construct(3, rt.i(0), rt.i(0), rt.i(1), 'int'), 3, 'int')), 1, 'float'))
     normal.replace(((rt.bool(rt.binary('>', rt.dot(normal, normal), rt.f(0))) ? (rt.normalize(normal)) : (rt.construct(3, rt.f(0), rt.f(1), rt.f(0))))).map { |c| rt.f32(c) })
-    g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), occupied)).map { |c| rt.f32(c) })
+    g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), occupied)).map { |c| rt.f32(c) })
   end
   main__void.call
   c0 = g['fragColor']

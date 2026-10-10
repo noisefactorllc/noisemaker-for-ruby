@@ -27,9 +27,9 @@ run_pixel = lambda do |ctx, out|
   noise3d__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     f = nil; i = nil; n000 = nil; n001 = nil; n010 = nil; n011 = nil; n100 = nil; n101 = nil; n110 = nil; n111 = nil; x0 = nil; x1 = nil; x2 = nil; x3 = nil; y0 = nil; y1 = nil
-    i = rt.construct(3, rt.component_wise('floor', p[0]), rt.component_wise('floor', p[1]), rt.component_wise('floor', p[2]))
-    f = rt.construct(3, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]), rt.component_wise('fract', p[2]))
-    f.replace((rt.binary('*', rt.binary('*', f, f, 3, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 3, 'float'), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+    i = rt.component_wise('floor', p)
+    f = rt.component_wise('fract', p)
+    f.replace((rt.binary_raw('*', rt.binary_raw('*', f, f, 3, 'float'), rt.binary_raw('-', rt.f(3), rt.binary_raw('*', rt.f(2), f, 3, 'float'), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     n000 = hash31__vec3.call(i)
     n100 = hash31__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(1)))), ((i[1]) + ((rt.f(0)))), ((i[2]) + ((rt.f(0))))))
     n010 = hash31__vec3.call(rt.construct(3, ((i[0]) + ((rt.f(0)))), ((i[1]) + ((rt.f(1)))), ((i[2]) + ((rt.f(0))))))
@@ -75,10 +75,10 @@ run_pixel = lambda do |ctx, out|
     xRandom = simplexRandom__float_float_vec3.call(rt.binary('+', _u_time, rt.binary('*', _u_speed, rt.f(0.10000000149011612), 1, 'float'), 1, 'float'), spd, g['X_NOISE_SEED'])
     yRandom = simplexRandom__float_float_vec3.call(rt.binary('+', _u_time, rt.binary('*', _u_speed, rt.f(0.10000000149011612), 1, 'float'), 1, 'float'), spd, g['Y_NOISE_SEED'])
     offsetScale = rt.binary('*', r, rt.binary('+', rt.f(0.0099999997764825821), rt.binary('*', _u_speed, rt.f(0.019999999552965164), 1, 'float'), 1, 'float'), 1, 'float')
-    offset = rt.construct(2, (((((xRandom)) - (rt.f(0.5)))) * (offsetScale)), (((((yRandom)) - (rt.f(0.5)))) * (offsetScale)))
-    sampleCoord = rt.construct(2, ((ctx.uv[0]) + (offset[0])), ((ctx.uv[1]) + (offset[1])))
+    offset = rt.construct(2, rt.binary_raw('*', rt.binary_raw('-', rt.construct_raw(2, xRandom, yRandom), rt.f(0.5), 2, 'float'), offsetScale, 2, 'float'))
+    sampleCoord = rt.construct(2, rt.binary_raw('+', ctx.uv, offset, 2, 'float'))
     sampleCoord.replace((applyWrap__vec2.call(sampleCoord)).map { |c| rt.f32(c) })
-    sampled = rt.construct(4, (rt.texture(_u_inputTex, sampleCoord))[0], (rt.texture(_u_inputTex, sampleCoord))[1], (rt.texture(_u_inputTex, sampleCoord))[2], (rt.texture(_u_inputTex, sampleCoord))[3])
+    sampled = rt.texture(_u_inputTex, sampleCoord)
     g['fragColor'].replace((sampled).map { |c| rt.f32(c) })
   end
   main__void.call

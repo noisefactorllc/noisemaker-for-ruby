@@ -18,9 +18,9 @@ run_pixel = lambda do |ctx, out|
     if rt.bool((rt.bool(rt.binary('<=', rt.swizzle(dims, 'x'), rt.f(0))) || rt.bool(rt.binary('<=', rt.swizzle(dims, 'y'), rt.f(0))) ? 1 : 0))
       return rt.f(0)
     end
-    delta = rt.construct(2, rt.component_wise('abs', rt.f32(((uv[0]) - ((rt.f(0.5)))))), rt.component_wise('abs', rt.f32(((uv[1]) - ((rt.f(0.5)))))))
+    delta = rt.component_wise('abs', rt.construct(2, ((uv[0]) - ((rt.f(0.5)))), ((uv[1]) - ((rt.f(0.5))))))
     aspect = rt.binary('/', rt.swizzle(dims, 'x'), rt.component_wise('max', rt.swizzle(dims, 'y'), rt.f(1)), 1, 'float')
-    scaled = rt.construct(2, rt.construct(2, rt.binary('*', rt.swizzle(delta, 'x'), aspect, 1, 'float'), rt.swizzle(delta, 'y')))
+    scaled = rt.construct(2, rt.binary('*', rt.swizzle(delta, 'x'), aspect, 1, 'float'), rt.swizzle(delta, 'y'))
     maxRadius = rt.length(rt.construct(2, rt.binary('*', aspect, rt.f(0.5), 1, 'float'), rt.f(0.5)))
     if rt.bool(rt.binary('<=', maxRadius, rt.f(0)))
       return rt.f(0)
@@ -30,17 +30,17 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     brightnessRgb = nil; dims = nil; edgeBlend = nil; finalRgb = nil; globalCoord = nil; globalUV = nil; mask = nil; texSize = nil; texel = nil; tileDims = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    tileDims = rt.construct(2, rt.construct(2, texSize))
-    dims = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (tileDims[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (tileDims[1])))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (tileDims[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (tileDims[1])))
-    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (dims[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (dims[1])))
-    texel = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    tileDims = rt.construct(2, texSize)
+    dims = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), tileDims, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), dims, 2, 'float'))
+    texel = rt.texture(_u_inputTex, uv)
     mask = computeVignetteMask__vec2_vec2.call(globalUV, dims)
-    brightnessRgb = rt.construct(3, rt.construct(3, _u_vignetteBrightness))
-    edgeBlend = rt.construct(3, rt.component_wise('mix', rt.swizzle(texel, 'r'), brightnessRgb[0], mask), rt.component_wise('mix', rt.swizzle(texel, 'g'), brightnessRgb[1], mask), rt.component_wise('mix', rt.swizzle(texel, 'b'), brightnessRgb[2], mask))
-    finalRgb = rt.construct(3, rt.component_wise('mix', rt.swizzle(texel, 'r'), edgeBlend[0], _u_alpha), rt.component_wise('mix', rt.swizzle(texel, 'g'), edgeBlend[1], _u_alpha), rt.component_wise('mix', rt.swizzle(texel, 'b'), edgeBlend[2], _u_alpha))
+    brightnessRgb = rt.construct(3, _u_vignetteBrightness)
+    edgeBlend = rt.component_wise('mix', rt.swizzle(texel, 'rgb'), brightnessRgb, mask)
+    finalRgb = rt.component_wise('mix', rt.swizzle(texel, 'rgb'), edgeBlend, _u_alpha)
     g['fragColor'].replace((rt.construct(4, finalRgb, rt.swizzle(texel, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

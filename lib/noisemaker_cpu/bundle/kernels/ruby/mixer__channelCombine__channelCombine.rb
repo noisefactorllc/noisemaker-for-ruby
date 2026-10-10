@@ -21,11 +21,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _g = nil; b = nil; globalCoord = nil; r = nil; st = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    st = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    r = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_rTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_rTex)), 2, 'float'))), _u_rLevel, 1, 'float'), rt.f(100), 1, 'float')
-    _g = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_gTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_gTex)), 2, 'float'))), _u_gLevel, 1, 'float'), rt.f(100), 1, 'float')
-    b = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_bTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_bTex)), 2, 'float'))), _u_bLevel, 1, 'float'), rt.f(100), 1, 'float')
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    r = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_rTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_rTex)), 2, 'float')))), _u_rLevel, 1, 'float'), rt.f(100), 1, 'float')
+    _g = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_gTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_gTex)), 2, 'float')))), _u_gLevel, 1, 'float'), rt.f(100), 1, 'float')
+    b = rt.binary('/', rt.binary('*', luminance__vec4.call(rt.texture(_u_bTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_bTex)), 2, 'float')))), _u_bLevel, 1, 'float'), rt.f(100), 1, 'float')
     g['fragColor'][0] = rt.f32(r); g['fragColor'][1] = rt.f32(_g); g['fragColor'][2] = rt.f32(b); g['fragColor'][3] = rt.f32(rt.f(1))
   end
   main__void.call

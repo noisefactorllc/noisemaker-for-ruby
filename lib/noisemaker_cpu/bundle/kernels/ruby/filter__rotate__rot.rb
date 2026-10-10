@@ -21,17 +21,17 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     angle = nil; aspect = nil; center = nil; texSize = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
     angle = _u_rotation
     if rt.bool(rt.binary('!=', _u_speed, rt.i(0)))
       angle = rt.binary('+', angle, rt.binary('*', rt.binary('*', _u_time, rt.f(360), 1, 'float'), rt.construct(1, _u_speed), 1, 'float'), 1, 'float')
     end
     aspect = rt.binary('/', rt.construct(1, rt.swizzle(texSize, 'x')), rt.construct(1, rt.swizzle(texSize, 'y')), 1, 'float')
-    center = rt.construct(2, rt.construct(2, rt.f(0.5)))
+    center = rt.construct(2, rt.f(0.5))
     uv[0] = rt.f32(rt.binary('-', uv[0], center[0], 1, 'float')); uv[1] = rt.f32(rt.binary('-', uv[1], center[1], 1, 'float'))
-    uv = rt.assign_swizzle(uv, 'x', rt.binary('*', rt.swizzle(uv, 'x'), aspect, 1, 'float'))
+    uv = rt.assign_swizzle(uv, 'x', rt.binary_raw('*', rt.swizzle(uv, 'x'), aspect, 1, 'float'))
     rt.matrix_mult_assign(uv, rotate2D__float.call(rt.binary('/', rt.binary('*', rt.unary('-', angle), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')), uv, 2)
-    uv = rt.assign_swizzle(uv, 'x', rt.binary('/', rt.swizzle(uv, 'x'), aspect, 1, 'float'))
+    uv = rt.assign_swizzle(uv, 'x', rt.binary_raw('/', rt.swizzle(uv, 'x'), aspect, 1, 'float'))
     uv[0] = rt.f32(rt.binary('+', uv[0], center[0], 1, 'float')); uv[1] = rt.f32(rt.binary('+', uv[1], center[1], 1, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
       uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })

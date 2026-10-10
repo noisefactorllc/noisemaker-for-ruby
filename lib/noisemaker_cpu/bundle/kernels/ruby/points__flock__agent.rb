@@ -42,9 +42,9 @@ run_pixel = lambda do |ctx, out|
   noise2D__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     f = nil; i = nil; n = nil
-    i = rt.construct(2, rt.component_wise('floor', p[0]), rt.component_wise('floor', p[1]))
-    f = rt.construct(2, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]))
-    f.replace((rt.binary('*', rt.binary('*', f, f, 2, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), f, 2, 'float'), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
+    i = rt.component_wise('floor', p)
+    f = rt.component_wise('fract', p)
+    f.replace((rt.binary_raw('*', rt.binary_raw('*', f, f, 2, 'float'), rt.binary_raw('-', rt.f(3), rt.binary_raw('*', rt.f(2), f, 2, 'float'), 2, 'float'), 2, 'float')).map { |c| rt.f32(c) })
     n = rt.binary('+', rt.swizzle(i, 'x'), rt.binary('*', rt.swizzle(i, 'y'), rt.f(57), 1, 'float'), 1, 'float')
     return rt.binary('-', rt.binary('*', rt.component_wise('mix', rt.component_wise('mix', hashFloat__float.call(n), hashFloat__float.call(rt.binary('+', n, rt.f(1), 1, 'float')), rt.swizzle(f, 'x')), rt.component_wise('mix', hashFloat__float.call(rt.binary('+', n, rt.f(57), 1, 'float')), hashFloat__float.call(rt.binary('+', n, rt.f(58), 1, 'float')), rt.swizzle(f, 'x')), rt.swizzle(f, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float')
   end
@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
     len = nil
     len = rt.length(v)
     if rt.bool((rt.bool(rt.binary('>', len, maxLen)) && rt.bool(rt.binary('>', len, rt.f(0))) ? 1 : 0))
-      return rt.construct(2, ((v[0]) * (((maxLen) / (len)))), ((v[1]) * (((maxLen) / (len)))))
+      return rt.construct(2, rt.binary_raw('*', v, rt.binary('/', maxLen, len, 1, 'float'), 2, 'float'))
     end
     return v
   end
@@ -67,7 +67,7 @@ run_pixel = lambda do |ctx, out|
     len = nil
     len = rt.length(v)
     if rt.bool(rt.binary('>', len, rt.f(0)))
-      return rt.construct(2, ((v[0]) * (((mag) / (len)))), ((v[1]) * (((mag) / (len)))))
+      return rt.construct(2, rt.binary_raw('*', v, rt.binary('/', mag, len, 1, 'float'), 2, 'float'))
     end
     return v
   end
@@ -75,16 +75,16 @@ run_pixel = lambda do |ctx, out|
     pos = rt.copy(pos, 'float')
     res = rt.copy(res, 'float')
     cellSize = nil
-    cellSize = rt.construct(2, ((res[0]) / ((g['GRID_SIZE']))), ((res[1]) / ((g['GRID_SIZE']))))
+    cellSize = rt.construct(2, rt.binary_raw('/', res, rt.construct(1, g['GRID_SIZE']), 2, 'float'))
     return rt.construct(2, rt.construct(2, rt.component_wise('clamp', rt.construct(2, ((pos[0]) / (cellSize[0])), ((pos[1]) / (cellSize[1]))), rt.construct(2, rt.f(0)), rt.construct(2, rt.construct(1, rt.binary('-', g['GRID_SIZE'], rt.i(1), 1, 'int'))))), 'int')
   end
   main__void = lambda do
     __sc1 = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; age = nil; alignSteer = nil; alignmentCount = nil; alignmentSum = nil; alive = nil; angle = nil; avgPos = nil; avgVel = nil; away = nil; boidId = nil; cellSeed = nil; checkCell = nil; cohesionCount = nil; cohesionSteer = nil; cohesionSum = nil; coord = nil; desired = nil; diff = nil; dist = nil; distSq = nil; dx = nil; dy = nil; myCell = nil; newPx = nil; newPy = nil; noiseForce = nil; noiseScale = nil; nx = nil; ny = nil; otherPos = nil; otherVel = nil; otherVelocity = nil; otherXyz = nil; perceptionSq = nil; pos = nil; px = nil; py = nil; rgba = nil; s = nil; sampleIdx = nil; sampleSeed = nil; seed = nil; separationCount = nil; separationForce = nil; separationSq = nil; speed = nil; stateSize = nil; steer = nil; sx = nil; sy = nil; totalBoids = nil; turnStrength = nil; vel = nil; velocity = nil; vx = nil; vy = nil; wallForce = nil; xyz = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
-    xyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, coord, rt.i(0)))
-    vel = rt.construct(4, rt.texel_fetch(_u_velTex, coord, rt.i(0)))
-    rgba = rt.construct(4, rt.texel_fetch(_u_rgbaTex, coord, rt.i(0)))
+    xyz = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
+    vel = rt.texel_fetch(_u_velTex, coord, rt.i(0))
+    rgba = rt.texel_fetch(_u_rgbaTex, coord, rt.i(0))
     px = rt.swizzle(xyz, 'x')
     py = rt.swizzle(xyz, 'y')
     alive = rt.swizzle(xyz, 'w')
@@ -93,8 +93,8 @@ run_pixel = lambda do |ctx, out|
     age = rt.swizzle(vel, 'z')
     seed = rt.swizzle(vel, 'w')
     boidId = rt.construct(1, rt.binary('+', rt.swizzle(coord, 'x'), rt.binary('*', rt.swizzle(coord, 'y'), rt.swizzle(stateSize, 'x'), 1, 'int'), 1, 'int'), 'uint')
-    pos = rt.construct(2, (((px)) * (_u_resolution[0])), (((py)) * (_u_resolution[1])))
-    velocity = rt.construct(2, rt.construct(2, vx, vy))
+    pos = rt.construct(2, rt.binary_raw('*', rt.construct_raw(2, px, py), _u_resolution, 2, 'float'))
+    velocity = rt.construct(2, vx, vy)
     if rt.bool(rt.binary('<', alive, rt.f(0.5)))
       g['outXYZ'].replace((xyz).map { |c| rt.f32(c) })
       g['outVel'].replace((vel).map { |c| rt.f32(c) })
@@ -107,11 +107,11 @@ run_pixel = lambda do |ctx, out|
       seed = hash__uint.call(rt.binary('+', boidId, rt.i(99999), 1, 'uint'))
       angle = rt.binary('*', hash__uint.call(rt.binary('+', boidId, rt.i(12345), 1, 'uint')), rt.f(6.2831854820251465), 1, 'float')
       speed = rt.binary('+', rt.binary('*', rt.binary('*', hash__uint.call(rt.binary('+', boidId, rt.i(23456), 1, 'uint')), _u_maxSpeed, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('*', _u_maxSpeed, rt.f(0.25), 1, 'float'), 1, 'float')
-      velocity.replace((rt.binary('*', rt.construct(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle)), speed, 2, 'float')).map { |c| rt.f32(c) })
+      velocity.replace((rt.binary_raw('*', rt.construct_raw(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle)), speed, 2, 'float')).map { |c| rt.f32(c) })
     end
-    separationForce = rt.construct(2, rt.construct(2, rt.f(0)))
-    alignmentSum = rt.construct(2, rt.construct(2, rt.f(0)))
-    cohesionSum = rt.construct(2, rt.construct(2, rt.f(0)))
+    separationForce = rt.construct(2, rt.f(0))
+    alignmentSum = rt.construct(2, rt.f(0))
+    cohesionSum = rt.construct(2, rt.f(0))
     separationCount = rt.i(0)
     alignmentCount = rt.i(0)
     cohesionCount = rt.i(0)
@@ -163,26 +163,26 @@ run_pixel = lambda do |ctx, out|
           if rt.bool((rt.bool(rt.binary('==', sx, rt.swizzle(coord, 'x'))) && rt.bool(rt.binary('==', sy, rt.swizzle(coord, 'y'))) ? 1 : 0))
             next
           end
-          otherXyz = rt.construct(4, rt.texel_fetch(_u_xyzTex, rt.construct(2, sx, sy, 'int'), rt.i(0)))
-          otherVel = rt.construct(4, rt.texel_fetch(_u_velTex, rt.construct(2, sx, sy, 'int'), rt.i(0)))
+          otherXyz = rt.texel_fetch(_u_xyzTex, rt.construct(2, sx, sy, 'int'), rt.i(0))
+          otherVel = rt.texel_fetch(_u_velTex, rt.construct(2, sx, sy, 'int'), rt.i(0))
           if rt.bool(rt.binary('<', rt.swizzle(otherXyz, 'w'), rt.f(0.5)))
             next
           end
-          otherPos = rt.construct(2, ((rt.swizzle(otherXyz, 'x')) * (_u_resolution[0])), ((rt.swizzle(otherXyz, 'y')) * (_u_resolution[1])))
-          otherVelocity = rt.construct(2, rt.swizzle(otherVel, 'x'), rt.swizzle(otherVel, 'y'))
-          diff = rt.construct(2, ((otherPos[0]) - (pos[0])), ((otherPos[1]) - (pos[1])))
+          otherPos = rt.construct(2, rt.binary_raw('*', rt.swizzle(otherXyz, 'xy'), _u_resolution, 2, 'float'))
+          otherVelocity = rt.swizzle(otherVel, 'xy')
+          diff = rt.construct(2, rt.binary_raw('-', otherPos, pos, 2, 'float'))
           if rt.bool(rt.binary('==', _u_boundaryMode, rt.i(0)))
             if rt.bool(rt.binary('>', rt.swizzle(diff, 'x'), rt.binary('*', rt.swizzle(_u_resolution, 'x'), rt.f(0.5), 1, 'float')))
-              diff = rt.assign_swizzle(diff, 'x', rt.binary('-', rt.swizzle(diff, 'x'), rt.swizzle(_u_resolution, 'x'), 1, 'float'))
+              diff = rt.assign_swizzle(diff, 'x', rt.binary_raw('-', rt.swizzle(diff, 'x'), rt.swizzle(_u_resolution, 'x'), 1, 'float'))
             end
             if rt.bool(rt.binary('<', rt.swizzle(diff, 'x'), rt.binary('*', rt.unary('-', rt.swizzle(_u_resolution, 'x')), rt.f(0.5), 1, 'float')))
-              diff = rt.assign_swizzle(diff, 'x', rt.binary('+', rt.swizzle(diff, 'x'), rt.swizzle(_u_resolution, 'x'), 1, 'float'))
+              diff = rt.assign_swizzle(diff, 'x', rt.binary_raw('+', rt.swizzle(diff, 'x'), rt.swizzle(_u_resolution, 'x'), 1, 'float'))
             end
             if rt.bool(rt.binary('>', rt.swizzle(diff, 'y'), rt.binary('*', rt.swizzle(_u_resolution, 'y'), rt.f(0.5), 1, 'float')))
-              diff = rt.assign_swizzle(diff, 'y', rt.binary('-', rt.swizzle(diff, 'y'), rt.swizzle(_u_resolution, 'y'), 1, 'float'))
+              diff = rt.assign_swizzle(diff, 'y', rt.binary_raw('-', rt.swizzle(diff, 'y'), rt.swizzle(_u_resolution, 'y'), 1, 'float'))
             end
             if rt.bool(rt.binary('<', rt.swizzle(diff, 'y'), rt.binary('*', rt.unary('-', rt.swizzle(_u_resolution, 'y')), rt.f(0.5), 1, 'float')))
-              diff = rt.assign_swizzle(diff, 'y', rt.binary('+', rt.swizzle(diff, 'y'), rt.swizzle(_u_resolution, 'y'), 1, 'float'))
+              diff = rt.assign_swizzle(diff, 'y', rt.binary_raw('+', rt.swizzle(diff, 'y'), rt.swizzle(_u_resolution, 'y'), 1, 'float'))
             end
           end
           distSq = rt.dot(diff, diff)
@@ -203,7 +203,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    steer = rt.construct(2, rt.construct(2, rt.f(0)))
+    steer = rt.construct(2, rt.f(0))
     if rt.bool(rt.binary('>', separationCount, rt.i(0)))
       __sc1 = rt.construct(1, separationCount); separationForce[0] = rt.f32(rt.binary('/', separationForce[0], __sc1, 1, 'float')); separationForce[1] = rt.f32(rt.binary('/', separationForce[1], __sc1, 1, 'float'))
       if rt.bool(rt.binary('>', rt.length(separationForce), rt.f(0)))
@@ -215,11 +215,11 @@ run_pixel = lambda do |ctx, out|
     end
     avgVel = rt.construct(2, 0.0)
     if rt.bool(rt.binary('>', alignmentCount, rt.i(0)))
-      avgVel = rt.construct(2, ((alignmentSum[0]) / ((alignmentCount))), ((alignmentSum[1]) / ((alignmentCount))))
+      avgVel = rt.construct(2, rt.binary_raw('/', alignmentSum, rt.construct(1, alignmentCount), 2, 'float'))
       alignSteer = rt.construct(2, 0.0)
       if rt.bool(rt.binary('>', rt.length(avgVel), rt.f(0)))
         avgVel.replace((setMag__vec2_float.call(avgVel, _u_maxSpeed)).map { |c| rt.f32(c) })
-        alignSteer = rt.construct(2, ((avgVel[0]) - (velocity[0])), ((avgVel[1]) - (velocity[1])))
+        alignSteer = rt.construct(2, rt.binary_raw('-', avgVel, velocity, 2, 'float'))
         alignSteer.replace((limitVec__vec2_float.call(alignSteer, _u_maxForce)).map { |c| rt.f32(c) })
         steer[0] = rt.f32(rt.binary('+', steer[0], ((alignSteer[0]) * (_u_alignment)), 1, 'float')); steer[1] = rt.f32(rt.binary('+', steer[1], ((alignSteer[1]) * (_u_alignment)), 1, 'float'))
       end
@@ -227,12 +227,12 @@ run_pixel = lambda do |ctx, out|
     avgPos = rt.construct(2, 0.0)
     desired = rt.construct(2, 0.0)
     if rt.bool(rt.binary('>', cohesionCount, rt.i(0)))
-      avgPos = rt.construct(2, ((cohesionSum[0]) / ((cohesionCount))), ((cohesionSum[1]) / ((cohesionCount))))
-      desired = rt.construct(2, ((avgPos[0]) - (pos[0])), ((avgPos[1]) - (pos[1])))
+      avgPos = rt.construct(2, rt.binary_raw('/', cohesionSum, rt.construct(1, cohesionCount), 2, 'float'))
+      desired = rt.construct(2, rt.binary_raw('-', avgPos, pos, 2, 'float'))
       cohesionSteer = rt.construct(2, 0.0)
       if rt.bool(rt.binary('>', rt.length(desired), rt.f(0)))
         desired.replace((setMag__vec2_float.call(desired, _u_maxSpeed)).map { |c| rt.f32(c) })
-        cohesionSteer = rt.construct(2, ((desired[0]) - (velocity[0])), ((desired[1]) - (velocity[1])))
+        cohesionSteer = rt.construct(2, rt.binary_raw('-', desired, velocity, 2, 'float'))
         cohesionSteer.replace((limitVec__vec2_float.call(cohesionSteer, _u_maxForce)).map { |c| rt.f32(c) })
         steer[0] = rt.f32(rt.binary('+', steer[0], ((cohesionSteer[0]) * (_u_cohesion)), 1, 'float')); steer[1] = rt.f32(rt.binary('+', steer[1], ((cohesionSteer[1]) * (_u_cohesion)), 1, 'float'))
       end
@@ -245,13 +245,13 @@ run_pixel = lambda do |ctx, out|
       noiseScale = rt.f(0.0099999997764825821)
       nx = noise2D__vec2.call(rt.construct(2, ((((pos[0]) * (noiseScale))) + (((_u_time) * (rt.f(0.5))))), ((((pos[1]) * (noiseScale))) + (((_u_time) * (rt.f(0.5)))))))
       ny = noise2D__vec2.call(rt.construct(2, ((((((pos[0]) * (noiseScale))) + ((rt.f(100))))) + (((_u_time) * (rt.f(0.5))))), ((((((pos[1]) * (noiseScale))) + ((rt.f(100))))) + (((_u_time) * (rt.f(0.5)))))))
-      noiseForce = rt.construct(2, (((((nx)) * (_u_maxForce))) * (_u_noiseWeight)), (((((ny)) * (_u_maxForce))) * (_u_noiseWeight)))
+      noiseForce = rt.construct(2, rt.binary_raw('*', rt.binary_raw('*', rt.construct_raw(2, nx, ny), _u_maxForce, 2, 'float'), _u_noiseWeight, 2, 'float'))
       steer[0] = rt.f32(rt.binary('+', steer[0], noiseForce[0], 1, 'float')); steer[1] = rt.f32(rt.binary('+', steer[1], noiseForce[1], 1, 'float'))
     end
     turnStrength = rt.f(0.0)
     wallForce = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u_boundaryMode, rt.i(1)))
-      wallForce = rt.construct(2, rt.construct(2, rt.f(0)))
+      wallForce = rt.construct(2, rt.f(0))
       turnStrength = rt.binary('*', _u_maxForce, rt.f(2), 1, 'float')
       if rt.bool(rt.binary('<', rt.swizzle(pos, 'x'), _u_wallMargin))
         wallForce = rt.assign_swizzle(wallForce, 'x', rt.binary('*', turnStrength, rt.binary('-', rt.f(1), rt.binary('/', rt.swizzle(pos, 'x'), _u_wallMargin, 1, 'float'), 1, 'float'), 1, 'float'))

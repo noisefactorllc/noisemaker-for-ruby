@@ -19,11 +19,11 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     __sc1 = nil; _for0_first = nil; brightness = nil; channel = nil; col = nil; dk = nil; edgeWidth = nil; globalCoord = nil; gridUv = nil; k = nil; key = nil; keyExact = nil; keyFrac = nil; keyLow = nil; keyRange = nil; keysPerPixel = nil; laneEdge = nil; laneF = nil; laneLocal = nil; lanePixels = nil; laneSep = nil; maxVel = nil; noteData = nil; noteVal = nil; prev = nil; prevBright = nil; scrollAmount = nil; scrollUv = nil; spread = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
     scrollAmount = rt.binary('*', rt.binary('*', _u_speed, _u_deltaTime, 1, 'float'), rt.f(0.5), 1, 'float')
-    scrollUv = rt.construct(2, rt.construct(2, rt.binary('-', rt.swizzle(uv, 'x'), scrollAmount, 1, 'float'), rt.swizzle(uv, 'y')))
-    prev = rt.construct(4, rt.construct(4, rt.f(0)))
+    scrollUv = rt.construct(2, rt.binary('-', rt.swizzle(uv, 'x'), scrollAmount, 1, 'float'), rt.swizzle(uv, 'y'))
+    prev = rt.construct(4, rt.f(0))
     if rt.bool(rt.binary('>=', rt.swizzle(scrollUv, 'x'), rt.f(0)))
       prev.replace((rt.texture(_u_feedbackTex, scrollUv)).map { |c| rt.f32(c) })
       __sc1 = rt.f(0.99699997901916504); prev[0] = rt.f32(rt.binary('*', prev[0], __sc1, 1, 'float')); prev[1] = rt.f32(rt.binary('*', prev[1], __sc1, 1, 'float')); prev[2] = rt.f32(rt.binary('*', prev[2], __sc1, 1, 'float')); prev[3] = rt.f32(rt.binary('*', prev[3], __sc1, 1, 'float'))
@@ -51,8 +51,8 @@ run_pixel = lambda do |ctx, out|
         break
       end
       k = rt.component_wise('clamp', rt.binary('+', key, dk, 1, 'int'), rt.i(0), rt.i(127))
-      gridUv = rt.construct(2, rt.construct(2, rt.binary('/', rt.binary('+', rt.construct(1, k), rt.f(0.5), 1, 'float'), rt.f(128), 1, 'float'), rt.binary('/', rt.binary('+', rt.construct(1, channel), rt.f(0.5), 1, 'float'), rt.f(16), 1, 'float')))
-      noteData = rt.construct(4, (rt.texture(_u_noteGridTex, gridUv))[0], (rt.texture(_u_noteGridTex, gridUv))[1], (rt.texture(_u_noteGridTex, gridUv))[2], (rt.texture(_u_noteGridTex, gridUv))[3])
+      gridUv = rt.construct(2, rt.binary('/', rt.binary('+', rt.construct(1, k), rt.f(0.5), 1, 'float'), rt.f(128), 1, 'float'), rt.binary('/', rt.binary('+', rt.construct(1, channel), rt.f(0.5), 1, 'float'), rt.f(16), 1, 'float'))
+      noteData = rt.texture(_u_noteGridTex, gridUv)
       if rt.bool(rt.binary('>', rt.swizzle(noteData, 'g'), rt.f(0.5)))
         maxVel = rt.component_wise('max', maxVel, rt.swizzle(noteData, 'r'))
       end
@@ -69,7 +69,7 @@ run_pixel = lambda do |ctx, out|
     end
     prevBright = rt.component_wise('max', rt.swizzle(prev, 'r'), rt.component_wise('max', rt.swizzle(prev, 'g'), rt.swizzle(prev, 'b')))
     brightness = rt.component_wise('max', prevBright, rt.component_wise('max', noteVal, laneSep))
-    col = rt.construct(3, ((_u_lineColor[0]) * (brightness)), ((_u_lineColor[1]) * (brightness)), ((_u_lineColor[2]) * (brightness)))
+    col = rt.construct(3, rt.binary_raw('*', _u_lineColor, brightness, 3, 'float'))
     g['fragColor'].replace((rt.construct(4, col, rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

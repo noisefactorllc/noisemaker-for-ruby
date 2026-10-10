@@ -47,8 +47,8 @@ run_pixel = lambda do |ctx, out|
     b = rt.copy(b, 'float')
     q = rt.copy(q, 'float')
     c = nil; e = nil; r = nil; s = nil; w = nil
-    e = rt.construct(2, ((b[0]) - (a[0])), ((b[1]) - (a[1])))
-    w = rt.construct(2, ((q[0]) - (a[0])), ((q[1]) - (a[1])))
+    e = rt.construct(2, rt.binary_raw('-', b, a, 2, 'float'))
+    w = rt.construct(2, rt.binary_raw('-', q, a, 2, 'float'))
     c = rt.construct(3, rt.binary('>=', rt.swizzle(q, 'y'), rt.swizzle(a, 'y')), rt.binary('<', rt.swizzle(q, 'y'), rt.swizzle(b, 'y')), rt.binary('>', rt.binary('*', rt.swizzle(e, 'x'), rt.swizzle(w, 'y'), 1, 'float'), rt.binary('*', rt.swizzle(e, 'y'), rt.swizzle(w, 'x'), 1, 'float')))
     if rt.bool((rt.bool(rt.component_wise('all', c)) || rt.bool((rt.bool(rt.component_wise('any', c)) ? 0 : 1)) ? 1 : 0))
       _t[0] = (rt.bool(_t[0]) ? 0 : 1)
@@ -57,7 +57,7 @@ run_pixel = lambda do |ctx, out|
     s = rt.f(0.0)
     if rt.bool(needDist)
       s = rt.component_wise('clamp', rt.binary('/', rt.dot(w, e), rt.component_wise('max', rt.dot(e, e), rt.f(9.9999999747524271e-07)), 1, 'float'), rt.f(0), rt.f(1))
-      r = rt.construct(2, ((w[0]) - (((e[0]) * (s)))), ((w[1]) - (((e[1]) * (s)))))
+      r = rt.construct(2, rt.binary_raw('-', w, rt.binary_raw('*', e, s, 2, 'float'), 2, 'float'))
       _t[1] = rt.component_wise('min', _t[1], rt.dot(r, r))
     end
     return _t
@@ -67,8 +67,8 @@ run_pixel = lambda do |ctx, out|
     _for0_first = nil; _t = nil; last = nil; lastPack = nil; pack = nil; pair = nil; pairs = nil; prev = nil; v0 = nil; v1 = nil
     _t = [0, rt.f(1.0000000150474662e+30)]
     last = rt.binary('-', n, rt.i(1), 1, 'int')
-    lastPack = rt.construct(4, rt.array_index(_u_data, rt.binary('+', base, rt.binary('/', last, rt.i(2), 1, 'int'), 1, 'int')))
-    prev = rt.construct(2, (((rt.bool(rt.binary('==', rt.binary('%', last, rt.i(2), 1, 'int'), rt.i(0))) ? (rt.swizzle(lastPack, 'x')) : (rt.swizzle(lastPack, 'z')))) * (_u_fullResolution[0])), (((rt.bool(rt.binary('==', rt.binary('%', last, rt.i(2), 1, 'int'), rt.i(0))) ? (rt.swizzle(lastPack, 'y')) : (rt.swizzle(lastPack, 'w')))) * (_u_fullResolution[1])))
+    lastPack = rt.array_index(_u_data, rt.binary('+', base, rt.binary('/', last, rt.i(2), 1, 'int'), 1, 'int'))
+    prev = rt.construct(2, rt.binary_raw('*', (rt.bool(rt.binary('==', rt.binary('%', last, rt.i(2), 1, 'int'), rt.i(0))) ? (rt.swizzle(lastPack, 'xy')) : (rt.swizzle(lastPack, 'zw'))), _u_fullResolution, 2, 'float'))
     pairs = rt.binary('/', rt.binary('+', n, rt.i(1), 1, 'int'), rt.i(2), 1, 'int')
     pair = rt.i(0)
     _for0_first = true
@@ -83,13 +83,13 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', pair, pairs))
         break
       end
-      pack = rt.construct(4, rt.array_index(_u_data, rt.binary('+', base, pair, 1, 'int')))
-      v0 = rt.construct(2, ((rt.swizzle(pack, 'x')) * (_u_fullResolution[0])), ((rt.swizzle(pack, 'y')) * (_u_fullResolution[1])))
+      pack = rt.array_index(_u_data, rt.binary('+', base, pair, 1, 'int'))
+      v0 = rt.construct(2, rt.binary_raw('*', rt.swizzle(pack, 'xy'), _u_fullResolution, 2, 'float'))
       _t = testEdge__struct1_vec2_vec2_vec2_bool.call(_t, v0, prev, q, needDist)
       prev.replace((v0).map { |c| rt.f32(c) })
       v1 = rt.construct(2, 0.0)
       if rt.bool(rt.binary('<', rt.binary('+', rt.binary('*', pair, rt.i(2), 1, 'int'), rt.i(1), 1, 'int'), n))
-        v1 = rt.construct(2, ((rt.swizzle(pack, 'z')) * (_u_fullResolution[0])), ((rt.swizzle(pack, 'w')) * (_u_fullResolution[1])))
+        v1 = rt.construct(2, rt.binary_raw('*', rt.swizzle(pack, 'zw'), _u_fullResolution, 2, 'float'))
         _t = testEdge__struct1_vec2_vec2_vec2_bool.call(_t, v1, prev, q, needDist)
         prev.replace((v1).map { |c| rt.f32(c) })
       end
@@ -98,17 +98,17 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for1_first = nil; _t = nil; activeCount = nil; base = nil; bounds = nil; controls = nil; coverage = nil; dilate = nil; featherPx = nil; globalPx = nil; header = nil; k = nil; n = nil; needDist = nil; p = nil; q = nil; result = nil; sampleUv = nil; src = nil; z = nil; zoneMeta = nil
-    globalPx = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    q = rt.construct(2, rt.construct(2, rt.swizzle(globalPx, 'x'), rt.binary('-', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(globalPx, 'y'), 1, 'float')))
-    p = rt.construct(2, ((q[0]) / (_u_fullResolution[0])), ((q[1]) / (_u_fullResolution[1])))
-    sampleUv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (rt.swizzle(rt.array_index(_u_data, rt.i(266)), 'x'))), ((rt.swizzle(ctx.frag_coord, 'y')) / (rt.swizzle(rt.array_index(_u_data, rt.i(266)), 'y'))))
-    header = rt.construct(4, rt.array_index(_u_data, rt.i(0)))
-    controls = rt.construct(4, rt.array_index(_u_data, rt.i(1)))
+    globalPx = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    q = rt.construct(2, rt.swizzle(globalPx, 'x'), rt.binary('-', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(globalPx, 'y'), 1, 'float'))
+    p = rt.construct(2, rt.binary_raw('/', q, _u_fullResolution, 2, 'float'))
+    sampleUv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.swizzle(rt.array_index(_u_data, rt.i(266)), 'xy'), 2, 'float'))
+    header = rt.array_index(_u_data, rt.i(0))
+    controls = rt.array_index(_u_data, rt.i(1))
     activeCount = rt.component_wise('min', rt.construct(1, rt.swizzle(controls, 'x'), 'int'), rt.i(8))
     featherPx = rt.binary('*', rt.binary('*', rt.component_wise('max', rt.swizzle(controls, 'y'), rt.f(0)), rt.f(0.05000000074505806), 1, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 1, 'float')
     needDist = rt.binary('>', featherPx, rt.f(0))
-    dilate = rt.construct(2, (((featherPx)) / (_u_fullResolution[0])), (((featherPx)) / (_u_fullResolution[1])))
-    result = rt.construct(4, rt.construct(4, rt.f(0)))
+    dilate = rt.construct(2, rt.binary_raw('/', rt.construct_raw(2, featherPx), _u_fullResolution, 2, 'float'))
+    result = rt.construct(4, rt.f(0))
     k = rt.i(0)
     _for1_first = true
     (0..1048575).each do |_for1|
@@ -123,12 +123,12 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('<', z, rt.i(0)))
         break
       end
-      zoneMeta = rt.construct(4, rt.array_index(_u_data, rt.binary('+', rt.i(2), z, 1, 'int')))
+      zoneMeta = rt.array_index(_u_data, rt.binary('+', rt.i(2), z, 1, 'int'))
       n = rt.component_wise('min', rt.construct(1, rt.swizzle(zoneMeta, 'x'), 'int'), rt.binary('*', rt.i(32), rt.i(2), 1, 'int'))
       if rt.bool((rt.bool(rt.binary('<', n, rt.i(3))) || rt.bool(rt.binary('<', rt.swizzle(zoneMeta, 'y'), rt.f(0.5))) ? 1 : 0))
         next
       end
-      bounds = rt.construct(4, rt.array_index(_u_data, rt.binary('+', rt.i(267), z, 1, 'int')))
+      bounds = rt.array_index(_u_data, rt.binary('+', rt.i(267), z, 1, 'int'))
       if rt.bool((rt.bool(rt.component_wise('any', rt.component_wise('lessThan', p, rt.construct(2, ((rt.swizzle(bounds, 'x')) - (dilate[0])), ((rt.swizzle(bounds, 'y')) - (dilate[1])))))) || rt.bool(rt.component_wise('any', rt.component_wise('greaterThan', p, rt.construct(2, ((rt.swizzle(bounds, 'z')) + (dilate[0])), ((rt.swizzle(bounds, 'w')) + (dilate[1])))))) ? 1 : 0))
         next
       end
@@ -155,7 +155,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
     end
-    result[0] = rt.f32(rt.binary('+', result[0], (((rt.swizzle(rt.binary('*', rt.swizzle(header, 'xyz'), rt.swizzle(header, 'w'), 3, 'float'), 'x'))) * (((rt.f(1)) - (rt.swizzle(result, 'a'))))), 1, 'float')); result[1] = rt.f32(rt.binary('+', result[1], (((rt.swizzle(rt.binary('*', rt.swizzle(header, 'xyz'), rt.swizzle(header, 'w'), 3, 'float'), 'y'))) * (((rt.f(1)) - (rt.swizzle(result, 'a'))))), 1, 'float')); result[2] = rt.f32(rt.binary('+', result[2], (((rt.swizzle(rt.binary('*', rt.swizzle(header, 'xyz'), rt.swizzle(header, 'w'), 3, 'float'), 'z'))) * (((rt.f(1)) - (rt.swizzle(result, 'a'))))), 1, 'float')); result[3] = rt.f32(rt.binary('+', result[3], (((rt.swizzle(header, 'w'))) * (((rt.f(1)) - (rt.swizzle(result, 'a'))))), 1, 'float'))
+    result[0] = rt.f32(rt.binary('+', result[0], (((rt.swizzle(rt.binary_raw('*', rt.swizzle(header, 'xyz'), rt.swizzle(header, 'w'), 3, 'float'), 'x'))) * (((rt.f(1)) - (rt.swizzle(result, 'a'))))), 1, 'float')); result[1] = rt.f32(rt.binary('+', result[1], (((rt.swizzle(rt.binary_raw('*', rt.swizzle(header, 'xyz'), rt.swizzle(header, 'w'), 3, 'float'), 'y'))) * (((rt.f(1)) - (rt.swizzle(result, 'a'))))), 1, 'float')); result[2] = rt.f32(rt.binary('+', result[2], (((rt.swizzle(rt.binary_raw('*', rt.swizzle(header, 'xyz'), rt.swizzle(header, 'w'), 3, 'float'), 'z'))) * (((rt.f(1)) - (rt.swizzle(result, 'a'))))), 1, 'float')); result[3] = rt.f32(rt.binary('+', result[3], (((rt.swizzle(header, 'w'))) * (((rt.f(1)) - (rt.swizzle(result, 'a'))))), 1, 'float'))
     g['fragColor'].replace((result).map { |c| rt.f32(c) })
   end
   main__void.call

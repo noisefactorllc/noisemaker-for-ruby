@@ -21,7 +21,7 @@ run_pixel = lambda do |ctx, out|
     p2 = rt.copy(p2, 'float')
     t2 = nil
     t2 = rt.binary('*', _t, _t, 1, 'float')
-    return rt.construct(4, ((((((((((p0[0]) * (rt.f(0.5)))) * (((rt.f(1)) - (_t))))) * (((rt.f(1)) - (_t))))) + (((((p1[0]) * (rt.f(0.5)))) * (((((((rt.unary('-', rt.f(2))) * (t2))) + (((rt.f(2)) * (_t))))) + (rt.f(1)))))))) + (((((p2[0]) * (rt.f(0.5)))) * (t2)))), ((((((((((p0[1]) * (rt.f(0.5)))) * (((rt.f(1)) - (_t))))) * (((rt.f(1)) - (_t))))) + (((((p1[1]) * (rt.f(0.5)))) * (((((((rt.unary('-', rt.f(2))) * (t2))) + (((rt.f(2)) * (_t))))) + (rt.f(1)))))))) + (((((p2[1]) * (rt.f(0.5)))) * (t2)))), ((((((((((p0[2]) * (rt.f(0.5)))) * (((rt.f(1)) - (_t))))) * (((rt.f(1)) - (_t))))) + (((((p1[2]) * (rt.f(0.5)))) * (((((((rt.unary('-', rt.f(2))) * (t2))) + (((rt.f(2)) * (_t))))) + (rt.f(1)))))))) + (((((p2[2]) * (rt.f(0.5)))) * (t2)))), ((((((((((p0[3]) * (rt.f(0.5)))) * (((rt.f(1)) - (_t))))) * (((rt.f(1)) - (_t))))) + (((((p1[3]) * (rt.f(0.5)))) * (((((((rt.unary('-', rt.f(2))) * (t2))) + (((rt.f(2)) * (_t))))) + (rt.f(1)))))))) + (((((p2[3]) * (rt.f(0.5)))) * (t2)))))
+    return rt.construct(4, rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('*', rt.binary_raw('*', rt.binary_raw('*', p0, rt.f(0.5), 4, 'float'), rt.binary('-', rt.f(1), _t, 1, 'float'), 4, 'float'), rt.binary('-', rt.f(1), _t, 1, 'float'), 4, 'float'), rt.binary_raw('*', rt.binary_raw('*', p1, rt.f(0.5), 4, 'float'), rt.binary('+', rt.binary('+', rt.binary('*', rt.unary('-', rt.f(2)), t2, 1, 'float'), rt.binary('*', rt.f(2), _t, 1, 'float'), 1, 'float'), rt.f(1), 1, 'float'), 4, 'float'), 4, 'float'), rt.binary_raw('*', rt.binary_raw('*', p2, rt.f(0.5), 4, 'float'), t2, 4, 'float'), 4, 'float'))
   end
   bicubic4v__vec4_vec4_vec4_vec4_float = lambda do |p0, p1, p2, p3, _t|
     p0 = rt.copy(p0, 'float')
@@ -35,7 +35,7 @@ run_pixel = lambda do |ctx, out|
     b1 = rt.binary('/', rt.binary('+', rt.binary('-', rt.binary('*', rt.f(3), t3, 1, 'float'), rt.binary('*', rt.f(6), t2, 1, 'float'), 1, 'float'), rt.f(4), 1, 'float'), rt.f(6), 1, 'float')
     b2 = rt.binary('/', rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('*', rt.unary('-', rt.f(3)), t3, 1, 'float'), rt.binary('*', rt.f(3), t2, 1, 'float'), 1, 'float'), rt.binary('*', rt.f(3), _t, 1, 'float'), 1, 'float'), rt.f(1), 1, 'float'), rt.f(6), 1, 'float')
     b3 = rt.binary('/', t3, rt.f(6), 1, 'float')
-    return rt.construct(4, ((((((((p0[0]) * (b0))) + (((p1[0]) * (b1))))) + (((p2[0]) * (b2))))) + (((p3[0]) * (b3)))), ((((((((p0[1]) * (b0))) + (((p1[1]) * (b1))))) + (((p2[1]) * (b2))))) + (((p3[1]) * (b3)))), ((((((((p0[2]) * (b0))) + (((p1[2]) * (b1))))) + (((p2[2]) * (b2))))) + (((p3[2]) * (b3)))), ((((((((p0[3]) * (b0))) + (((p1[3]) * (b1))))) + (((p2[3]) * (b2))))) + (((p3[3]) * (b3)))))
+    return rt.construct(4, rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('*', p0, b0, 4, 'float'), rt.binary_raw('*', p1, b1, 4, 'float'), 4, 'float'), rt.binary_raw('*', p2, b2, 4, 'float'), 4, 'float'), rt.binary_raw('*', p3, b3, 4, 'float'), 4, 'float'))
   end
   catmull3v__vec4_vec4_vec4_float = lambda do |p0, p1, p2, _t|
     p0 = rt.copy(p0, 'float')
@@ -44,25 +44,25 @@ run_pixel = lambda do |ctx, out|
     m = nil; t2 = nil; t3 = nil
     t2 = rt.binary('*', _t, _t, 1, 'float')
     t3 = rt.binary('*', t2, _t, 1, 'float')
-    m = rt.construct(4, ((rt.f(0.5)) * (((p2[0]) - (p0[0])))), ((rt.f(0.5)) * (((p2[1]) - (p0[1])))), ((rt.f(0.5)) * (((p2[2]) - (p0[2])))), ((rt.f(0.5)) * (((p2[3]) - (p0[3])))))
-    return rt.construct(4, ((((((((((((((rt.f(2)) * (t3))) - (((rt.f(3)) * (t2))))) + (rt.f(1)))) * (p1[0]))) + (((((((t3) - (((rt.f(2)) * (t2))))) + (_t))) * (m[0]))))) + (((((((rt.unary('-', rt.f(2))) * (t3))) + (((rt.f(3)) * (t2))))) * (p2[0]))))) + (((((t3) - (t2))) * (m[0])))), ((((((((((((((rt.f(2)) * (t3))) - (((rt.f(3)) * (t2))))) + (rt.f(1)))) * (p1[1]))) + (((((((t3) - (((rt.f(2)) * (t2))))) + (_t))) * (m[1]))))) + (((((((rt.unary('-', rt.f(2))) * (t3))) + (((rt.f(3)) * (t2))))) * (p2[1]))))) + (((((t3) - (t2))) * (m[1])))), ((((((((((((((rt.f(2)) * (t3))) - (((rt.f(3)) * (t2))))) + (rt.f(1)))) * (p1[2]))) + (((((((t3) - (((rt.f(2)) * (t2))))) + (_t))) * (m[2]))))) + (((((((rt.unary('-', rt.f(2))) * (t3))) + (((rt.f(3)) * (t2))))) * (p2[2]))))) + (((((t3) - (t2))) * (m[2])))), ((((((((((((((rt.f(2)) * (t3))) - (((rt.f(3)) * (t2))))) + (rt.f(1)))) * (p1[3]))) + (((((((t3) - (((rt.f(2)) * (t2))))) + (_t))) * (m[3]))))) + (((((((rt.unary('-', rt.f(2))) * (t3))) + (((rt.f(3)) * (t2))))) * (p2[3]))))) + (((((t3) - (t2))) * (m[3])))))
+    m = rt.construct(4, rt.binary_raw('*', rt.f(0.5), rt.binary_raw('-', p2, p0, 4, 'float'), 4, 'float'))
+    return rt.construct(4, rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('*', rt.binary('+', rt.binary('-', rt.binary('*', rt.f(2), t3, 1, 'float'), rt.binary('*', rt.f(3), t2, 1, 'float'), 1, 'float'), rt.f(1), 1, 'float'), p1, 4, 'float'), rt.binary_raw('*', rt.binary('+', rt.binary('-', t3, rt.binary('*', rt.f(2), t2, 1, 'float'), 1, 'float'), _t, 1, 'float'), m, 4, 'float'), 4, 'float'), rt.binary_raw('*', rt.binary('+', rt.binary('*', rt.unary('-', rt.f(2)), t3, 1, 'float'), rt.binary('*', rt.f(3), t2, 1, 'float'), 1, 'float'), p2, 4, 'float'), 4, 'float'), rt.binary_raw('*', rt.binary('-', t3, t2, 1, 'float'), m, 4, 'float'), 4, 'float'))
   end
   catmull4v__vec4_vec4_vec4_vec4_float = lambda do |p0, p1, p2, p3, _t|
     p0 = rt.copy(p0, 'float')
     p1 = rt.copy(p1, 'float')
     p2 = rt.copy(p2, 'float')
     p3 = rt.copy(p3, 'float')
-    return rt.construct(4, ((p1[0]) + (((((rt.f(0.5)) * (_t))) * (((((p2[0]) - (p0[0]))) + (((_t) * (((((((((((rt.f(2)) * (p0[0]))) - (((rt.f(5)) * (p1[0]))))) + (((rt.f(4)) * (p2[0]))))) - (p3[0]))) + (((_t) * (((((((rt.f(3)) * (((p1[0]) - (p2[0]))))) + (p3[0]))) - (p0[0])))))))))))))), ((p1[1]) + (((((rt.f(0.5)) * (_t))) * (((((p2[1]) - (p0[1]))) + (((_t) * (((((((((((rt.f(2)) * (p0[1]))) - (((rt.f(5)) * (p1[1]))))) + (((rt.f(4)) * (p2[1]))))) - (p3[1]))) + (((_t) * (((((((rt.f(3)) * (((p1[1]) - (p2[1]))))) + (p3[1]))) - (p0[1])))))))))))))), ((p1[2]) + (((((rt.f(0.5)) * (_t))) * (((((p2[2]) - (p0[2]))) + (((_t) * (((((((((((rt.f(2)) * (p0[2]))) - (((rt.f(5)) * (p1[2]))))) + (((rt.f(4)) * (p2[2]))))) - (p3[2]))) + (((_t) * (((((((rt.f(3)) * (((p1[2]) - (p2[2]))))) + (p3[2]))) - (p0[2])))))))))))))), ((p1[3]) + (((((rt.f(0.5)) * (_t))) * (((((p2[3]) - (p0[3]))) + (((_t) * (((((((((((rt.f(2)) * (p0[3]))) - (((rt.f(5)) * (p1[3]))))) + (((rt.f(4)) * (p2[3]))))) - (p3[3]))) + (((_t) * (((((((rt.f(3)) * (((p1[3]) - (p2[3]))))) + (p3[3]))) - (p0[3])))))))))))))))
+    return rt.construct(4, rt.binary_raw('+', p1, rt.binary_raw('*', rt.binary('*', rt.f(0.5), _t, 1, 'float'), rt.binary_raw('+', rt.binary_raw('-', p2, p0, 4, 'float'), rt.binary_raw('*', _t, rt.binary_raw('+', rt.binary_raw('-', rt.binary_raw('+', rt.binary_raw('-', rt.binary_raw('*', rt.f(2), p0, 4, 'float'), rt.binary_raw('*', rt.f(5), p1, 4, 'float'), 4, 'float'), rt.binary_raw('*', rt.f(4), p2, 4, 'float'), 4, 'float'), p3, 4, 'float'), rt.binary_raw('*', _t, rt.binary_raw('-', rt.binary_raw('+', rt.binary_raw('*', rt.f(3), rt.binary_raw('-', p1, p2, 4, 'float'), 4, 'float'), p3, 4, 'float'), p0, 4, 'float'), 4, 'float'), 4, 'float'), 4, 'float'), 4, 'float'), 4, 'float'), 4, 'float'))
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; _for2_first = nil; _for3_first = nil; _for4_first = nil; _for5_first = nil; _for6_first = nil; _for7_first = nil; baseI = nil; f = nil; i = nil; idx = nil; j = nil; maxIdx = nil; minIdx = nil; p = nil; r0 = nil; r1 = nil; r2 = nil; r3 = nil; sampled = nil; texSize = nil; texelPos = nil; uv = nil; v0 = nil; v00 = nil; v01 = nil; v1 = nil; v10 = nil; v11 = nil; w = nil
     texSize = rt.texture_size(_u_canvasTex)
     minIdx = rt.construct(2, rt.i(0), 'int')
     maxIdx = rt.binary('-', texSize, rt.construct(2, rt.i(1), 'int'), 2, 'int')
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    texelPos = rt.construct(2, ((((uv[0]) * ((texSize[0])))) - ((rt.f(0.5)))), ((((uv[1]) * ((texSize[1])))) - ((rt.f(0.5)))))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    texelPos = rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', uv, rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'), rt.construct_raw(2, rt.f(0.5)), 2, 'float'))
     baseI = rt.construct(2, rt.construct(2, rt.component_wise('floor', texelPos)), 'int')
-    f = rt.construct(2, rt.component_wise('fract', texelPos[0]), rt.component_wise('fract', texelPos[1]))
+    f = rt.component_wise('fract', texelPos)
     sampled = rt.construct(4, 0.0)
     idx = rt.construct(2, 0.0, 'int')
     p = rt.construct(4, 0.0)
@@ -82,13 +82,13 @@ run_pixel = lambda do |ctx, out|
       sampled.replace((rt.texel_fetch(_u_canvasTex, idx, rt.i(0))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_smoothing, rt.i(2)))
-        v00 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(baseI, minIdx, maxIdx))
-        v10 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), minIdx, maxIdx))
-        v01 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx))
-        v11 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx))
-        w = rt.construct(2, rt.component_wise('smoothstep', (rt.f(0)), (rt.f(1)), f[0]), rt.component_wise('smoothstep', (rt.f(0)), (rt.f(1)), f[1]))
-        v0 = rt.construct(4, rt.component_wise('mix', v00[0], v10[0], rt.swizzle(w, 'x')), rt.component_wise('mix', v00[1], v10[1], rt.swizzle(w, 'x')), rt.component_wise('mix', v00[2], v10[2], rt.swizzle(w, 'x')), rt.component_wise('mix', v00[3], v10[3], rt.swizzle(w, 'x')))
-        v1 = rt.construct(4, rt.component_wise('mix', v01[0], v11[0], rt.swizzle(w, 'x')), rt.component_wise('mix', v01[1], v11[1], rt.swizzle(w, 'x')), rt.component_wise('mix', v01[2], v11[2], rt.swizzle(w, 'x')), rt.component_wise('mix', v01[3], v11[3], rt.swizzle(w, 'x')))
+        v00 = fetchTex__ivec2_ivec2_ivec2.call(baseI, minIdx, maxIdx)
+        v10 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), minIdx, maxIdx)
+        v01 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx)
+        v11 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx)
+        w = rt.component_wise('smoothstep', rt.construct(2, rt.f(0)), rt.construct(2, rt.f(1)), f)
+        v0 = rt.component_wise('mix', v00, v10, rt.swizzle(w, 'x'))
+        v1 = rt.component_wise('mix', v01, v11, rt.swizzle(w, 'x'))
         sampled.replace((rt.component_wise('mix', v0, v1, rt.swizzle(w, 'y'))).map { |c| rt.f32(c) })
       else
         if rt.bool(rt.binary('==', _u_smoothing, rt.i(3)))
@@ -113,12 +113,12 @@ run_pixel = lambda do |ctx, out|
               unless rt.bool(rt.binary('<', i, rt.i(3)))
                 break
               end
-              p[(rt.binary('+', rt.binary('*', j, rt.i(3), 1, 'int'), i, 1, 'int')).to_i] = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)
+              p[(rt.binary('+', rt.binary('*', j, rt.i(3), 1, 'int'), i, 1, 'int')).to_i].replace((fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)).map { |c| rt.f32(c) })
             end
           end
-          r0 = rt.construct(4, catmull3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(0)), rt.array_index(p, rt.i(1)), rt.array_index(p, rt.i(2)), rt.swizzle(f, 'x')))
-          r1 = rt.construct(4, catmull3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(3)), rt.array_index(p, rt.i(4)), rt.array_index(p, rt.i(5)), rt.swizzle(f, 'x')))
-          r2 = rt.construct(4, catmull3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(6)), rt.array_index(p, rt.i(7)), rt.array_index(p, rt.i(8)), rt.swizzle(f, 'x')))
+          r0 = catmull3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(0)), rt.array_index(p, rt.i(1)), rt.array_index(p, rt.i(2)), rt.swizzle(f, 'x'))
+          r1 = catmull3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(3)), rt.array_index(p, rt.i(4)), rt.array_index(p, rt.i(5)), rt.swizzle(f, 'x'))
+          r2 = catmull3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(6)), rt.array_index(p, rt.i(7)), rt.array_index(p, rt.i(8)), rt.swizzle(f, 'x'))
           sampled.replace((catmull3v__vec4_vec4_vec4_float.call(r0, r1, r2, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
         else
           if rt.bool(rt.binary('==', _u_smoothing, rt.i(4)))
@@ -143,13 +143,13 @@ run_pixel = lambda do |ctx, out|
                 unless rt.bool(rt.binary('<', i, rt.i(4)))
                   break
                 end
-                p[(rt.binary('+', rt.binary('*', j, rt.i(4), 1, 'int'), i, 1, 'int')).to_i] = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)
+                p[(rt.binary('+', rt.binary('*', j, rt.i(4), 1, 'int'), i, 1, 'int')).to_i].replace((fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)).map { |c| rt.f32(c) })
               end
             end
-            r0 = rt.construct(4, catmull4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(0)), rt.array_index(p, rt.i(1)), rt.array_index(p, rt.i(2)), rt.array_index(p, rt.i(3)), rt.swizzle(f, 'x')))
-            r1 = rt.construct(4, catmull4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(4)), rt.array_index(p, rt.i(5)), rt.array_index(p, rt.i(6)), rt.array_index(p, rt.i(7)), rt.swizzle(f, 'x')))
-            r2 = rt.construct(4, catmull4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(8)), rt.array_index(p, rt.i(9)), rt.array_index(p, rt.i(10)), rt.array_index(p, rt.i(11)), rt.swizzle(f, 'x')))
-            r3 = rt.construct(4, catmull4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(12)), rt.array_index(p, rt.i(13)), rt.array_index(p, rt.i(14)), rt.array_index(p, rt.i(15)), rt.swizzle(f, 'x')))
+            r0 = catmull4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(0)), rt.array_index(p, rt.i(1)), rt.array_index(p, rt.i(2)), rt.array_index(p, rt.i(3)), rt.swizzle(f, 'x'))
+            r1 = catmull4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(4)), rt.array_index(p, rt.i(5)), rt.array_index(p, rt.i(6)), rt.array_index(p, rt.i(7)), rt.swizzle(f, 'x'))
+            r2 = catmull4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(8)), rt.array_index(p, rt.i(9)), rt.array_index(p, rt.i(10)), rt.array_index(p, rt.i(11)), rt.swizzle(f, 'x'))
+            r3 = catmull4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(12)), rt.array_index(p, rt.i(13)), rt.array_index(p, rt.i(14)), rt.array_index(p, rt.i(15)), rt.swizzle(f, 'x'))
             sampled.replace((catmull4v__vec4_vec4_vec4_vec4_float.call(r0, r1, r2, r3, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
           else
             if rt.bool(rt.binary('==', _u_smoothing, rt.i(5)))
@@ -174,12 +174,12 @@ run_pixel = lambda do |ctx, out|
                   unless rt.bool(rt.binary('<', i, rt.i(3)))
                     break
                   end
-                  p[(rt.binary('+', rt.binary('*', j, rt.i(3), 1, 'int'), i, 1, 'int')).to_i] = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)
+                  p[(rt.binary('+', rt.binary('*', j, rt.i(3), 1, 'int'), i, 1, 'int')).to_i].replace((fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)).map { |c| rt.f32(c) })
                 end
               end
-              r0 = rt.construct(4, quad3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(0)), rt.array_index(p, rt.i(1)), rt.array_index(p, rt.i(2)), rt.swizzle(f, 'x')))
-              r1 = rt.construct(4, quad3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(3)), rt.array_index(p, rt.i(4)), rt.array_index(p, rt.i(5)), rt.swizzle(f, 'x')))
-              r2 = rt.construct(4, quad3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(6)), rt.array_index(p, rt.i(7)), rt.array_index(p, rt.i(8)), rt.swizzle(f, 'x')))
+              r0 = quad3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(0)), rt.array_index(p, rt.i(1)), rt.array_index(p, rt.i(2)), rt.swizzle(f, 'x'))
+              r1 = quad3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(3)), rt.array_index(p, rt.i(4)), rt.array_index(p, rt.i(5)), rt.swizzle(f, 'x'))
+              r2 = quad3v__vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(6)), rt.array_index(p, rt.i(7)), rt.array_index(p, rt.i(8)), rt.swizzle(f, 'x'))
               sampled.replace((quad3v__vec4_vec4_vec4_float.call(r0, r1, r2, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
             else
               if rt.bool(rt.binary('==', _u_smoothing, rt.i(6)))
@@ -204,21 +204,21 @@ run_pixel = lambda do |ctx, out|
                     unless rt.bool(rt.binary('<', i, rt.i(4)))
                       break
                     end
-                    p[(rt.binary('+', rt.binary('*', j, rt.i(4), 1, 'int'), i, 1, 'int')).to_i] = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)
+                    p[(rt.binary('+', rt.binary('*', j, rt.i(4), 1, 'int'), i, 1, 'int')).to_i].replace((fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.binary('-', i, rt.i(1), 1, 'int'), rt.binary('-', j, rt.i(1), 1, 'int'), 'int'), 2, 'int'), minIdx, maxIdx)).map { |c| rt.f32(c) })
                   end
                 end
-                r0 = rt.construct(4, bicubic4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(0)), rt.array_index(p, rt.i(1)), rt.array_index(p, rt.i(2)), rt.array_index(p, rt.i(3)), rt.swizzle(f, 'x')))
-                r1 = rt.construct(4, bicubic4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(4)), rt.array_index(p, rt.i(5)), rt.array_index(p, rt.i(6)), rt.array_index(p, rt.i(7)), rt.swizzle(f, 'x')))
-                r2 = rt.construct(4, bicubic4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(8)), rt.array_index(p, rt.i(9)), rt.array_index(p, rt.i(10)), rt.array_index(p, rt.i(11)), rt.swizzle(f, 'x')))
-                r3 = rt.construct(4, bicubic4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(12)), rt.array_index(p, rt.i(13)), rt.array_index(p, rt.i(14)), rt.array_index(p, rt.i(15)), rt.swizzle(f, 'x')))
+                r0 = bicubic4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(0)), rt.array_index(p, rt.i(1)), rt.array_index(p, rt.i(2)), rt.array_index(p, rt.i(3)), rt.swizzle(f, 'x'))
+                r1 = bicubic4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(4)), rt.array_index(p, rt.i(5)), rt.array_index(p, rt.i(6)), rt.array_index(p, rt.i(7)), rt.swizzle(f, 'x'))
+                r2 = bicubic4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(8)), rt.array_index(p, rt.i(9)), rt.array_index(p, rt.i(10)), rt.array_index(p, rt.i(11)), rt.swizzle(f, 'x'))
+                r3 = bicubic4v__vec4_vec4_vec4_vec4_float.call(rt.array_index(p, rt.i(12)), rt.array_index(p, rt.i(13)), rt.array_index(p, rt.i(14)), rt.array_index(p, rt.i(15)), rt.swizzle(f, 'x'))
                 sampled.replace((bicubic4v__vec4_vec4_vec4_vec4_float.call(r0, r1, r2, r3, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
               else
-                v00 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(baseI, minIdx, maxIdx))
-                v10 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), minIdx, maxIdx))
-                v01 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx))
-                v11 = rt.construct(4, fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx))
-                v0 = rt.construct(4, rt.component_wise('mix', v00[0], v10[0], rt.swizzle(f, 'x')), rt.component_wise('mix', v00[1], v10[1], rt.swizzle(f, 'x')), rt.component_wise('mix', v00[2], v10[2], rt.swizzle(f, 'x')), rt.component_wise('mix', v00[3], v10[3], rt.swizzle(f, 'x')))
-                v1 = rt.construct(4, rt.component_wise('mix', v01[0], v11[0], rt.swizzle(f, 'x')), rt.component_wise('mix', v01[1], v11[1], rt.swizzle(f, 'x')), rt.component_wise('mix', v01[2], v11[2], rt.swizzle(f, 'x')), rt.component_wise('mix', v01[3], v11[3], rt.swizzle(f, 'x')))
+                v00 = fetchTex__ivec2_ivec2_ivec2.call(baseI, minIdx, maxIdx)
+                v10 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), minIdx, maxIdx)
+                v01 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(0), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx)
+                v11 = fetchTex__ivec2_ivec2_ivec2.call(rt.binary('+', baseI, rt.construct(2, rt.i(1), rt.i(1), 'int'), 2, 'int'), minIdx, maxIdx)
+                v0 = rt.component_wise('mix', v00, v10, rt.swizzle(f, 'x'))
+                v1 = rt.component_wise('mix', v01, v11, rt.swizzle(f, 'x'))
                 sampled.replace((rt.component_wise('mix', v0, v1, rt.swizzle(f, 'y'))).map { |c| rt.f32(c) })
               end
             end

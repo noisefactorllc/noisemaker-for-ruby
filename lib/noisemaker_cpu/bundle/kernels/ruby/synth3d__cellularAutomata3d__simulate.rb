@@ -20,9 +20,9 @@ run_pixel = lambda do |ctx, out|
   hash3__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     __sc1 = nil
-    p.replace((rt.binary('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+    p.replace((rt.binary_raw('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     p.replace((rt.component_wise('fract', rt.construct(3, ((p[0]) * ((rt.f(0.1031000018119812)))), ((p[1]) * ((rt.f(0.10300000011920929)))), ((p[2]) * ((rt.f(0.097300000488758087))))))).map { |c| rt.f32(c) })
-    __sc1 = rt.dot(p, rt.binary('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float')); p[0] = rt.f32(rt.binary('+', p[0], __sc1, 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __sc1, 1, 'float')); p[2] = rt.f32(rt.binary('+', p[2], __sc1, 1, 'float'))
+    __sc1 = rt.dot(p, rt.binary_raw('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float')); p[0] = rt.f32(rt.binary('+', p[0], __sc1, 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __sc1, 1, 'float')); p[2] = rt.f32(rt.binary('+', p[2], __sc1, 1, 'float'))
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'))
   end
   atlasTexel__ivec3_int = lambda do |p, volSize|
@@ -76,7 +76,7 @@ run_pixel = lambda do |ctx, out|
           if rt.bool((rt.bool((rt.bool(rt.binary('==', dx, rt.i(0))) && rt.bool(rt.binary('==', dy, rt.i(0))) ? 1 : 0)) && rt.bool(rt.binary('==', dz, rt.i(0))) ? 1 : 0))
             next
           end
-          neighbor = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, dx, dy, dz, 'int'), 3, 'int'), volSize))
+          neighbor = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, dx, dy, dz, 'int'), 3, 'int'), volSize)
           if rt.bool(rt.binary('>', rt.swizzle(neighbor, 'r'), rt.f(0.5)))
             count = rt.binary('+', count, rt.i(1), 1, 'int')
           end
@@ -89,12 +89,12 @@ run_pixel = lambda do |ctx, out|
     voxel = rt.copy(voxel, 'int')
     count = nil; xn = nil; xp = nil; yn = nil; yp = nil; zn = nil; zp = nil
     count = rt.i(0)
-    xp = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(1), rt.i(0), rt.i(0), 'int'), 3, 'int'), volSize))
-    xn = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.unary('-', rt.i(1)), rt.i(0), rt.i(0), 'int'), 3, 'int'), volSize))
-    yp = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(1), rt.i(0), 'int'), 3, 'int'), volSize))
-    yn = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.unary('-', rt.i(1)), rt.i(0), 'int'), 3, 'int'), volSize))
-    zp = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.i(1), 'int'), 3, 'int'), volSize))
-    zn = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.unary('-', rt.i(1)), 'int'), 3, 'int'), volSize))
+    xp = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(1), rt.i(0), rt.i(0), 'int'), 3, 'int'), volSize)
+    xn = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.unary('-', rt.i(1)), rt.i(0), rt.i(0), 'int'), 3, 'int'), volSize)
+    yp = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(1), rt.i(0), 'int'), 3, 'int'), volSize)
+    yn = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.unary('-', rt.i(1)), rt.i(0), 'int'), 3, 'int'), volSize)
+    zp = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.i(1), 'int'), 3, 'int'), volSize)
+    zn = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.unary('-', rt.i(1)), 'int'), 3, 'int'), volSize)
     if rt.bool(rt.binary('>', rt.swizzle(xp, 'r'), rt.f(0.5)))
       count = rt.binary('+', count, rt.i(1), 1, 'int')
     end
@@ -200,14 +200,14 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    state = rt.construct(4, sampleState__ivec3_int.call(voxel, volSize))
+    state = sampleState__ivec3_int.call(voxel, volSize)
     alive = rt.swizzle(state, 'r')
     age = rt.swizzle(state, 'g')
     bufferIsEmpty = (rt.bool((rt.bool((rt.bool(rt.binary('==', rt.swizzle(state, 'r'), rt.f(0))) && rt.bool(rt.binary('==', rt.swizzle(state, 'g'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(state, 'b'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(state, 'a'), rt.f(0))) ? 1 : 0)
     hasSeedInput = 0
     seedVal = rt.construct(4, 0.0)
     if rt.bool((rt.bool(bufferIsEmpty) || rt.bool(_u_resetState) ? 1 : 0))
-      seedVal = rt.construct(4, sampleSeed__ivec3_int.call(voxel, volSize))
+      seedVal = sampleSeed__ivec3_int.call(voxel, volSize)
       hasSeedInput = (rt.bool((rt.bool(rt.binary('>', rt.swizzle(seedVal, 'r'), rt.f(0))) || rt.bool(rt.binary('>', rt.swizzle(seedVal, 'g'), rt.f(0))) ? 1 : 0)) || rt.bool(rt.binary('>', rt.swizzle(seedVal, 'b'), rt.f(0))) ? 1 : 0)
       center = rt.construct(3, 0.0)
       dist = rt.f(0.0)
@@ -221,11 +221,11 @@ run_pixel = lambda do |ctx, out|
         alive = (rt.bool(rt.binary('>', lum, rt.f(0.5))) ? (rt.f(1)) : (rt.f(0)))
         age = rt.f(0)
       else
-        p = rt.construct(3, rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)))
+        p = rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z))
         h = hash3__vec3.call(p)
         threshold = rt.binary('*', _u_density, rt.f(0.0099999997764825821), 1, 'float')
-        center = rt.construct(3, rt.construct(3, rt.binary('*', volSizeF, rt.f(0.5), 1, 'float')))
-        dist = rt.length(rt.binary('-', p, center, 3, 'float'))
+        center = rt.construct(3, rt.binary('*', volSizeF, rt.f(0.5), 1, 'float'))
+        dist = rt.length(rt.binary_raw('-', p, center, 3, 'float'))
         radius = rt.binary('*', volSizeF, rt.f(0.15000000596046448), 1, 'float')
         if rt.bool((rt.bool(rt.binary('<', h, threshold)) || rt.bool(rt.binary('<', dist, radius)) ? 1 : 0))
           alive = rt.f(1)
@@ -268,7 +268,7 @@ run_pixel = lambda do |ctx, out|
     finalAge = rt.component_wise('mix', age, newAge, animSpeed)
     seedLum = rt.f(0.0)
     if rt.bool(rt.binary('>', _u_weight, rt.f(0)))
-      seedVal = rt.construct(4, sampleSeed__ivec3_int.call(voxel, volSize))
+      seedVal = sampleSeed__ivec3_int.call(voxel, volSize)
       seedLum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
       finalAlive = rt.component_wise('mix', finalAlive, seedLum, rt.binary('*', _u_weight, rt.f(0.0099999997764825821), 1, 'float'))
     end

@@ -9,7 +9,7 @@ run_pixel = lambda do |ctx, out|
   _u_bgAlpha = u.key?('bgAlpha') ? u['bgAlpha'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
-    g['fragColor'].replace((rt.construct(4, rt.binary('*', _u_bgColor, _u_bgAlpha, 3, 'float'), _u_bgAlpha)).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.construct(4, rt.binary_raw('*', _u_bgColor, _u_bgAlpha, 3, 'float'), _u_bgAlpha)).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

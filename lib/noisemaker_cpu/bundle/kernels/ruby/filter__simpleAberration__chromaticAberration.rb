@@ -13,18 +13,18 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     blue = nil; blueGlobalUV = nil; blueLocalUV = nil; boundedDisplacement = nil; globalPixel = nil; globalUV = nil; green = nil; greenLocalUV = nil; maxDisplacementUV = nil; red = nil; redGlobalUV = nil; redLocalUV = nil
-    globalPixel = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    globalUV = rt.construct(2, ((globalPixel[0]) / (_u_fullResolution[0])), ((globalPixel[1]) / (_u_fullResolution[1])))
+    globalPixel = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary_raw('/', globalPixel, _u_fullResolution, 2, 'float'))
     maxDisplacementUV = rt.binary('/', rt.f(256), rt.swizzle(_u_fullResolution, 'x'), 1, 'float')
     boundedDisplacement = rt.component_wise('clamp', _u_displacement, rt.unary('-', maxDisplacementUV), maxDisplacementUV)
-    redGlobalUV = rt.construct(2, ((globalUV[0]) + ((boundedDisplacement))), ((globalUV[1]) + ((rt.f(0)))))
-    redLocalUV = rt.construct(2, ((((((redGlobalUV[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((redGlobalUV[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
-    red = rt.construct(4, (rt.texture(_u_inputTex, redLocalUV))[0], (rt.texture(_u_inputTex, redLocalUV))[1], (rt.texture(_u_inputTex, redLocalUV))[2], (rt.texture(_u_inputTex, redLocalUV))[3])
-    greenLocalUV = rt.construct(2, ((((((globalUV[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((globalUV[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
-    green = rt.construct(4, (rt.texture(_u_inputTex, greenLocalUV))[0], (rt.texture(_u_inputTex, greenLocalUV))[1], (rt.texture(_u_inputTex, greenLocalUV))[2], (rt.texture(_u_inputTex, greenLocalUV))[3])
-    blueGlobalUV = rt.construct(2, ((globalUV[0]) - ((boundedDisplacement))), ((globalUV[1]) - ((rt.f(0)))))
-    blueLocalUV = rt.construct(2, ((((((blueGlobalUV[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((blueGlobalUV[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
-    blue = rt.construct(4, (rt.texture(_u_inputTex, blueLocalUV))[0], (rt.texture(_u_inputTex, blueLocalUV))[1], (rt.texture(_u_inputTex, blueLocalUV))[2], (rt.texture(_u_inputTex, blueLocalUV))[3])
+    redGlobalUV = rt.construct(2, rt.binary_raw('+', globalUV, rt.construct_raw(2, boundedDisplacement, rt.f(0)), 2, 'float'))
+    redLocalUV = rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', redGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    red = rt.texture(_u_inputTex, redLocalUV)
+    greenLocalUV = rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', globalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    green = rt.texture(_u_inputTex, greenLocalUV)
+    blueGlobalUV = rt.construct(2, rt.binary_raw('-', globalUV, rt.construct_raw(2, boundedDisplacement, rt.f(0)), 2, 'float'))
+    blueLocalUV = rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', blueGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    blue = rt.texture(_u_inputTex, blueLocalUV)
     g['fragColor'][0] = rt.f32(rt.swizzle(red, 'r')); g['fragColor'][1] = rt.f32(rt.swizzle(green, 'g')); g['fragColor'][2] = rt.f32(rt.swizzle(blue, 'b')); g['fragColor'][3] = rt.f32(rt.swizzle(green, 'a'))
   end
   main__void.call

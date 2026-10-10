@@ -13,17 +13,17 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     alpha = nil; color = nil; fullRes = nil; globalCoord = nil; globalUV = nil; normal = nil; pos = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (_u_resolution[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (_u_resolution[1])))
-    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
-    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    pos = rt.construct(4, (rt.texture(_u_positionsTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_positionsTex)), 2, 'float')))[0], (rt.texture(_u_positionsTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_positionsTex)), 2, 'float')))[1], (rt.texture(_u_positionsTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_positionsTex)), 2, 'float')))[2], (rt.texture(_u_positionsTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_positionsTex)), 2, 'float')))[3])
-    normal = rt.construct(4, (rt.texture(_u_normalsTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_normalsTex)), 2, 'float')))[0], (rt.texture(_u_normalsTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_normalsTex)), 2, 'float')))[1], (rt.texture(_u_normalsTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_normalsTex)), 2, 'float')))[2], (rt.texture(_u_normalsTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_normalsTex)), 2, 'float')))[3])
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
+    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    pos = rt.texture(_u_positionsTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_positionsTex)), 2, 'float')))
+    normal = rt.texture(_u_normalsTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_normalsTex)), 2, 'float')))
     color = rt.construct(3, 0.0)
     if rt.bool(rt.binary('<', rt.swizzle(globalUV, 'x'), rt.f(0.5)))
-      color.replace((rt.binary('+', rt.binary('*', rt.swizzle(pos, 'xyz'), rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float')).map { |c| rt.f32(c) })
+      color.replace((rt.binary_raw('+', rt.binary_raw('*', rt.swizzle(pos, 'xyz'), rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float')).map { |c| rt.f32(c) })
     else
-      color.replace((rt.binary('+', rt.binary('*', rt.swizzle(normal, 'xyz'), rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float')).map { |c| rt.f32(c) })
+      color.replace((rt.binary_raw('+', rt.binary_raw('*', rt.swizzle(normal, 'xyz'), rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float')).map { |c| rt.f32(c) })
     end
     alpha = rt.f(1)
     g['fragColor'].replace((rt.construct(4, color, alpha)).map { |c| rt.f32(c) })

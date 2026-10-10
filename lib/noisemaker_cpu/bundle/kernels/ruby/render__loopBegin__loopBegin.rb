@@ -13,13 +13,13 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     a = nil; accum = nil; blended = nil; i = nil; inputColor = nil; result = nil; st = nil
-    st = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    inputColor = rt.construct(4, (rt.texture(_u_inputTex, st))[0], (rt.texture(_u_inputTex, st))[1], (rt.texture(_u_inputTex, st))[2], (rt.texture(_u_inputTex, st))[3])
-    accum = rt.construct(4, (rt.texture(_u_accumTex, st))[0], (rt.texture(_u_accumTex, st))[1], (rt.texture(_u_accumTex, st))[2], (rt.texture(_u_accumTex, st))[3])
+    st = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    inputColor = rt.texture(_u_inputTex, st)
+    accum = rt.texture(_u_accumTex, st)
     a = rt.binary('/', _u_alpha, rt.f(100), 1, 'float')
     i = rt.binary('/', _u_intensity, rt.f(100), 1, 'float')
-    blended = rt.construct(4, rt.component_wise('max', inputColor[0], rt.f32(((accum[0]) * (i)))), rt.component_wise('max', inputColor[1], rt.f32(((accum[1]) * (i)))), rt.component_wise('max', inputColor[2], rt.f32(((accum[2]) * (i)))), rt.component_wise('max', inputColor[3], rt.f32(((accum[3]) * (i)))))
-    result = rt.construct(4, rt.component_wise('mix', inputColor[0], blended[0], a), rt.component_wise('mix', inputColor[1], blended[1], a), rt.component_wise('mix', inputColor[2], blended[2], a), rt.component_wise('mix', inputColor[3], blended[3], a))
+    blended = rt.component_wise('max', inputColor, rt.construct(4, ((accum[0]) * (i)), ((accum[1]) * (i)), ((accum[2]) * (i)), ((accum[3]) * (i))))
+    result = rt.component_wise('mix', inputColor, blended, a)
     result = rt.assign_swizzle(result, 'a', rt.component_wise('max', rt.swizzle(inputColor, 'a'), rt.swizzle(accum, 'a')))
     g['fragColor'].replace((result).map { |c| rt.f32(c) })
   end

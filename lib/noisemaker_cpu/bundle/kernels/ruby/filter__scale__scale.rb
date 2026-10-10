@@ -18,15 +18,15 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     c = nil; globalCoord = nil; localUV = nil; st = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    st = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    c = rt.construct(2, rt.construct(2, _u_centerX, _u_centerY))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    c = rt.construct(2, _u_centerX, _u_centerY)
     st[0] = rt.f32(rt.binary('-', st[0], c[0], 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], c[1], 1, 'float'))
-    st = rt.assign_swizzle(st, 'x', rt.binary('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
-    st.replace((rt.binary('/', st, rt.construct(2, _u_scaleX, _u_scaleY), 2, 'float')).map { |c| rt.f32(c) })
-    st = rt.assign_swizzle(st, 'x', rt.binary('/', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
+    st = rt.assign_swizzle(st, 'x', rt.binary_raw('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
+    st.replace((rt.binary_raw('/', st, rt.construct_raw(2, _u_scaleX, _u_scaleY), 2, 'float')).map { |c| rt.f32(c) })
+    st = rt.assign_swizzle(st, 'x', rt.binary_raw('/', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     st[0] = rt.f32(rt.binary('+', st[0], c[0], 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], c[1], 1, 'float'))
-    localUV = rt.construct(2, ((((((st[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((((st[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (_u_resolution[1])))
+    localUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', rt.binary_raw('*', st, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), _u_resolution, 2, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
       localUV.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
     else

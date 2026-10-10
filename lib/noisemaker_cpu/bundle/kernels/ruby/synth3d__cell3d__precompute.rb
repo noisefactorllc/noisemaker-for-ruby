@@ -22,16 +22,16 @@ run_pixel = lambda do |ctx, out|
   hash3__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     q = nil
-    p.replace((rt.binary('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
-    q = rt.construct(3, rt.binary('+', rt.construct(3, rt.construct(3, rt.binary('*', p, rt.f(1000), 3, 'float')), 'int'), rt.i(65536), 3, 'int'), 'uint')
+    p.replace((rt.binary_raw('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+    q = rt.construct(3, rt.binary('+', rt.construct(3, rt.construct(3, rt.binary_raw('*', p, rt.f(1000), 3, 'float')), 'int'), rt.i(65536), 3, 'int'), 'uint')
     q.replace(rt.pcg3d(q))
     return rt.cpu_cell3d_hash_result(q)
   end
   cellNoise3D__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     _for0_first = nil; _for1_first = nil; _for2_first = nil; cellId = nil; cellPos = nil; diff = nil; dist = nil; f = nil; i = nil; jitter = nil; minDist = nil; neighbor = nil; randomOffset = nil; x = nil; y = nil; z = nil
-    i = rt.construct(3, rt.component_wise('floor', p[0]), rt.component_wise('floor', p[1]), rt.component_wise('floor', p[2]))
-    f = rt.construct(3, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]), rt.component_wise('fract', p[2]))
+    i = rt.component_wise('floor', p)
+    f = rt.component_wise('fract', p)
     minDist = rt.f(10)
     cellId = rt.f(0)
     z = rt.unary('-', rt.i(1))
@@ -64,11 +64,11 @@ run_pixel = lambda do |ctx, out|
           unless rt.bool(rt.binary('<=', x, rt.i(1)))
             break
           end
-          neighbor = rt.construct(3, rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)))
-          cellPos = rt.construct(3, ((i[0]) + (neighbor[0])), ((i[1]) + (neighbor[1])), ((i[2]) + (neighbor[2])))
-          randomOffset = rt.construct(3, hash3__vec3.call(cellPos))
+          neighbor = rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z))
+          cellPos = rt.construct(3, rt.binary_raw('+', i, neighbor, 3, 'float'))
+          randomOffset = hash3__vec3.call(cellPos)
           jitter = rt.binary('*', _u_cellVariation, rt.f(0.0099999997764825821), 1, 'float')
-          diff = rt.construct(3, rt.binary('-', rt.binary('+', neighbor, rt.component_wise('mix', rt.construct(3, rt.f(0.5)), randomOffset, jitter), 3, 'float'), f, 3, 'float'))
+          diff = rt.construct(3, rt.binary('-', rt.construct(3, rt.binary('+', neighbor, rt.component_wise('mix', rt.construct(3, rt.f(0.5)), randomOffset, jitter), 3, 'float')), f, 3, 'float'))
           dist = rt.f(0.0)
           if rt.bool(rt.binary('==', _u_metric, rt.i(0)))
             dist = rt.length(diff)
@@ -90,7 +90,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     cellId = nil; dist = nil; dxp = nil; dyp = nil; dzp = nil; eps = nil; globalCoord = nil; gradient = nil; h1 = nil; h2 = nil; h3 = nil; normal = nil; normalizedDist = nil; normalizer = nil; p = nil; pixelCoord = nil; result = nil; scaledP = nil; volSize = nil; volSizeF = nil; x = nil; y = nil; z = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     volSize = _u_volumeSize
     volSizeF = rt.construct(1, volSize)
     pixelCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
@@ -102,17 +102,17 @@ run_pixel = lambda do |ctx, out|
       g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))
       return
     end
-    p = rt.construct(3, ((((((((x))) / (((volSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1))), ((((((((y))) / (((volSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1))), ((((((((z))) / (((volSizeF) - (rt.f(1)))))) * (rt.f(2)))) - (rt.f(1))))
-    scaledP = rt.construct(3, ((p[0]) * (((rt.f(16)) - (_u_scale)))), ((p[1]) * (((rt.f(16)) - (_u_scale)))), ((p[2]) * (((rt.f(16)) - (_u_scale)))))
-    result = rt.construct(2, cellNoise3D__vec3.call(scaledP))
+    p = rt.construct(3, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('/', rt.construct_raw(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)), rt.binary('-', volSizeF, rt.f(1), 1, 'float'), 3, 'float'), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'))
+    scaledP = rt.construct(3, rt.binary_raw('*', p, rt.binary('-', rt.f(16), _u_scale, 1, 'float'), 3, 'float'))
+    result = cellNoise3D__vec3.call(scaledP)
     dist = rt.swizzle(result, 'x')
     cellId = rt.swizzle(result, 'y')
     eps = rt.binary('/', rt.f(0.0099999997764825821), _u_scale, 1, 'float')
     dxp = rt.swizzle(cellNoise3D__vec3.call(rt.construct(3, ((scaledP[0]) + ((eps))), ((scaledP[1]) + ((rt.f(0)))), ((scaledP[2]) + ((rt.f(0)))))), 'x')
     dyp = rt.swizzle(cellNoise3D__vec3.call(rt.construct(3, ((scaledP[0]) + ((rt.f(0)))), ((scaledP[1]) + ((eps))), ((scaledP[2]) + ((rt.f(0)))))), 'x')
     dzp = rt.swizzle(cellNoise3D__vec3.call(rt.construct(3, ((scaledP[0]) + ((rt.f(0)))), ((scaledP[1]) + ((rt.f(0)))), ((scaledP[2]) + ((eps))))), 'x')
-    gradient = rt.construct(3, (((((dxp) - (dist)))) / (eps)), (((((dyp) - (dist)))) / (eps)), (((((dzp) - (dist)))) / (eps)))
-    normal = rt.construct(3, rt.normalize(rt.binary('+', rt.unary('-', gradient), rt.construct(3, rt.f(9.9999999747524271e-07)), 3, 'float')))
+    gradient = rt.construct(3, rt.binary_raw('/', rt.construct_raw(3, rt.binary('-', dxp, dist, 1, 'float'), rt.binary('-', dyp, dist, 1, 'float'), rt.binary('-', dzp, dist, 1, 'float')), eps, 3, 'float'))
+    normal = rt.normalize(rt.binary_raw('+', rt.unary('-', gradient), rt.construct_raw(3, rt.f(9.9999999747524271e-07)), 3, 'float'))
     normalizer = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_metric, rt.i(0)))
       normalizer = rt.f(0.86599999666213989)
@@ -132,7 +132,7 @@ run_pixel = lambda do |ctx, out|
     else
       g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(h1); g['fragColor'][2] = rt.f32(h2); g['fragColor'][3] = rt.f32(h3)
     end
-    g['geoOut'].replace((rt.construct(4, rt.binary('+', rt.binary('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), normalizedDist)).map { |c| rt.f32(c) })
+    g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), normalizedDist)).map { |c| rt.f32(c) })
   end
   main__void.call
   c0 = g['fragColor']

@@ -13,12 +13,12 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     __hoistv1 = nil; _for0_first = nil; _kernel = nil; conv = nil; globalCoord = nil; i = nil; offsets = nil; origColor = nil; resolution = nil; texSample = nil; texSize = nil; texelSize = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    resolution = rt.construct(2, rt.construct(2, texSize))
-    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    texelSize = rt.construct(2, ((rt.f(1)) / (resolution[0])), ((rt.f(1)) / (resolution[1])))
-    origColor = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[3])
+    resolution = rt.construct(2, texSize)
+    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), resolution, 2, 'float'))
+    origColor = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
     _kernel = rt.new_array(rt.i(9), 1)
     _kernel[(rt.i(0)).to_i] = rt.unary('-', rt.f(1))
     _kernel[(rt.i(1)).to_i] = rt.f(0)
@@ -30,16 +30,16 @@ run_pixel = lambda do |ctx, out|
     _kernel[(rt.i(7)).to_i] = rt.f(0)
     _kernel[(rt.i(8)).to_i] = rt.unary('-', rt.f(1))
     offsets = rt.new_array(rt.i(9), 2)
-    offsets[(rt.i(0)).to_i] = rt.construct(2, rt.unary('-', rt.swizzle(texelSize, 'x')), rt.unary('-', rt.swizzle(texelSize, 'y')))
-    offsets[(rt.i(1)).to_i] = rt.construct(2, rt.f(0), rt.unary('-', rt.swizzle(texelSize, 'y')))
-    offsets[(rt.i(2)).to_i] = rt.construct(2, rt.swizzle(texelSize, 'x'), rt.unary('-', rt.swizzle(texelSize, 'y')))
-    offsets[(rt.i(3)).to_i] = rt.construct(2, rt.unary('-', rt.swizzle(texelSize, 'x')), rt.f(0))
-    offsets[(rt.i(4)).to_i] = rt.construct(2, rt.f(0), rt.f(0))
-    offsets[(rt.i(5)).to_i] = rt.construct(2, rt.swizzle(texelSize, 'x'), rt.f(0))
-    offsets[(rt.i(6)).to_i] = rt.construct(2, rt.unary('-', rt.swizzle(texelSize, 'x')), rt.swizzle(texelSize, 'y'))
-    offsets[(rt.i(7)).to_i] = rt.construct(2, rt.f(0), rt.swizzle(texelSize, 'y'))
-    offsets[(rt.i(8)).to_i] = rt.construct(2, rt.swizzle(texelSize, 'x'), rt.swizzle(texelSize, 'y'))
-    conv = rt.construct(3, rt.construct(3, rt.f(0)))
+    offsets[(rt.i(0)).to_i].replace((rt.construct(2, rt.unary('-', rt.swizzle(texelSize, 'x')), rt.unary('-', rt.swizzle(texelSize, 'y')))).map { |c| rt.f32(c) })
+    offsets[(rt.i(1)).to_i].replace((rt.construct(2, rt.f(0), rt.unary('-', rt.swizzle(texelSize, 'y')))).map { |c| rt.f32(c) })
+    offsets[(rt.i(2)).to_i].replace((rt.construct(2, rt.swizzle(texelSize, 'x'), rt.unary('-', rt.swizzle(texelSize, 'y')))).map { |c| rt.f32(c) })
+    offsets[(rt.i(3)).to_i].replace((rt.construct(2, rt.unary('-', rt.swizzle(texelSize, 'x')), rt.f(0))).map { |c| rt.f32(c) })
+    offsets[(rt.i(4)).to_i].replace((rt.construct(2, rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
+    offsets[(rt.i(5)).to_i].replace((rt.construct(2, rt.swizzle(texelSize, 'x'), rt.f(0))).map { |c| rt.f32(c) })
+    offsets[(rt.i(6)).to_i].replace((rt.construct(2, rt.unary('-', rt.swizzle(texelSize, 'x')), rt.swizzle(texelSize, 'y'))).map { |c| rt.f32(c) })
+    offsets[(rt.i(7)).to_i].replace((rt.construct(2, rt.f(0), rt.swizzle(texelSize, 'y'))).map { |c| rt.f32(c) })
+    offsets[(rt.i(8)).to_i].replace((rt.construct(2, rt.swizzle(texelSize, 'x'), rt.swizzle(texelSize, 'y'))).map { |c| rt.f32(c) })
+    conv = rt.construct(3, rt.f(0))
     i = rt.i(0)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -50,8 +50,8 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      texSample = rt.construct(3, rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'r'), rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'g'), rt.swizzle(rt.texture(_u_inputTex, rt.binary('/', rt.binary('-', rt.binary('*', rt.binary('+', uv, rt.binary('*', rt.binary('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')), 'b'))
-      __hoistv1 = rt.binary('*', texSample, rt.array_index(_kernel, i), 3, 'float'); conv[0] = rt.f32(rt.binary('+', conv[0], __hoistv1[0], 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], __hoistv1[1], 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], __hoistv1[2], 1, 'float'))
+      texSample = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, rt.binary_raw('*', rt.binary_raw('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))), 'rgb')
+      __hoistv1 = rt.binary_raw('*', texSample, rt.array_index(_kernel, i), 3, 'float'); conv[0] = rt.f32(rt.binary('+', conv[0], __hoistv1[0], 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], __hoistv1[1], 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], __hoistv1[2], 1, 'float'))
     end
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', conv, rt.f(0), rt.f(1)), rt.swizzle(origColor, 'a'))).map { |c| rt.f32(c) })
   end

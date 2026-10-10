@@ -15,8 +15,8 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     alpha = nil; dist = nil; fIndex = nil; fill = nil; fract_i = nil; globalCoord = nil; i0 = nil; i1 = nil; line = nil; mag = nil; s0 = nil; s1 = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
     fIndex = rt.binary('*', rt.swizzle(uv, 'x'), rt.f(127), 1, 'float')
     i0 = rt.construct(1, rt.component_wise('floor', fIndex), 'int')
     i1 = rt.component_wise('min', rt.binary('+', i0, rt.i(1), 1, 'int'), rt.i(127))
@@ -28,7 +28,7 @@ run_pixel = lambda do |ctx, out|
     line = rt.component_wise('smoothstep', rt.binary('+', _u_lineThickness, rt.f(1), 1, 'float'), _u_lineThickness, dist)
     fill = rt.binary('*', rt.component_wise('smoothstep', rt.binary('+', mag, rt.binary('/', rt.f(1), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), 1, 'float'), mag, rt.swizzle(uv, 'y')), rt.f(0.15000000596046448), 1, 'float')
     alpha = rt.component_wise('max', line, fill)
-    g['fragColor'].replace((rt.construct(4, rt.binary('*', _u_lineColor, alpha, 3, 'float'), alpha)).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.construct(4, rt.binary_raw('*', _u_lineColor, alpha, 3, 'float'), alpha)).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

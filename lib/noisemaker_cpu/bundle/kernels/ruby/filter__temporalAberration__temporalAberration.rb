@@ -21,42 +21,42 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     bOut = nil; cur = nil; db = nil; dg = nil; dr = nil; gOut = nil; ib0 = nil; ib1 = nil; ig0 = nil; ig1 = nil; ir0 = nil; ir1 = nil; rOut = nil; s = nil; slots = nil; texSize = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
-    cur = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    cur = rt.texture(_u_inputTex, uv)
     slots = rt.new_array(rt.i(9), 4)
-    slots[(rt.i(0)).to_i] = cur
+    slots[(rt.i(0)).to_i].replace((cur).map { |c| rt.f32(c) })
     s = rt.construct(4, 0.0)
     s.replace((rt.texture(_u_h1, uv)).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('>=', rt.swizzle(s, 'a'), rt.f(0.5)))
-      slots[(rt.i(1)).to_i] = s
+      slots[(rt.i(1)).to_i].replace((s).map { |c| rt.f32(c) })
     end
     s.replace((rt.texture(_u_h2, uv)).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('>=', rt.swizzle(s, 'a'), rt.f(0.5)))
-      slots[(rt.i(2)).to_i] = s
+      slots[(rt.i(2)).to_i].replace((s).map { |c| rt.f32(c) })
     end
     s.replace((rt.texture(_u_h3, uv)).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('>=', rt.swizzle(s, 'a'), rt.f(0.5)))
-      slots[(rt.i(3)).to_i] = s
+      slots[(rt.i(3)).to_i].replace((s).map { |c| rt.f32(c) })
     end
     s.replace((rt.texture(_u_h4, uv)).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('>=', rt.swizzle(s, 'a'), rt.f(0.5)))
-      slots[(rt.i(4)).to_i] = s
+      slots[(rt.i(4)).to_i].replace((s).map { |c| rt.f32(c) })
     end
     s.replace((rt.texture(_u_h5, uv)).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('>=', rt.swizzle(s, 'a'), rt.f(0.5)))
-      slots[(rt.i(5)).to_i] = s
+      slots[(rt.i(5)).to_i].replace((s).map { |c| rt.f32(c) })
     end
     s.replace((rt.texture(_u_h6, uv)).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('>=', rt.swizzle(s, 'a'), rt.f(0.5)))
-      slots[(rt.i(6)).to_i] = s
+      slots[(rt.i(6)).to_i].replace((s).map { |c| rt.f32(c) })
     end
     s.replace((rt.texture(_u_h7, uv)).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('>=', rt.swizzle(s, 'a'), rt.f(0.5)))
-      slots[(rt.i(7)).to_i] = s
+      slots[(rt.i(7)).to_i].replace((s).map { |c| rt.f32(c) })
     end
     s.replace((rt.texture(_u_h8, uv)).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('>=', rt.swizzle(s, 'a'), rt.f(0.5)))
-      slots[(rt.i(8)).to_i] = s
+      slots[(rt.i(8)).to_i].replace((s).map { |c| rt.f32(c) })
     end
     dr = rt.component_wise('clamp', _u_redDelay, rt.f(0), rt.f(8))
     ir0 = rt.construct(1, rt.component_wise('floor', dr), 'int')

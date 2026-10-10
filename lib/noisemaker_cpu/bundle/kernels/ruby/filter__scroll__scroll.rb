@@ -19,14 +19,14 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     globalCoord = nil; globalUV = nil; localUV = nil; offset = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    globalUV = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    globalUV = rt.assign_swizzle(globalUV, 'x', rt.binary('*', rt.swizzle(globalUV, 'x'), _u_aspect, 1, 'float'))
-    offset = rt.construct(2, rt.construct(2, rt.binary('+', rt.unary('-', _u_x), rt.binary('*', _u_time, rt.unary('-', _u_speedX), 1, 'float'), 1, 'float'), rt.binary('+', _u_y, rt.binary('*', _u_time, _u_speedY, 1, 'float'), 1, 'float')))
-    offset = rt.assign_swizzle(offset, 'x', rt.binary('*', rt.swizzle(offset, 'x'), _u_aspect, 1, 'float'))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    globalUV = rt.assign_swizzle(globalUV, 'x', rt.binary_raw('*', rt.swizzle(globalUV, 'x'), _u_aspect, 1, 'float'))
+    offset = rt.construct(2, rt.binary('+', rt.unary('-', _u_x), rt.binary('*', _u_time, rt.unary('-', _u_speedX), 1, 'float'), 1, 'float'), rt.binary('+', _u_y, rt.binary('*', _u_time, _u_speedY, 1, 'float'), 1, 'float'))
+    offset = rt.assign_swizzle(offset, 'x', rt.binary_raw('*', rt.swizzle(offset, 'x'), _u_aspect, 1, 'float'))
     globalUV[0] = rt.f32(rt.binary('+', globalUV[0], offset[0], 1, 'float')); globalUV[1] = rt.f32(rt.binary('+', globalUV[1], offset[1], 1, 'float'))
-    globalUV = rt.assign_swizzle(globalUV, 'x', rt.binary('/', rt.swizzle(globalUV, 'x'), _u_aspect, 1, 'float'))
-    localUV = rt.construct(2, ((((((globalUV[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (((rt.texture_size(_u_inputTex))[0]))), ((((((globalUV[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (((rt.texture_size(_u_inputTex))[1]))))
+    globalUV = rt.assign_swizzle(globalUV, 'x', rt.binary_raw('/', rt.swizzle(globalUV, 'x'), _u_aspect, 1, 'float'))
+    localUV = rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', globalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
       localUV.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
     else

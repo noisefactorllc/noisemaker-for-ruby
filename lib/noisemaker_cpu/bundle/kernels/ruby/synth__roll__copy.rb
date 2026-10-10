@@ -10,7 +10,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     texSize = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((texSize[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((texSize[1]))))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
     g['fragColor'].replace((rt.texture(_u_inputTex, uv)).map { |c| rt.f32(c) })
   end
   main__void.call

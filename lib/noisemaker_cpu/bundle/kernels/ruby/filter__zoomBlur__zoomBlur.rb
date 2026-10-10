@@ -16,19 +16,19 @@ run_pixel = lambda do |ctx, out|
   end
   prng__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    return rt.construct(3, rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[0], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[1], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[2], rt.f(4294967296), 1, 'uint'))
+    return rt.construct(3, rt.binary('/', rt.construct(3, rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint'))), rt.f(4294967296), 3, 'float'))
   end
   main__void = lambda do
     __sc1 = nil; _for0_first = nil; _t = nil; color = nil; fullRes = nil; globalCoord = nil; globalUV = nil; offset = nil; percent = nil; tex = nil; texSize = nil; tileDims = nil; toCenter = nil; total = nil; uv = nil; weight = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    tileDims = rt.construct(2, rt.construct(2, texSize))
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (tileDims[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (tileDims[1])))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (tileDims[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (tileDims[1])))
-    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
-    color = rt.construct(3, rt.construct(3, rt.f(0)))
+    tileDims = rt.construct(2, texSize)
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), tileDims, 2, 'float'))
+    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    color = rt.construct(3, rt.f(0))
     total = rt.f(0)
-    toCenter = rt.construct(2, ((globalUV[0]) - (rt.f(0.5))), ((globalUV[1]) - (rt.f(0.5))))
+    toCenter = rt.construct(2, rt.binary_raw('-', globalUV, rt.f(0.5), 2, 'float'))
     offset = rt.swizzle(prng__vec3.call(rt.construct(3, (rt.f(12.989800453186035)), (rt.f(78.233001708984375)), (rt.f(151.71820068359375)))), 'x')
     _t = rt.f(0)
     _for0_first = true
@@ -42,7 +42,7 @@ run_pixel = lambda do |ctx, out|
       end
       percent = rt.binary('/', rt.binary('+', _t, offset, 1, 'float'), rt.f(40), 1, 'float')
       weight = rt.binary('*', rt.f(4), rt.binary('-', percent, rt.binary('*', percent, percent, 1, 'float'), 1, 'float'), 1, 'float')
-      tex = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('+', uv, rt.binary('*', rt.binary('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float')))[3])
+      tex = rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.binary_raw('*', rt.binary_raw('*', toCenter, percent, 2, 'float'), _u_strength, 2, 'float'), 2, 'float'))
       color[0] = rt.f32(rt.binary('+', color[0], ((rt.swizzle(tex, 'r')) * (weight)), 1, 'float')); color[1] = rt.f32(rt.binary('+', color[1], ((rt.swizzle(tex, 'g')) * (weight)), 1, 'float')); color[2] = rt.f32(rt.binary('+', color[2], ((rt.swizzle(tex, 'b')) * (weight)), 1, 'float'))
       total = rt.binary('+', total, weight, 1, 'float')
     end

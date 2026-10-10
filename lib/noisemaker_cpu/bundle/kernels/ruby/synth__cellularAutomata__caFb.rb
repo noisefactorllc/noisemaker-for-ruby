@@ -181,8 +181,8 @@ run_pixel = lambda do |ctx, out|
         if rt.bool((rt.bool(rt.binary('==', x, rt.i(0))) && rt.bool(rt.binary('==', y, rt.i(0))) ? 1 : 0))
           next
         end
-        offset = rt.construct(2, ((((x))) * (texelSize[0])), ((((y))) * (texelSize[1])))
-        n = rt.swizzle(rt.texture(_u_bufTex, rt.binary('+', uv, offset, 2, 'float')), 'r')
+        offset = rt.construct(2, rt.binary_raw('*', rt.construct_raw(2, rt.construct(1, x), rt.construct(1, y)), texelSize, 2, 'float'))
+        n = rt.swizzle(rt.texture(_u_bufTex, rt.binary_raw('+', uv, offset, 2, 'float')), 'r')
         count = rt.binary('+', count, rt.construct(1, rt.binary('>', n, rt.f(0.5)), 'int'), 1, 'int')
       end
     end
@@ -190,11 +190,11 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     alive = nil; animSpeed = nil; bufState = nil; bufferIsEmpty = nil; currentState = nil; neighbors = nil; newState = nil; nextState = nil; prevFrame = nil; prevLum = nil; r = nil; state = nil; texSize = nil; texelSize = nil; uv = nil
-    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_bufTex)))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (texSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (texSize[1])))
-    texelSize = rt.construct(2, ((rt.f(1)) / (texSize[0])), ((rt.f(1)) / (texSize[1])))
+    texSize = rt.construct(2, rt.texture_size(_u_bufTex))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
+    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), texSize, 2, 'float'))
     state = rt.swizzle(rt.texture(_u_bufTex, uv), 'r')
-    bufState = rt.construct(4, (rt.texture(_u_bufTex, uv))[0], (rt.texture(_u_bufTex, uv))[1], (rt.texture(_u_bufTex, uv))[2], (rt.texture(_u_bufTex, uv))[3])
+    bufState = rt.texture(_u_bufTex, uv)
     bufferIsEmpty = (rt.bool((rt.bool((rt.bool(rt.binary('==', rt.swizzle(bufState, 'r'), rt.f(0))) && rt.bool(rt.binary('==', rt.swizzle(bufState, 'g'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(bufState, 'b'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(bufState, 'a'), rt.f(0))) ? 1 : 0)
     alive = rt.f(0.0)
     r = rt.f(0.0)
@@ -204,7 +204,7 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'][0] = rt.f32(alive); g['fragColor'][1] = rt.f32(alive); g['fragColor'][2] = rt.f32(alive); g['fragColor'][3] = rt.f32(rt.f(1))
       return
     end
-    prevFrame = rt.construct(3, rt.swizzle(rt.texture(_u_tex, uv), 'r'), rt.swizzle(rt.texture(_u_tex, uv), 'g'), rt.swizzle(rt.texture(_u_tex, uv), 'b'))
+    prevFrame = rt.swizzle(rt.texture(_u_tex, uv), 'rgb')
     prevLum = lum__vec3.call(prevFrame)
     neighbors = countNeighbors__vec2_vec2.call(uv, texelSize)
     newState = state
@@ -221,8 +221,8 @@ run_pixel = lambda do |ctx, out|
       newState = rt.component_wise('mix', newState, prevLum, rt.binary('*', _u_weight, rt.f(0.0099999997764825821), 1, 'float'))
     end
     animSpeed = map__float_float_float_float_float.call(_u_speed, rt.f(1), rt.f(100), rt.f(0.10000000149011612), rt.f(100))
-    currentState = rt.construct(4, rt.construct(4, state, state, state, rt.f(1)))
-    nextState = rt.construct(4, rt.construct(4, newState, newState, newState, rt.f(1)))
+    currentState = rt.construct(4, state, state, state, rt.f(1))
+    nextState = rt.construct(4, newState, newState, newState, rt.f(1))
     g['fragColor'].replace((rt.component_wise('mix', currentState, nextState, rt.component_wise('min', rt.f(1), rt.binary('*', _u_deltaTime, animSpeed, 1, 'float')))).map { |c| rt.f32(c) })
   end
   main__void.call

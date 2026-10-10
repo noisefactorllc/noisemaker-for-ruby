@@ -17,8 +17,8 @@ run_pixel = lambda do |ctx, out|
   hash12__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
     __sc1 = nil; p3 = nil
-    p3 = rt.construct(3, rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * (rt.f(0.1031000018119812))))), rt.component_wise('fract', rt.f32((((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * (rt.f(0.1031000018119812))))))
-    __sc1 = rt.dot(p3, rt.binary('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1, 1, 'float'))
+    p3 = rt.component_wise('fract', rt.construct(3, (((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * (rt.f(0.1031000018119812))), (((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * (rt.f(0.1031000018119812))), (((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * (rt.f(0.1031000018119812)))))
+    __sc1 = rt.dot(p3, rt.binary_raw('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1, 1, 'float'))
     return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')))
   end
   rotateAround__vec2_vec2_float_float = lambda do |uv, center, angle, aspectRatio|
@@ -26,28 +26,28 @@ run_pixel = lambda do |ctx, out|
     center = rt.copy(center, 'float')
     c = nil; co = nil; p = nil; s = nil
     p = rt.copy(uv, 'float')
-    p = rt.assign_swizzle(p, 'x', rt.binary('*', rt.swizzle(p, 'x'), aspectRatio, 1, 'float'))
+    p = rt.assign_swizzle(p, 'x', rt.binary_raw('*', rt.swizzle(p, 'x'), aspectRatio, 1, 'float'))
     c = rt.copy(center, 'float')
-    c = rt.assign_swizzle(c, 'x', rt.binary('*', rt.swizzle(c, 'x'), aspectRatio, 1, 'float'))
+    c = rt.assign_swizzle(c, 'x', rt.binary_raw('*', rt.swizzle(c, 'x'), aspectRatio, 1, 'float'))
     p[0] = rt.f32(rt.binary('-', p[0], c[0], 1, 'float')); p[1] = rt.f32(rt.binary('-', p[1], c[1], 1, 'float'))
     s = rt.component_wise('sin', angle)
     co = rt.component_wise('cos', angle)
     rt.matrix_mult_assign(p, rt.construct(4, co, rt.unary('-', s), s, co), p, 2)
     p[0] = rt.f32(rt.binary('+', p[0], c[0], 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], c[1], 1, 'float'))
-    p = rt.assign_swizzle(p, 'x', rt.binary('/', rt.swizzle(p, 'x'), aspectRatio, 1, 'float'))
+    p = rt.assign_swizzle(p, 'x', rt.binary_raw('/', rt.swizzle(p, 'x'), aspectRatio, 1, 'float'))
     return p
   end
   main__void = lambda do
     __hoistv2 = nil; _for0_first = nil; angularStep = nil; arc = nil; aspectRatio = nil; center = nil; distorted = nil; globalCoord = nil; i = nil; jitter = nil; jitterCoord = nil; sampleUV = nil; sum = nil; theta = nil; uv = nil
     aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    center = rt.construct(2, rt.construct(2, _u_centerX, _u_centerY))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    center = rt.construct(2, _u_centerX, _u_centerY)
     arc = rt.component_wise('radians', _u_amount)
     angularStep = rt.binary('/', arc, rt.construct(1, rt.binary('-', g['N'], rt.i(1), 1, 'int')), 1, 'float')
-    jitterCoord = rt.construct(2, rt.construct(2, rt.swizzle(globalCoord, 'x'), rt.component_wise('abs', rt.binary('-', rt.swizzle(globalCoord, 'y'), rt.binary('*', rt.swizzle(_u_fullResolution, 'y'), rt.f(0.5), 1, 'float'), 1, 'float'))))
+    jitterCoord = rt.construct(2, rt.swizzle(globalCoord, 'x'), rt.component_wise('abs', rt.binary('-', rt.swizzle(globalCoord, 'y'), rt.binary('*', rt.swizzle(_u_fullResolution, 'y'), rt.f(0.5), 1, 'float'), 1, 'float')))
     jitter = rt.binary('*', rt.binary('-', hash12__vec2.call(jitterCoord), rt.f(0.5), 1, 'float'), angularStep, 1, 'float')
-    sum = rt.construct(4, rt.construct(4, rt.f(0)))
+    sum = rt.construct(4, rt.f(0))
     i = rt.i(0)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -59,11 +59,11 @@ run_pixel = lambda do |ctx, out|
         break
       end
       theta = rt.binary('+', rt.binary('*', rt.binary('-', rt.binary('/', rt.construct(1, i), rt.construct(1, rt.binary('-', g['N'], rt.i(1), 1, 'int')), 1, 'float'), rt.f(0.5), 1, 'float'), arc, 1, 'float'), jitter, 1, 'float')
-      distorted = rt.construct(2, rt.component_wise('clamp', rotateAround__vec2_vec2_float_float.call(uv, center, theta, aspectRatio), rt.f(0), rt.f(1)))
-      sampleUV = rt.construct(2, rt.component_wise('clamp', rt.f32(((((((distorted[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (_u_resolution[0]))), rt.f(0), rt.f(1)), rt.component_wise('clamp', rt.f32(((((((distorted[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1)))
+      distorted = rt.component_wise('clamp', rotateAround__vec2_vec2_float_float.call(uv, center, theta, aspectRatio), rt.f(0), rt.f(1))
+      sampleUV = rt.component_wise('clamp', rt.construct(2, ((((((distorted[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((((distorted[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
       __hoistv2 = rt.texture(_u_inputTex, sampleUV); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv2[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv2[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv2[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoistv2[3], 1, 'float'))
     end
-    g['fragColor'].replace((rt.binary('/', sum, rt.construct(1, g['N']), 4, 'float')).map { |c| rt.f32(c) })
+    g['fragColor'].replace((rt.binary_raw('/', sum, rt.construct(1, g['N']), 4, 'float')).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

@@ -23,9 +23,9 @@ run_pixel = lambda do |ctx, out|
   hash3__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     __sc1 = nil
-    p.replace((rt.binary('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+    p.replace((rt.binary_raw('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
     p.replace((rt.component_wise('fract', rt.construct(3, ((p[0]) * ((rt.f(0.1031000018119812)))), ((p[1]) * ((rt.f(0.10300000011920929)))), ((p[2]) * ((rt.f(0.097300000488758087))))))).map { |c| rt.f32(c) })
-    __sc1 = rt.dot(p, rt.binary('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float')); p[0] = rt.f32(rt.binary('+', p[0], __sc1, 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __sc1, 1, 'float')); p[2] = rt.f32(rt.binary('+', p[2], __sc1, 1, 'float'))
+    __sc1 = rt.dot(p, rt.binary_raw('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float')); p[0] = rt.f32(rt.binary('+', p[0], __sc1, 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __sc1, 1, 'float')); p[2] = rt.f32(rt.binary('+', p[2], __sc1, 1, 'float'))
     return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'))
   end
   atlasTexel__ivec3_int = lambda do |p, volSize|
@@ -45,15 +45,15 @@ run_pixel = lambda do |ctx, out|
   laplacian3D__ivec3_int = lambda do |voxel, volSize|
     voxel = rt.copy(voxel, 'int')
     center = nil; lap = nil; neighborSum = nil; xn = nil; xp = nil; yn = nil; yp = nil; zn = nil; zp = nil
-    center = rt.construct(4, sampleState__ivec3_int.call(voxel, volSize))
-    xp = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(1), rt.i(0), rt.i(0), 'int'), 3, 'int'), volSize))
-    xn = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.unary('-', rt.i(1)), rt.i(0), rt.i(0), 'int'), 3, 'int'), volSize))
-    yp = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(1), rt.i(0), 'int'), 3, 'int'), volSize))
-    yn = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.unary('-', rt.i(1)), rt.i(0), 'int'), 3, 'int'), volSize))
-    zp = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.i(1), 'int'), 3, 'int'), volSize))
-    zn = rt.construct(4, sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.unary('-', rt.i(1)), 'int'), 3, 'int'), volSize))
-    neighborSum = rt.construct(2, ((((((((((rt.swizzle(xp, 'r')) + (rt.swizzle(xn, 'r')))) + (rt.swizzle(yp, 'r')))) + (rt.swizzle(yn, 'r')))) + (rt.swizzle(zp, 'r')))) + (rt.swizzle(zn, 'r'))), ((((((((((rt.swizzle(xp, 'a')) + (rt.swizzle(xn, 'a')))) + (rt.swizzle(yp, 'a')))) + (rt.swizzle(yn, 'a')))) + (rt.swizzle(zp, 'a')))) + (rt.swizzle(zn, 'a'))))
-    lap = rt.construct(2, ((neighborSum[0]) - (((rt.f(6)) * (rt.swizzle(center, 'r'))))), ((neighborSum[1]) - (((rt.f(6)) * (rt.swizzle(center, 'a'))))))
+    center = sampleState__ivec3_int.call(voxel, volSize)
+    xp = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(1), rt.i(0), rt.i(0), 'int'), 3, 'int'), volSize)
+    xn = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.unary('-', rt.i(1)), rt.i(0), rt.i(0), 'int'), 3, 'int'), volSize)
+    yp = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(1), rt.i(0), 'int'), 3, 'int'), volSize)
+    yn = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.unary('-', rt.i(1)), rt.i(0), 'int'), 3, 'int'), volSize)
+    zp = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.i(1), 'int'), 3, 'int'), volSize)
+    zn = sampleState__ivec3_int.call(rt.binary('+', voxel, rt.construct(3, rt.i(0), rt.i(0), rt.unary('-', rt.i(1)), 'int'), 3, 'int'), volSize)
+    neighborSum = rt.construct(2, rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('+', rt.swizzle(xp, 'ra'), rt.swizzle(xn, 'ra'), 2, 'float'), rt.swizzle(yp, 'ra'), 2, 'float'), rt.swizzle(yn, 'ra'), 2, 'float'), rt.swizzle(zp, 'ra'), 2, 'float'), rt.swizzle(zn, 'ra'), 2, 'float'))
+    lap = rt.construct(2, rt.binary_raw('-', neighborSum, rt.binary_raw('*', rt.f(6), rt.swizzle(center, 'ra'), 2, 'float'), 2, 'float'))
     return lap
   end
   main__void = lambda do
@@ -68,7 +68,7 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    state = rt.construct(4, sampleState__ivec3_int.call(voxel, volSize))
+    state = sampleState__ivec3_int.call(voxel, volSize)
     b = rt.swizzle(state, 'r')
     a = rt.swizzle(state, 'a')
     bufferIsEmpty = (rt.bool((rt.bool((rt.bool(rt.binary('==', rt.swizzle(state, 'r'), rt.f(0))) && rt.bool(rt.binary('==', rt.swizzle(state, 'g'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(state, 'b'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(state, 'a'), rt.f(0))) ? 1 : 0)
@@ -86,7 +86,7 @@ run_pixel = lambda do |ctx, out|
         inCenterCube = (rt.bool((rt.bool((rt.bool((rt.bool((rt.bool(rt.binary('>=', x, start)) && rt.bool(rt.binary('<=', x, _end)) ? 1 : 0)) && rt.bool(rt.binary('>=', y, start)) ? 1 : 0)) && rt.bool(rt.binary('<=', y, _end)) ? 1 : 0)) && rt.bool(rt.binary('>=', z, start)) ? 1 : 0)) && rt.bool(rt.binary('<=', z, _end)) ? 1 : 0)
         b = (rt.bool(inCenterCube) ? (rt.f(1)) : (rt.f(0)))
       else
-        seedVal = rt.construct(4, sampleSeed__ivec3_int.call(voxel, volSize))
+        seedVal = sampleSeed__ivec3_int.call(voxel, volSize)
         hasSeedInput = (rt.bool((rt.bool(rt.binary('>', rt.swizzle(seedVal, 'r'), rt.f(0))) || rt.bool(rt.binary('>', rt.swizzle(seedVal, 'g'), rt.f(0))) ? 1 : 0)) || rt.bool(rt.binary('>', rt.swizzle(seedVal, 'b'), rt.f(0))) ? 1 : 0)
         lum = rt.f(0.0)
         p = rt.construct(3, 0.0)
@@ -94,7 +94,7 @@ run_pixel = lambda do |ctx, out|
           lum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
           b = (rt.bool(rt.binary('>', lum, rt.f(0.5))) ? (rt.f(1)) : (rt.f(0)))
         else
-          p = rt.construct(3, rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)))
+          p = rt.construct(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z))
           if rt.bool(rt.binary('>', hash3__vec3.call(p), rt.f(0.97000002861022949)))
             b = rt.f(1)
           end
@@ -103,7 +103,7 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'][0] = rt.f32(b); g['fragColor'][1] = rt.f32(b); g['fragColor'][2] = rt.f32(b); g['fragColor'][3] = rt.f32(a)
       return
     end
-    lap = rt.construct(2, laplacian3D__ivec3_int.call(voxel, volSize))
+    lap = laplacian3D__ivec3_int.call(voxel, volSize)
     f = rt.binary('*', _u_feed, rt.f(0.0010000000474974513), 1, 'float')
     k = rt.binary('*', _u_kill, rt.f(0.0010000000474974513), 1, 'float')
     r1 = rt.binary('/', rt.binary('*', _u_rate1, rt.f(0.0099999997764825821), 1, 'float'), rt.f(6), 1, 'float')
@@ -115,7 +115,7 @@ run_pixel = lambda do |ctx, out|
     seedLum = rt.f(0.0)
     seedVal = rt.construct(4, 0.0)
     if rt.bool(rt.binary('>', _u_weight, rt.f(0)))
-      seedVal = rt.construct(4, sampleSeed__ivec3_int.call(voxel, volSize))
+      seedVal = sampleSeed__ivec3_int.call(voxel, volSize)
       seedLum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
       newB = rt.component_wise('mix', newB, seedLum, rt.binary('*', _u_weight, rt.f(0.0099999997764825821), 1, 'float'))
     end

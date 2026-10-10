@@ -28,25 +28,25 @@ run_pixel = lambda do |ctx, out|
     p = rt.assign_swizzle(p, 'x', (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
     p = rt.assign_swizzle(p, 'y', (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
     p = rt.assign_swizzle(p, 'z', (rt.bool(rt.binary('>=', rt.swizzle(p, 'z'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'z'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'z')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
-    return rt.construct(3, rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[0], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[1], rt.f(4294967296), 1, 'uint'), rt.binary('/', (rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint')))[2], rt.f(4294967296), 1, 'uint'))
+    return rt.construct(3, rt.binary('/', rt.construct(3, rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint'))), rt.f(4294967296), 3, 'float'))
   end
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; _for2_first = nil; _for3_first = nil; aspect = nil; cellChoice = nil; cellCoord = nil; cellFract = nil; cellId = nil; color = nil; colorA = nil; colorB = nil; d = nil; d1 = nil; dist = nil; edge = nil; edgeDist = nil; fullRes = nil; globalCoord = nil; globalUV = nil; mask = nil; mid = nil; nearestCell = nil; nearestHash = nil; nearestPoint = nil; neighbor = nil; onEdge = nil; p = nil; point = nil; rnd = nil; spd = nil; st = nil; wobble = nil; x = nil; y = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    st = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    colorA = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[3])
-    colorB = rt.construct(4, (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))[0], (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))[1], (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))[2], (rt.texture(_u_tex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))[3])
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[0]) : (_u_resolution[0])), (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution[1]) : (_u_resolution[1])))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    colorA = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    colorB = rt.texture(_u_tex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
     aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-    globalUV = rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0]))) / (fullRes[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1]))) / (fullRes[1])))
-    p = rt.construct(2, ((globalUV[0]) * (((rt.f(31)) - (_u_scale)))), ((globalUV[1]) * (((rt.f(31)) - (_u_scale)))))
-    p = rt.assign_swizzle(p, 'x', rt.binary('*', rt.swizzle(p, 'x'), aspect, 1, 'float'))
+    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    p = rt.construct(2, rt.binary_raw('*', globalUV, rt.binary('-', rt.f(31), _u_scale, 1, 'float'), 2, 'float'))
+    p = rt.assign_swizzle(p, 'x', rt.binary_raw('*', rt.swizzle(p, 'x'), aspect, 1, 'float'))
     spd = rt.component_wise('floor', _u_speed)
-    cellCoord = rt.construct(2, rt.component_wise('floor', p[0]), rt.component_wise('floor', p[1]))
-    cellFract = rt.construct(2, rt.component_wise('fract', p[0]), rt.component_wise('fract', p[1]))
+    cellCoord = rt.component_wise('floor', p)
+    cellFract = rt.component_wise('fract', p)
     d1 = rt.f(10000000000)
-    nearestPoint = rt.construct(2, rt.construct(2, rt.f(0)))
-    nearestCell = rt.construct(2, rt.construct(2, rt.f(0)))
+    nearestPoint = rt.construct(2, rt.f(0))
+    nearestCell = rt.construct(2, rt.f(0))
     nearestHash = rt.f(0)
     y = rt.unary('-', rt.i(1))
     _for0_first = true
@@ -68,11 +68,11 @@ run_pixel = lambda do |ctx, out|
         unless rt.bool(rt.binary('<=', x, rt.i(1)))
           break
         end
-        neighbor = rt.construct(2, rt.construct(2, rt.construct(1, x), rt.construct(1, y)))
-        cellId = rt.construct(2, ((cellCoord[0]) + (neighbor[0])), ((cellCoord[1]) + (neighbor[1])))
-        rnd = rt.construct(3, prng__vec3.call(rt.construct(3, (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')), ((_u_seed)))))
-        wobble = rt.construct(2, rt.binary('*', rt.binary('*', rt.component_wise('sin', rt.construct(2, ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'x')) * (g['TAU'])))), ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'y')) * (g['TAU'])))))), rt.f(0.15000000596046448), 2, 'float'), rt.component_wise('min', spd, rt.f(1)), 2, 'float'))
-        point = rt.construct(2, ((((((neighbor[0]) + (rt.swizzle(rnd, 'x')))) + (wobble[0]))) - (cellFract[0])), ((((((neighbor[1]) + (rt.swizzle(rnd, 'y')))) + (wobble[1]))) - (cellFract[1])))
+        neighbor = rt.construct(2, rt.construct(1, x), rt.construct(1, y))
+        cellId = rt.construct(2, rt.binary_raw('+', cellCoord, neighbor, 2, 'float'))
+        rnd = prng__vec3.call(rt.construct(3, (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')), ((_u_seed))))
+        wobble = rt.construct(2, rt.binary('*', rt.construct(2, rt.binary('*', rt.component_wise('sin', rt.construct(2, ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'x')) * (g['TAU'])))), ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'y')) * (g['TAU'])))))), rt.f(0.15000000596046448), 2, 'float')), rt.component_wise('min', spd, rt.f(1)), 2, 'float'))
+        point = rt.construct(2, rt.binary_raw('-', rt.binary_raw('+', rt.binary_raw('+', neighbor, rt.swizzle(rnd, 'xy'), 2, 'float'), wobble, 2, 'float'), cellFract, 2, 'float'))
         dist = rt.dot(point, point)
         if rt.bool(rt.binary('<', dist, d1))
           d1 = dist
@@ -103,16 +103,16 @@ run_pixel = lambda do |ctx, out|
         unless rt.bool(rt.binary('<=', x, rt.i(2)))
           break
         end
-        neighbor = rt.construct(2, rt.construct(2, rt.construct(1, x), rt.construct(1, y)))
-        cellId = rt.construct(2, ((cellCoord[0]) + (neighbor[0])), ((cellCoord[1]) + (neighbor[1])))
+        neighbor = rt.construct(2, rt.construct(1, x), rt.construct(1, y))
+        cellId = rt.construct(2, rt.binary_raw('+', cellCoord, neighbor, 2, 'float'))
         if rt.bool(rt.binary('==', cellId, nearestCell))
           next
         end
-        rnd = rt.construct(3, prng__vec3.call(rt.construct(3, (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')), ((_u_seed)))))
-        wobble = rt.construct(2, rt.binary('*', rt.binary('*', rt.component_wise('sin', rt.construct(2, ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'x')) * (g['TAU'])))), ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'y')) * (g['TAU'])))))), rt.f(0.15000000596046448), 2, 'float'), rt.component_wise('min', spd, rt.f(1)), 2, 'float'))
-        point = rt.construct(2, ((((((neighbor[0]) + (rt.swizzle(rnd, 'x')))) + (wobble[0]))) - (cellFract[0])), ((((((neighbor[1]) + (rt.swizzle(rnd, 'y')))) + (wobble[1]))) - (cellFract[1])))
-        mid = rt.construct(2, ((((nearestPoint[0]) + (point[0]))) * (rt.f(0.5))), ((((nearestPoint[1]) + (point[1]))) * (rt.f(0.5))))
-        edge = rt.construct(2, rt.normalize(rt.binary('-', point, nearestPoint, 2, 'float')))
+        rnd = prng__vec3.call(rt.construct(3, (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')), ((_u_seed))))
+        wobble = rt.construct(2, rt.binary('*', rt.construct(2, rt.binary('*', rt.component_wise('sin', rt.construct(2, ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'x')) * (g['TAU'])))), ((((((g['TAU']) * (_u_time))) * (spd))) + (((rt.swizzle(rnd, 'y')) * (g['TAU'])))))), rt.f(0.15000000596046448), 2, 'float')), rt.component_wise('min', spd, rt.f(1)), 2, 'float'))
+        point = rt.construct(2, rt.binary_raw('-', rt.binary_raw('+', rt.binary_raw('+', neighbor, rt.swizzle(rnd, 'xy'), 2, 'float'), wobble, 2, 'float'), cellFract, 2, 'float'))
+        mid = rt.construct(2, rt.binary_raw('*', rt.binary_raw('+', nearestPoint, point, 2, 'float'), rt.f(0.5), 2, 'float'))
+        edge = rt.normalize(rt.binary_raw('-', point, nearestPoint, 2, 'float'))
         d = rt.component_wise('abs', rt.dot(mid, edge))
         edgeDist = rt.component_wise('min', edgeDist, d)
       end
@@ -132,7 +132,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool((rt.bool(rt.binary('==', _u_mode, rt.i(0))) && rt.bool(rt.binary('==', _u_invert, rt.i(1))) ? 1 : 0))
       mask = rt.binary('-', rt.f(1), mask, 1, 'float')
     end
-    color = rt.construct(4, rt.component_wise('mix', colorA[0], colorB[0], mask), rt.component_wise('mix', colorA[1], colorB[1], mask), rt.component_wise('mix', colorA[2], colorB[2], mask), rt.component_wise('mix', colorA[3], colorB[3], mask))
+    color = rt.component_wise('mix', colorA, colorB, mask)
     color = rt.assign_swizzle(color, 'a', rt.component_wise('max', rt.swizzle(colorA, 'a'), rt.swizzle(colorB, 'a')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end

@@ -35,10 +35,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     colorA = nil; colorB = nil; localUV = nil; mapColor = nil; rawUV = nil; remappedUV = nil; result = nil; s = nil; sampleFromB = nil; sampleUV = nil
-    localUV = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (_u_resolution[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (_u_resolution[1])))
-    colorA = rt.construct(4, (rt.texture(_u_inputTex, localUV))[0], (rt.texture(_u_inputTex, localUV))[1], (rt.texture(_u_inputTex, localUV))[2], (rt.texture(_u_inputTex, localUV))[3])
-    colorB = rt.construct(4, (rt.texture(_u_tex, localUV))[0], (rt.texture(_u_tex, localUV))[1], (rt.texture(_u_tex, localUV))[2], (rt.texture(_u_tex, localUV))[3])
-    mapColor = rt.construct(4, (rt.bool(rt.binary('==', _u_mapSource, rt.i(0))) ? (colorA[0]) : (colorB[0])), (rt.bool(rt.binary('==', _u_mapSource, rt.i(0))) ? (colorA[1]) : (colorB[1])), (rt.bool(rt.binary('==', _u_mapSource, rt.i(0))) ? (colorA[2]) : (colorB[2])), (rt.bool(rt.binary('==', _u_mapSource, rt.i(0))) ? (colorA[3]) : (colorB[3])))
+    localUV = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    colorA = rt.texture(_u_inputTex, localUV)
+    colorB = rt.texture(_u_tex, localUV)
+    mapColor = rt.construct(4, (rt.bool(rt.binary('==', _u_mapSource, rt.i(0))) ? (colorA) : (colorB)))
     sampleFromB = (rt.bool(rt.binary('==', _u_mapSource, rt.i(0))) ? (rt.i(1)) : (rt.i(0)))
     rawUV = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u_channel, rt.i(0)))
@@ -51,9 +51,9 @@ run_pixel = lambda do |ctx, out|
       end
     end
     s = rt.binary('/', _u_scale, rt.f(100), 1, 'float')
-    remappedUV = rt.construct(2, ((((rawUV[0]) * (s))) + (_u_offset)), ((((rawUV[1]) * (s))) + (_u_offset)))
+    remappedUV = rt.construct(2, rt.binary_raw('+', rt.binary_raw('*', rawUV, s, 2, 'float'), _u_offset, 2, 'float'))
     remappedUV.replace((applyWrap__vec2_int.call(remappedUV, _u_wrap)).map { |c| rt.f32(c) })
-    sampleUV = rt.construct(2, ((((((remappedUV[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((((remappedUV[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (_u_resolution[1])))
+    sampleUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', rt.binary_raw('*', remappedUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), _u_resolution, 2, 'float'))
     sampleUV.replace((rt.component_wise('fract', sampleUV)).map { |c| rt.f32(c) })
     result = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', sampleFromB, rt.i(1)))

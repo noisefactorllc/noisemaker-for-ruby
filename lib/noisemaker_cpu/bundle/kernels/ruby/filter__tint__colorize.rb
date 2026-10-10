@@ -61,27 +61,27 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     base = nil; base_hsv = nil; base_rgb = nil; globalCoord = nil; m = nil; rgb = nil; st = nil; tintHue = nil; tinted = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    st = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / ((rt.component_wise('max', (rt.texture_size(_u_inputTex))[0], (rt.i(1)))))), ((rt.swizzle(ctx.frag_coord, 'y')) / ((rt.component_wise('max', (rt.texture_size(_u_inputTex))[1], (rt.i(1)))))))
-    base = rt.construct(4, (rt.texture(_u_inputTex, st))[0], (rt.texture(_u_inputTex, st))[1], (rt.texture(_u_inputTex, st))[2], (rt.texture(_u_inputTex, st))[3])
-    base_rgb = rt.construct(3, (rt.bool(rt.binary('>', rt.swizzle(base, 'a'), rt.f(0))) ? (rt.component_wise('clamp', rt.f32(((rt.swizzle(base, 'r')) / (rt.swizzle(base, 'a')))), rt.f(0), rt.f(1))) : ((rt.f(0)))), (rt.bool(rt.binary('>', rt.swizzle(base, 'a'), rt.f(0))) ? (rt.component_wise('clamp', rt.f32(((rt.swizzle(base, 'g')) / (rt.swizzle(base, 'a')))), rt.f(0), rt.f(1))) : ((rt.f(0)))), (rt.bool(rt.binary('>', rt.swizzle(base, 'a'), rt.f(0))) ? (rt.component_wise('clamp', rt.f32(((rt.swizzle(base, 'b')) / (rt.swizzle(base, 'a')))), rt.f(0), rt.f(1))) : ((rt.f(0)))))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.component_wise('max', rt.texture_size(_u_inputTex), rt.construct(2, rt.i(1), 'int'))), 2, 'float'))
+    base = rt.texture(_u_inputTex, st)
+    base_rgb = rt.construct(3, (rt.bool(rt.binary('>', rt.swizzle(base, 'a'), rt.f(0))) ? (rt.component_wise('clamp', rt.construct(3, ((rt.swizzle(base, 'r')) / (rt.swizzle(base, 'a'))), ((rt.swizzle(base, 'g')) / (rt.swizzle(base, 'a'))), ((rt.swizzle(base, 'b')) / (rt.swizzle(base, 'a')))), rt.f(0), rt.f(1))) : (rt.construct(3, rt.f(0)))))
     m = rt.construct(1, _u_mode, 'int')
     tinted = rt.construct(3, 0.0)
     base_hsv = rt.construct(3, 0.0)
     tintHue = rt.f(0.0)
     if rt.bool(rt.binary('==', m, rt.i(1)))
-      tinted.replace((rt.binary('*', base_rgb, _u_color, 3, 'float')).map { |c| rt.f32(c) })
+      tinted.replace((rt.binary_raw('*', base_rgb, _u_color, 3, 'float')).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', m, rt.i(2)))
         tintHue = rt.swizzle(rgb_to_hsv__vec3.call(_u_color), 'x')
-        base_hsv = rt.construct(3, rgb_to_hsv__vec3.call(base_rgb))
+        base_hsv = rgb_to_hsv__vec3.call(base_rgb)
         tinted.replace((rt.component_wise('clamp', hsv_to_rgb__vec3.call(rt.construct(3, (tintHue), (rt.component_wise('clamp', rt.swizzle(base_rgb, 'y'), rt.f(0), rt.f(1))), (rt.component_wise('clamp', rt.swizzle(base_hsv, 'z'), rt.f(0), rt.f(1))))), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
       else
         tinted.replace((_u_color).map { |c| rt.f32(c) })
       end
     end
-    rgb = rt.construct(3, rt.component_wise('mix', base_rgb[0], tinted[0], _u_alpha), rt.component_wise('mix', base_rgb[1], tinted[1], _u_alpha), rt.component_wise('mix', base_rgb[2], tinted[2], _u_alpha))
-    g['fragColor'].replace((rt.construct(4, rt.binary('*', rgb, rt.swizzle(base, 'a'), 3, 'float'), rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
+    rgb = rt.component_wise('mix', base_rgb, tinted, _u_alpha)
+    g['fragColor'].replace((rt.construct(4, rt.binary_raw('*', rgb, rt.swizzle(base, 'a'), 3, 'float'), rt.swizzle(base, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

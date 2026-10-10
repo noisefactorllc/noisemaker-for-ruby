@@ -67,7 +67,7 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    return rt.construct(3, ((rgb[0]) + ((m))), ((rgb[1]) + ((m))), ((rgb[2]) + ((m))))
+    return rt.construct(3, rt.binary_raw('+', rgb, rt.construct_raw(3, m), 3, 'float'))
   end
   rgb2hsv__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
@@ -93,15 +93,15 @@ run_pixel = lambda do |ctx, out|
   linear2srgb__vec3 = lambda do |lin|
     lin = rt.copy(lin, 'float')
     high = nil; low = nil
-    low = rt.construct(3, ((lin[0]) * (rt.f(12.920000076293945))), ((lin[1]) * (rt.f(12.920000076293945))), ((lin[2]) * (rt.f(12.920000076293945))))
-    high = rt.construct(3, rt.binary('-', rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', rt.component_wise('max', lin, rt.construct(3, rt.f(0))), rt.construct(3, rt.f(0.4166666567325592))), 3, 'float'), rt.f(0.054999999701976776), 3, 'float'))
+    low = rt.construct(3, rt.binary_raw('*', lin, rt.f(12.920000076293945), 3, 'float'))
+    high = rt.construct(3, rt.binary('-', rt.construct(3, rt.binary('*', rt.f(1.0549999475479126), rt.component_wise('pow', rt.component_wise('max', lin, rt.construct(3, rt.f(0))), rt.construct(3, rt.f(0.4166666567325592))), 3, 'float')), rt.f(0.054999999701976776), 3, 'float'))
     return rt.component_wise('mix', high, low, rt.component_wise('step', lin, rt.construct(3, rt.f(0.0031308000907301903))))
   end
   srgb2linear__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     high = nil; low = nil
-    low = rt.construct(3, ((c[0]) / (rt.f(12.920000076293945))), ((c[1]) / (rt.f(12.920000076293945))), ((c[2]) / (rt.f(12.920000076293945))))
-    high = rt.construct(3, rt.component_wise('pow', rt.f32(((((c[0]) + (rt.f(0.054999999701976776)))) / (rt.f(1.0549999475479126)))), (rt.f(2.4000000953674316))), rt.component_wise('pow', rt.f32(((((c[1]) + (rt.f(0.054999999701976776)))) / (rt.f(1.0549999475479126)))), (rt.f(2.4000000953674316))), rt.component_wise('pow', rt.f32(((((c[2]) + (rt.f(0.054999999701976776)))) / (rt.f(1.0549999475479126)))), (rt.f(2.4000000953674316))))
+    low = rt.construct(3, rt.binary_raw('/', c, rt.f(12.920000076293945), 3, 'float'))
+    high = rt.component_wise('pow', rt.construct(3, ((((c[0]) + (rt.f(0.054999999701976776)))) / (rt.f(1.0549999475479126))), ((((c[1]) + (rt.f(0.054999999701976776)))) / (rt.f(1.0549999475479126))), ((((c[2]) + (rt.f(0.054999999701976776)))) / (rt.f(1.0549999475479126)))), rt.construct(3, rt.f(2.4000000953674316)))
     return rt.component_wise('mix', high, low, rt.component_wise('step', c, rt.construct(3, rt.f(0.040449999272823334))))
   end
   oklab2linear__vec3 = lambda do |lab|
@@ -144,7 +144,7 @@ run_pixel = lambda do |ctx, out|
   rgb2oklch__vec3 = lambda do |rgb|
     rgb = rt.copy(rgb, 'float')
     _C = nil; h = nil; lab = nil
-    lab = rt.construct(3, rgb2oklab__vec3.call(rgb))
+    lab = rgb2oklab__vec3.call(rgb)
     _C = rt.length(rt.swizzle(lab, 'yz'))
     h = rt.component_wise('atan', rt.swizzle(lab, 'z'), rt.swizzle(lab, 'y'))
     return rt.construct(3, rt.swizzle(lab, 'x'), _C, rt.component_wise('fract', rt.binary('/', h, g['TAU'], 1, 'float')))
@@ -258,7 +258,7 @@ run_pixel = lambda do |ctx, out|
     _for0_first = nil; blend = nil; boundary = nil; bw = nil; d = nil; firstColor = nil; gap = nil; i = nil; lastColor = nil; mode = nil; nextColor = nil; pCurr = nil; pFirst = nil; pLast = nil; pPrev = nil; result = nil; wrapColor = nil; wrapFactor = nil; wrapMask = nil
     _t = rt.component_wise('clamp', _t, rt.f(0), rt.f(1))
     mode = _u_colorMode
-    result = rt.construct(3, rgbToColorSpace__vec3_int.call(getColor__int.call(rt.i(0)), mode))
+    result = rgbToColorSpace__vec3_int.call(getColor__int.call(rt.i(0)), mode)
     i = rt.i(1)
     _for0_first = true
     (0..1048575).each do |_for0|
@@ -283,7 +283,7 @@ run_pixel = lambda do |ctx, out|
         bw = rt.binary('*', rt.binary('*', smoothAmount, rt.binary('-', pCurr, pPrev, 1, 'float'), 1, 'float'), rt.f(0.25), 1, 'float')
       end
       blend = rt.component_wise('smoothstep', rt.binary('-', boundary, bw, 1, 'float'), rt.binary('+', boundary, bw, 1, 'float'), _t)
-      nextColor = rt.construct(3, rgbToColorSpace__vec3_int.call(getColor__int.call(i), mode))
+      nextColor = rgbToColorSpace__vec3_int.call(getColor__int.call(i), mode)
       result.replace((mixInColorSpace__vec3_vec3_float_int.call(result, nextColor, blend, mode)).map { |c| rt.f32(c) })
     end
     bw = rt.f(0.0)
@@ -309,9 +309,9 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>', bw, rt.f(0)))
         d = (rt.bool(rt.binary('>', _t, rt.f(0.5))) ? (rt.binary('-', _t, rt.f(1), 1, 'float')) : (_t))
         wrapFactor = rt.component_wise('smoothstep', rt.unary('-', bw), bw, d)
-        lastColor = rt.construct(3, rgbToColorSpace__vec3_int.call(getColor__int.call(rt.binary('-', count, rt.i(1), 1, 'int')), mode))
-        firstColor = rt.construct(3, rgbToColorSpace__vec3_int.call(getColor__int.call(rt.i(0)), mode))
-        wrapColor = rt.construct(3, mixInColorSpace__vec3_vec3_float_int.call(lastColor, firstColor, wrapFactor, mode))
+        lastColor = rgbToColorSpace__vec3_int.call(getColor__int.call(rt.binary('-', count, rt.i(1), 1, 'int')), mode)
+        firstColor = rgbToColorSpace__vec3_int.call(getColor__int.call(rt.i(0)), mode)
+        wrapColor = mixInColorSpace__vec3_vec3_float_int.call(lastColor, firstColor, wrapFactor, mode)
         wrapMask = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.f(0), bw, rt.component_wise('abs', d)), 1, 'float')
         result.replace((mixInColorSpace__vec3_vec3_float_int.call(result, wrapColor, wrapMask, mode)).map { |c| rt.f32(c) })
       end
@@ -320,10 +320,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _t = nil; blendedColor = nil; globalCoord = nil; gradientColor = nil; inputColor = nil; lum = nil; texSize = nil; uv = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    texSize = rt.construct(2, rt.construct(2, rt.texture_size(_u_inputTex)))
-    uv = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (texSize[0])), ((rt.swizzle(ctx.frag_coord, 'y')) / (texSize[1])))
-    inputColor = rt.construct(4, (rt.texture(_u_inputTex, uv))[0], (rt.texture(_u_inputTex, uv))[1], (rt.texture(_u_inputTex, uv))[2], (rt.texture(_u_inputTex, uv))[3])
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    texSize = rt.construct(2, rt.texture_size(_u_inputTex))
+    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
+    inputColor = rt.texture(_u_inputTex, uv)
     lum = rt.dot(rt.swizzle(inputColor, 'rgb'), rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
     _t = rt.binary('+', rt.binary('*', rt.binary('*', lum, rt.f(0.99989998340606689), 1, 'float'), _u_repeat, 1, 'float'), _u_offset, 1, 'float')
     if rt.bool(rt.binary('==', _u_rotation, rt.unary('-', rt.i(1))))
@@ -334,8 +334,8 @@ run_pixel = lambda do |ctx, out|
       end
     end
     _t = rt.component_wise('fract', _t)
-    gradientColor = rt.construct(3, sampleColorArray__float_int_float.call(_t, _u_colorCount, _u_smoothness))
-    blendedColor = rt.construct(3, rt.component_wise('mix', rt.swizzle(inputColor, 'r'), gradientColor[0], _u_alpha), rt.component_wise('mix', rt.swizzle(inputColor, 'g'), gradientColor[1], _u_alpha), rt.component_wise('mix', rt.swizzle(inputColor, 'b'), gradientColor[2], _u_alpha))
+    gradientColor = sampleColorArray__float_int_float.call(_t, _u_colorCount, _u_smoothness)
+    blendedColor = rt.component_wise('mix', rt.swizzle(inputColor, 'rgb'), gradientColor, _u_alpha)
     g['fragColor'].replace((rt.construct(4, blendedColor, rt.swizzle(inputColor, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

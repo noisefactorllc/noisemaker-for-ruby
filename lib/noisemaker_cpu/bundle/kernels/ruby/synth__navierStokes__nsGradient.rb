@@ -12,16 +12,16 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _u = nil; fragCoord = nil; grad = nil; here = nil; pB = nil; pL = nil; pR = nil; pT = nil; texSize = nil; texel = nil; uv = nil
     texSize = rt.texture_size(_u_velTex)
-    fragCoord = rt.construct(2, rt.swizzle(ctx.frag_coord, 'x'), rt.swizzle(ctx.frag_coord, 'y'))
-    texel = rt.construct(2, ((rt.f(1)) / ((texSize[0]))), ((rt.f(1)) / ((texSize[1]))))
-    uv = rt.construct(2, ((fragCoord[0]) / ((texSize[0]))), ((fragCoord[1]) / ((texSize[1]))))
-    pR = rt.swizzle(rt.texture(_u_pressureTex, rt.binary('+', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
-    pL = rt.swizzle(rt.texture(_u_pressureTex, rt.binary('-', uv, rt.construct(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
-    pT = rt.swizzle(rt.texture(_u_pressureTex, rt.binary('+', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')
-    pB = rt.swizzle(rt.texture(_u_pressureTex, rt.binary('-', uv, rt.construct(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')
-    grad = rt.construct(2, ((rt.f(0.5)) * ((((pR) - (pL))))), ((rt.f(0.5)) * ((((pT) - (pB))))))
-    here = rt.construct(4, (rt.texture(_u_velTex, uv))[0], (rt.texture(_u_velTex, uv))[1], (rt.texture(_u_velTex, uv))[2], (rt.texture(_u_velTex, uv))[3])
-    _u = rt.construct(2, ((rt.swizzle(here, 'r')) - (grad[0])), ((rt.swizzle(here, 'g')) - (grad[1])))
+    fragCoord = rt.swizzle(ctx.frag_coord, 'xy')
+    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', fragCoord, rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    pR = rt.swizzle(rt.texture(_u_pressureTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
+    pL = rt.swizzle(rt.texture(_u_pressureTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
+    pT = rt.swizzle(rt.texture(_u_pressureTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')
+    pB = rt.swizzle(rt.texture(_u_pressureTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')
+    grad = rt.construct(2, rt.binary_raw('*', rt.f(0.5), rt.construct_raw(2, rt.binary('-', pR, pL, 1, 'float'), rt.binary('-', pT, pB, 1, 'float')), 2, 'float'))
+    here = rt.texture(_u_velTex, uv)
+    _u = rt.construct(2, rt.binary_raw('-', rt.swizzle(here, 'rg'), grad, 2, 'float'))
     g['fragColor'].replace((rt.construct(4, _u, rt.swizzle(here, 'b'), rt.f(1))).map { |c| rt.f32(c) })
   end
   main__void.call

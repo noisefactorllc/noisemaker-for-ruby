@@ -14,10 +14,10 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; accum = nil; count = nil; globalCoord = nil; gx = nil; gy = nil; mean = nil; normalized = nil; s = nil; sampleUV = nil; sqrtVal = nil; src = nil; sum = nil; uv = nil; v = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    uv = rt.construct(2, ((globalCoord[0]) / (_u_fullResolution[0])), ((globalCoord[1]) / (_u_fullResolution[1])))
-    src = rt.construct(4, (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[0], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[1], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[2], (rt.texture(_u_inputTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))[3])
-    accum = rt.construct(4, (rt.texture(_u_accumTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_accumTex)), 2, 'float')))[0], (rt.texture(_u_accumTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_accumTex)), 2, 'float')))[1], (rt.texture(_u_accumTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_accumTex)), 2, 'float')))[2], (rt.texture(_u_accumTex, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_accumTex)), 2, 'float')))[3])
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    src = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    accum = rt.texture(_u_accumTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_accumTex)), 2, 'float')))
     sum = rt.f(0)
     count = rt.f(0)
     gy = rt.i(0)
@@ -40,8 +40,8 @@ run_pixel = lambda do |ctx, out|
         unless rt.bool(rt.binary('<', gx, rt.i(32)))
           break
         end
-        sampleUV = rt.construct(2, ((((((gx))) + (rt.f(0.5)))) / (rt.f(32))), ((((((gy))) + (rt.f(0.5)))) / (rt.f(32))))
-        s = rt.construct(4, (rt.texture(_u_accumTex, sampleUV))[0], (rt.texture(_u_accumTex, sampleUV))[1], (rt.texture(_u_accumTex, sampleUV))[2], (rt.texture(_u_accumTex, sampleUV))[3])
+        sampleUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.construct_raw(2, rt.construct(1, gx), rt.construct(1, gy)), rt.f(0.5), 2, 'float'), rt.f(32), 2, 'float'))
+        s = rt.texture(_u_accumTex, sampleUV)
         v = rt.binary('/', rt.binary('+', rt.binary('+', rt.swizzle(s, 'r'), rt.swizzle(s, 'g'), 1, 'float'), rt.swizzle(s, 'b'), 1, 'float'), rt.f(3), 1, 'float')
         sum = rt.binary('+', sum, v, 1, 'float')
         count = rt.binary('+', count, rt.f(1), 1, 'float')
@@ -54,7 +54,7 @@ run_pixel = lambda do |ctx, out|
     else
       normalized.replace((rt.swizzle(accum, 'rgb')).map { |c| rt.f32(c) })
     end
-    sqrtVal = rt.construct(3, rt.component_wise('sqrt', normalized[0]), rt.component_wise('sqrt', normalized[1]), rt.component_wise('sqrt', normalized[2]))
+    sqrtVal = rt.component_wise('sqrt', normalized)
     g['fragColor'].replace((rt.construct(4, rt.component_wise('mix', rt.swizzle(src, 'rgb'), sqrtVal, _u_alpha), rt.swizzle(src, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

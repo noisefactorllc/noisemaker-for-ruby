@@ -25,8 +25,8 @@ run_pixel = lambda do |ctx, out|
   hsv2rgb__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
     p = nil
-    p = rt.construct(3, rt.component_wise('abs', rt.f32(rt.f32(((rt.f32(((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(1))))))) * (rt.f(6))))) - (rt.f(3)))))), rt.component_wise('abs', rt.f32(rt.f32(((rt.f32(((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.66666668653488159))))))) * (rt.f(6))))) - (rt.f(3)))))), rt.component_wise('abs', rt.f32(rt.f32(((rt.f32(((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.3333333432674408))))))) * (rt.f(6))))) - (rt.f(3)))))))
-    return rt.binary('*', rt.swizzle(c, 'z'), rt.component_wise('mix', rt.construct(3, rt.f(1)), rt.component_wise('clamp', rt.construct(3, ((p[0]) - (rt.f(1))), ((p[1]) - (rt.f(1))), ((p[2]) - (rt.f(1)))), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')), 3, 'float')
+    p = rt.component_wise('abs', rt.construct(3, rt.f32(((rt.f32(((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(1))))))) * (rt.f(6))))) - (rt.f(3)))), rt.f32(((rt.f32(((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.66666668653488159))))))) * (rt.f(6))))) - (rt.f(3)))), rt.f32(((rt.f32(((rt.component_wise('fract', rt.f32(((rt.swizzle(c, 'x')) + ((rt.f(0.3333333432674408))))))) * (rt.f(6))))) - (rt.f(3))))))
+    return rt.construct(3, rt.binary('*', rt.swizzle(c, 'z'), rt.component_wise('mix', rt.construct(3, rt.f(1)), rt.component_wise('clamp', rt.construct(3, ((p[0]) - (rt.f(1))), ((p[1]) - (rt.f(1))), ((p[2]) - (rt.f(1)))), rt.f(0), rt.f(1)), rt.swizzle(c, 'y')), 3, 'float'))
   end
   bitOp__int_int_int_int = lambda do |a, b, op, m|
     r = nil
@@ -69,10 +69,10 @@ run_pixel = lambda do |ctx, out|
     angle = rt.binary('/', rt.binary('*', _u_rotation, g['PI'], 1, 'float'), rt.f(180), 1, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    centered = rt.construct(2, ((globalCoord[0]) - (((_u_fullResolution[0]) * (rt.f(0.5))))), ((globalCoord[1]) - (((_u_fullResolution[1]) * (rt.f(0.5))))))
-    rotated = rt.construct(2, rt.construct(2, rt.binary('-', rt.binary('*', rt.swizzle(centered, 'x'), c, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), s, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(centered, 'x'), s, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), c, 1, 'float'), 1, 'float')))
-    coord = rt.construct(2, ((rotated[0]) + (((_u_fullResolution[0]) * (rt.f(0.5))))), ((rotated[1]) + (((_u_fullResolution[1]) * (rt.f(0.5))))))
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    centered = rt.construct(2, rt.binary_raw('-', globalCoord, rt.binary_raw('*', _u_fullResolution, rt.f(0.5), 2, 'float'), 2, 'float'))
+    rotated = rt.construct(2, rt.binary('-', rt.binary('*', rt.swizzle(centered, 'x'), c, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), s, 1, 'float'), 1, 'float'), rt.binary('+', rt.binary('*', rt.swizzle(centered, 'x'), s, 1, 'float'), rt.binary('*', rt.swizzle(centered, 'y'), c, 1, 'float'), 1, 'float'))
+    coord = rt.construct(2, rt.binary_raw('+', rotated, rt.binary_raw('*', _u_fullResolution, rt.f(0.5), 2, 'float'), 2, 'float'))
     animOffset = rt.construct(1, rt.component_wise('floor', rt.binary('*', rt.binary('*', _u_time, rt.construct(1, rt.construct(1, rt.unary('-', _u_speed), 'int')), 1, 'float'), rt.f(256), 1, 'float')), 'int')
     x = rt.binary('+', rt.binary('+', rt.construct(1, rt.component_wise('floor', rt.binary('/', rt.swizzle(coord, 'x'), pixelScale, 1, 'float')), 'int'), _u_offsetX, 1, 'int'), animOffset, 1, 'int')
     y = rt.binary('+', rt.construct(1, rt.component_wise('floor', rt.binary('/', rt.swizzle(coord, 'y'), pixelScale, 1, 'float')), 'int'), _u_offsetY, 1, 'int')

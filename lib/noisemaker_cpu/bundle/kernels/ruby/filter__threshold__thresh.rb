@@ -13,9 +13,9 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     c = nil; e = nil; globalCoord = nil; l = nil; st = nil
-    globalCoord = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (_u_tileOffset[0])), ((rt.swizzle(ctx.frag_coord, 'y')) + (_u_tileOffset[1])))
-    st = rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) / (((rt.texture_size(_u_inputTex))[0]))), ((rt.swizzle(ctx.frag_coord, 'y')) / (((rt.texture_size(_u_inputTex))[1]))))
-    c = rt.construct(4, (rt.texture(_u_inputTex, st))[0], (rt.texture(_u_inputTex, st))[1], (rt.texture(_u_inputTex, st))[2], (rt.texture(_u_inputTex, st))[3])
+    globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
+    st = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    c = rt.texture(_u_inputTex, st)
     l = rt.dot(rt.swizzle(c, 'rgb'), rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
     e = rt.component_wise('smoothstep', rt.binary('-', _u_level, _u_sharpness, 1, 'float'), rt.binary('+', _u_level, _u_sharpness, 1, 'float'), l)
     g['fragColor'].replace((rt.construct(4, rt.construct(3, e), rt.f(1))).map { |c| rt.f32(c) })
