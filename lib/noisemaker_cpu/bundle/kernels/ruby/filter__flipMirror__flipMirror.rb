@@ -37,12 +37,12 @@ run_pixel = lambda do |ctx, out|
               end
             else
               if rt.bool(rt.binary('==', _u_flipMode, rt.i(13)))
-                if rt.bool(rt.binary('>', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
+                if rt.bool(rt.binary('<', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
                   warpedUV = rt.assign_swizzle(warpedUV, 'y', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'y'), 1, 'float'))
                 end
               else
                 if rt.bool(rt.binary('==', _u_flipMode, rt.i(14)))
-                  if rt.bool(rt.binary('<', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
+                  if rt.bool(rt.binary('>', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
                     warpedUV = rt.assign_swizzle(warpedUV, 'y', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'y'), 1, 'float'))
                   end
                 else
@@ -50,7 +50,7 @@ run_pixel = lambda do |ctx, out|
                     if rt.bool(rt.binary('>', rt.swizzle(warpedUV, 'x'), rt.f(0.5)))
                       warpedUV = rt.assign_swizzle(warpedUV, 'x', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'x'), 1, 'float'))
                     end
-                    if rt.bool(rt.binary('>', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
+                    if rt.bool(rt.binary('<', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
                       warpedUV = rt.assign_swizzle(warpedUV, 'y', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'y'), 1, 'float'))
                     end
                   else
@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
                       if rt.bool(rt.binary('>', rt.swizzle(warpedUV, 'x'), rt.f(0.5)))
                         warpedUV = rt.assign_swizzle(warpedUV, 'x', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'x'), 1, 'float'))
                       end
-                      if rt.bool(rt.binary('<', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
+                      if rt.bool(rt.binary('>', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
                         warpedUV = rt.assign_swizzle(warpedUV, 'y', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'y'), 1, 'float'))
                       end
                     else
@@ -66,7 +66,7 @@ run_pixel = lambda do |ctx, out|
                         if rt.bool(rt.binary('<', rt.swizzle(warpedUV, 'x'), rt.f(0.5)))
                           warpedUV = rt.assign_swizzle(warpedUV, 'x', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'x'), 1, 'float'))
                         end
-                        if rt.bool(rt.binary('>', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
+                        if rt.bool(rt.binary('<', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
                           warpedUV = rt.assign_swizzle(warpedUV, 'y', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'y'), 1, 'float'))
                         end
                       else
@@ -74,7 +74,7 @@ run_pixel = lambda do |ctx, out|
                           if rt.bool(rt.binary('<', rt.swizzle(warpedUV, 'x'), rt.f(0.5)))
                             warpedUV = rt.assign_swizzle(warpedUV, 'x', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'x'), 1, 'float'))
                           end
-                          if rt.bool(rt.binary('<', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
+                          if rt.bool(rt.binary('>', rt.swizzle(warpedUV, 'y'), rt.f(0.5)))
                             warpedUV = rt.assign_swizzle(warpedUV, 'y', rt.binary('-', rt.f(1), rt.swizzle(warpedUV, 'y'), 1, 'float'))
                           end
                         end

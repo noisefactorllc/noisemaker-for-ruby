@@ -191,7 +191,14 @@ module NoisemakerCpu
       full_width: width, full_height: height)
       res = [0.0 + width, 0.0 + height]
       full_res = [0.0 + full_width, 0.0 + full_height]
-      aspect = f32(width.fdiv(height))
+      # Upstream's Pipeline computes these scalar reciprocals on the CPU and
+      # uploads them as uniforms instead of dividing in-shader (relaxed-math
+      # backends lower a division to an approximate reciprocal multiply). The
+      # transpiled kernels read them as plain bindings, so build them the same
+      # way: tiling uses the full image's aspect and dimensions, otherwise the
+      # render's own.
+      aspect_value = full_res[0] / full_res[1]
+      aspect = f32(aspect_value)
       u = {
         "renderScale" => f32(1.0),
         "speed" => 0,
@@ -208,6 +215,8 @@ module NoisemakerCpu
         "tileOffset" => [0.0, 0.0],
         "aspectRatio" => aspect,
         "aspect" => aspect,
+        "aspectInv" => f32(1.0 / aspect_value),
+        "invFullResolution" => [f32(1.0 / full_res[0]), f32(1.0 / full_res[1])],
         "time" => f32(time),
         "globalTime" => f32(time),
         "deltaTime" => f32(delta_time),

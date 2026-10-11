@@ -803,16 +803,19 @@ module NoisemakerCpu
       q.map { |value| f32((value.to_i & 0xFFFFFFFF).to_f.fdiv(denominator)) }
     end
 
-    # ---- vector geometry (snap args to f32, accumulate float64, round once) ----
+    # ---- vector geometry (snap args to f32; dot accumulates as an fma chain
+    # with one f32 rounding per term, other helpers accumulate float64 and
+    # round once) ----
 
     def dot(a, b)
-      # JS stdlib dot (glsl-runtime.js:253-257) accumulates the f64 product
-      # sum and returns F32(sum) — ONE f32 round at the end. The components
-      # are pooled f32 reads. crt/simplex feeds this dot into further RAW f64
-      # slot arithmetic (m0 = max(0.6 - dot(x0, x0), 0) → m0^4 * 42): the
-      # oracle's dot result is the F32(sum) — our old extra behavior matched
-      # that. dotraw.mjs established the sum stays f64 UNTIL that single
-      # return-round, so f32(_dot_raw(snap32)) is the exact port.
+      # JS stdlib dot (glsl-runtime.js) folds a dot product into a
+      # fused-multiply-add chain with one f32 rounding per accumulated term
+      # (GPU backends round per term): f64 products of f32 values are exact,
+      # so rounding each a[i]*b[i] + sum to f32 keeps the single fma
+      # rounding. crt/simplex feeds this dot into further RAW f64 slot
+      # arithmetic (m0 = max(0.6 - dot(x0, x0), 0) → m0^4 * 42): the oracle's
+      # dot result is the final f32, so f32(_dot_raw(snap32)) stays the exact
+      # port (the extra round is an identity on an already-f32 value).
       f32(_dot_raw(_snap32(a), _snap32(b)))
     end
 
@@ -1222,8 +1225,14 @@ module NoisemakerCpu
     end
 
     def _dot_raw(a, b)
+      # The oracle's dot folds into a fused-multiply-add chain: one f32
+      # rounding per accumulated term (f64 products of f32 values are exact,
+      # so the f64 add keeps the single final rounding of an fma). Every
+      # caller routes through here — dot, length, distance, normalize,
+      # reflect, refract — mirroring the JS stdlib, whose length/normalize/
+      # reflect/refract all call the same dot helper.
       s = 0
-      (0...a.length).each { |idx| s += a[idx] * b[idx] }
+      (0...a.length).each { |idx| s = f32((a[idx] * b[idx]) + s) }
       s
     end
 

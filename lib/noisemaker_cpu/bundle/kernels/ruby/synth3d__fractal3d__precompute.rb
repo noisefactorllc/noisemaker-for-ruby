@@ -14,8 +14,6 @@ run_pixel = lambda do |ctx, out|
   _u_juliaY = u.key?('juliaY') ? u['juliaY'] : rt.f(0.0)
   _u_juliaZ = u.key?('juliaZ') ? u['juliaZ'] : rt.f(0.0)
   _u_colorMode = u.key?('colorMode') ? u['colorMode'] : 0
-  _u_tileOffset = u.key?('tileOffset') ? u['tileOffset'] : rt.construct(2, 0.0)
-  _u_renderScale = u.key?('renderScale') ? u['renderScale'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   g['geoOut'] = rt.construct(4, 0.0)
   g['PI'] = rt.f(3.1415927410125732)
@@ -215,21 +213,19 @@ run_pixel = lambda do |ctx, out|
     end
   end
   main__void = lambda do
-    dist = nil; dxp = nil; dyp = nil; dzp = nil; eps = nil; globalPixelCoord = nil; gradient = nil; iterRatio = nil; juliaC = nil; normal = nil; normalizedDist = nil; p = nil; pixelCoord = nil; result = nil; scaledVolSize = nil; scaledVolSizeF = nil; trap = nil; volSize = nil; x = nil; y = nil; z = nil
+    dist = nil; dxp = nil; dyp = nil; dzp = nil; eps = nil; gradient = nil; iterRatio = nil; juliaC = nil; normal = nil; normalizedDist = nil; p = nil; pixelCoord = nil; result = nil; trap = nil; volSize = nil; volSizeF = nil; x = nil; y = nil; z = nil
     volSize = _u_volumeSize
-    scaledVolSize = rt.construct(1, rt.binary('*', rt.construct(1, volSize), _u_renderScale, 1, 'float'), 'int')
-    scaledVolSizeF = rt.construct(1, scaledVolSize)
-    globalPixelCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    pixelCoord = rt.construct(2, rt.construct(2, globalPixelCoord), 'int')
-    x = rt.construct(1, rt.component_wise('mod', rt.construct(1, rt.swizzle(pixelCoord, 'x')), scaledVolSizeF), 'int')
-    y = rt.binary('%', rt.swizzle(pixelCoord, 'y'), scaledVolSize, 1, 'int')
-    z = rt.trunc_div(rt.swizzle(pixelCoord, 'y'), scaledVolSize)
-    if rt.bool((rt.bool((rt.bool(rt.binary('>=', x, scaledVolSize)) || rt.bool(rt.binary('>=', y, scaledVolSize)) ? 1 : 0)) || rt.bool(rt.binary('>=', z, scaledVolSize)) ? 1 : 0))
+    volSizeF = rt.construct(1, volSize)
+    pixelCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    x = rt.swizzle(pixelCoord, 'x')
+    y = rt.binary('%', rt.swizzle(pixelCoord, 'y'), volSize, 1, 'int')
+    z = rt.trunc_div(rt.swizzle(pixelCoord, 'y'), volSize)
+    if rt.bool((rt.bool((rt.bool(rt.binary('>=', x, volSize)) || rt.bool(rt.binary('>=', y, volSize)) ? 1 : 0)) || rt.bool(rt.binary('>=', z, volSize)) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))
       return
     end
-    p = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('/', rt.construct_raw(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)), rt.binary('-', scaledVolSizeF, rt.f(1), 1, 'float'), 3, 'float'), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'), rt.f(1.5), 3, 'float'))
+    p = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('/', rt.construct_raw(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)), rt.binary('-', volSizeF, rt.f(1), 1, 'float'), 3, 'float'), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'), rt.f(1.5), 3, 'float'))
     juliaC = rt.construct(3, rt.binary_raw('*', rt.construct_raw(3, _u_juliaX, _u_juliaY, _u_juliaZ), rt.f(0.0099999997764825821), 3, 'float'))
     result = computeFractal__vec3_vec3.call(p, juliaC)
     dist = rt.swizzle(result, 'x')

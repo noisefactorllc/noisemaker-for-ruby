@@ -22,7 +22,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.construct_raw(2, rt.construct(2, coord)), rt.f(0.5), 2, 'float'), rt.construct_raw(2, rt.construct(2, stateSize)), 2, 'float'))
     heightColor = rt.swizzle(rt.texture(_u_heightTex, uv), 'rgb')
     elevation = rt.dot(heightColor, rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
-    g['outXYZ'][0] = rt.f32(rt.binary('*', rt.binary('-', rt.swizzle(uv, 'x'), rt.f(0.5), 1, 'float'), _u_gridScale, 1, 'float')); g['outXYZ'][1] = rt.f32(rt.binary('+', rt.binary('*', elevation, _u_heightScale, 1, 'float'), _u_heightOffset, 1, 'float')); g['outXYZ'][2] = rt.f32(rt.binary('*', rt.binary('-', rt.swizzle(uv, 'y'), rt.f(0.5), 1, 'float'), _u_gridScale, 1, 'float')); g['outXYZ'][3] = rt.f32(rt.f(1))
+    g['outXYZ'][0] = rt.f32(rt.binary('*', rt.binary('-', rt.swizzle(uv, 'x'), rt.f(0.5), 1, 'float'), _u_gridScale, 1, 'float')); g['outXYZ'][1] = rt.f32(rt.binary('+', rt.binary('*', elevation, _u_heightScale, 1, 'float'), _u_heightOffset, 1, 'float')); g['outXYZ'][2] = rt.f32(rt.binary('*', rt.binary('-', rt.f(0.5), rt.swizzle(uv, 'y'), 1, 'float'), _u_gridScale, 1, 'float')); g['outXYZ'][3] = rt.f32(rt.f(1))
     g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(rt.swizzle(rt.texel_fetch(_u_velTex, coord, rt.i(0)), 'w'))
     g['outRGBA'].replace((rt.texture(_u_diffuseTex, uv)).map { |c| rt.f32(c) })
   end
