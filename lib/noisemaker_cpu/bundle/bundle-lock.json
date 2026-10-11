@@ -1,6 +1,6 @@
 {
   "source": "https://shaders.noisedeck.app",
-  "version": "1.0.285",
+  "version": "1.0.271",
   "hashes": {
     "classicNoisedeck/bitEffects:bitEffects": "adf44e902e12ef9395076470a65ada857ecc1a057ee1a5e978d143906606a191",
     "classicNoisedeck/caustic:caustic": "6e48eab04db32697b04d478f33323e4bb32f6a6b17289b6a0f32d3177992af3e",
