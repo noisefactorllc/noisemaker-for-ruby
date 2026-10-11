@@ -23,8 +23,10 @@ Effect kernels are **transpiled directly from the upstream GLSL** served by the 
 - Screen-space derivatives.
 - GL texture sampling.
 
-The bundle includes 210 catalog effects (295 kernels), transpiled from published
-engine `1.0.271` (Noisemaker `5976b7a6`). The parity harness
+The bundle includes 210 catalog effects (295 kernels), transpiled from the
+published engine `1.0.271` catalog with program GLSL taken from the pinned
+Noisemaker `a3d96b66` sources (recorded as `glslRoot` in the bundle
+provenance). The parity harness
 compares exact RGBA8 output with a pinned JavaScript reference. It uses 8×8
 images, seed 1, time 0.25, small volume atlases, and identical explicit scenes
 for particle consumers. These checks cover the catalog, not every parameter,
@@ -135,6 +137,14 @@ ruby scripts/build-bundle.rb --all
 
 To move to a newer engine release, name it and accept the new sources:
 `NM_SHADER_VERSION=1.0.271 ruby scripts/build-bundle.rb --all --update-lock`.
+
+When the pinned upstream revision's GLSL runs ahead of the recorded CDN tag,
+build against that exact source instead of a newer tag:
+`NM_GLSL_ROOT=<pinned noisemaker checkout> ruby scripts/build-bundle.rb --all
+--update-lock`. Program GLSL is then read from the checkout's
+`shaders/effects/<id>/glsl/<program>.glsl` — the same sources the pinned
+oracle compiled — and the bundle provenance records `glslRoot`, while the
+CDN tag continues to supply the effect catalog metadata.
 
 Builds are staged and validated before replacing the installed bundle. Fetch,
 compile, or lock-drift errors leave the previous bundle intact. An intentional

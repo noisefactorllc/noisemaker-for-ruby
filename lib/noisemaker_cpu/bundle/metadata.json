@@ -2,7 +2,8 @@
   "provenance": {
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0.271",
-    "base": "https://shaders.noisedeck.app"
+    "base": "https://shaders.noisedeck.app",
+    "glslRoot": "/state/cache/platform/noisemaker"
   },
   "effects": {
     "classicNoisedeck/bitEffects": {
