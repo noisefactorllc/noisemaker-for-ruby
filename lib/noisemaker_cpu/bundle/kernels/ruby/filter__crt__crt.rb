@@ -374,7 +374,7 @@ run_pixel = lambda do |ctx, out|
     return rt.component_wise('mix', val_y0, val_y1, y_fract)
   end
   main__void = lambda do
-    aber_mask = nil; alpha = nil; alphaVal = nil; base_color = nil; base_offsets = nil; base_sample = nil; blue_base_col = nil; blue_blended = nil; blue_offsets = nil; blue_sample_global_x = nil; blue_sample_local_x = nil; blue_sample_x = nil; blue_scan_val = nil; blue_x = nil; color = nil; displacement = nil; displacement_base = nil; displacement_pixels = nil; freq = nil; fullRes = nil; globalCoord = nil; global_id = nil; gradient = nil; green_blended = nil; height = nil; height_f = nil; hue_shift = nil; local_mean = nil; ppb = nil; red_base_col = nil; red_blended = nil; red_offsets = nil; red_sample_global_x = nil; red_sample_local_x = nil; red_sample_x = nil; red_scan_val = nil; red_x = nil; rs = nil; scan_value = nil; scanline_base = nil; seed_base = nil; simplex_value = nil; singularity = nil; speed = nil; time = nil; vignette_alpha = nil; vignette_mask = nil; width = nil; width_f = nil; x = nil; y = nil
+    aber_mask = nil; alpha = nil; alphaVal = nil; base_color = nil; base_offsets = nil; base_sample = nil; blue_base_col = nil; blue_blended = nil; blue_offsets = nil; blue_sample_global_x = nil; blue_sample_local_x = nil; blue_sample_x = nil; blue_scan_val = nil; blue_x = nil; color = nil; displacement = nil; displacement_base = nil; displacement_pixels = nil; effectColor8 = nil; freq = nil; fullRes = nil; globalCoord = nil; global_id = nil; gradient = nil; green_blended = nil; height = nil; height_f = nil; hue_shift = nil; local_mean = nil; ppb = nil; red_base_col = nil; red_blended = nil; red_offsets = nil; red_sample_global_x = nil; red_sample_local_x = nil; red_sample_x = nil; red_scan_val = nil; red_x = nil; rs = nil; scan_value = nil; scanline_base = nil; seed_base = nil; simplex_value = nil; singularity = nil; speed = nil; time = nil; vignette_alpha = nil; vignette_mask = nil; width = nil; width_f = nil; x = nil; y = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     global_id = rt.construct(3, rt.construct(1, rt.swizzle(ctx.frag_coord, 'x'), 'uint'), rt.construct(1, rt.swizzle(ctx.frag_coord, 'y'), 'uint'), rt.i(0), 'uint')
     width = as_u32__float.call(rt.swizzle(_u_resolution, 'x'))
@@ -472,7 +472,8 @@ run_pixel = lambda do |ctx, out|
     end
     local_mean = rt.binary('*', rt.binary('+', rt.binary('+', rt.swizzle(color, 'x'), rt.swizzle(color, 'y'), 1, 'float'), rt.swizzle(color, 'z'), 1, 'float'), g['INV_THREE'], 1, 'float')
     color.replace((rt.component_wise('clamp', rt.construct(3, ((((((color[0]) - (local_mean))) * (rt.f(1.25)))) + (local_mean)), ((((((color[1]) - (local_mean))) * (rt.f(1.25)))) + (local_mean)), ((((((color[2]) - (local_mean))) * (rt.f(1.25)))) + (local_mean))), rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1)))).map { |c| rt.f32(c) })
-    color.replace((rt.component_wise('mix', base_color, color, alphaVal)).map { |c| rt.f32(c) })
+    effectColor8 = rt.construct(3, rt.binary('/', rt.component_wise('floor', rt.construct(3, rt.f32(((rt.f32(((rt.component_wise('clamp', color[0], rt.f(0), rt.f(1))) * (rt.f(255))))) + (rt.f(0.5)))), rt.f32(((rt.f32(((rt.component_wise('clamp', color[1], rt.f(0), rt.f(1))) * (rt.f(255))))) + (rt.f(0.5)))), rt.f32(((rt.f32(((rt.component_wise('clamp', color[2], rt.f(0), rt.f(1))) * (rt.f(255))))) + (rt.f(0.5)))))), rt.f(255), 3, 'float'))
+    color.replace((rt.component_wise('mix', base_color, effectColor8, alphaVal)).map { |c| rt.f32(c) })
     g['fragColor'].replace((rt.construct(4, color, rt.swizzle(base_sample, 'w'))).map { |c| rt.f32(c) })
   end
   main__void.call

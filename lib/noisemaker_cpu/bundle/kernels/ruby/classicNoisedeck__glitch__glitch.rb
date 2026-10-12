@@ -169,6 +169,7 @@ run_pixel = lambda do |ctx, out|
     color = rt.construct(4, rt.f(0))
     blendy = periodicFunction__float.call(rt.binary('-', _u_time, offsets__vec2.call(uv), 1, 'float'))
     color.replace((glitch__vec2.call(uv)).map { |c| rt.f32(c) })
+    color = rt.assign_swizzle(color, 'rgb', rt.construct(3, rt.binary('/', rt.component_wise('floor', rt.construct(3, rt.f32(((rt.f32(((rt.component_wise('clamp', rt.swizzle(color, 'r'), rt.f(0), rt.f(1))) * (rt.f(255))))) + (rt.f(0.5)))), rt.f32(((rt.f32(((rt.component_wise('clamp', rt.swizzle(color, 'g'), rt.f(0), rt.f(1))) * (rt.f(255))))) + (rt.f(0.5)))), rt.f32(((rt.f32(((rt.component_wise('clamp', rt.swizzle(color, 'b'), rt.f(0), rt.f(1))) * (rt.f(255))))) + (rt.f(0.5)))))), rt.f(255), 3, 'float')))
     if rt.bool(rt.binary('!=', _u_scanlinesAmt, rt.f(0)))
       color.replace((scanlines__vec4_vec2.call(color, uv)).map { |c| rt.f32(c) })
     end
