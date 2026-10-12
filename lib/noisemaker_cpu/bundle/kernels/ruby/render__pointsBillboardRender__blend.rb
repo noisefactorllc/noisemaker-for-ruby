@@ -26,11 +26,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', _u_blendMode, rt.i(1)))
       outAlpha = rt.binary('+', rt.swizzle(trailColor, 'a'), rt.binary('*', rt.swizzle(scaledInput, 'a'), rt.binary('-', rt.f(1), rt.swizzle(trailColor, 'a'), 1, 'float'), 1, 'float'), 1, 'float')
       outRGB_pre = rt.construct(3, rt.binary_raw('+', rt.swizzle(trailColor, 'rgb'), rt.binary_raw('*', rt.binary_raw('*', rt.swizzle(scaledInput, 'rgb'), rt.swizzle(scaledInput, 'a'), 3, 'float'), rt.binary('-', rt.f(1), rt.swizzle(trailColor, 'a'), 1, 'float'), 3, 'float'), 3, 'float'))
-      if rt.bool(rt.binary('>', outAlpha, rt.f(0)))
-        rt.binary_raw('/', outRGB_pre, outAlpha, 3, 'float')
-      else
-        outRGB.replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })
-      end
+      outRGB.replace(((rt.bool(rt.binary('>', outAlpha, rt.f(0))) ? (rt.binary_raw('/', outRGB_pre, outAlpha, 3, 'float')) : (rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })
     else
       trail = rt.component_wise('clamp', rt.swizzle(trailColor, 'rgb'), rt.f(0), rt.f(1))
       trailPresence = rt.component_wise('max', rt.component_wise('max', rt.swizzle(trail, 'r'), rt.swizzle(trail, 'g')), rt.swizzle(trail, 'b'))

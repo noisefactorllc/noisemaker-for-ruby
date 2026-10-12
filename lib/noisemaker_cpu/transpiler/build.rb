@@ -422,21 +422,14 @@ module NoisemakerCpu
                   ruby_src = ruby_src.gsub(q1, "voxel = rt.assign_swizzle(voxel, 'x', rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'x'), step, 1))") if ruby_src.include?(q1)
                   ruby_src = ruby_src.gsub(q2, "lastNormal[0] = rt.scalar_vec_coerce('-', rt.f(0), step, 1)") if ruby_src.include?(q2)
                 end
-                if eid == "render/pointsBillboardRender" && p["program"] == "blend"
-                  # The oracle generator drops the assignment in
-                  # `outRGB = outAlpha > 0.0 ? outRGB_pre / outAlpha : vec3(0.0);`
-                  # (canonical-kernels.js 27406): the ternary is emitted as a
-                  # bare statement — the true branch computes the divide into
-                  # a discarded array, the false branch reduce-writes
-                  # vec3(0) into outRGB. Net: outRGB stays [0,0,0] under
-                  # blendMode 1.
-                  # The rounding model keeps both-operand id arithmetic raw
-                  # (binary_raw); the divide result is discarded either way.
-                  qb = "outRGB.replace(((rt.bool(rt.binary('>', outAlpha, rt.f(0))) ? (rt.binary_raw('/', outRGB_pre, outAlpha, 3, 'float')) : (rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })"
-                  raise "pointsBillboardRender blend ternary site not found in generated #{key}" unless ruby_src.include?(qb)
-
-                  ruby_src = ruby_src.gsub(qb, "if rt.bool(rt.binary('>', outAlpha, rt.f(0)))\n        rt.binary_raw('/', outRGB_pre, outAlpha, 3, 'float')\n      else\n        outRGB.replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })\n      end")
-                end
+                # The oracle's blend-ternary quirk (the generator dropped the
+                # assignment in `outRGB = outAlpha > 0.0 ? outRGB_pre / outAlpha
+                # : vec3(0.0);`, leaving outRGB [0,0,0] under blendMode 1) is
+                # fixed upstream (noisemaker-for-cpu a99ab34's
+                # adaptCanonicalSource rewrites the ternary to if/else): the
+                # pinned oracle now writes outRGB in both branches, so this
+                # port's natural ternary emission matches it and no quirk
+                # rewrite runs here anymore.
                 if eid == "filter/dither" && p["program"] == "dither"
                   # The oracle's error-diffusion block stores back into the
                   # pooled errRow rows (PooledFloat32Array writes f32-round
