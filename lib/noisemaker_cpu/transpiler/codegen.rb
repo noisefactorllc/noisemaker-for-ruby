@@ -345,6 +345,7 @@ module NoisemakerCpu
       def initialize(program, outputs, varyings, effect_id = nil)
         @program = program
         @effect_id = effect_id
+        @cur_func = nil
         @outputs = outputs && !outputs.empty? ? outputs : ["fragColor"]
         @varyings = {}
         (varyings || []).each { |v| @varyings[v] = true }
@@ -527,6 +528,8 @@ module NoisemakerCpu
         out_rbnames = (fn["out_idxs"] || []).map { |i| rbnames[i] }
         prev_out = @cur_out
         prev_decl = @declared
+        prev_func = @cur_func
+        @cur_func = fn["node"]["name"]
         @cur_out = out_rbnames
         @declared = {}
         rbnames.each { |n| @declared[n] = true }
@@ -535,6 +538,7 @@ module NoisemakerCpu
         locals = (@declared.keys - rbnames).sort
         @cur_out = prev_out
         @declared = prev_decl
+        @cur_func = prev_func
         params_src = rbnames.empty? ? "" : " |#{rbnames.join(", ")}|"
         l << "#{pad}#{fn["mangled"]} = lambda do#{params_src}"
         l.concat(body_head)
@@ -572,6 +576,8 @@ module NoisemakerCpu
             init_code =
               if init.nil?
                 nil
+              elsif (uid = _restore_uint_scalar_pcg(init, scope))
+                uid
               elsif (tid = _restore_integer_division(init, scope))
                 tid
               else
@@ -611,8 +617,12 @@ module NoisemakerCpu
             end
           end
         when "expr"
-          code, = expr(s["expr"], scope)
-          out << "#{pad}#{code}"
+          if (pcg = _restore_uint_scalar_pcg_stmt(s["expr"], scope))
+            out << "#{pad}#{pcg}"
+          else
+            code, = expr(s["expr"], scope)
+            out << "#{pad}#{code}"
+          end
         when "if"
           code, = expr(s["cond"], scope)
           # Hoist lowered-#if branch declarations to the enclosing scope (see
@@ -658,6 +668,8 @@ module NoisemakerCpu
             out << "#{pad}return [#{val}, #{@cur_out.join(", ")}]"
           elsif val_node.nil?
             out << "#{pad}return"
+          elsif (pcg = _restore_uint_scalar_pcg(val_node, scope))
+            out << "#{pad}return #{pcg}"
           else
             # A float-vector RETURN of arithmetic compiles in the oracle to
             # `return new PooledFloat32Array([raw scalar slots...])` — f64
@@ -872,6 +884,120 @@ module NoisemakerCpu
         return nil if l.is_a?(Hash) && l["k"] == "id" && l["name"] == r["name"]
 
         "rt.trunc_div(#{dividend_code}, #{re['py']})"
+      end
+
+      # Function bodies the oracle replaces with stdlib routes BEFORE
+      # restoreUnsignedIntegerArithmetic runs (compile-glsl
+      # lowerUnsignedJavaScript rewrites `function hash_uint {...}` to the
+      # stdlib call; build.rb's rename gives the LCG body the hash_uint_lcg
+      # name). The restored scalar pcg forms must not fire inside them: the
+      # oracle's restore never sees that text.
+      ROUTED_UINT_BODIES = %w[hash_uint hash_uint_lcg].each_with_object({}) { |n, h| h[n] = true }.freeze
+
+      # The oracle's compile-glsl.js restoreUnsignedIntegerArithmetic (synced
+      # at noisemaker-for-cpu b68fdb8) restores exact GLSL uint semantics for
+      # the scalar single-lane pcg state chains (filter/osd's pcg and the
+      # points/hydraulic agent's hash2):
+      #
+      #   state = X * 747796405u + 2891336453u
+      #     -> state = (umul(X, 747796405) + 2891336453) >>> 0
+      #   word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u
+      #     -> word = umul(((state >>> ((state >>> 28) + 4)) ^ state) >>> 0, 277803737)
+      #   NAME = (state >> 22u) ^ state
+      #     -> NAME = ((state >>> 22) ^ state) >>> 0
+      #   return (word >> 22u) ^ word
+      #     -> return ((word >>> 22) ^ word) >>> 0
+      #
+      # The add alone exceeds uint, the shifts are logical, the 277803737
+      # product wraps through umul instead of a float64 multiply that loses
+      # the low bits past 2^53, and the hash leaves as the unsigned bit
+      # pattern (a signed word makes `% 10u` negative and osd's digit lookup
+      # reads past the glyph table). Mirror the same statement forms exactly:
+      # the first form fires only for a scalar uint-typed identifier operand
+      # (the oracle's cpu_umul lowering exists only for scalar uint names),
+      # the rest on shape alone, and never inside the routed hash_uint /
+      # hash_uint_lcg bodies.
+      def _restore_uint_scalar_pcg(node, scope)
+        return nil if @cur_func && ROUTED_UINT_BODIES[@cur_func]
+        return nil unless node.is_a?(Hash) && node["k"] == "binary"
+
+        case node["op"]
+        when "+"
+          l = node["l"]
+          r = node["r"]
+          return nil unless r.is_a?(Hash) && r["k"] == "num" && r["value"].to_i == 2_891_336_453
+          return nil unless l.is_a?(Hash) && l["k"] == "binary" && l["op"] == "*"
+
+          ml = l["l"]
+          mr = l["r"]
+          return nil unless mr.is_a?(Hash) && mr["k"] == "num" && mr["value"].to_i == 747_796_405
+          return nil unless ml.is_a?(Hash) && ml["k"] == "id"
+
+          x = scope.resolve(ml["name"])
+          return nil unless x && Codegen.base_of(x["type"]) == "uint" &&
+                            Codegen.width_of(x["type"]) == 1 && !x["type"]["array"]
+
+          "rt.to_uint(rt.binary('+', rt.umul(#{x['py']}, rt.i(747796405)), rt.i(2891336453)))"
+        when "*"
+          l = node["l"]
+          r = node["r"]
+          return nil unless r.is_a?(Hash) && r["k"] == "num" && r["value"].to_i == 277_803_737
+          return nil unless l.is_a?(Hash) && l["k"] == "binary" && l["op"] == "^"
+
+          xl = l["l"]
+          xr = l["r"]
+          return nil unless xr.is_a?(Hash) && xr["k"] == "id"
+          return nil unless xl.is_a?(Hash) && xl["k"] == "binary" && xl["op"] == ">>"
+
+          sl = xl["l"]
+          sr = xl["r"]
+          return nil unless sl.is_a?(Hash) && sl["k"] == "id" && sl["name"] == xr["name"]
+          return nil unless sr.is_a?(Hash) && sr["k"] == "binary" && sr["op"] == "+"
+
+          cl = sr["l"]
+          cr = sr["r"]
+          return nil unless cl.is_a?(Hash) && cl["k"] == "binary" && cl["op"] == ">>" &&
+                            cl["l"].is_a?(Hash) && cl["l"]["k"] == "id" &&
+                            cl["l"]["name"] == sl["name"] &&
+                            cl["r"].is_a?(Hash) && cl["r"]["k"] == "num" &&
+                            cl["r"]["value"].to_i == 28
+          return nil unless cr.is_a?(Hash) && cr["k"] == "num" && cr["value"].to_i == 4
+
+          s = scope.resolve(sl["name"])
+          return nil unless s
+
+          "rt.umul(rt.to_uint(rt.binary('^', rt.ushr(#{s['py']}, rt.binary('+', rt.ushr(#{s['py']}, rt.i(28)), rt.i(4))), #{s['py']})), rt.i(277803737))"
+        when "^"
+          l = node["l"]
+          r = node["r"]
+          return nil unless r.is_a?(Hash) && r["k"] == "id"
+          return nil unless l.is_a?(Hash) && l["k"] == "binary" && l["op"] == ">>" &&
+                            l["r"].is_a?(Hash) && l["r"]["k"] == "num" &&
+                            l["r"]["value"].to_i == 22 &&
+                            l["l"].is_a?(Hash) && l["l"]["k"] == "id" &&
+                            l["l"]["name"] == r["name"]
+
+          n = scope.resolve(r["name"])
+          return nil unless n
+
+          "rt.to_uint(rt.binary('^', rt.ushr(#{n['py']}, rt.i(22)), #{n['py']}))"
+        end
+      end
+
+      # Statement-level anchor for the scalar pcg restore: a plain `=`
+      # assignment to a bare identifier target (the oracle's rewrite anchors
+      # on `NAME = ...;` / `var NAME = ...;` statements; compound op-assigns
+      # do not match its text form).
+      def _restore_uint_scalar_pcg_stmt(node, scope)
+        return nil unless node.is_a?(Hash) && node["k"] == "assign" && node["op"] == "="
+
+        target = node["target"]
+        return nil unless target.is_a?(Hash) && target["k"] == "id"
+
+        rhs = _restore_uint_scalar_pcg(node["value"], scope)
+        return nil if rhs.nil?
+
+        "#{expr(target, scope)[0]} = #{rhs}"
       end
 
       def _e_member(node, scope)

@@ -23,9 +23,9 @@ run_pixel = lambda do |ctx, out|
   g['BASE_PADDING'] = rt.i(25)
   pcg__uint = lambda do |v_in|
     state = nil; word = nil
-    state = rt.binary('+', rt.binary('*', v_in, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
-    word = rt.binary('*', rt.binary('^', rt.binary('>>', state, rt.binary('+', rt.binary('>>', state, rt.i(28), 1, 'uint'), rt.i(4), 1, 'uint'), 1, 'uint'), state, 1, 'uint'), rt.i(277803737), 1, 'uint')
-    return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
+    state = rt.to_uint(rt.binary('+', rt.umul(v_in, rt.i(747796405)), rt.i(2891336453)))
+    word = rt.umul(rt.to_uint(rt.binary('^', rt.ushr(state, rt.binary('+', rt.ushr(state, rt.i(28)), rt.i(4))), state)), rt.i(277803737))
+    return rt.to_uint(rt.binary('^', rt.ushr(word, rt.i(22)), word))
   end
   hash2__uint_uint = lambda do |a, b|
     return pcg__uint.call(rt.binary('^', a, rt.binary('+', rt.binary('*', b, rt.i(2654435769), 1, 'uint'), rt.i(1663821211), 1, 'uint'), 1, 'uint'))

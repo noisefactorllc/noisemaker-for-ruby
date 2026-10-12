@@ -743,6 +743,23 @@ module NoisemakerCpu
       IVec.new(x.map { |c| NoisemakerCpu::UintMath.u32(c) })
     end
 
+    # The oracle's stdlib.umul (glsl-runtime.js: Math.imul(left, right) >>> 0)
+    # -- exact mod-2^32 multiply for any ToInt32-pattern operands. compile-glsl
+    # restoreUnsignedIntegerArithmetic (synced at noisemaker-for-cpu b68fdb8)
+    # routes the restored scalar uint state chains' products through it instead
+    # of the raw f64 multiply that loses the low bits past 2^53.
+    def umul(a, b)
+      NoisemakerCpu::UintMath.umul(a, b)
+    end
+
+    # JS `>>>` on scalar operands: ToUint32(a) shifted logically by
+    # ToUint32(b) & 31, unsigned result. The restored scalar uint state
+    # chains shift logically (`>>>`), while the raw lowered kernels the
+    # general uint path mirrors keep the arithmetic `>>`.
+    def ushr(a, b)
+      NoisemakerCpu::UintMath.ushr(a, b)
+    end
+
     # The canonical JS compiler lowers synth3d/noise3d's uvec4 hash into a
     # plain Array. Its compound assignments therefore use Number arithmetic
     # until each later bitwise operator applies ToInt32. Reproduce that one

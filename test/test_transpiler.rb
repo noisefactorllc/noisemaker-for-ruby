@@ -134,6 +134,21 @@ class TestTranspilerPipeline < Minitest::Test
       q.negative? && t.zero? ? -0.0 : t
     end
 
+    # Exact uint primitives for the restored scalar pcg chains (see
+    # Runtime#umul / Runtime#ushr / Runtime#to_uint; UintMath is the shared
+    # implementation).
+    def umul(a, b)
+      NoisemakerCpu::UintMath.umul(a, b)
+    end
+
+    def ushr(a, b)
+      NoisemakerCpu::UintMath.ushr(a, b)
+    end
+
+    def to_uint(x)
+      NoisemakerCpu::UintMath.u32(x)
+    end
+
     def binary(op, a, b, width = nil, base = nil)
       scalar = lambda do |x, y|
         case op
@@ -1047,6 +1062,80 @@ class TestTranspilerPipeline < Minitest::Test
     refute_includes exempt, "rt.trunc_div("
     regular = Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"])
     assert_includes regular, "rt.trunc_div("
+  end
+
+  def test_scalar_uint_pcg_state_chain_restores_exact_semantics
+    # The oracle's compile-glsl.js restoreUnsignedIntegerArithmetic (CPU
+    # b68fdb8) restores exact GLSL uint semantics for the scalar single-lane
+    # pcg chains (filter/osd's pcg, the points/hydraulic agent's hash2): the
+    # 747796405 multiply-add wraps mod 2^32 (the add alone exceeds uint), the
+    # shifts are logical (`>>>`), the 277803737 product wraps through umul
+    # (a raw f64 multiply loses the low bits past 2^53), and the hash leaves
+    # as the UNSIGNED bit pattern so `hash % 10u` cannot go negative and read
+    # past osd's glyph table. Mirror the same statement forms.
+    src = transpile(<<~GLSL)
+      out vec4 fragColor;
+      uint pcg(uint v_in) {
+        uint state = v_in * 747796405u + 2891336453u;
+        uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+        return (word >> 22u) ^ word;
+      }
+      vec2 hash2(uint seed) {
+        uint state = seed * 747796405u + 2891336453u;
+        uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+        uint x_bits = (word >> 22u) ^ word;
+        state = x_bits * 747796405u + 2891336453u;
+        word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+        uint y_bits = (word >> 22u) ^ word;
+        return vec2(float(x_bits) / 4294967296.0, float(y_bits) / 4294967296.0);
+      }
+      void main() {
+        uint h = pcg(4000000000u);
+        vec2 h2 = hash2(7u);
+        fragColor = vec4(float(h) / 4294967296.0, h2.x, h2.y, 1.0);
+      }
+    GLSL
+
+    assert_includes src,
+                    "rt.to_uint(rt.binary('+', rt.umul(v_in, rt.i(747796405)), rt.i(2891336453)))"
+    assert_includes src,
+                    "rt.umul(rt.to_uint(rt.binary('^', rt.ushr(state, rt.binary('+', rt.ushr(state, rt.i(28)), rt.i(4))), state)), rt.i(277803737))"
+    assert_includes src, "rt.to_uint(rt.binary('^', rt.ushr(word, rt.i(22)), word))"
+    out, = run_kernel(src, StubCtx.new(StubRuntime.new, uniforms: {}))
+    h = NoisemakerCpu::UintMath.hash_uint_lcg(4_000_000_000)
+    x = NoisemakerCpu::UintMath.hash_uint_lcg(7)
+    y = NoisemakerCpu::UintMath.hash_uint_lcg(x)
+    f32 = ->(v) { [v].pack("e").unpack1("e") }
+    # Every hash leaves as the unsigned bit pattern: the fractions are in
+    # [0, 1) (a signed word makes the fraction negative) and both chains
+    # match the oracle's exact uint lowering (stdlib.hashUintLcg's algorithm).
+    assert_equal [f32.call(h.fdiv(4_294_967_296)), f32.call(x.fdiv(4_294_967_296)),
+                  f32.call(y.fdiv(4_294_967_296)), 1.0], out
+  end
+
+  def test_scalar_uint_pcg_restore_skips_routed_hash_uint_bodies
+    # cpu's lowerUnsignedJavaScript replaces the `uint hash_uint(uint)` body
+    # with the stdlib route BEFORE restoreUnsignedIntegerArithmetic runs, so
+    # the restored scalar pcg forms never fire inside the routed body. The
+    # port keeps that body as the transpiled hash_uint_lcg lambda (its call
+    # sites route through rt.hash_uint_lcg), and the restore must leave its
+    # lowered scalar chain exactly as published.
+    src = transpile(<<~GLSL)
+      out vec4 fragColor;
+      uint hash_uint(uint seed) {
+        uint state = seed * 747796405u + 2891336453u;
+        uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+        return (word >> 22u) ^ word;
+      }
+      void main() {
+        fragColor = vec4(float(hash_uint(7u)) / 4294967296.0, 0.0, 0.0, 1.0);
+      }
+    GLSL
+
+    assert_includes src,
+                    "state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')"
+    assert_includes src,
+                    "return rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')"
   end
 
   def test_integer_vector_constructor_snaps_float_vector_expression

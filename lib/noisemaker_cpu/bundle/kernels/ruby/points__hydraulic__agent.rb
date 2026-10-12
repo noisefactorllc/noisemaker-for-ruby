@@ -20,12 +20,12 @@ run_pixel = lambda do |ctx, out|
   g['outRGBA'] = rt.construct(4, 0.0)
   hash2__uint = lambda do |seed|
     state = nil; word = nil; x_bits = nil; y_bits = nil
-    state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
-    word = rt.binary('*', rt.binary('^', rt.binary('>>', state, rt.binary('+', rt.binary('>>', state, rt.i(28), 1, 'uint'), rt.i(4), 1, 'uint'), 1, 'uint'), state, 1, 'uint'), rt.i(277803737), 1, 'uint')
-    x_bits = rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
-    state = rt.binary('+', rt.binary('*', x_bits, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
-    word = rt.binary('*', rt.binary('^', rt.binary('>>', state, rt.binary('+', rt.binary('>>', state, rt.i(28), 1, 'uint'), rt.i(4), 1, 'uint'), 1, 'uint'), state, 1, 'uint'), rt.i(277803737), 1, 'uint')
-    y_bits = rt.binary('^', rt.binary('>>', word, rt.i(22), 1, 'uint'), word, 1, 'uint')
+    state = rt.to_uint(rt.binary('+', rt.umul(seed, rt.i(747796405)), rt.i(2891336453)))
+    word = rt.umul(rt.to_uint(rt.binary('^', rt.ushr(state, rt.binary('+', rt.ushr(state, rt.i(28)), rt.i(4))), state)), rt.i(277803737))
+    x_bits = rt.to_uint(rt.binary('^', rt.ushr(word, rt.i(22)), word))
+    state = rt.to_uint(rt.binary('+', rt.umul(x_bits, rt.i(747796405)), rt.i(2891336453)))
+    word = rt.umul(rt.to_uint(rt.binary('^', rt.ushr(state, rt.binary('+', rt.ushr(state, rt.i(28)), rt.i(4))), state)), rt.i(277803737))
+    y_bits = rt.to_uint(rt.binary('^', rt.ushr(word, rt.i(22)), word))
     return rt.construct(2, rt.binary('/', rt.construct(1, x_bits), rt.f(4294967296), 1, 'float'), rt.binary('/', rt.construct(1, y_bits), rt.f(4294967296), 1, 'float'))
   end
   wrap_float__float_float = lambda do |value, size|
