@@ -52,7 +52,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       digits[(i).to_i] = rt.binary('%', temp, rt.i(10), 1, 'int')
-      temp = rt.binary('/', temp, rt.i(10), 1, 'int')
+      temp = rt.trunc_div(temp, rt.i(10))
     end
     d = rt.i(0)
     _for1_first = true

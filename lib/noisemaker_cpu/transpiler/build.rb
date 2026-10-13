@@ -247,6 +247,16 @@ module NoisemakerCpu
 
           source = adapted
         end
+        if effect_id == "synth/testPattern"
+          # The oracle's compile-glsl.js restoreIntegerDivision (synced at
+          # noisemaker-for-cpu 7d11682c42d5) guards its statement-level
+          # `Math.trunc(temp / 10)` rewrite on these exact digit-accumulator
+          # lines; raise when the pinned GLSL drifts instead of silently
+          # keeping the f64 quotient (see Codegen's testPattern restore).
+          unless source.include?("int temp = number;") && source.include?("temp /= 10;")
+            raise "cannot locate synth/testPattern digit division for CPU lowering\n"
+          end
+        end
         if effect_id == "synth/polygon"
           # The oracle's adaptCanonicalSource special-cases smoothing == 0
           # (smoothstep with equal edges is a division by zero): the m

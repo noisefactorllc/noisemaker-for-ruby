@@ -619,6 +619,8 @@ module NoisemakerCpu
         when "expr"
           if (pcg = _restore_uint_scalar_pcg_stmt(s["expr"], scope))
             out << "#{pad}#{pcg}"
+          elsif (tpd = _restore_test_pattern_div_stmt(s["expr"], scope))
+            out << "#{pad}#{tpd}"
           else
             code, = expr(s["expr"], scope)
             out << "#{pad}#{code}"
@@ -998,6 +1000,31 @@ module NoisemakerCpu
         return nil if rhs.nil?
 
         "#{expr(target, scope)[0]} = #{rhs}"
+      end
+
+      # The oracle's compile-glsl.js restoreIntegerDivision (synced at
+      # noisemaker-for-cpu 7d11682c42d5) special-cases synth/testPattern's
+      # numbered checkerboard: the digit accumulator is divided IN PLACE
+      # (`temp /= 10;`), a form the declaration-only rewrites never reach,
+      # so the compiled kernel kept the raw f64 quotient. The fractional
+      # digit then reads the glyph table as undefined and drops every
+      # glyph after the first. The oracle rewrites that exact statement to
+      # `Math.trunc(temp / 10)` (build.rb's _adapt_source guards the pinned
+      # GLSL lines the same way compile-glsl.js does). Do not widen this
+      # rule: the oracle measured and rejected broader statement-level
+      # rewrites (filter/spookyTicker stays exempt from truncation).
+      def _restore_test_pattern_div_stmt(node, scope)
+        return nil unless @effect_id == "synth/testPattern"
+
+        return nil unless node.is_a?(Hash) && node["k"] == "assign" && node["op"] == "/="
+
+        target = node["target"]
+        value = node["value"]
+        return nil unless target.is_a?(Hash) && target["k"] == "id" && target["name"] == "temp"
+        return nil unless value.is_a?(Hash) && value["k"] == "num" && value["value"].to_i == 10
+
+        tcode, = expr(target, scope)
+        "#{tcode} = rt.trunc_div(#{tcode}, rt.i(10))"
       end
 
       def _e_member(node, scope)
