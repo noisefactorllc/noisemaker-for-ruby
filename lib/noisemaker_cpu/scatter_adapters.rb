@@ -36,6 +36,15 @@ module NoisemakerCpu
       value - value.floor
     end
 
+    # JS Math.round (ties toward +Infinity); Ruby Float#round ties away from
+    # zero, which differs at negative halves. Non-finite input raises
+    # FloatDomainError, which callers treat the way the reference treats a
+    # non-finite raster position (the point is culled, no pixel is counted).
+    def self.js_round(value)
+      whole = value.floor
+      (value - whole) >= 0.5 ? whole + 1 : whole
+    end
+
     def self.texel_fetch_agent(surface, sx, sy)
       x = [[sx, 0].max, surface.width - 1].min
       shader_y = [[sy, 0].max, surface.height - 1].min
@@ -213,13 +222,17 @@ module NoisemakerCpu
         position = texel_fetch_agent(state1, x, y)
         color = texel_fetch_agent(state2, x, y)
         atlas_x = position[0]
-        atlas_y = position[1] + position[2].floor * volume_size
-        offset = scatter_point_pixel(
-          (atlas_x.fdiv(volume_size) * 2) - 1,
-          (atlas_y.fdiv(atlas_height) * 2) - 1,
-          1, destination.width, destination.height
-        )
-        next if offset.nil?
+        atlas_y = f32(position[1] + position[2].floor * volume_size)
+        # The M4/Metal point rasterizer snaps window positions to 1/256 pixel
+        # and assigns an integer boundary to the lower GL pixel. A center within
+        # half a subpixel step at the left or bottom edge produces no fragment.
+        next if atlas_x <= 1.0 / 512 || atlas_y <= 1.0 / 512
+
+        gl_col = js_round(atlas_x * 256).fdiv(256).ceil - 1
+        gl_row = js_round(atlas_y * 256).fdiv(256).ceil - 1
+        next if gl_col.negative? || gl_col >= volume_size || gl_row.negative? || gl_row >= atlas_height
+
+        offset = ((atlas_height - 1 - gl_row) * volume_size + gl_col) * 4
 
         3.times { |channel| destination.data[offset + channel] += color[channel] }
         destination.data[offset + 3] += 1

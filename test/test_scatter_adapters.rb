@@ -111,6 +111,85 @@ class TestScatterAdapters < Minitest::Test
     assert_equal [0.25, 0.5, 0.75, 1], pixel(destination, 5, 1)
   end
 
+  def test_flow3d_deposit_places_integer_atlas_boundaries_in_the_lower_gl_pixel
+    state1 = agent_surface(2, 1)
+    state2 = agent_surface(2, 1)
+    poke(state1, 0, 0, [20, 1.9599609375, 5.7421875, 0])
+    poke(state1, 1, 0, [20.71875, 17, 29.671875, 0])
+    poke(state2, 0, 0, [0.5, 0, 0, 1])
+    poke(state2, 1, 0, [0.25, 0, 0, 1])
+    destination = agent_surface(32, 1024)
+
+    NoisemakerCpu::ScatterAdapters.run(
+      "filter3d/flow3d:deposit", {}, { "density" => 100, "volumeSize" => 32 },
+      { "stateTex1" => state1, "stateTex2" => state2 }, destination
+    )
+
+    assert_equal [0.5, 0, 0, 1], pixel(destination, 862, 19)
+    assert_equal [0, 0, 0, 0], pixel(destination, 862, 20)
+    assert_equal [0.25, 0, 0, 1], pixel(destination, 79, 20)
+    assert_equal [0, 0, 0, 0], pixel(destination, 78, 20)
+  end
+
+  def test_flow3d_deposit_rounds_atlas_addition_as_glsl_float_before_raster_placement
+    state1 = agent_surface(1, 1)
+    state2 = agent_surface(1, 1)
+    poke(state1, 0, 0, [1.25, 0.0001220703125, 63, 0])
+    poke(state2, 0, 0, [0.5, 0, 0, 1])
+    destination = agent_surface(64, 4096)
+
+    NoisemakerCpu::ScatterAdapters.run(
+      "filter3d/flow3d:deposit", {}, { "density" => 100, "volumeSize" => 64 },
+      { "stateTex1" => state1, "stateTex2" => state2 }, destination
+    )
+
+    assert_equal [0.5, 0, 0, 1], pixel(destination, 64, 1)
+    assert_equal [0, 0, 0, 0], pixel(destination, 63, 1)
+  end
+
+  def test_flow3d_deposit_culls_points_inside_the_m4_viewport_subpixel_edge
+    [
+      [32, [0.00032138824462890625, 22.546875, 13.6015625, 0]],
+      [32, [1.0 / 512, 22.546875, 13.6015625, 0]],
+      [64, [1.25, 0.00006103515625, 0, 0]],
+      [64, [1.25, 1.0 / 512, 0, 0]],
+    ].each do |volume_size, position|
+      state1 = agent_surface(1, 1)
+      state2 = agent_surface(1, 1)
+      poke(state1, 0, 0, position)
+      poke(state2, 0, 0, [0.5, 0, 0, 1])
+      destination = agent_surface(volume_size, volume_size * volume_size)
+
+      result = NoisemakerCpu::ScatterAdapters.run(
+        "filter3d/flow3d:deposit", {}, { "density" => 100, "volumeSize" => volume_size },
+        { "stateTex1" => state1, "stateTex2" => state2 }, destination
+      )
+
+      assert_equal 0, result[:pixels]
+      assert destination.data.all?(&:zero?), "volumeSize #{volume_size} position #{position.inspect}"
+    end
+  end
+
+  def test_flow3d_deposit_snaps_near_integer_atlas_positions_to_the_m4_subpixel_grid
+    state1 = agent_surface(2, 1)
+    state2 = agent_surface(2, 1)
+    poke(state1, 0, 0, [1.0009765625, 0.25, 1.1, 0])
+    poke(state1, 1, 0, [2.25, 1.0009765625, 1.1, 0])
+    poke(state2, 0, 0, [0.5, 0, 0, 1])
+    poke(state2, 1, 0, [0.25, 0, 0, 1])
+    destination = agent_surface(32, 1024)
+
+    NoisemakerCpu::ScatterAdapters.run(
+      "filter3d/flow3d:deposit", {}, { "density" => 100, "volumeSize" => 32 },
+      { "stateTex1" => state1, "stateTex2" => state2 }, destination
+    )
+
+    assert_equal [0.5, 0, 0, 1], pixel(destination, 991, 0)
+    assert_equal [0, 0, 0, 0], pixel(destination, 991, 1)
+    assert_equal [0.25, 0, 0, 1], pixel(destination, 991, 2)
+    assert_equal [0, 0, 0, 0], pixel(destination, 990, 2)
+  end
+
   def test_registry_contains_exact_catalog_keys
     assert_equal %w[
       filter3d/flow3d:deposit points/dla:depositGrid points/lenia:deposit points/physarum:deposit
