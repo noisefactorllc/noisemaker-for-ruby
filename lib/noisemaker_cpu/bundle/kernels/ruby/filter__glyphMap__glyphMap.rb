@@ -257,7 +257,7 @@ run_pixel = lambda do |ctx, out|
     resolution = rt.construct(2, texSize)
     pixelCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     cs = rt.component_wise('max', rt.construct(1, rt.binary('*', rt.construct(1, _u_cellSize), _u_renderScale, 1, 'float'), 'int'), rt.i(1))
-    isTileRendering = rt.binary('>', rt.length(_u_tileOffset), rt.f(0))
+    isTileRendering = rt.component_wise('any', rt.component_wise('notEqual', _u_fullResolution, resolution))
     if rt.bool(isTileRendering)
       cs = rt.component_wise('min', cs, rt.i(512))
     end
