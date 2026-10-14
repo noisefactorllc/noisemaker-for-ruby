@@ -1052,22 +1052,32 @@ module NoisemakerCpu
     end
 
     def self._render_iteration_group(group, group_input, surfaces, external_textures, width, height, seed, time)
-      owner_step = group["steps"][0]
-      owner_inputs = _iteration_step_inputs(owner_step, group_input, surfaces, external_textures)
-      owner_state = _initialize_iteration_state(
-        owner_step["definition"], owner_step["params"], owner_inputs, seed, width, height, time: time
-      )
-      owner_size = owner_state["params"]["stateSize"] if group["steps"].length > 1
-      states = [owner_state]
-      group["steps"].drop(1).each do |step|
+      # The authority runs the group's steps in chain order. The iterationCount
+      # owner is the group's iterated effect (the merged flow3d group's noise3d
+      # input is not iterated and carries no group count); the shared stateSize
+      # still comes from the group's first step and reaches every later step's
+      # texture sizing and uniforms.
+      owner_step = group["steps"].find { |step| step.dig("definition", "iterated") == true } ||
+                   group["steps"][0]
+      owner_index = group["steps"].index(owner_step)
+      states = []
+      owner_size = nil
+      group["steps"].each_with_index do |step, index|
         inputs = _iteration_step_inputs(step, group_input, surfaces, external_textures)
-        states << _initialize_iteration_state(
-          step["definition"], step["params"], inputs, seed, width, height,
-          owner_state_size: owner_size, time: time
-        )
+        if index.zero?
+          states << _initialize_iteration_state(
+            step["definition"], step["params"], inputs, seed, width, height, time: time
+          )
+          owner_size = states[0]["params"]["stateSize"] if group["steps"].length > 1
+        else
+          states << _initialize_iteration_state(
+            step["definition"], step["params"], inputs, seed, width, height,
+            owner_state_size: owner_size, time: time
+          )
+        end
       end
 
-      count = _iterated_count(owner_step["definition"], owner_state["params"])
+      count = _iterated_count(owner_step["definition"], states[owner_index]["params"])
       if count <= 0 && group_input
         bundle = _chain_bundle(group_input)
         return group_input.clone unless _chain_bundle?(group_input)

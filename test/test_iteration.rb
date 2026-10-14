@@ -12,10 +12,11 @@ class TestIteration < Minitest::Test
     flunk "NoisemakerCpu::Iteration is not implemented"
   end
 
-  def step(id, textures: {}, passes: [], iterated: false)
+  def step(id, textures: {}, passes: [], iterated: false, params: {})
     {
       "kind" => "effect",
       "effect_id" => id,
+      "params" => params,
       "definition" => {
         "textures" => textures,
         "passes" => passes,
@@ -48,6 +49,22 @@ class TestIteration < Minitest::Test
 
     groups = iteration.compute_groups([emit, flock, solid])
     assert_equal [[true, 2], [false, 1]], groups.map { |group| [group["iterated"], group["steps"].length] }
+  end
+
+  def test_flow3d_reruns_animated_noise3d_per_tick
+    flow = step("filter3d/flow3d", iterated: true, params: { "iterationCount" => 2 })
+    animated = step("synth3d/noise3d", params: { "speed" => 1 })
+    static_noise = step("synth3d/noise3d", params: { "speed" => 0 })
+    zero_flow = step("filter3d/flow3d", iterated: true, params: { "iterationCount" => 0 })
+
+    groups = iteration.compute_groups([animated, flow])
+    assert_equal [[true, 2]], groups.map { |group| [group["iterated"], group["steps"].length] }
+    groups = iteration.compute_groups([static_noise, flow])
+    assert_equal [[false, 1], [true, 1]],
+                 groups.map { |group| [group["iterated"], group["steps"].length] }
+    groups = iteration.compute_groups([animated, zero_flow])
+    assert_equal [[false, 1], [true, 1]],
+                 groups.map { |group| [group["iterated"], group["steps"].length] }
   end
 
   def test_read_and_write_steps_close_particle_groups

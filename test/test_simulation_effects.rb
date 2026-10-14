@@ -216,6 +216,20 @@ class TestSimulationEffects < Minitest::Test
     end
   end
 
+  def test_flow3d_reruns_animated_noise3d_input_per_tick
+    program = <<~DSL
+      search synth3d, filter3d, render
+      noise3d(seed: 0, volumeSize: x32).flow3d(iterationCount: 2).render3d().write(o0)
+      render(o0)
+    DSL
+    expected = js_dsl(program)
+    actual, message = capture_render do
+      NoisemakerCpu::Renderer.render_dsl(program, width: 8, height: 8, seed: 1, time: 0.25)
+    end
+    assert_equal "", message
+    assert_equal expected.to_rgba8, actual.to_rgba8
+  end
+
   def test_particle_group_matches_javascript_across_frames
     program = <<~DSL
       search synth, points, render

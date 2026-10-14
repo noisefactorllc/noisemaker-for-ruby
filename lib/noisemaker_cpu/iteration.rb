@@ -70,6 +70,28 @@ module NoisemakerCpu
           next
         end
 
+        # The authority re-runs animated noise3d before every flow3d tick
+        # (noisemaker-for-cpu src/runtime/iteration.js): a flow3d step with a
+        # positive iterationCount that directly follows a lone synth3d/noise3d
+        # step joins it as one iterated group when that noise3d is animated
+        # (a `speed` param of 0 keeps both steps independent). `effect_id`
+        # carries the id the JS authority stores on `definition.id`, and a
+        # missing speed param stays animated, matching the JS `!== 0` check.
+        previous = groups.last
+        previous_step = previous && previous["steps"][0]
+        speed = previous_step && (previous_step["params"] || {})["speed"]
+        flow3d_merge = open_group.nil? &&
+                       step["effect_id"] == "filter3d/flow3d" &&
+                       (step["params"] || {})["iterationCount"].to_f > 0 &&
+                       previous_step && previous["steps"].length == 1 &&
+                       previous_step["effect_id"] == "synth3d/noise3d" &&
+                       !(speed.is_a?(Numeric) && speed.zero?)
+        if flow3d_merge
+          groups.pop
+          groups << { "steps" => [previous["steps"][0], step], "iterated" => true }
+          next
+        end
+
         close_group.call
         groups << { "steps" => [step], "iterated" => definition["iterated"] == true }
       end
