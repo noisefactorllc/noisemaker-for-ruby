@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "sampler"
+require_relative "texture_format"
 require_relative "uint_math"
 
 module NoisemakerCpu
@@ -150,6 +151,7 @@ module NoisemakerCpu
 
     def self.lenia_deposit(_pass, uniforms, inputs, destination)
       amount = uniforms["depositAmount"].to_f
+      half_float_blend = destination.format == "rgba16f" || destination.format == "rgba16float"
       pixels = 0
       each_agent(inputs["xyzTex"]) do |_index, x, y|
         xyz = texel_fetch_agent(inputs["xyzTex"], x, y)
@@ -158,8 +160,20 @@ module NoisemakerCpu
         offset = scatter_point_pixel(xyz[0] * 2 - 1, xyz[1] * 2 - 1, 1, destination.width, destination.height)
         next if offset.nil?
 
-        destination.data[offset] += amount
-        destination.data[offset + 3] += 1
+        # Additive blending writes back to the half-float attachment after every point.
+        data = destination.data
+        data[offset] =
+          if half_float_blend
+            NoisemakerCpu::TextureFormat.float16_truncate(data[offset] + amount)
+          else
+            data[offset] + amount
+          end
+        data[offset + 3] =
+          if half_float_blend
+            NoisemakerCpu::TextureFormat.float16_truncate(data[offset + 3] + 1)
+          else
+            data[offset + 3] + 1
+          end
         pixels += 1
       end
       { pixels: pixels }
@@ -186,7 +200,7 @@ module NoisemakerCpu
       threshold = uniforms["density"].to_f / 100.0
       pixels = 0
       each_agent(inputs["xyzTex"]) do |index, x, y|
-        next if fract(index * GOLDEN_RATIO_CONJUGATE) > threshold
+        next if fract(f32(index * f32(GOLDEN_RATIO_CONJUGATE))) > threshold
 
         xyz = texel_fetch_agent(inputs["xyzTex"], x, y)
         next if xyz[3] < 0.5

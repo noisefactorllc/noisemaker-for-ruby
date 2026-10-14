@@ -72,6 +72,47 @@ class TestScatterAdapters < Minitest::Test
     assert_equal [0.5, 0.25, 1, 0.5], pixel(destination, 1, 2)
   end
 
+  def test_points_render_density_cull_matches_m4_highp_float_at_65536_agents
+    xyz = agent_surface(256, 256)
+    rgba = agent_surface(256, 256)
+    xyz.data.length.times do |index|
+      next unless index % 4 == 0
+
+      xyz.data[index] = 0.5
+      xyz.data[index + 1] = 0.5
+      xyz.data[index + 3] = 1
+      rgba.data[index] = 1
+      rgba.data[index + 3] = 1
+    end
+    destination = agent_surface(8, 8)
+
+    result = NoisemakerCpu::ScatterAdapters.run(
+      "render/pointsRender:deposit", {}, { "density" => 0.1, "viewMode" => 0 },
+      { "xyzTex" => xyz, "rgbaTex" => rgba }, destination
+    )
+
+    assert_equal 142, result[:pixels]
+    assert_equal [142, 0, 0, 142], pixel(destination, 3, 4)
+  end
+
+  def test_lenia_deposit_rounds_each_additive_blend_into_an_rgba16f_target
+    xyz = agent_surface(64, 64)
+    64.times do |y|
+      64.times do |x|
+        poke(xyz, x, y, [0.5, 0.5, 0, 1])
+      end
+    end
+    destination = agent_surface(4, 4)
+    destination.format = "rgba16f"
+
+    result = NoisemakerCpu::ScatterAdapters.run(
+      "points/lenia:deposit", {}, { "depositAmount" => 3.6 }, { "xyzTex" => xyz }, destination
+    )
+
+    assert_equal 4096, result[:pixels]
+    assert_equal [4096, 0, 0, 2048], pixel(destination, 1, 2)
+  end
+
   def test_billboard_helpers_and_premultiplied_deposit
     assert_in_delta 0.07695067745562426, NoisemakerCpu::ScatterAdapters.billboard_hash(0, 42), 1e-12
     assert_in_delta 0.9033963931499507, NoisemakerCpu::ScatterAdapters.billboard_hash(1234.5, 42), 1e-12
