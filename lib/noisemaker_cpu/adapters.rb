@@ -446,9 +446,9 @@ module NoisemakerCpu
     # ---- classicNoisedeck/fractal: Julia/Newton/Mandelbrot (full
     # reimplementation) -- the oracle renders fractal through the hand-written
     # CPU adapter (src/effects/adapters/fractal.js), not the transpiled CDN
-    # GLSL, so the adapter is the parity target. The f64 chain matters at
-    # mode 1/2 (the Math.hypot distance feeds the palette directly); the
-    # transpiled kernel's f32 vector stores diverge over 100 iterations.
+    # GLSL, so the adapter is the parity target. Julia and shared color mapping
+    # follow its float32 rounding and fused-operation order; Newton and
+    # Mandelbrot retain their existing float64 iteration paths.
     #
     # V8's 2-argument Math.hypot is exactly
     # sqrt((x/m)^2 + (y/m)^2) * m with m = max(|x|, |y|) -- verified 200k
@@ -485,6 +485,64 @@ module NoisemakerCpu
       cs = Math.cos(angle)
       sn = Math.sin(angle)
       [(cs * px) + (sn * py) + (0.5 * aspect), (-sn * px) + (cs * py) + 0.5]
+    end
+
+    def self._fmap32(value, in_min, in_max, out_min, out_max)
+      _f32(out_min + _f32(out_max - out_min) * ((value - in_min) * _f32(1.0.fdiv(_f32(in_max - in_min)))))
+    end
+
+    def self._fmix32(a, b, amount)
+      _f32(_f32(a * _f32(1.0 - amount)) + _f32(b * amount))
+    end
+
+    def self._frotate32(x, y, rotation, aspect)
+      angle = _f32(_fmap32(rotation, 0.0, 360.0, 0.0, 2.0) * _f32(3.1415929794311523))
+      px = _f32(x - _f32(0.5 * aspect))
+      py = _f32(y - 0.5)
+      cs = _f32(Math.cos(angle))
+      sn = _f32(Math.sin(angle))
+      [_f32(sn * py + _f32(cs * px)), _f32(cs * py + _f32(-sn * px))]
+    end
+
+    def self._ffract32(value)
+      _f32(value - value.floor)
+    end
+
+    def self._fmod32(value, divisor)
+      base = _f32(value)
+      _f32(base - _f32(divisor * _f32(base.fdiv(divisor)).floor))
+    end
+
+    def self._fhsv_to_rgb32(h, s, v)
+      h = _ffract32(h)
+      c = _f32(v * s)
+      x = _f32(c * _f32(1.0 - (_fmod32(_f32(h * 6.0), 2.0) - 1.0).abs))
+      m = _f32(v - c)
+      color = if h < 1.0.fdiv(6.0)
+        [c + m, x + m, m]
+      elsif h < 2.0.fdiv(6.0)
+        [x + m, c + m, m]
+      elsif h < 3.0.fdiv(6.0)
+        [m, c + m, x + m]
+      elsif h < 4.0.fdiv(6.0)
+        [m, x + m, c + m]
+      elsif h < 5.0.fdiv(6.0)
+        [x + m, m, c + m]
+      else
+        [c + m, m, x + m]
+      end
+      color.map { |value| _f32(value) }
+    end
+
+    def self._fpalette32(t, u)
+      return _fpalette(t, u) if u["paletteMode"] == 2
+
+      color = (0..2).map do |channel|
+        inner = _f32(u["paletteFreq"][channel] * t + u["palettePhase"][channel])
+        cosine = _f32(Math.cos(_f32(inner * _f32(FRACTAL_PALETTE_TAU))))
+        _f32(u["paletteAmp"][channel] * cosine + u["paletteOffset"][channel])
+      end
+      u["paletteMode"] == 1 ? _fhsv_to_rgb32(*color) : color
     end
 
     def self._linear_to_srgb_f(value)
@@ -545,22 +603,25 @@ module NoisemakerCpu
     end
 
     def self._fjulia(x, y, u, aspect)
-      zoom = _fmap(u["zoomAmt"], 0.0, 100.0, 2.0, 0.5)
-      speedy = _fmap(u["speed"], 0.0, 100.0, 0.0, 1.0)
-      speed = (speedy * 0.05) * (1.0 - speedy) + (speedy * 0.125) * speedy
-      cx = (Math.sin(u["time"] * FRACTAL_TAU) * speed) + _fmap(u["offsetX"], -100.0, 100.0, -0.5, 0.5)
-      cy = (Math.cos(u["time"] * FRACTAL_TAU) * speed) + _fmap(u["offsetY"], -100.0, 100.0, -1.0, 1.0)
-      x, y = _frotate(x, y, u["rotation"], aspect)
-      x = ((x - (0.5 * aspect)) * zoom) + _fmap(u["centerX"], -100.0, 100.0, 1.0, -1.0)
-      y = ((y - 0.5) * zoom) + _fmap(u["centerY"], -100.0, 100.0, 1.0, -1.0)
+      x, y, aspect = [_f32(x), _f32(y), _f32(aspect)]
+      time = _f32(u["time"])
+      zoom = _fmap32(u["zoomAmt"], 0.0, 100.0, 2.0, 0.5)
+      speedy = _fmap32(u["speed"], 0.0, 100.0, 0.0, 1.0)
+      speed = _fmix32(_f32(speedy * 0.05), _f32(speedy * 0.125), speedy)
+      cx = _f32(Math.sin(_f32(time * _f32(FRACTAL_TAU))) * speed + _fmap32(u["offsetX"], -100.0, 100.0, -0.5, 0.5))
+      cy = _f32(Math.cos(_f32(time * _f32(FRACTAL_TAU))) * speed + _fmap32(u["offsetY"], -100.0, 100.0, -1.0, 1.0))
+      x, y = _frotate32(x, y, _f32(u["rotation"]), aspect)
+      # The oracle rounds each zoom multiply plus center add only once.
+      x = _f32(x * zoom + _fmap32(u["centerX"], -100.0, 100.0, 1.0, -1.0))
+      y = _f32(y * zoom + _fmap32(u["centerY"], -100.0, 100.0, 1.0, -1.0))
       count = u["iterations"] * 2.0
       iteration = 0.0
       index = 0.0
       while index < count
         iteration = index
-        next_x = (x * x) - (y * y) + cx
-        next_y = (y * x) + (x * y) + cy
-        break if ((next_x * next_x) + (next_y * next_y)) > 4.0
+        next_x = _f32(_f32(x * x + cx) - y * y)
+        next_y = _f32(y * x + x * y + cy)
+        break if _f32(next_x * next_x + next_y * next_y) > 4.0
 
         x = next_x
         y = next_y
@@ -568,7 +629,7 @@ module NoisemakerCpu
       end
       return 1.0 if (count - iteration) < u["cutoff"].to_i
 
-      u["mode"] == 0 ? iteration.fdiv(count) : _hypot2(x, y)
+      u["mode"] == 0 ? _f32(iteration.fdiv(count)) : _f32(Math.sqrt(_f32(x * x + y * y)))
     end
 
     def self._fnewton(x, y, u, aspect)
@@ -644,23 +705,23 @@ module NoisemakerCpu
           out[0] = u["bgColor"][0]
           out[1] = u["bgColor"][1]
           out[2] = u["bgColor"][2]
-          out[3] = _f32(u["bgAlpha"] * 0.01)
+          out[3] = _f32(_f32(u["bgAlpha"]) * _f32(0.01))
           return
         end
         cycle = u["cyclePalette"]
-        distance -= u["time"] if cycle == -1
-        distance += u["time"] if cycle == 1
-        distance = _ffract((distance * u["repeatPalette"]) + (u["rotatePalette"] * 0.01))
+        distance = _f32(distance - u["time"]) if cycle == -1
+        distance = _f32(distance + u["time"]) if cycle == 1
+        distance = _ffract32(_f32(distance * _f32(u["repeatPalette"]) + _f32(_f32(u["rotatePalette"]) * _f32(0.01))))
         levels = u["levels"]
         if levels > 0
-          levels += 1
-          distance = (distance * levels).floor.fdiv(levels)
+          levels = _f32(_f32(levels) + 1.0)
+          distance = _f32(_f32(distance * levels).floor.fdiv(levels))
         end
         color =
           case u["colorMode"]
-          when 0 then [_ffract(distance)] * 3
-          when 4 then _fpalette(distance, u)
-          when 6 then _fhsv_to_rgb((distance * u["hueRange"]) * 0.01, 1.0, 1.0)
+          when 0 then [_ffract32(distance)] * 3
+          when 4 then _fpalette32(distance, u)
+          when 6 then _fhsv_to_rgb32(_f32(distance * _f32(_f32(u["hueRange"]) * _f32(0.01))), 1.0, 1.0)
           else [0.0, 0.0, 1.0]
           end
         out[0] = _f32(color[0])
