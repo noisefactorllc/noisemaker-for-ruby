@@ -46,10 +46,12 @@ if ! ruby_ok ruby; then
     echo "noisemaker entrypoint: downloading $URL" >&2
     RELOCATED=""
     YLIB=""
-    for BASE in ${NOISEMAKER_TEST_TOOLCHAIN:-} /tmp/ruby-toolchain "$HOME/.cache/ruby-toolchain" /state/cache/ruby-toolchain; do
+    for BASE in ${NOISEMAKER_TEST_TOOLCHAIN:-} /tmp/ruby-toolchain "$HOME/.cache/ruby-toolchain"; do
       [ -n "$BASE" ] || continue
       case "$BASE" in
-        /state/*|/tmp/*|"$HOME"/*) ;;     # keep installs off the repo and system dirs
+        # keep installs off the repo and system dirs: elsewhere, only a
+        # dedicated absolute .../ruby-toolchain directory is replaced
+        /tmp/*|"$HOME"/*|/*/ruby-toolchain) ;;
         *) continue ;;
       esac
       ROOT="$BASE/x64"

@@ -64,7 +64,7 @@ def provision_oracle
 
   base = ENV["NOISEMAKER_PARITY_CACHE"]
   base ||= ["/tmp/noisemaker-parity-cache", File.join(Dir.home.to_s, ".cache", "noisemaker-parity")]
-          .find { |c| c.start_with?("/tmp/", "/state/", "#{Dir.home}/") && (File.directory?(c) || FileUtils.mkdir_p(c) rescue false) }
+          .find { |c| c.start_with?("/tmp/", "#{Dir.home}/") && (File.directory?(c) || FileUtils.mkdir_p(c) rescue false) }
   return nil unless base
 
   dir = File.join(base, "noisemaker-for-cpu")
