@@ -218,13 +218,8 @@ module NoisemakerCpu
                     out
                   end
 
-                  # JS comma-assign semantics for `dst = <construct-shaped rhs>`: the
-                  # compiled kernel stores components sequentially, so a later element
-                  # may read target components already overwritten (e.g. sdfTriangle's
-                  # `p = vec2((p.x - k*p.y)/2, (-k*p.x - p.y)/2)` compiles to
-                  # `p[0] = (p[0] - k*p[1])/2, p[1] = (-k*p[0] - p[1])/2` where p[1]
-                  # reads the NEW p[0]). Returns sequential store code, or nil when the
-                  # rhs is not a plain (or scalar-wrapped elementwise) construct.
+                  # Decompose constructor-shaped assignments into component expressions.
+                  # _component_writes stages any reads of earlier target components.
                   def self._scalar_code?(s)
                     !s.include?(",") && (s.match?(/\Art\.[fi]\(/) || s.match?(/\A-?[\d.]+(e[+-]?\d+)?\z/i))
                   end
@@ -242,20 +237,13 @@ module NoisemakerCpu
                     w >= 1 && elems.length == w ? [w, elems] : nil
                   end
 
-                  def self._sequential_assign(tcode, rhs)
+                  def self._assignment_components(rhs)
                     base = _construct_elems(rhs)
                     if base
                       w, elems = base
                       return nil if w <= 1
 
-                      # The generator's preserveVectorAssignmentReads temps
-                      # ONLY single-line constructor self-assigns (mirrored in
-                      # build.rb); every other whole-assign lowers to the JS
-                      # comma-assign where later components read the
-                      # ALREADY-STORED earlier components (mandelbrot's
-                      # dz.y reads the new dz.x). So self-references here are
-                      # resolved SEQUENTIALLY, not snapshot.
-                      return elems.each_with_index.map { |e, i| "#{tcode}[#{i}] = rt.f32(#{e})" }.join("; ")
+                      return elems
                     end
                     m = /\Art\.binary(?:_raw)?\((.*)\)\z/m.match(rhs)
                     return nil unless m
@@ -271,9 +259,9 @@ module NoisemakerCpu
                       w, elems = base
                       next unless w == parts[3].to_i && w > 1 && _scalar_code?(other)
 
-                      return elems.each_with_index.map do |e, i|
-                        "#{tcode}[#{i}] = rt.f32(rt.binary(#{op}, #{e}, #{other}, 1, 'float'))"
-                      end.join("; ")
+                      return elems.map do |e|
+                        "rt.binary(#{op}, #{e}, #{other}, 1, 'float')"
+                      end
                     end
                     nil
                   end
@@ -337,14 +325,16 @@ module NoisemakerCpu
       SKIP_FUNCS = %w[cpu_umul cpu_ivec2 cpu_ivec3 cpu_ivec4 cpu_uvec2 cpu_uvec3 cpu_uvec4 cpu_float]
                    .each_with_object({}) { |n, h| h[n] = true }.freeze
 
-      def self.emit_ruby(program, outputs, varyings, effect_id = nil)
+      def self.emit_ruby(program, outputs, varyings, effect_id = nil, constant_divisors: {})
         program["decls"] = program["decls"].reject { |d| (d["k"] || "") == "func" && SKIP_FUNCS[d["name"] || ""] }
-        new(program, outputs, varyings, effect_id).emit
+        new(program, outputs, varyings, effect_id, constant_divisors: constant_divisors).emit
       end
 
-      def initialize(program, outputs, varyings, effect_id = nil)
+      def initialize(program, outputs, varyings, effect_id = nil, constant_divisors: {})
         @program = program
         @effect_id = effect_id
+        @constant_divisors = constant_divisors.respond_to?(:keys) ? constant_divisors.keys : constant_divisors
+        @int_names = {}
         @cur_func = nil
         @outputs = outputs && !outputs.empty? ? outputs : ["fragColor"]
         @varyings = {}
@@ -424,6 +414,7 @@ module NoisemakerCpu
               "type" => type_of_name(d["type"], dc["array"]),
               "init" => dc["init"],
               "array" => dc["array"],
+              "const" => quals.include?("const"),
             }
           end
         end
@@ -432,13 +423,19 @@ module NoisemakerCpu
       # ---- emit ----
       def emit
         collect
-        @uniforms.each { |u| @root.define(u["name"], u["type"], "_u_#{Codegen.p_ident(u["name"])}") }
+        @uniforms.each do |u|
+          entry = @root.define(u["name"], u["type"], "_u_#{Codegen.p_ident(u["name"])}")
+          entry["division_kind"] = @constant_divisors.include?(u["name"]) ? "constant" : "runtime"
+        end
+        _collect_int_names(@program)
         @globals.each do |g|
           # String hash key -- never a bare Ruby identifier, so it is never
           # at risk of the uppercase-constant trap and is left unmangled
           # (raw GLSL name), same as every other g['...'] site below.
           rb = @varyings[g["name"]] ? "ctx.uv" : "g['#{g["name"]}']"
-          @root.define(g["name"], g["type"], rb)
+          entry = @root.define(g["name"], g["type"], rb)
+          entry["division_kind"] = g["const"] ? "constant" : nil
+          entry["initializer"] = g["init"]
         end
 
         l = [
@@ -514,7 +511,9 @@ module NoisemakerCpu
             rbnames << "_unused#{@unused_n}"
             next
           end
-          rbnames << scope.define(p[1], t)["py"]
+          entry = scope.define(p[1], t)
+          entry["division_kind"] = "unknown"
+          rbnames << entry["py"]
         end
         body_head = []
         fn["node"]["params"].each_index do |i|
@@ -578,7 +577,7 @@ module NoisemakerCpu
                 nil
               elsif (uid = _restore_uint_scalar_pcg(init, scope))
                 uid
-              elsif (tid = _restore_integer_division(init, scope))
+              elsif (tid = _restore_integer_division(init, scope, t))
                 tid
               else
                 # Store the initializer exactly as the oracle's compiled JS
@@ -591,7 +590,15 @@ module NoisemakerCpu
                 # and typed/constructor initializers pass through.
                 _materialized_operand(init, scope)
               end
+            kind = if (s["quals"] || []).include?("const")
+                     "constant"
+                   elsif @cur_func == "main" && init
+                     _divisor_kind(init, scope)
+                   else
+                     "unknown"
+                   end
             e = scope.define(dc["name"], t)
+            e["division_kind"] = kind
             _local(e["py"])
             if !init_code.nil?
               # GLSL `vecN v = u;` copies. The JS generator emits a live alias
@@ -839,20 +846,57 @@ module NoisemakerCpu
       # (single-component member or numeric-literal index of an identifier)
       # and a plain int-typed identifier divisor.
       #
-      # It also rewrites statement-level scalar/scalar int divisions
-      # (synth3d/shape3d: `int z = yAtlas / volumeSize;` where yAtlas is a
-      # scalar int local) when BOTH operands are int-typed GLSL identifiers
-      # (and they differ). The CPU repo measured and REJECTED broader
-      # expression-level rewrites (filter/spookyTicker's authority bytes
-      # contradict the pinned GLSL's int-division semantics, as measured in
-      # noisemaker-for-cpu) -- do not widen this rule. filter/spookyTicker is exempt
-      # from the scalar/scalar form: its pinned authority capture matches
-      # the untruncated lowering, so truncating it regresses the gate.
-      def _restore_integer_division(init, scope)
+      # Scalar/scalar integer declarations apply to every effect. Conditional
+      # initializers retain source tokens so only the CPU compiler's narrow
+      # bare-name or single-parenthesis dividend forms are truncated.
+      def _collect_int_names(node)
+        if node.is_a?(Hash)
+          if node["k"] == "decl" && (node["type"] == "int" || node["type"].match?(/\Aivec[234]\z/))
+            node["declarators"].each { |dc| @int_names[dc["name"]] = true }
+          elsif node["k"] == "func"
+            node["params"].each { |param| @int_names[param[1]] = true if param[0] == "int" || param[0].match?(/\Aivec[234]\z/) }
+          end
+          node.each_value { |value| _collect_int_names(value) }
+        elsif node.is_a?(Array)
+          node.each { |value| _collect_int_names(value) }
+        end
+      end
+
+      def _restore_integer_division(init, scope, declared_type = nil)
+        if init.is_a?(Hash) && init["k"] == "cond" && Codegen.base_of(declared_type) == "int"
+          text = (init["source_tokens"] || []).join(" ")
+          # Scalar int casts lower to `value|0`, without call parentheses.
+          # Preserve other calls and explicit grouping for the CPU regex.
+          text = text.gsub(/\bint\s*\(([^()]*)\)/, '\\1|0')
+          name = '[A-Za-z_]\\w*'
+          dividend = "(#{name}|\\([^()]*\\))"
+          match = /\A[^;?:]+\?\s*#{dividend}\s*\/\s*(#{name})\s*:\s*#{dividend}\s*\/\s*(#{name})\z/.match(text)
+          if match && [[match[1], match[2]], [match[3], match[4]]].all? { |left, right| @int_names[right] && (left.start_with?("(") || @int_names[left]) }
+            condition = expr(init["c"], scope)[0]
+            branches = [init["a"], init["b"]]
+            metal = branches.zip([match[1], match[3]]).map do |arm, dividend|
+              dividend.match?(/\A\(\s*[A-Za-z_]\w*\s*\)\z/) && _divisor_kind(arm["r"], scope) == "runtime"
+            end
+            # A grouped bare name is float evidence in the CPU operation hook.
+            # Its fdiv call prevents the subsequent whole-ternary regex matching.
+            arms = branches.each_with_index.map do |arm, index|
+              left, right = expr(arm["l"], scope)[0], expr(arm["r"], scope)[0]
+              if metal[index]
+                "rt.fdiv(#{left}, #{right})"
+              elsif metal.any?
+                expr(arm, scope)[0]
+              else
+                "rt.trunc_div(#{left}, #{right})"
+              end
+            end
+            return "(#{_bool(condition)} ? #{arms[0]} : #{arms[1]})"
+          end
+        end
         return nil unless init.is_a?(Hash) && init["k"] == "binary" && init["op"] == "/"
 
         l = init["l"]
         r = init["r"]
+        return nil if l["grouping"] || r["grouping"]
         dividend_code =
           if l.is_a?(Hash) && l["k"] == "member" && l["obj"].is_a?(Hash) &&
              l["obj"]["k"] == "id" && l["field"].is_a?(String) && l["field"].length == 1
@@ -866,7 +910,7 @@ module NoisemakerCpu
             return nil unless Codegen.width_of(obj_t) > 1 && Codegen.base_of(obj_t) != "struct"
 
             "#{obj_code}[(rt.i(#{l['idx']['value'].to_i})).to_i]"
-          elsif l.is_a?(Hash) && l["k"] == "id" && @effect_id != "filter/spookyTicker"
+          elsif l.is_a?(Hash) && l["k"] == "id"
             # Statement-level scalar/scalar form (synth3d/shape3d's
             # `int z = yAtlas / volumeSize;`). Both operands must be
             # provably int-typed GLSL identifiers (the transpiler loses the
@@ -1011,8 +1055,7 @@ module NoisemakerCpu
       # glyph after the first. The oracle rewrites that exact statement to
       # `Math.trunc(temp / 10)` (build.rb's _adapt_source guards the pinned
       # GLSL lines the same way compile-glsl.js does). Do not widen this
-      # rule: the oracle measured and rejected broader statement-level
-      # rewrites (filter/spookyTicker stays exempt from truncation).
+      # rule: other compound integer divisions retain their raw quotient.
       def _restore_test_pattern_div_stmt(node, scope)
         return nil unless @effect_id == "synth/testPattern"
 
@@ -1176,6 +1219,8 @@ module NoisemakerCpu
           else
             "float"
           end
+        metal = _metal_division?(node, scope, l_t, r_t)
+        base = "float" if metal
         # A whole-assign rhs that mixes scalar-op-call subtrees elementwise
         # (simplex `h = 1.0 - abs(x) - abs(y)` lowers to
         # vec4.subtract(abs(x).map(_ => 1 - _), abs(y))): emit it per
@@ -1196,13 +1241,76 @@ module NoisemakerCpu
         # does; the raw form keeps constructors and plain-Array maps raw.
         if base == "float" && width > 1 && %w[* / + -].include?(op)
           if _vec_binary_rounds(node, scope)
-            code = "rt.construct(#{width}, rt.binary(#{Codegen.rq(op)}, #{_materialized_operand(node["l"], scope)}, #{_materialized_operand(node["r"], scope)}, #{width}, 'float'))"
+            left = _materialized_operand(node["l"], scope)
+            right = _materialized_operand(node["r"], scope)
+            operation = metal ? "rt.fdiv(#{left}, #{right})" : "rt.binary(#{Codegen.rq(op)}, #{left}, #{right}, #{width}, 'float')"
+            code = "rt.construct(#{width}, #{operation})"
           else
-            code = "rt.binary_raw(#{Codegen.rq(op)}, #{_fused_operand(node["l"], scope)}, #{_fused_operand(node["r"], scope)}, #{width}, 'float')"
+            left = _fused_operand(node["l"], scope)
+            right = _fused_operand(node["r"], scope)
+            code = metal ? "rt.fdiv(#{left}, #{right})" : "rt.binary_raw(#{Codegen.rq(op)}, #{left}, #{right}, #{width}, 'float')"
           end
           return [code, { "base" => base, "width" => width }]
         end
-        ["rt.binary(#{Codegen.rq(op)}, #{l_code}, #{r_code}, #{width}, #{Codegen.rq(base)})", { "base" => base, "width" => width }]
+        code = metal ? "rt.fdiv(#{l_code}, #{r_code})" : "rt.binary(#{Codegen.rq(op)}, #{l_code}, #{r_code}, #{width}, #{Codegen.rq(base)})"
+        [code, { "base" => base, "width" => width }]
+      end
+
+      def _divisor_kind(node, scope, seen = [])
+        if node.is_a?(Hash)
+          if node["k"] == "id"
+            name = node["name"]
+            return "runtime" if name == "gl_FragCoord"
+            entry = scope.resolve(name)
+            return "constant" unless entry
+            kind = entry.fetch("division_kind", "unknown")
+            return kind unless kind.nil?
+            return "unknown" if seen.include?(name)
+            return _divisor_kind(entry["initializer"], scope, seen + [name])
+          end
+          kinds = node.values.select { |value| value.is_a?(Hash) || value.is_a?(Array) }.map { |value| _divisor_kind(value, scope, seen) }
+        elsif node.is_a?(Array)
+          kinds = node.map { |value| _divisor_kind(value, scope, seen) }
+        else
+          return node.nil? ? "unknown" : "constant"
+        end
+        kinds.include?("unknown") ? "unknown" : (kinds.include?("runtime") ? "runtime" : "constant")
+      end
+
+      def _grouped_division_name?(node)
+        return false unless node["grouping"] == 1
+        node["k"] == "id" ||
+          (node["k"] == "member" && node.dig("obj", "k") == "id" && node["field"].length == 1) ||
+          (node["k"] == "index" && node.dig("obj", "k") == "id" && node.dig("idx", "k") == "num")
+      end
+
+      def _lowered_integer_expression?(node, scope)
+        if node["k"] == "construct" && node["type"] == "float" && node["args"].length == 1 && node["args"][0]["k"] == "id"
+          return %w[int uint].include?(Codegen.base_of(expr(node["args"][0], scope)[1]))
+        end
+        if node["k"] == "binary" && %w[+ - * /].include?(node["op"])
+          return _lowered_integer_expression?(node["l"], scope) && _lowered_integer_expression?(node["r"], scope)
+        end
+        %w[int uint].include?(Codegen.base_of(expr(node, scope)[1]))
+      end
+
+      def _integer_division_operand?(node, scope)
+        return false if _grouped_division_name?(node)
+        return true if node["grouping"] && node["k"] == "construct" && node["type"] == "float" && _lowered_integer_expression?(node, scope)
+        return true if node["k"] == "binary" && _lowered_integer_expression?(node, scope)
+        typ = expr(node, scope)[1]
+        return true if %w[int uint].include?(Codegen.base_of(typ))
+        node["k"] == "construct" && %w[vec2 vec3 vec4].include?(node["type"]) && node["args"].length == 1 &&
+          Codegen.width_of(expr(node["args"][0], scope)[1]) > 1 && _integer_division_operand?(node["args"][0], scope)
+      end
+
+      def _metal_division?(node, scope, left_type, right_type)
+        node["op"] == "/" && !left_type["mat"] && !right_type["mat"] &&
+          [Codegen.width_of(left_type), Codegen.width_of(right_type)].max <= 4 &&
+          (Codegen.base_of(left_type) == "float" || Codegen.base_of(right_type) == "float" ||
+           _grouped_division_name?(node["l"]) || _grouped_division_name?(node["r"])) &&
+          !(_integer_division_operand?(node["l"], scope) && _integer_division_operand?(node["r"], scope)) &&
+          _divisor_kind(node["r"], scope) == "runtime"
       end
 
       RAW_ELEM_OPS = { "+" => "+", "-" => "-", "*" => "*", "/" => "/" }.freeze
@@ -1448,7 +1556,11 @@ module NoisemakerCpu
           rhs =
             if base_op
               b = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
-              "rt.binary(#{Codegen.rq(base_op)}, #{obj_code}[(#{idx_code}).to_i], #{v_code}, #{Codegen.width_of(tt)}, #{Codegen.rq(b)})"
+              if base_op == "/" && Codegen.width_of(tt) > 1 && b == "float" && _divisor_kind(node["value"], scope) == "runtime"
+                "rt.fdiv(#{obj_code}[(#{idx_code}).to_i], #{v_code})"
+              else
+                "rt.binary(#{Codegen.rq(base_op)}, #{obj_code}[(#{idx_code}).to_i], #{v_code}, #{Codegen.width_of(tt)}, #{Codegen.rq(b)})"
+              end
             else
               v_code
             end
@@ -1483,8 +1595,8 @@ module NoisemakerCpu
             if Codegen.base_of(tt) == "int" || Codegen.base_of(tt) == "uint"
               return ["#{tcode}.replace(#{rhs})", tt]
             end
-            if (seq = Codegen._sequential_assign(tcode, rhs))
-              return [seq, tt]
+            if (components = Codegen._assignment_components(rhs))
+              return [_component_writes(tcode, components, target["name"], node["value"], scope, stage: base_op.nil?), tt]
             end
             # Mat*vec (and mat*mat) assignment: the oracle compiles the whole-
             # vector store as a component-sequential comma-assign over the
@@ -1522,7 +1634,8 @@ module NoisemakerCpu
                 stores = "#{hv} = #{v_code}; " +
                          (0...Codegen.width_of(tt)).map do |i|
                            b2 = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
-                           "#{tcode}[#{i}] = rt.f32(rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{hv}, 1, #{Codegen.rq(b2)}))"
+                           operation = base_op == "/" && _divisor_kind(node["value"], scope) == "runtime" ? "rt.fdiv(#{tcode}[#{i}], #{hv})" : "rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{hv}, 1, #{Codegen.rq(b2)})"
+                           "#{tcode}[#{i}] = rt.f32(#{operation})"
                          end.join("; ")
                 return [stores, tt]
               end
@@ -1549,7 +1662,8 @@ module NoisemakerCpu
                 h = _local("__hoistv#{@scalar_assign_n += 1}")
                 joined = stores.each_with_index.map do |(cc, _), i|
                   b = Codegen.base_of(tt) == "uint" ? "uint" : (Codegen.base_of(tt) == "int" ? "int" : "float")
-                  "#{tcode}[#{i}] = rt.f32(rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{h}[#{i}], 1, #{Codegen.rq(b)}))"
+                  operation = "rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{h}[#{i}], 1, #{Codegen.rq(b)})"
+                  "#{tcode}[#{i}] = rt.f32(#{operation})"
                 end.join("; ")
                 return ["#{h} = #{full}; #{joined}", tt]
               end
@@ -1565,7 +1679,8 @@ module NoisemakerCpu
                   h = _local("__hoist#{i}")
                   "#{h} = #{cc}; #{tcode}[#{i}] = rt.f32(rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{h}[#{i}], 1, #{Codegen.rq(b)}))"
                 else
-                  "#{tcode}[#{i}] = rt.f32(rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{cc}, 1, #{Codegen.rq(b)}))"
+                  operation = "rt.binary(#{Codegen.rq(base_op)}, #{tcode}[#{i}], #{cc}, 1, #{Codegen.rq(b)})"
+                  "#{tcode}[#{i}] = rt.f32(#{operation})"
                 end
               end.join("; ")
               return [stores, tt]
@@ -1661,7 +1776,11 @@ module NoisemakerCpu
                 # ...])`): the current components are read as stored f32, the
                 # add runs raw f64, and ONE f32 round lands at the rebuilt
                 # array store (assign_swizzle below).
-                "rt.binary_raw(#{Codegen.rq(base_op)}, #{cur}, #{v_code}, #{sw.length}, 'float')"
+                if base_op == "/" && sw.length > 1 && _divisor_kind(node["value"], scope) == "runtime"
+                  "rt.fdiv(#{cur}, #{v_code})"
+                else
+                  "rt.binary_raw(#{Codegen.rq(base_op)}, #{cur}, #{v_code}, #{sw.length}, 'float')"
+                end
               else
                 "rt.binary(#{Codegen.rq(base_op)}, #{cur}, #{v_code}, #{sw.length}, #{Codegen.rq(b)})"
               end
@@ -1674,6 +1793,62 @@ module NoisemakerCpu
           ]
         end
         raise "codegen: bad assignment target #{target["k"]}\n"
+      end
+
+      def _component_node(node, scope, index)
+        case node["k"]
+        when "construct"
+          components = node["args"].flat_map do |arg|
+            width = Codegen.width_of(expr(arg, scope)[1])
+            width > 1 ? (0...width).map { |i| _component_node(arg, scope, i) } : [arg]
+          end
+          components[index] || components[-1]
+        when "binary"
+          node.merge("l" => _component_node(node["l"], scope, index), "r" => _component_node(node["r"], scope, index))
+        when "unary"
+          node.merge("x" => _component_node(node["x"], scope, index))
+        when "member"
+          node.merge("field" => node["field"][index % node["field"].length])
+        when "id"
+          Codegen.width_of(expr(node, scope)[1]) > 1 ? {"k" => "member", "obj" => node, "field" => "xyzw"[index]} : node
+        else
+          node
+        end
+      end
+
+      def _reads_written_component?(node, name, written)
+        return false if written.empty?
+        if node.is_a?(Hash)
+          if node["k"] == "member" && node.dig("obj", "k") == "id" && node["obj"]["name"] == name
+            return written.any? { |index| %w[xyzw rgba stpq].any? { |alphabet| node["field"].include?(alphabet[index]) } }
+          end
+          if node["k"] == "index" && node.dig("obj", "k") == "id" && node["obj"]["name"] == name
+            return true unless node.dig("idx", "k") == "num"
+            begin
+              return written.include?(Integer(node["idx"]["value"].sub(/[uU]\z/, ""), 0))
+            rescue ArgumentError
+              return true
+            end
+          end
+          return true if node["k"] == "id" && node["name"] == name
+          node.values.any? { |value| _reads_written_component?(value, name, written) }
+        elsif node.is_a?(Array)
+          node.any? { |value| _reads_written_component?(value, name, written) }
+        else
+          false
+        end
+      end
+
+      def _component_writes(target, codes, name, value, scope, stage: true)
+        prefix = []
+        if stage && codes.each_index.any? { |i| _reads_written_component?(_component_node(value, scope, i), name, (0...i).to_a) }
+          temporaries = codes.each_index.map { |i| _local("__vector_write_#{@scalar_assign_n}_#{i}") }
+          @scalar_assign_n += 1
+          prefix = temporaries.zip(codes).map { |temporary, code| "#{temporary} = #{code}" }
+          codes = temporaries
+        end
+        statements = prefix + codes.each_with_index.map { |code, i| "#{target}[#{i}] = rt.f32(#{code})" }
+        "(begin #{(statements + [target]).join('; ')} end)"
       end
 
       # Scalar projection of a float-vector expression for the oracle's
@@ -1781,7 +1956,7 @@ module NoisemakerCpu
             # `st[0] -= (0.5*fullResolution[0])/fullResolution[1]` needs the
             # raw form to match), so emit raw operators here -- except where
             # an operand is a vector builtin call (see _materialized_vec?).
-            raw = "((#{l_code}) #{op} (#{r_code}))"
+            raw = _metal_division?(node, scope, wl, wr) ? "rt.fdiv(#{l_code}, #{r_code})" : "((#{l_code}) #{op} (#{r_code}))"
             if _materialized_vec?(node["l"], scope) || _materialized_vec?(node["r"], scope)
               return ["rt.f32(#{raw})", { "base" => "float", "width" => 1 }]
             end
@@ -1803,17 +1978,9 @@ module NoisemakerCpu
         when "construct"
           code, t = expr(node, scope)
           w = Codegen.width_of(t)
-          if w == 1
-            # rt.construct(1, x) is a 1-element pooled ARRAY; projected to a
-            # scalar slot it must become the bare element (bitEffects:
-            # `st[0] += vec1(seed)[0] + 1000` -- an Array in raw scalar
-            # arithmetic would raise). Only float/int/uint constructs of one
-            # element appear here.
-            return [code, t] unless code.start_with?("rt.construct(1,")
-
-            inner = code.sub(/\Art\.construct\(1, /m, "").sub(/\)\z/m, "")
-            return ["(#{inner})", t]
-          end
+          # A scalar constructor already returns a scalar. Preserve its
+          # explicit conversion boundary when projecting into a vector slot.
+          return [code, t] if w == 1
 
           # A constructor of pure expressions is inlined component-by-component
           # in the oracle's comma-assign (st[0] - (0.5*res.x)/res.y, st[1] - 0.5)
@@ -2020,6 +2187,31 @@ module NoisemakerCpu
         "cpu_uvec3" => ->(_g, c, _a) { ["rt.construct(3, #{c.join(", ")}, 'uint')", TYPE["uvec3"]] },
       }.freeze
 
+      def _murmur_finalizer?(name)
+        (@overloads[name] || []).any? do |fn|
+          node = fn["node"]
+          next false unless node["ret"] == "uint" && node["params"].length == 1 && node["params"][0][0] == "uint"
+          argument = {"k" => "id", "name" => node["params"][0][1]}
+          body = node["body"]
+          next false unless body.length == 6 && body[-1] == {"k" => "return", "value" => argument}
+          steps = body[0...-1].map do |statement|
+            assignment = statement["expr"] || {}
+            next nil unless assignment["k"] == "assign" && assignment["target"] == argument
+            value = assignment["value"]
+            op = assignment["op"][0...-1]
+            if assignment["op"] == "=" && value["k"] == "binary" && value["l"] == argument
+              op, value = value["op"], value["r"]
+            end
+            if op == "^" && value["k"] == "binary" && value["op"] == ">>" && value["l"] == argument
+              ["shift", value["r"]["value"]]
+            elsif op == "*" && value["k"] == "num"
+              ["multiply", value["value"].downcase]
+            end
+          end
+          steps == [["shift", "16u"], ["multiply", "0x7feb352du"], ["shift", "15u"], ["multiply", "0x846ca68bu"], ["shift", "16u"]]
+        end
+      end
+
       def _e_call(node, scope)
         name = node["name"]
         args = node["args"].map { |a| expr(a, scope) }
@@ -2028,7 +2220,8 @@ module NoisemakerCpu
           @uses_deriv = true
           return ["rt.#{name}(#{codes[0]})", args[0][1]]
         end
-        r = ROUTED[name]
+        return ["rt.hash_uint(#{codes[0]})", TYPE["uint"]] if _murmur_finalizer?(name)
+        r = name == "hash_uint" && @overloads.key?(name) ? nil : ROUTED[name]
         # cpu_float(0xffffffffu): the hash-boundary rewrite turns
         # `float(0xffffffffu)` into cpu_float(<uint literal>); the value is a
         # uint-to-float VALUE conversion, so f32 rounds 4294967295 up to

@@ -191,9 +191,9 @@ run_pixel = lambda do |ctx, out|
     uv = rt.copy(uv, 'float')
     _for2_first = nil; _for3_first = nil; _for4_first = nil; a = nil; atlas = nil; axis = nil; b = nil; boundary = nil; cameraRay = nil; cell = nil; crossed = nil; delta = nil; density = nil; direction = nil; distance = nil; enter = nil; farT = nil; focalLength = nil; framedUv = nil; hit = nil; leave = nil; nearT = nil; nextT = nil; normal = nil; origin = nil; p = nil; size = nil; step = nil; stepDir = nil; viewDirection = nil; worldNormal = nil
     size = rt.construct(1, _u_volumeSize)
-    focalLength = rt.binary('/', rt.f(1), rt.component_wise('tan', rt.binary('*', rt.component_wise('clamp', _u_fieldOfView, rt.f(10), rt.f(150)), rt.f(0.0087266461923718452), 1, 'float')), 1, 'float')
+    focalLength = rt.fdiv(rt.f(1), rt.component_wise('tan', rt.binary('*', rt.component_wise('clamp', _u_fieldOfView, rt.f(10), rt.f(150)), rt.f(0.0087266461923718452), 1, 'float')))
     origin = rt.construct(3, rt.binary('*', rt.construct(3, rt.binary('+', rt.construct(3, rt.binary('/', inverseRotation__vec3.call(rt.construct(3, (rt.unary('-', _u_posX)), (rt.unary('-', _u_posY)), (((rt.f(80)) - (_u_posZ))))), rt.f(80), 3, 'float')), rt.f(0.5), 3, 'float')), size, 3, 'float'))
-    framedUv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', uv, rt.construct_raw(2, _u_panX, _u_panY), 2, 'float'), rt.component_wise('max', _u_zoom, rt.f(0.0010000000474974513)), 2, 'float'))
+    framedUv = rt.construct(2, rt.fdiv(rt.binary_raw('+', uv, rt.construct_raw(2, _u_panX, _u_panY), 2, 'float'), rt.component_wise('max', _u_zoom, rt.f(0.0010000000474974513))))
     cameraRay = rt.construct(3, rt.binary_raw('/', rt.binary_raw('*', framedUv, rt.f(2), 2, 'float'), rt.binary('*', focalLength, rt.component_wise('max', _u_viewScale, rt.f(0.0010000000474974513)), 1, 'float'), 2, 'float'), rt.unary('-', rt.f(1)))
     direction = rt.construct(3, rt.binary('*', inverseRotation__vec3.call(cameraRay), rt.binary('/', size, rt.f(80), 1, 'float'), 3, 'float'))
     nearT = rt.construct(3, rt.unary('-', rt.f(1.0000000150474662e+30)))
@@ -320,9 +320,9 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _for5_first = nil; aspect = nil; atlas = nil; cell = nil; color = nil; crossed = nil; density = nil; distance = nil; enter = nil; fullRes = nil; hit = nil; leave = nil; nearT = nil; nextT = nil; normal = nil; origin = nil; p = nil; right = nil; size = nil; span = nil; step = nil; up = nil; uv = nil
     g['fragColor'].replace((rt.construct(4, rt.binary_raw('*', _u_bgColor, _u_bgAlpha, 3, 'float'), _u_bgAlpha)).map { |c| rt.f32(c) })
-    g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(1)); g['geoOut'][3] = rt.f32(rt.f(1))
+    (begin g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(1)); g['geoOut'][3] = rt.f32(rt.f(1)); g['geoOut'] end)
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.binary_raw('*', fullRes, rt.f(0.5), 2, 'float'), 2, 'float'), rt.swizzle(fullRes, 'y'), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('-', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.binary_raw('*', fullRes, rt.f(0.5), 2, 'float'), 2, 'float'), rt.swizzle(fullRes, 'y')))
     aspect = rt.f(0.0)
     cell = rt.construct(3, 0.0, 'int')
     distance = rt.f(0.0)
@@ -340,8 +340,8 @@ run_pixel = lambda do |ctx, out|
       renderPerspective__vec2.call(uv)
     else
       size = rt.construct(1, _u_volumeSize)
-      aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-      span = rt.binary('/', rt.binary('*', rt.binary('*', rt.component_wise('max', rt.f(1.632993221282959), rt.binary('/', rt.f(1.4142135381698608), aspect, 1, 'float')), size, 1, 'float'), rt.f(1.0800000429153442), 1, 'float'), rt.component_wise('max', _u_zoom, rt.f(0.0010000000474974513)), 1, 'float')
+      aspect = rt.fdiv(rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'))
+      span = rt.fdiv(rt.binary('*', rt.binary('*', rt.component_wise('max', rt.f(1.632993221282959), rt.fdiv(rt.f(1.4142135381698608), aspect)), size, 1, 'float'), rt.f(1.0800000429153442), 1, 'float'), rt.component_wise('max', _u_zoom, rt.f(0.0010000000474974513)))
       right = rt.construct(3, rt.f(0.70710676908493042), rt.f(0), rt.unary('-', rt.f(0.70710676908493042)))
       up = rt.construct(3, rt.unary('-', rt.f(0.40824830532073975)), rt.f(0.81649661064147949), rt.unary('-', rt.f(0.40824830532073975)))
       origin = rt.construct(3, rt.binary_raw('+', rt.binary_raw('+', rt.construct_raw(3, rt.binary('*', size, rt.f(2.5), 1, 'float')), rt.binary_raw('*', rt.binary_raw('*', right, rt.binary('+', rt.swizzle(uv, 'x'), _u_panX, 1, 'float'), 3, 'float'), span, 3, 'float'), 3, 'float'), rt.binary_raw('*', rt.binary_raw('*', up, rt.binary('+', rt.swizzle(uv, 'y'), _u_panY, 1, 'float'), 3, 'float'), span, 3, 'float'), 3, 'float'))
@@ -356,10 +356,10 @@ run_pixel = lambda do |ctx, out|
       nextT = rt.construct(3, rt.binary_raw('-', origin, rt.construct_raw(3, rt.construct(3, cell)), 3, 'float'))
       normal = rt.construct(3, rt.f(0), rt.f(0), rt.f(1))
       if rt.bool((rt.bool(rt.binary('>=', rt.swizzle(nearT, 'y'), rt.swizzle(nearT, 'x'))) && rt.bool(rt.binary('>=', rt.swizzle(nearT, 'y'), rt.swizzle(nearT, 'z'))) ? 1 : 0))
-        normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(1)); normal[2] = rt.f32(rt.f(0))
+        (begin normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(1)); normal[2] = rt.f32(rt.f(0)); normal end)
       else
         if rt.bool(rt.binary('>=', rt.swizzle(nearT, 'x'), rt.swizzle(nearT, 'z')))
-          normal[0] = rt.f32(rt.f(1)); normal[1] = rt.f32(rt.f(0)); normal[2] = rt.f32(rt.f(0))
+          (begin normal[0] = rt.f32(rt.f(1)); normal[1] = rt.f32(rt.f(0)); normal[2] = rt.f32(rt.f(0)); normal end)
         end
       end
       hit = [rt.f(0.0), rt.construct(3, 0.0), [rt.construct(3, 0.0, 'int'), rt.construct(3, 0.0)]]
@@ -374,7 +374,7 @@ run_pixel = lambda do |ctx, out|
           normal.replace((isosurfaceNormal__vec3_vec3.call(p, normal)).map { |c| rt.f32(c) })
         end
         g['fragColor'].replace((rt.construct(4, lighting__vec3_vec3_vec3.call(rt.swizzle(sampleAtlasCoords__sampler2D_struct1_bool.call(_u_volumeCache, hit[2], 1), 'rgb'), normal, rt.construct(3, (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)))), rt.f(1))).map { |c| rt.f32(c) })
-        g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.binary('/', hit[0], rt.binary('*', size, rt.f(4), 1, 'float'), 1, 'float'), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
+        g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.fdiv(hit[0], rt.binary('*', size, rt.f(4), 1, 'float')), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
         return
       end
       step = rt.i(0)
@@ -396,18 +396,18 @@ run_pixel = lambda do |ctx, out|
         if rt.bool((rt.bool(rt.binary('>', density, rt.f(0))) && rt.bool(rt.binary('>=', density, _u_threshold)) ? 1 : 0))
           color = rt.swizzle(rt.texel_fetch(_u_volumeCache, atlas, rt.i(0)), 'rgb')
           g['fragColor'].replace((rt.construct(4, lighting__vec3_vec3_vec3.call(color, normal, rt.construct(3, (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)))), rt.f(1))).map { |c| rt.f32(c) })
-          g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.binary('/', distance, rt.binary('*', size, rt.f(4), 1, 'float'), 1, 'float'), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
+          g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.fdiv(distance, rt.binary('*', size, rt.f(4), 1, 'float')), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
           return
         end
         distance = rt.component_wise('min', rt.component_wise('min', rt.swizzle(nextT, 'x'), rt.swizzle(nextT, 'y')), rt.swizzle(nextT, 'z'))
         crossed = rt.component_wise('lessThanEqual', nextT, rt.construct(3, distance))
         if rt.bool(rt.swizzle(crossed, 'y'))
-          normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(1)); normal[2] = rt.f32(rt.f(0))
+          (begin normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(1)); normal[2] = rt.f32(rt.f(0)); normal end)
         else
           if rt.bool(rt.swizzle(crossed, 'x'))
-            normal[0] = rt.f32(rt.f(1)); normal[1] = rt.f32(rt.f(0)); normal[2] = rt.f32(rt.f(0))
+            (begin normal[0] = rt.f32(rt.f(1)); normal[1] = rt.f32(rt.f(0)); normal[2] = rt.f32(rt.f(0)); normal end)
           else
-            normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(0)); normal[2] = rt.f32(rt.f(1))
+            (begin normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(0)); normal[2] = rt.f32(rt.f(1)); normal end)
           end
         end
         cell.replace(rt.binary('-', cell, rt.construct(3, crossed, 'int'), 3, 'int'))

@@ -28,8 +28,8 @@ run_pixel = lambda do |ctx, out|
   end
   sample_glyph__int_int_int_int = lambda do |digit, localX, localY, iScale|
     gx = nil; gy = nil; row = nil
-    gx = rt.binary('/', localX, iScale, 1, 'int')
-    gy = rt.binary('/', localY, iScale, 1, 'int')
+    gx = rt.trunc_div(localX, iScale)
+    gy = rt.trunc_div(localY, iScale)
     if rt.bool((rt.bool((rt.bool((rt.bool(rt.binary('<', gx, rt.i(0))) || rt.bool(rt.binary('>=', gx, g['GLYPH_W'])) ? 1 : 0)) || rt.bool(rt.binary('<', gy, rt.i(0))) ? 1 : 0)) || rt.bool(rt.binary('>=', gy, g['GLYPH_H'])) ? 1 : 0))
       return rt.f(0)
     end
@@ -38,12 +38,12 @@ run_pixel = lambda do |ctx, out|
   end
   ticker_row_mask__int_int_int_float_int_int = lambda do |pixelX, pixelY, rowSeed, _t, _CELL_W, iScale|
     cellX = nil; digit = nil; h = nil; localX = nil; offset = nil; scrollSpeed = nil; sx = nil
-    scrollSpeed = rt.binary('+', rt.f(0.5), rt.binary('*', rt.binary('/', rt.construct(1, rt.binary('&', hash_mix__uint.call(rt.binary('^', rt.construct(1, rowSeed, 'uint'), rt.i(17), 1, 'uint')), rt.i(65535), 1, 'uint')), rt.f(65535), 1, 'float'), rt.f(1.5), 1, 'float'), 1, 'float')
+    scrollSpeed = rt.binary('+', rt.f(0.5), rt.binary('*', rt.binary('/', rt.construct(1, rt.binary('&', rt.hash_uint(rt.binary('^', rt.construct(1, rowSeed, 'uint'), rt.i(17), 1, 'uint')), rt.i(65535), 1, 'uint')), rt.f(65535), 1, 'float'), rt.f(1.5), 1, 'float'), 1, 'float')
     offset = rt.construct(1, rt.component_wise('floor', rt.binary('*', rt.binary('*', _t, scrollSpeed, 1, 'float'), rt.f(120), 1, 'float')), 'int')
     sx = rt.binary('+', pixelX, offset, 1, 'int')
-    cellX = (rt.bool(rt.binary('>=', sx, rt.i(0))) ? (rt.binary('/', sx, _CELL_W, 1, 'int')) : (rt.binary('/', rt.binary('+', rt.binary('-', sx, _CELL_W, 1, 'int'), rt.i(1), 1, 'int'), _CELL_W, 1, 'int')))
+    cellX = (rt.bool(rt.binary('>=', sx, rt.i(0))) ? rt.trunc_div(sx, _CELL_W) : rt.trunc_div(rt.binary('+', rt.binary('-', sx, _CELL_W, 1, 'int'), rt.i(1), 1, 'int'), _CELL_W))
     localX = rt.binary('-', sx, rt.binary('*', cellX, _CELL_W, 1, 'int'), 1, 'int')
-    h = hash_mix__uint.call(rt.binary('^', rt.construct(1, cellX, 'uint'), rt.binary('*', rt.construct(1, rowSeed, 'uint'), rt.i(997), 1, 'uint'), 1, 'uint'))
+    h = rt.hash_uint(rt.binary('^', rt.construct(1, cellX, 'uint'), rt.binary('*', rt.construct(1, rowSeed, 'uint'), rt.i(997), 1, 'uint'), 1, 'uint'))
     digit = rt.construct(1, rt.binary('%', h, rt.i(10), 1, 'uint'), 'int')
     return sample_glyph__int_int_int_int.call(digit, localX, pixelY, iScale)
   end
@@ -56,7 +56,7 @@ run_pixel = lambda do |ctx, out|
     dims = rt.construct(2, rt.texture_size(_u_inputTex))
     src = rt.texture(_u_inputTex, ctx.uv)
     _t = rt.binary('*', _u_time, _u_speed, 1, 'float')
-    baseSeed = hash_mix__uint.call(rt.binary('*', rt.construct(1, _u_seed, 'uint'), rt.i(7919), 1, 'uint'))
+    baseSeed = rt.hash_uint(rt.binary('*', rt.construct(1, _u_seed, 'uint'), rt.i(7919), 1, 'uint'))
     totalH = rt.binary('*', _u_rows, rt.binary('+', _CELL_H, _ROW_GAP, 1, 'int'), 1, 'int')
     px = rt.construct(1, rt.component_wise('floor', rt.binary('*', rt.swizzle(ctx.uv, 'x'), rt.swizzle(dims, 'x'), 1, 'float')), 'int')
     pyFromBottom = rt.construct(1, rt.component_wise('floor', rt.binary('*', rt.binary('-', rt.f(1), rt.swizzle(ctx.uv, 'y'), 1, 'float'), rt.swizzle(dims, 'y'), 1, 'float')), 'int')
@@ -65,13 +65,13 @@ run_pixel = lambda do |ctx, out|
       return
     end
     rowStride = rt.binary('+', _CELL_H, _ROW_GAP, 1, 'int')
-    rowIdx = rt.binary('/', pyFromBottom, rowStride, 1, 'int')
+    rowIdx = rt.trunc_div(pyFromBottom, rowStride)
     localY = rt.binary('-', pyFromBottom, rt.binary('*', rowIdx, rowStride, 1, 'int'), 1, 'int')
     if rt.bool((rt.bool(rt.binary('>=', rowIdx, _u_rows)) || rt.bool(rt.binary('>=', localY, _CELL_H)) ? 1 : 0))
       g['fragColor'].replace((src).map { |c| rt.f32(c) })
       return
     end
-    rowSeed = rt.construct(1, hash_mix__uint.call(rt.binary('+', rt.construct(1, rowIdx, 'uint'), baseSeed, 1, 'uint')), 'int')
+    rowSeed = rt.construct(1, rt.hash_uint(rt.binary('+', rt.construct(1, rowIdx, 'uint'), baseSeed, 1, 'uint')), 'int')
     mask = ticker_row_mask__int_int_int_float_int_int.call(px, localY, rowSeed, _t, _CELL_W, iScale)
     shadow = rt.f(0)
     shadowOff = rt.component_wise('max', rt.construct(1, rt.binary('*', rt.f(2), _u_renderScale, 1, 'float'), 'int'), rt.i(1))

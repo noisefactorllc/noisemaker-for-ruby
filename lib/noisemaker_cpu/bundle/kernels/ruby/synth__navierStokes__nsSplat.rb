@@ -15,12 +15,12 @@ run_pixel = lambda do |ctx, out|
   _u_inputTex = ctx.texture_binding('inputTex')
   g['fragColor'] = rt.construct(4, 0.0)
   hash11__float = lambda do |x|
-    return rt.component_wise('fract', rt.binary('*', rt.component_wise('sin', rt.binary('*', x, rt.f(12.989800453186035), 1, 'float')), rt.f(43758.546875), 1, 'float'))
+    return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.component_wise('sin', rt.construct(1, rt.binary('*', rt.construct(1, x), rt.f(12.989800453186035), 1, 'float')))), rt.f(43758.546875), 1, 'float')))
   end
   hash22__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    p = rt.assign_swizzle(p, 'x', rt.dot(p, rt.construct(2, rt.f(127.09999847412109), rt.f(311.70001220703125))))
-    p = rt.assign_swizzle(p, 'y', rt.dot(p, rt.construct(2, rt.f(269.5), rt.f(183.30000305175781))))
+    __vector_write_0_0 = nil; __vector_write_0_1 = nil
+    (begin __vector_write_0_0 = rt.dot(p, rt.construct(2, rt.f(127.09999847412109), rt.f(311.70001220703125))); __vector_write_0_1 = rt.dot(p, rt.construct(2, rt.f(269.5), rt.f(183.30000305175781))); p[0] = rt.f32(__vector_write_0_0); p[1] = rt.f32(__vector_write_0_1); p end)
     return rt.component_wise('fract', rt.construct(2, rt.f32(((rt.component_wise('sin', p[0])) * (rt.f(43758.546875)))), rt.f32(((rt.component_wise('sin', p[1])) * (rt.f(43758.546875))))))
   end
   lum__vec3 = lambda do |c|
@@ -31,7 +31,7 @@ run_pixel = lambda do |ctx, out|
     _for0_first = nil; bufferEmpty = nil; c = nil; d = nil; dt = nil; dye = nil; falloff = nil; fragCoord = nil; grad = nil; i = nil; iDye = nil; iForce = nil; idf = nil; lc = nil; lr = nil; lu = nil; prev = nil; r2 = nil; radius = nil; seedF = nil; sign = nil; tangent = nil; texSize = nil; texel = nil; uv = nil; vel = nil
     texSize = rt.texture_size(_u_bufTex)
     fragCoord = rt.swizzle(ctx.frag_coord, 'xy')
-    uv = rt.construct(2, rt.binary_raw('/', fragCoord, rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(fragCoord, rt.construct_raw(2, rt.construct(2, texSize))))
     prev = rt.texture(_u_bufTex, uv)
     bufferEmpty = rt.binary('==', rt.swizzle(prev, 'a'), rt.f(0))
     dye = rt.f(0.0)
@@ -57,7 +57,7 @@ run_pixel = lambda do |ctx, out|
         radius = rt.binary('+', rt.f(0.10000000149011612), rt.binary('*', rt.f(0.059999998658895493), hash11__float.call(rt.binary('+', rt.binary('*', idf, rt.f(2.1099998950958252), 1, 'float'), seedF, 1, 'float')), 1, 'float'), 1, 'float')
         d = rt.construct(2, rt.binary_raw('-', uv, c, 2, 'float'))
         r2 = rt.dot(d, d)
-        falloff = rt.component_wise('exp', rt.binary('/', rt.unary('-', r2), rt.binary('*', rt.binary('*', rt.f(2), radius, 1, 'float'), radius, 1, 'float'), 1, 'float'))
+        falloff = rt.component_wise('exp', rt.fdiv(rt.unary('-', r2), rt.binary('*', rt.binary('*', rt.f(2), radius, 1, 'float'), radius, 1, 'float')))
         tangent = rt.construct(2, rt.unary('-', rt.swizzle(d, 'y')), rt.swizzle(d, 'x'))
         vel[0] = rt.f32(rt.binary('+', vel[0], ((((((tangent[0]) * (sign))) * (falloff))) * (rt.f(12))), 1, 'float')); vel[1] = rt.f32(rt.binary('+', vel[1], ((((((tangent[1]) * (sign))) * (falloff))) * (rt.f(12))), 1, 'float'))
         dye = rt.binary('+', dye, falloff, 1, 'float')
@@ -76,7 +76,7 @@ run_pixel = lambda do |ctx, out|
     lu = rt.f(0.0)
     texel = rt.construct(2, 0.0)
     if rt.bool((rt.bool(rt.binary('>', iForce, rt.f(0))) || rt.bool(rt.binary('>', iDye, rt.f(0))) ? 1 : 0))
-      texel = rt.construct(2, rt.binary_raw('/', rt.f(1), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+      texel = rt.construct(2, rt.fdiv(rt.f(1), rt.construct_raw(2, rt.construct(2, texSize))))
       lc = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, uv), 'rgb'))
       lr = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
       lu = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))

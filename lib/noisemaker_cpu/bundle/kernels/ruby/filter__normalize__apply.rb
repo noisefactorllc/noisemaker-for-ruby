@@ -22,7 +22,7 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'].replace((color).map { |c| rt.f32(c) })
       return
     end
-    normalized = rt.construct(3, rt.binary_raw('/', rt.binary_raw('-', rt.swizzle(color, 'rgb'), minVal, 3, 'float'), rt.binary('-', maxVal, minVal, 1, 'float'), 3, 'float'))
+    normalized = rt.construct(3, rt.fdiv(rt.binary_raw('-', rt.swizzle(color, 'rgb'), minVal, 3, 'float'), rt.binary('-', maxVal, minVal, 1, 'float')))
     g['fragColor'].replace((rt.construct(4, normalized, rt.swizzle(color, 'a'))).map { |c| rt.f32(c) })
   end
   main__void.call

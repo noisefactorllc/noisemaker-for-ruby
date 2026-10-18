@@ -34,7 +34,7 @@ run_pixel = lambda do |ctx, out|
   lumGradientSimplified__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     _t = nil; b = nil; bl = nil; br = nil; l = nil; px = nil; r = nil; tl = nil; tr = nil
-    px = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    px = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     tl = lum__vec3.call(rt.swizzle(rt.texture(_u_simplifiedTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.f(1)), 2, 'float'), 2, 'float')), 'rgb'))
     l = lum__vec3.call(rt.swizzle(rt.texture(_u_simplifiedTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.f(0)), 2, 'float'), 2, 'float')), 'rgb'))
     bl = lum__vec3.call(rt.swizzle(rt.texture(_u_simplifiedTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.unary('-', rt.f(1))), 2, 'float'), 2, 'float')), 'rgb'))
@@ -47,7 +47,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     __sc2 = nil; __sc3 = nil; c = nil; edge = nil; flatness = nil; gc = nil; pool = nil; simplified = nil; src = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     simplified = rt.swizzle(rt.texture(_u_simplifiedTex, uv), 'rgb')
     edge = rt.length(lumGradientSimplified__vec2.call(uv))

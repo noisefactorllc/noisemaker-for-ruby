@@ -12,8 +12,8 @@ run_pixel = lambda do |ctx, out|
     div = nil; fragCoord = nil; texSize = nil; texel = nil; uB = nil; uL = nil; uR = nil; uT = nil; uv = nil
     texSize = rt.texture_size(_u_velTex)
     fragCoord = rt.swizzle(ctx.frag_coord, 'xy')
-    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', fragCoord, rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    texel = rt.construct(2, rt.fdiv(rt.f(1), rt.construct_raw(2, rt.construct(2, texSize))))
+    uv = rt.construct(2, rt.fdiv(fragCoord, rt.construct_raw(2, rt.construct(2, texSize))))
     uR = rt.swizzle(rt.texture(_u_velTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rg')
     uL = rt.swizzle(rt.texture(_u_velTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rg')
     uT = rt.swizzle(rt.texture(_u_velTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rg')
@@ -31,7 +31,7 @@ run_pixel = lambda do |ctx, out|
       uT = rt.assign_swizzle(uT, 'y', rt.unary('-', rt.swizzle(uB, 'y')))
     end
     div = rt.binary('*', rt.f(0.5), rt.binary('+', rt.binary('-', rt.swizzle(uR, 'x'), rt.swizzle(uL, 'x'), 1, 'float'), rt.binary('-', rt.swizzle(uT, 'y'), rt.swizzle(uB, 'y'), 1, 'float'), 1, 'float'), 1, 'float')
-    g['fragColor'][0] = rt.f32(rt.f(0)); g['fragColor'][1] = rt.f32(div); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(rt.f(0)); g['fragColor'][1] = rt.f32(div); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

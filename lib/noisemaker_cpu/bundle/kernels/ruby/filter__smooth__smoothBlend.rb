@@ -240,8 +240,8 @@ run_pixel = lambda do |ctx, out|
     globalCoord = nil; original = nil; result = nil; texSize = nil; texelSize = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize))))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), rt.construct_raw(2, rt.construct(2, texSize))))
     original = rt.texel_fetch(_u_inputTex, rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int'), rt.i(0))
     result = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', _u_smoothType, rt.i(0)))

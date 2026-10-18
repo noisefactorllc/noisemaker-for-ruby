@@ -151,7 +151,7 @@ run_pixel = lambda do |ctx, out|
     reDF = rt.copy(reDF, 'float')
     imDF = rt.copy(imDF, 'float')
     angle = nil; cs = nil; scale = nil; sn = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', fragCoord, rt.binary_raw('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('-', fragCoord, rt.binary_raw('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', _u_rotation), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
     cs = rt.component_wise('cos', angle)
     sn = rt.component_wise('sin', angle)

@@ -19,13 +19,13 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     globalCoord = nil; globalUV = nil; localUV = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    globalUV = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     st = rt.copy(globalUV, 'float')
     st = rt.assign_swizzle(st, 'x', rt.binary_raw('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     st.replace((rt.binary_raw('+', rt.binary_raw('*', st, rt.construct_raw(2, _u_x, _u_y), 2, 'float'), rt.construct_raw(2, rt.binary('*', _u_offsetX, _u_aspect, 1, 'float'), _u_offsetY), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary_raw('/', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      st.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((st[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((st[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
+      st.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((st[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((st[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((st[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((st[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         st.replace((rt.component_wise('fract', st)).map { |c| rt.f32(c) })
@@ -33,9 +33,9 @@ run_pixel = lambda do |ctx, out|
         st.replace((rt.component_wise('clamp', st, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
       end
     end
-    localUV = rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', st, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    localUV = rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', st, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      localUV.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
+      localUV.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((localUV[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((localUV[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((localUV[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((localUV[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         localUV.replace((rt.component_wise('fract', localUV)).map { |c| rt.f32(c) })

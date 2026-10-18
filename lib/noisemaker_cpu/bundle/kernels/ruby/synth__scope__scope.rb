@@ -16,7 +16,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     dist = nil; fIndex = nil; fract_i = nil; globalCoord = nil; i0 = nil; i1 = nil; line = nil; s0 = nil; s1 = nil; uv = nil; wval = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     fIndex = rt.binary('*', rt.swizzle(uv, 'x'), rt.f(127), 1, 'float')
     i0 = rt.construct(1, rt.component_wise('floor', fIndex), 'int')
     i1 = rt.component_wise('min', rt.binary('+', i0, rt.i(1), 1, 'int'), rt.i(127))

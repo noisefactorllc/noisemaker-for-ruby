@@ -15,19 +15,19 @@ run_pixel = lambda do |ctx, out|
     texSize = rt.texture_size(_u_inputTex)
     tileDims = rt.construct(2, texSize)
     resolution = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), tileDims, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), tileDims))
     if rt.bool(rt.binary('<', _u_size, rt.f(1)))
       g['fragColor'].replace((rt.texture(_u_inputTex, uv)).map { |c| rt.f32(c) })
       return
     end
     pixelSize = _u_size
-    dx = rt.binary('/', pixelSize, rt.swizzle(resolution, 'x'), 1, 'float')
-    dy = rt.binary('/', pixelSize, rt.swizzle(resolution, 'y'), 1, 'float')
-    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), resolution, 2, 'float'))
+    dx = rt.fdiv(pixelSize, rt.swizzle(resolution, 'x'))
+    dy = rt.fdiv(pixelSize, rt.swizzle(resolution, 'y'))
+    globalUV = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), resolution))
     centered = rt.construct(2, rt.binary_raw('-', globalUV, rt.f(0.5), 2, 'float'))
-    globalCoord = rt.construct(2, rt.binary('*', dx, rt.component_wise('floor', rt.binary('/', rt.swizzle(centered, 'x'), dx, 1, 'float')), 1, 'float'), rt.binary('*', dy, rt.component_wise('floor', rt.binary('/', rt.swizzle(centered, 'y'), dy, 1, 'float')), 1, 'float'))
+    globalCoord = rt.construct(2, rt.binary('*', dx, rt.component_wise('floor', rt.fdiv(rt.swizzle(centered, 'x'), dx)), 1, 'float'), rt.binary('*', dy, rt.component_wise('floor', rt.fdiv(rt.swizzle(centered, 'y'), dy)), 1, 'float'))
     __sc1 = rt.f(0.5); globalCoord[0] = rt.f32(rt.binary('+', globalCoord[0], __sc1, 1, 'float')); globalCoord[1] = rt.f32(rt.binary('+', globalCoord[1], __sc1, 1, 'float'))
-    coord = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', rt.binary_raw('*', globalCoord, resolution, 2, 'float'), _u_tileOffset, 2, 'float'), tileDims, 2, 'float'))
+    coord = rt.construct(2, rt.fdiv(rt.binary_raw('-', rt.binary_raw('*', globalCoord, resolution, 2, 'float'), _u_tileOffset, 2, 'float'), tileDims))
     g['fragColor'].replace((rt.texture(_u_inputTex, coord)).map { |c| rt.f32(c) })
   end
   main__void.call

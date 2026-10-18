@@ -98,24 +98,24 @@ run_pixel = lambda do |ctx, out|
     m = rt.binary('-', v, c, 1, 'float')
     rgb = rt.construct(3, 0.0)
     if rt.bool((rt.bool(rt.binary('<=', rt.f(0), h)) && rt.bool(rt.binary('<', h, rt.f(0.1666666716337204))) ? 1 : 0))
-      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
+      (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0)); rgb end)
     else
       if rt.bool((rt.bool(rt.binary('<=', rt.f(0.1666666716337204), h)) && rt.bool(rt.binary('<', h, rt.f(0.3333333432674408))) ? 1 : 0))
-        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
+        (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0)); rgb end)
       else
         if rt.bool((rt.bool(rt.binary('<=', rt.f(0.3333333432674408), h)) && rt.bool(rt.binary('<', h, rt.f(0.5))) ? 1 : 0))
-          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
+          (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x); rgb end)
         else
           if rt.bool((rt.bool(rt.binary('<=', rt.f(0.5), h)) && rt.bool(rt.binary('<', h, rt.f(0.66666668653488159))) ? 1 : 0))
-            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
+            (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c); rgb end)
           else
             if rt.bool((rt.bool(rt.binary('<=', rt.f(0.66666668653488159), h)) && rt.bool(rt.binary('<', h, rt.f(0.83333331346511841))) ? 1 : 0))
-              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
+              (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
               if rt.bool((rt.bool(rt.binary('<=', rt.f(0.83333331346511841), h)) && rt.bool(rt.binary('<', h, rt.f(1))) ? 1 : 0))
-                rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
+                (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
               else
-                rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0))
+                (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0)); rgb end)
               end
             end
           end
@@ -436,7 +436,7 @@ run_pixel = lambda do |ctx, out|
     color = nil; colorXY = nil; colorXZ = nil; colorYZ = nil; d = nil; diffuse = nil; fogDist = nil; globalCoord = nil; lightPosition = nil; lightVector = nil; localP = nil; lum = nil; normal = nil; p = nil; rayDirection = nil; rayOrigin = nil; shapeParams = nil; st = nil; transformData = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     color = rt.construct(4, rt.f(1))
-    st = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', globalCoord, rt.binary_raw('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'xy'), 2, 'float'), 2, 'float'), rt.swizzle(_u_fullResolution, 'y'), 2, 'float'))
+    st = rt.construct(2, rt.fdiv(rt.binary_raw('-', globalCoord, rt.binary_raw('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'xy'), 2, 'float'), 2, 'float'), rt.swizzle(_u_fullResolution, 'y')))
     rayOrigin = rt.construct(3, rt.f(0), rt.f(0), rt.unary('-', _u_cameraDist))
     rayDirection = rt.normalize(rt.construct(3, st, rt.f(1)))
     transformData = computeTransformData__void.call()
@@ -487,7 +487,7 @@ run_pixel = lambda do |ctx, out|
     else
       color.replace((rt.component_wise('mix', color, rt.construct(4, _u_bgColor, rt.binary('*', _u_bgAlpha, rt.f(0.0099999997764825821), 1, 'float')), rt.component_wise('floor', fogDist))).map { |c| rt.f32(c) })
     end
-    st.replace((rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float')).map { |c| rt.f32(c) })
+    st.replace((rt.fdiv(globalCoord, _u_fullResolution)).map { |c| rt.f32(c) })
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end
   main__void.call

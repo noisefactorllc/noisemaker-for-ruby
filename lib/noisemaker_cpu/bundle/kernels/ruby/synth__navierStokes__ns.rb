@@ -18,7 +18,7 @@ run_pixel = lambda do |ctx, out|
     texSize = rt.texture_size(_u_fbTex)
     minIdx = rt.construct(2, rt.i(0), 'int')
     maxIdx = rt.binary('-', texSize, rt.construct(2, rt.i(1), 'int'), 2, 'int')
-    texelPos = rt.construct(2, rt.binary_raw('-', rt.binary_raw('/', rt.binary_raw('*', globalCoord, rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'), _u_fullResolution, 2, 'float'), rt.construct_raw(2, rt.f(0.5)), 2, 'float'))
+    texelPos = rt.construct(2, rt.binary_raw('-', rt.fdiv(rt.binary_raw('*', globalCoord, rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'), _u_fullResolution), rt.construct_raw(2, rt.f(0.5)), 2, 'float'))
     baseI = rt.construct(2, rt.construct(2, rt.component_wise('floor', texelPos)), 'int')
     f = rt.component_wise('fract', texelPos)
     v00 = rt.swizzle(rt.texel_fetch(_u_fbTex, rt.component_wise('clamp', baseI, minIdx, maxIdx), rt.i(0)), 'b')
@@ -34,7 +34,7 @@ run_pixel = lambda do |ctx, out|
     inputColor = rt.construct(3, 0.0)
     inputUv = rt.construct(2, 0.0)
     if rt.bool(rt.binary('>', blend, rt.f(0)))
-      inputUv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+      inputUv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
       inputColor = rt.swizzle(rt.texture(_u_inputTex, inputUv), 'rgb')
       outCol.replace((rt.component_wise('mix', outCol, inputColor, blend)).map { |c| rt.f32(c) })
     end

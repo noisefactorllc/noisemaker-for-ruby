@@ -43,8 +43,8 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     bandHeight = nil; beveled = nil; edge = nil; globalCoord = nil; glossy = nil; gradMag = nil; grain = nil; hC = nil; hR = nil; hT = nil; hhC = nil; hhR = nil; hhT = nil; m = nil; outColor = nil; shade = nil; sheet = nil; sheetOut = nil; src = nil; strength = nil; texel = nil; threshold = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
+    texel = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     hC = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, uv), 'rgb'))
     hR = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))

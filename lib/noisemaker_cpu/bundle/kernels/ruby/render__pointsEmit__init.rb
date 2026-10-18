@@ -34,7 +34,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _t = nil; a = nil; agentSeed = nil; angle = nil; attritionRate = nil; center = nil; centerSeed = nil; check_seed = nil; clusterId = nil; clusterSeed = nil; needsRespawn = nil; newCol = nil; newPos = nil; pCol = nil; pPos = nil; pVel = nil; r = nil; radius = nil; respawnRand = nil; rnd = nil; rotRand = nil; sampledCol = nil; stateCoord = nil; strideRand = nil; texCoord = nil; texDims = nil; timeBits = nil; uv = nil
     stateCoord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(1, _u_stateSize), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(1, _u_stateSize)))
     agentSeed = rt.binary('+', rt.construct(1, rt.binary('+', rt.swizzle(stateCoord, 'x'), rt.binary('*', rt.swizzle(stateCoord, 'y'), _u_stateSize, 1, 'int'), 1, 'int'), 'uint'), rt.construct(1, _u_seed, 'uint'), 1, 'uint')
     pPos = rt.texel_fetch(_u_xyzTex, stateCoord, rt.i(0))
     pVel = rt.texel_fetch(_u_velTex, stateCoord, rt.i(0))
@@ -111,7 +111,7 @@ run_pixel = lambda do |ctx, out|
       rotRand = hash__uint.call(rt.binary('+', agentSeed, rt.i(100), 1, 'uint'))
       strideRand = rt.binary('-', hash__uint.call(rt.binary('+', agentSeed, rt.i(101), 1, 'uint')), rt.f(0.5), 1, 'float')
       g['outXYZ'].replace((rt.construct(4, newPos, rt.f(1))).map { |c| rt.f32(c) })
-      g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rotRand); g['outVel'][3] = rt.f32(strideRand)
+      (begin g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rotRand); g['outVel'][3] = rt.f32(strideRand); g['outVel'] end)
       g['outRGBA'].replace((newCol).map { |c| rt.f32(c) })
     else
       g['outXYZ'].replace((pPos).map { |c| rt.f32(c) })

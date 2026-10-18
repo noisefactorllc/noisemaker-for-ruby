@@ -56,24 +56,24 @@ run_pixel = lambda do |ctx, out|
     m = rt.binary('-', v, c, 1, 'float')
     rgb = rt.construct(3, 0.0)
     if rt.bool((rt.bool(rt.binary('<=', rt.f(0), h)) && rt.bool(rt.binary('<', h, rt.f(0.1666666716337204))) ? 1 : 0))
-      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
+      (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0)); rgb end)
     else
       if rt.bool((rt.bool(rt.binary('<=', rt.f(0.1666666716337204), h)) && rt.bool(rt.binary('<', h, rt.f(0.3333333432674408))) ? 1 : 0))
-        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
+        (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0)); rgb end)
       else
         if rt.bool((rt.bool(rt.binary('<=', rt.f(0.3333333432674408), h)) && rt.bool(rt.binary('<', h, rt.f(0.5))) ? 1 : 0))
-          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
+          (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x); rgb end)
         else
           if rt.bool((rt.bool(rt.binary('<=', rt.f(0.5), h)) && rt.bool(rt.binary('<', h, rt.f(0.66666668653488159))) ? 1 : 0))
-            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
+            (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c); rgb end)
           else
             if rt.bool((rt.bool(rt.binary('<=', rt.f(0.66666668653488159), h)) && rt.bool(rt.binary('<', h, rt.f(0.83333331346511841))) ? 1 : 0))
-              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
+              (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
               if rt.bool((rt.bool(rt.binary('<=', rt.f(0.83333331346511841), h)) && rt.bool(rt.binary('<', h, rt.f(1))) ? 1 : 0))
-                rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
+                (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
               else
-                rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0))
+                (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0)); rgb end)
               end
             end
           end
@@ -394,15 +394,15 @@ run_pixel = lambda do |ctx, out|
     return color
   end
   main__void = lambda do
-    color = nil; globalCoord = nil; left = nil; leftColor = nil; right = nil; rightColor = nil; st = nil
+    __hoistv1 = nil; color = nil; globalCoord = nil; left = nil; leftColor = nil; right = nil; rightColor = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     color = rt.construct(4, rt.f(0), rt.f(0), rt.f(1), rt.f(1))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, rt.swizzle(_u_fullResolution, 'y'), 2, 'float'))
-    st[0] = rt.f32(rt.binary('-', st[0], (((((rt.swizzle(_u_fullResolution, 'x')) / (rt.swizzle(_u_fullResolution, 'y')))) * (rt.f(0.5)))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
+    st = rt.construct(2, rt.fdiv(globalCoord, rt.swizzle(_u_fullResolution, 'y')))
+    __hoistv1 = rt.construct(2, rt.binary('*', rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5), 1, 'float'), rt.f(0.5)); st[0] = rt.f32(rt.binary('-', st[0], __hoistv1[0], 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __hoistv1[1], 1, 'float'))
     leftColor = noise__vec2_float.call(st, rt.construct(1, _u_seed))
     rightColor = noise__vec2_float.call(st, rt.binary('+', rt.construct(1, _u_seed), rt.f(10), 1, 'float'))
-    left = rt.component_wise('min', rt.construct(3, ((((leftColor[0]) * (rightColor[0]))) / (((rt.f(1)) - (((rightColor[0]) * (leftColor[0])))))), ((((leftColor[1]) * (rightColor[1]))) / (((rt.f(1)) - (((rightColor[1]) * (leftColor[1])))))), ((((leftColor[2]) * (rightColor[2]))) / (((rt.f(1)) - (((rightColor[2]) * (leftColor[2]))))))), rt.construct(3, rt.f(1)))
-    right = rt.component_wise('min', rt.construct(3, ((((rightColor[0]) * (leftColor[0]))) / (((rt.f(1)) - (((leftColor[0]) * (rightColor[0])))))), ((((rightColor[1]) * (leftColor[1]))) / (((rt.f(1)) - (((leftColor[1]) * (rightColor[1])))))), ((((rightColor[2]) * (leftColor[2]))) / (((rt.f(1)) - (((leftColor[2]) * (rightColor[2]))))))), rt.construct(3, rt.f(1)))
+    left = rt.component_wise('min', rt.construct(3, rt.fdiv(((leftColor[0]) * (rightColor[0])), ((rt.f(1)) - (((rightColor[0]) * (leftColor[0]))))), rt.fdiv(((leftColor[1]) * (rightColor[1])), ((rt.f(1)) - (((rightColor[1]) * (leftColor[1]))))), rt.fdiv(((leftColor[2]) * (rightColor[2])), ((rt.f(1)) - (((rightColor[2]) * (leftColor[2])))))), rt.construct(3, rt.f(1)))
+    right = rt.component_wise('min', rt.construct(3, rt.fdiv(((rightColor[0]) * (leftColor[0])), ((rt.f(1)) - (((leftColor[0]) * (rightColor[0]))))), rt.fdiv(((rightColor[1]) * (leftColor[1])), ((rt.f(1)) - (((leftColor[1]) * (rightColor[1]))))), rt.fdiv(((rightColor[2]) * (leftColor[2])), ((rt.f(1)) - (((leftColor[2]) * (rightColor[2])))))), rt.construct(3, rt.f(1)))
     color = rt.assign_swizzle(color, 'rgb', brightnessContrast__vec3.call(rt.component_wise('mix', left, right, rt.f(0.5))))
     color = rt.assign_swizzle(color, 'a', rt.f(1))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })

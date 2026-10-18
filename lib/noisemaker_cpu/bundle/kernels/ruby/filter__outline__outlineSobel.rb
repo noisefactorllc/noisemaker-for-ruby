@@ -86,7 +86,7 @@ run_pixel = lambda do |ctx, out|
     gy = rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('-', rt.binary('-', rt.unary('-', rt.array_index(samples, rt.i(0))), rt.binary('*', rt.f(2), rt.array_index(samples, rt.i(1)), 1, 'float'), 1, 'float'), rt.array_index(samples, rt.i(2)), 1, 'float'), rt.array_index(samples, rt.i(6)), 1, 'float'), rt.binary('*', rt.f(2), rt.array_index(samples, rt.i(7)), 1, 'float'), 1, 'float'), rt.array_index(samples, rt.i(8)), 1, 'float')
     magnitude = distanceMetric__float_float_int.call(gx, gy, metric)
     normalized = rt.component_wise('clamp', rt.binary('*', magnitude, rt.f(4), 1, 'float'), rt.f(0), rt.f(1))
-    g['fragColor'][0] = rt.f32(normalized); g['fragColor'][1] = rt.f32(normalized); g['fragColor'][2] = rt.f32(normalized); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(normalized); g['fragColor'][1] = rt.f32(normalized); g['fragColor'][2] = rt.f32(normalized); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

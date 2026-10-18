@@ -13,7 +13,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _t = nil; inputColor = nil; outAlpha = nil; outRGB = nil; outRGB_pre = nil; scaledInput = nil; trail = nil; trailColor = nil; trailPresence = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     inputColor = rt.texture(_u_inputTex, uv)
     trailColor = rt.texture(_u_trailTex, uv)
     _t = rt.binary('/', _u_inputIntensity, rt.f(100), 1, 'float')

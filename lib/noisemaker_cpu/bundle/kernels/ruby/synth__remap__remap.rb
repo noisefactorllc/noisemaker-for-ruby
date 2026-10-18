@@ -100,14 +100,14 @@ run_pixel = lambda do |ctx, out|
     _for1_first = nil; _t = nil; activeCount = nil; base = nil; bounds = nil; controls = nil; coverage = nil; dilate = nil; featherPx = nil; globalPx = nil; header = nil; k = nil; n = nil; needDist = nil; p = nil; q = nil; result = nil; sampleUv = nil; src = nil; z = nil; zoneMeta = nil
     globalPx = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     q = rt.construct(2, rt.swizzle(globalPx, 'x'), rt.binary('-', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(globalPx, 'y'), 1, 'float'))
-    p = rt.construct(2, rt.binary_raw('/', q, _u_fullResolution, 2, 'float'))
-    sampleUv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.swizzle(rt.array_index(_u_data, rt.i(266)), 'xy'), 2, 'float'))
+    p = rt.construct(2, rt.fdiv(q, _u_fullResolution))
+    sampleUv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.swizzle(rt.array_index(_u_data, rt.i(266)), 'xy')))
     header = rt.array_index(_u_data, rt.i(0))
     controls = rt.array_index(_u_data, rt.i(1))
     activeCount = rt.component_wise('min', rt.construct(1, rt.swizzle(controls, 'x'), 'int'), rt.i(8))
     featherPx = rt.binary('*', rt.binary('*', rt.component_wise('max', rt.swizzle(controls, 'y'), rt.f(0)), rt.f(0.05000000074505806), 1, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 1, 'float')
     needDist = rt.binary('>', featherPx, rt.f(0))
-    dilate = rt.construct(2, rt.binary_raw('/', rt.construct_raw(2, featherPx), _u_fullResolution, 2, 'float'))
+    dilate = rt.construct(2, rt.fdiv(rt.construct_raw(2, featherPx), _u_fullResolution))
     result = rt.construct(4, rt.f(0))
     k = rt.i(0)
     _for1_first = true

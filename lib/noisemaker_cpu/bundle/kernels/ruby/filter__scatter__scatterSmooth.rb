@@ -12,8 +12,8 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     __hoistv1 = nil; _for0_first = nil; _for1_first = nil; blurred = nil; src = nil; sum = nil; texel = nil; uv = nil; w = nil; wsum = nil; x = nil; y = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
+    texel = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     sum = rt.construct(4, rt.f(0))
     wsum = rt.f(0)

@@ -13,12 +13,12 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _for0_first = nil; acc = nil; hi = nil; i = nil; lo = nil; o = nil; r = nil; sD = nil; sU = nil; texel = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     acc = rt.texture(_u_inputTex, uv)
     r = rt.f(0.0)
     texel = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u__SHAPE, rt.i(0)))
-      texel = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+      texel = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
       r = rt.component_wise('min', _u_radius, rt.f(32))
       i = rt.i(1)
       _for0_first = true

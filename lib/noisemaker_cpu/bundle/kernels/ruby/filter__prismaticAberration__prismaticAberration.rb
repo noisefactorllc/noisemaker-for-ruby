@@ -31,24 +31,24 @@ run_pixel = lambda do |ctx, out|
     m = rt.binary('-', v, c, 1, 'float')
     rgb = rt.construct(3, 0.0)
     if rt.bool((rt.bool(rt.binary('<=', rt.f(0), h)) && rt.bool(rt.binary('<', h, rt.f(0.1666666716337204))) ? 1 : 0))
-      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
+      (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0)); rgb end)
     else
       if rt.bool((rt.bool(rt.binary('<=', rt.f(0.1666666716337204), h)) && rt.bool(rt.binary('<', h, rt.f(0.3333333432674408))) ? 1 : 0))
-        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
+        (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0)); rgb end)
       else
         if rt.bool((rt.bool(rt.binary('<=', rt.f(0.3333333432674408), h)) && rt.bool(rt.binary('<', h, rt.f(0.5))) ? 1 : 0))
-          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
+          (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x); rgb end)
         else
           if rt.bool((rt.bool(rt.binary('<=', rt.f(0.5), h)) && rt.bool(rt.binary('<', h, rt.f(0.66666668653488159))) ? 1 : 0))
-            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
+            (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c); rgb end)
           else
             if rt.bool((rt.bool(rt.binary('<=', rt.f(0.66666668653488159), h)) && rt.bool(rt.binary('<', h, rt.f(0.83333331346511841))) ? 1 : 0))
-              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
+              (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
               if rt.bool((rt.bool(rt.binary('<=', rt.f(0.83333331346511841), h)) && rt.bool(rt.binary('<', h, rt.f(1))) ? 1 : 0))
-                rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
+                (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
               else
-                rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0))
+                (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0)); rgb end)
               end
             end
           end
@@ -95,16 +95,16 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _t = nil; aberrationOffset = nil; blue = nil; blueLocalUV = nil; blueOffset = nil; blueUV = nil; centerDist = nil; color = nil; diff = nil; fullRes = nil; globalAspect = nil; globalCoord = nil; globalUV = nil; green = nil; greenLocalUV = nil; hsv = nil; lensedCoords = nil; red = nil; redLocalUV = nil; redOffset = nil; redUV = nil; texelSize = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
-    globalAspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
+    globalUV = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
+    globalAspect = rt.fdiv(rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'))
     color = rt.construct(4, rt.f(0), rt.f(0), rt.f(0), rt.f(1))
     diff = rt.construct(2, rt.binary_raw('-', rt.construct_raw(2, rt.binary('*', rt.f(0.5), globalAspect, 1, 'float'), rt.f(0.5)), rt.construct_raw(2, rt.binary('*', rt.swizzle(globalUV, 'x'), globalAspect, 1, 'float'), rt.swizzle(globalUV, 'y')), 2, 'float'))
     centerDist = rt.length(diff)
     lensedCoords = rt.copy(uv, 'float')
     aberrationOffset = rt.binary('*', rt.binary('*', rt.binary('*', map__float_float_float_float_float.call(_u_aberrationAmt, rt.f(0), rt.f(100), rt.f(0), rt.f(0.05000000074505806)), centerDist, 1, 'float'), rt.f(3.1415927410125732), 1, 'float'), rt.f(0.5), 1, 'float')
-    texelSize = rt.construct(2, rt.binary('/', rt.f(1), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), rt.construct(2, rt.texture_size(_u_inputTex))))
     redOffset = rt.component_wise('mix', rt.component_wise('clamp', rt.binary('+', rt.swizzle(lensedCoords, 'x'), aberrationOffset, 1, 'float'), rt.f(0), rt.f(1)), rt.swizzle(lensedCoords, 'x'), rt.swizzle(lensedCoords, 'x'))
     redUV = rt.construct(2, redOffset, rt.swizzle(lensedCoords, 'y'))
     redLocalUV = rt.construct(2, rt.binary_raw('*', rt.binary_raw('-', rt.binary_raw('*', redUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float'), texelSize, 2, 'float'))

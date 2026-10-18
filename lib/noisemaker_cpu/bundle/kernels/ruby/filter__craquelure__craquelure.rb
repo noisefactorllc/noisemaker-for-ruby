@@ -98,7 +98,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     darkened = nil; globalCoord = nil; gradK = nil; gradMagK = nil; hC = nil; hR = nil; hT = nil; kB = nil; kC = nil; kL = nil; kR = nil; kT = nil; result = nil; seedF = nil; shade = nil; shadeMul = nil; shadeStrength = nil; src = nil; uv = nil; wallMask = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     seedF = rt.construct(1, _u_seed)
     kC = crackMask__vec2_float_float_float.call(globalCoord, _u_spacing, _u_depth, seedF)

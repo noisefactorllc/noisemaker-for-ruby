@@ -20,7 +20,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     __sc1 = nil; _for0_first = nil; brightness = nil; channel = nil; col = nil; dk = nil; edgeWidth = nil; globalCoord = nil; gridUv = nil; k = nil; key = nil; keyExact = nil; keyFrac = nil; keyLow = nil; keyRange = nil; keysPerPixel = nil; laneEdge = nil; laneF = nil; laneLocal = nil; lanePixels = nil; laneSep = nil; maxVel = nil; noteData = nil; noteVal = nil; prev = nil; prevBright = nil; scrollAmount = nil; scrollUv = nil; spread = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     scrollAmount = rt.binary('*', rt.binary('*', _u_speed, _u_deltaTime, 1, 'float'), rt.f(0.5), 1, 'float')
     scrollUv = rt.construct(2, rt.binary('-', rt.swizzle(uv, 'x'), scrollAmount, 1, 'float'), rt.swizzle(uv, 'y'))
     prev = rt.construct(4, rt.f(0))
@@ -38,7 +38,7 @@ run_pixel = lambda do |ctx, out|
     keyFrac = rt.component_wise('fract', keyExact)
     maxVel = rt.f(0)
     lanePixels = rt.binary('/', rt.swizzle(_u_fullResolution, 'y'), rt.f(16), 1, 'float')
-    keysPerPixel = rt.binary('/', rt.construct(1, keyRange), lanePixels, 1, 'float')
+    keysPerPixel = rt.fdiv(rt.construct(1, keyRange), lanePixels)
     spread = rt.component_wise('max', rt.i(1), rt.construct(1, rt.component_wise('ceil', keysPerPixel), 'int'))
     dk = rt.unary('-', spread)
     _for0_first = true
@@ -57,7 +57,7 @@ run_pixel = lambda do |ctx, out|
         maxVel = rt.component_wise('max', maxVel, rt.swizzle(noteData, 'r'))
       end
     end
-    edgeWidth = rt.binary('/', rt.f(4), rt.swizzle(_u_fullResolution, 'x'), 1, 'float')
+    edgeWidth = rt.fdiv(rt.f(4), rt.swizzle(_u_fullResolution, 'x'))
     noteVal = rt.f(0)
     if rt.bool((rt.bool(rt.binary('<', rt.swizzle(uv, 'x'), edgeWidth)) && rt.bool(rt.binary('>', maxVel, rt.f(0))) ? 1 : 0))
       noteVal = rt.binary('*', maxVel, _u_gain, 1, 'float')

@@ -337,18 +337,18 @@ run_pixel = lambda do |ctx, out|
     quantized = rt.binary('/', rt.component_wise('floor', rt.binary('+', rt.binary('*', l, levels, 1, 'float'), rt.f(0.5), 1, 'float')), levels, 1, 'float')
     ramp = rt.construct(3, 0.0)
     if rt.bool(rt.binary('<', quantized, rt.f(0.20000000298023224)))
-      ramp[0] = rt.f32(rt.f(0.10000000149011612)); ramp[1] = rt.f32(rt.f(0.05000000074505806)); ramp[2] = rt.f32(rt.f(0.15000000596046448))
+      (begin ramp[0] = rt.f32(rt.f(0.10000000149011612)); ramp[1] = rt.f32(rt.f(0.05000000074505806)); ramp[2] = rt.f32(rt.f(0.15000000596046448)); ramp end)
     else
       if rt.bool(rt.binary('<', quantized, rt.f(0.40000000596046448)))
-        ramp[0] = rt.f32(rt.f(0.30000001192092896)); ramp[1] = rt.f32(rt.f(0.20000000298023224)); ramp[2] = rt.f32(rt.f(0.40000000596046448))
+        (begin ramp[0] = rt.f32(rt.f(0.30000001192092896)); ramp[1] = rt.f32(rt.f(0.20000000298023224)); ramp[2] = rt.f32(rt.f(0.40000000596046448)); ramp end)
       else
         if rt.bool(rt.binary('<', quantized, rt.f(0.60000002384185791)))
-          ramp[0] = rt.f32(rt.f(0.5)); ramp[1] = rt.f32(rt.f(0.40000000596046448)); ramp[2] = rt.f32(rt.f(0.60000002384185791))
+          (begin ramp[0] = rt.f32(rt.f(0.5)); ramp[1] = rt.f32(rt.f(0.40000000596046448)); ramp[2] = rt.f32(rt.f(0.60000002384185791)); ramp end)
         else
           if rt.bool(rt.binary('<', quantized, rt.f(0.80000001192092896)))
-            ramp[0] = rt.f32(rt.f(0.80000001192092896)); ramp[1] = rt.f32(rt.f(0.60000002384185791)); ramp[2] = rt.f32(rt.f(0.5))
+            (begin ramp[0] = rt.f32(rt.f(0.80000001192092896)); ramp[1] = rt.f32(rt.f(0.60000002384185791)); ramp[2] = rt.f32(rt.f(0.5)); ramp end)
           else
-            ramp[0] = rt.f32(rt.f(1)); ramp[1] = rt.f32(rt.f(0.89999997615814209)); ramp[2] = rt.f32(rt.f(0.80000001192092896))
+            (begin ramp[0] = rt.f32(rt.f(1)); ramp[1] = rt.f32(rt.f(0.89999997615814209)); ramp[2] = rt.f32(rt.f(0.80000001192092896)); ramp end)
           end
         end
       end

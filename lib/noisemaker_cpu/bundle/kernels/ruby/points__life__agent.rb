@@ -49,21 +49,21 @@ run_pixel = lambda do |ctx, out|
     x = rt.binary('*', c, rt.binary('-', rt.f(1), rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', h, rt.f(2)), rt.f(1), 1, 'float')), 1, 'float'), 1, 'float')
     rgb = rt.construct(3, 0.0)
     if rt.bool(rt.binary('<', h, rt.f(1)))
-      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
+      (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0)); rgb end)
     else
       if rt.bool(rt.binary('<', h, rt.f(2)))
-        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
+        (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0)); rgb end)
       else
         if rt.bool(rt.binary('<', h, rt.f(3)))
-          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
+          (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x); rgb end)
         else
           if rt.bool(rt.binary('<', h, rt.f(4)))
-            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
+            (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c); rgb end)
           else
             if rt.bool(rt.binary('<', h, rt.f(5)))
-              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
+              (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
-              rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
+              (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
             end
           end
         end
@@ -79,10 +79,10 @@ run_pixel = lambda do |ctx, out|
   end
   radialForce__float_float_float_float = lambda do |dist, strength, prefDist, curveShape|
     force = nil; forceScale = nil; normDist = nil; shaped = nil
-    normDist = rt.binary('/', rt.binary('-', dist, _u_minRadius, 1, 'float'), rt.binary('-', _u_maxRadius, _u_minRadius, 1, 'float'), 1, 'float')
+    normDist = rt.fdiv(rt.binary('-', dist, _u_minRadius, 1, 'float'), rt.binary('-', _u_maxRadius, _u_minRadius, 1, 'float'))
     forceScale = rt.binary('*', _u_maxSpeed, rt.f(10), 1, 'float')
     if rt.bool(rt.binary('<', normDist, rt.f(0)))
-      return rt.binary('*', rt.binary('*', rt.unary('-', _u_repulsionScale), rt.binary('-', rt.f(1), rt.binary('/', dist, _u_minRadius, 1, 'float'), 1, 'float'), 1, 'float'), forceScale, 1, 'float')
+      return rt.binary('*', rt.binary('*', rt.unary('-', _u_repulsionScale), rt.binary('-', rt.f(1), rt.fdiv(dist, _u_minRadius), 1, 'float'), 1, 'float'), forceScale, 1, 'float')
     end
     if rt.bool(rt.binary('>', normDist, rt.f(1)))
       return rt.f(0)
@@ -229,13 +229,13 @@ run_pixel = lambda do |ctx, out|
           prefDist = rt.swizzle(forceParams, 'y')
           curveShape = rt.swizzle(forceParams, 'z')
           forceMag = radialForce__float_float_float_float.call(dist, strength, prefDist, curveShape)
-          forceDir = rt.construct(2, rt.binary_raw('/', diff, dist, 2, 'float'))
+          forceDir = rt.construct(2, rt.fdiv(diff, dist))
           totalForce[0] = rt.f32(rt.binary('+', totalForce[0], ((forceDir[0]) * (forceMag)), 1, 'float')); totalForce[1] = rt.f32(rt.binary('+', totalForce[1], ((forceDir[1]) * (forceMag)), 1, 'float'))
           neighborCount = rt.binary('+', neighborCount, rt.i(1), 1, 'int')
         end
       end
     end
-    __sc1 = mass; totalForce[0] = rt.f32(rt.binary('/', totalForce[0], __sc1, 1, 'float')); totalForce[1] = rt.f32(rt.binary('/', totalForce[1], __sc1, 1, 'float'))
+    __sc1 = mass; totalForce[0] = rt.f32(rt.fdiv(totalForce[0], __sc1)); totalForce[1] = rt.f32(rt.fdiv(totalForce[1], __sc1))
     velocity[0] = rt.f32(rt.binary('+', velocity[0], totalForce[0], 1, 'float')); velocity[1] = rt.f32(rt.binary('+', velocity[1], totalForce[1], 1, 'float'))
     __sc2 = rt.binary('-', rt.f(1), _u_friction, 1, 'float'); velocity[0] = rt.f32(rt.binary('*', velocity[0], __sc2, 1, 'float')); velocity[1] = rt.f32(rt.binary('*', velocity[1], __sc2, 1, 'float'))
     velocity.replace((limitVec__vec2_float.call(velocity, _u_maxSpeed)).map { |c| rt.f32(c) })
@@ -269,7 +269,7 @@ run_pixel = lambda do |ctx, out|
     else
       g['outRGBA'].replace((rt.texture(_u_inputTex, pos)).map { |c| rt.f32(c) })
     end
-    g['outData'][0] = rt.f32(typeId); g['outData'][1] = rt.f32(mass); g['outData'][2] = rt.f32(rt.f(0)); g['outData'][3] = rt.f32(rt.f(1))
+    (begin g['outData'][0] = rt.f32(typeId); g['outData'][1] = rt.f32(mass); g['outData'][2] = rt.f32(rt.f(0)); g['outData'][3] = rt.f32(rt.f(1)); g['outData'] end)
   end
   main__void.call
   c0 = g['outXYZ']

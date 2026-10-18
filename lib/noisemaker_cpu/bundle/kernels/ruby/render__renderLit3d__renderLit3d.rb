@@ -78,7 +78,7 @@ run_pixel = lambda do |ctx, out|
   calcNormal__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     dx = nil; dy = nil; dz = nil; eps = nil; len = nil; n = nil
-    eps = rt.binary('/', rt.f(2), rt.construct(1, _u_volumeSize), 1, 'float')
+    eps = rt.fdiv(rt.f(2), rt.construct(1, _u_volumeSize))
     dx = rt.binary('-', getField__vec3.call(rt.construct(3, ((p[0]) + ((eps))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((rt.f(0)))))), getField__vec3.call(rt.construct(3, ((p[0]) - ((eps))), ((p[1]) - ((rt.f(0)))), ((p[2]) - ((rt.f(0)))))), 1, 'float')
     dy = rt.binary('-', getField__vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((eps))), ((p[2]) + ((rt.f(0)))))), getField__vec3.call(rt.construct(3, ((p[0]) - ((rt.f(0)))), ((p[1]) - ((eps))), ((p[2]) - ((rt.f(0)))))), 1, 'float')
     dz = rt.binary('-', getField__vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((eps))))), getField__vec3.call(rt.construct(3, ((p[0]) - ((rt.f(0)))), ((p[1]) - ((rt.f(0)))), ((p[2]) - ((eps))))), 1, 'float')
@@ -173,7 +173,7 @@ run_pixel = lambda do |ctx, out|
     end
     tStart = rt.swizzle(bounds, 'x')
     tEnd = rt.swizzle(bounds, 'y')
-    stepSize = rt.binary('/', rt.f(1.5), rt.construct(1, _u_volumeSize), 1, 'float')
+    stepSize = rt.fdiv(rt.f(1.5), rt.construct(1, _u_volumeSize))
     _t = tStart
     prevField = getField__vec3.call(rt.construct(3, ((ro[0]) + (((rd[0]) * (_t)))), ((ro[1]) + (((rd[1]) * (_t)))), ((ro[2]) + (((rd[2]) * (_t))))))
     if rt.bool(rt.binary('<', prevField, rt.f(0)))
@@ -283,20 +283,20 @@ run_pixel = lambda do |ctx, out|
     alpha = nil; angle = nil; c = nil; color = nil; cpu_vector_assignment_1 = nil; depth = nil; forward = nil; fullRes = nil; globalCoord = nil; hit = nil; normal = nil; rd = nil; rdVol = nil; right = nil; ro = nil; roVol = nil; s = nil; up = nil; uv = nil; worldLightDir = nil; worldUp = nil
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
     if rt.bool(rt.binary('<', rt.swizzle(fullRes, 'x'), rt.f(1)))
-      fullRes[0] = rt.f32(rt.f(1024)); fullRes[1] = rt.f32(rt.f(1024))
+      (begin fullRes[0] = rt.f32(rt.f(1024)); fullRes[1] = rt.f32(rt.f(1024)); fullRes end)
     end
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', globalCoord, rt.binary_raw('*', rt.f(0.5), fullRes, 2, 'float'), 2, 'float'), rt.swizzle(fullRes, 'y'), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('-', globalCoord, rt.binary_raw('*', rt.f(0.5), fullRes, 2, 'float'), 2, 'float'), rt.swizzle(fullRes, 'y')))
     ro = rt.construct(3, rt.binary_raw('*', _u_cameraPosition, rt.f(3.5), 3, 'float'))
     forward = rt.construct(3, 0.0)
     if rt.bool(rt.binary('<', rt.length(ro), rt.f(0.0010000000474974513)))
-      forward[0] = rt.f32(rt.f(0)); forward[1] = rt.f32(rt.f(0)); forward[2] = rt.f32(rt.unary('-', rt.f(1)))
+      (begin forward[0] = rt.f32(rt.f(0)); forward[1] = rt.f32(rt.f(0)); forward[2] = rt.f32(rt.unary('-', rt.f(1))); forward end)
     else
       forward.replace((rt.normalize(rt.unary('-', ro))).map { |c| rt.f32(c) })
     end
     worldUp = rt.construct(3, rt.f(0), rt.f(1), rt.f(0))
     if rt.bool(rt.binary('>', rt.component_wise('abs', rt.dot(forward, worldUp)), rt.f(0.99900001287460327)))
-      worldUp[0] = rt.f32(rt.f(0)); worldUp[1] = rt.f32(rt.f(0)); worldUp[2] = rt.f32(rt.component_wise('sign', rt.swizzle(forward, 'y')))
+      (begin worldUp[0] = rt.f32(rt.f(0)); worldUp[1] = rt.f32(rt.f(0)); worldUp[2] = rt.f32(rt.component_wise('sign', rt.swizzle(forward, 'y'))); worldUp end)
     end
     right = rt.normalize(rt.cross(forward, worldUp))
     up = rt.cross(right, forward)

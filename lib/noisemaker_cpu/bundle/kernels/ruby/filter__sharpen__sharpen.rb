@@ -16,9 +16,9 @@ run_pixel = lambda do |ctx, out|
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
     resolution = rt.construct(2, texSize)
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), resolution, 2, 'float'))
-    origColor = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), resolution))
+    origColor = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
     _kernel = rt.new_array(rt.i(9), 1)
     _kernel[(rt.i(0)).to_i] = rt.unary('-', rt.f(1))
     _kernel[(rt.i(1)).to_i] = rt.f(0)
@@ -50,7 +50,7 @@ run_pixel = lambda do |ctx, out|
       unless rt.bool(rt.binary('<', i, rt.i(9)))
         break
       end
-      texSample = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, rt.binary_raw('*', rt.binary_raw('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))), 'rgb')
+      texSample = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, rt.binary_raw('*', rt.binary_raw('*', rt.array_index(offsets, i), _u_amount, 2, 'float'), _u_renderScale, 2, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))), 'rgb')
       __hoistv1 = rt.binary_raw('*', texSample, rt.array_index(_kernel, i), 3, 'float'); conv[0] = rt.f32(rt.binary('+', conv[0], __hoistv1[0], 1, 'float')); conv[1] = rt.f32(rt.binary('+', conv[1], __hoistv1[1], 1, 'float')); conv[2] = rt.f32(rt.binary('+', conv[2], __hoistv1[2], 1, 'float'))
     end
     g['fragColor'].replace((rt.construct(4, rt.component_wise('clamp', conv, rt.f(0), rt.f(1)), rt.swizzle(origColor, 'a'))).map { |c| rt.f32(c) })

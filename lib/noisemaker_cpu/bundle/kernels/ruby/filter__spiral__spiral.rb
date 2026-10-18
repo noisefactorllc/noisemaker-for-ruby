@@ -30,9 +30,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     __hoistv3 = nil; __hoistv4 = nil; __hoistv5 = nil; __hoistv6 = nil; __sc1 = nil; __sc2 = nil; a = nil; aspectRatio = nil; col = nil; dx = nil; dy = nil; globalCoord = nil; r = nil; sampleUV = nil; spiralAmt = nil; uv = nil
-    aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    aspectRatio = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     uv.replace((rotate2D__vec2_float_float.call(uv, rt.binary('/', _u_rotation, rt.f(180), 1, 'float'), aspectRatio)).map { |c| rt.f32(c) })
     __sc1 = rt.f(0.5); uv[0] = rt.f32(rt.binary('-', uv[0], __sc1, 1, 'float')); uv[1] = rt.f32(rt.binary('-', uv[1], __sc1, 1, 'float'))
     if rt.bool(_u_aspectLens)
@@ -48,7 +48,7 @@ run_pixel = lambda do |ctx, out|
     end
     __sc2 = rt.f(0.5); uv[0] = rt.f32(rt.binary('+', uv[0], __sc2, 1, 'float')); uv[1] = rt.f32(rt.binary('+', uv[1], __sc2, 1, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
+      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((uv[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((uv[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         uv.replace((rt.component_wise('mod', uv, rt.f(1))).map { |c| rt.f32(c) })
@@ -57,7 +57,7 @@ run_pixel = lambda do |ctx, out|
       end
     end
     uv.replace((rotate2D__vec2_float_float.call(uv, rt.binary('/', rt.unary('-', _u_rotation), rt.f(180), 1, 'float'), aspectRatio)).map { |c| rt.f32(c) })
-    sampleUV = rt.component_wise('clamp', rt.construct(2, ((((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
+    sampleUV = rt.component_wise('clamp', rt.construct(2, rt.fdiv(((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0])), _u_resolution[0]), rt.fdiv(((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1])), _u_resolution[1])), rt.f(0), rt.f(1))
     col = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)

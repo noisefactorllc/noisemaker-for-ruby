@@ -31,21 +31,21 @@ run_pixel = lambda do |ctx, out|
     m = rt.binary('-', v, c, 1, 'float')
     rgb = rt.construct(3, 0.0)
     if rt.bool(rt.binary('<', hp, rt.f(1)))
-      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
+      (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0)); rgb end)
     else
       if rt.bool(rt.binary('<', hp, rt.f(2)))
-        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
+        (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0)); rgb end)
       else
         if rt.bool(rt.binary('<', hp, rt.f(3)))
-          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
+          (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x); rgb end)
         else
           if rt.bool(rt.binary('<', hp, rt.f(4)))
-            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
+            (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c); rgb end)
           else
             if rt.bool(rt.binary('<', hp, rt.f(5)))
-              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
+              (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
-              rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
+              (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
             end
           end
         end
@@ -92,7 +92,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _t = nil; blendedColor = nil; entry = nil; finalColor = nil; inputColor = nil; lum = nil; mode = nil; paletteColor = nil; texSize = nil; uv = nil
     texSize = rt.construct(2, rt.texture_size(_u_inputTex3d))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), texSize))
     inputColor = rt.texture(_u_inputTex3d, uv)
     if rt.bool((rt.bool(rt.binary('<=', _u_paletteIndex, rt.i(0))) || rt.bool(rt.binary('>', _u_paletteIndex, g['PALETTE_COUNT'])) ? 1 : 0))
       g['fragColor'].replace((inputColor).map { |c| rt.f32(c) })

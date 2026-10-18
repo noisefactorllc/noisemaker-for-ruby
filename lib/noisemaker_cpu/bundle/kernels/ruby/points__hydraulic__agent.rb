@@ -141,7 +141,7 @@ run_pixel = lambda do |ctx, out|
     targetVy = rt.f(0)
     scale = rt.f(0.0)
     if rt.bool(rt.binary('>', glen, rt.f(9.9999999747524271e-07)))
-      scale = rt.binary('/', rt.binary('*', _u_stride, rt.f(0.10000000149011612), 1, 'float'), glen, 1, 'float')
+      scale = rt.fdiv(rt.binary('*', _u_stride, rt.f(0.10000000149011612), 1, 'float'), glen)
       targetVx = rt.binary('*', gx, scale, 1, 'float')
       targetVy = rt.binary('*', gy, scale, 1, 'float')
     end
@@ -151,12 +151,12 @@ run_pixel = lambda do |ctx, out|
     vy = rt.component_wise('mix', vy, targetVy, blendFactor)
     x = wrap_float__float_float.call(rt.binary('+', x, vx, 1, 'float'), rt.swizzle(_u_resolution, 'x'))
     y = wrap_float__float_float.call(rt.binary('+', y, vy, 1, 'float'), rt.swizzle(_u_resolution, 'y'))
-    newPx = rt.binary('/', x, rt.swizzle(_u_resolution, 'x'), 1, 'float')
-    newPy = rt.binary('/', y, rt.swizzle(_u_resolution, 'y'), 1, 'float')
-    normVx = rt.binary('/', vx, rt.swizzle(_u_resolution, 'x'), 1, 'float')
-    normVy = rt.binary('/', vy, rt.swizzle(_u_resolution, 'y'), 1, 'float')
-    g['outXYZ'][0] = rt.f32(newPx); g['outXYZ'][1] = rt.f32(newPy); g['outXYZ'][2] = rt.f32(rt.swizzle(xyz, 'z')); g['outXYZ'][3] = rt.f32(alive)
-    g['outVel'][0] = rt.f32(normVx); g['outVel'][1] = rt.f32(normVy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f)
+    newPx = rt.fdiv(x, rt.swizzle(_u_resolution, 'x'))
+    newPy = rt.fdiv(y, rt.swizzle(_u_resolution, 'y'))
+    normVx = rt.fdiv(vx, rt.swizzle(_u_resolution, 'x'))
+    normVy = rt.fdiv(vy, rt.swizzle(_u_resolution, 'y'))
+    (begin g['outXYZ'][0] = rt.f32(newPx); g['outXYZ'][1] = rt.f32(newPy); g['outXYZ'][2] = rt.f32(rt.swizzle(xyz, 'z')); g['outXYZ'][3] = rt.f32(alive); g['outXYZ'] end)
+    (begin g['outVel'][0] = rt.f32(normVx); g['outVel'][1] = rt.f32(normVy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f); g['outVel'] end)
     g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
   end
   main__void.call

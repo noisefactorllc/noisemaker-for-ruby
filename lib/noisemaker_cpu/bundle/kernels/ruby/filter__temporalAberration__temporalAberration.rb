@@ -21,7 +21,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     bOut = nil; cur = nil; db = nil; dg = nil; dr = nil; gOut = nil; ib0 = nil; ib1 = nil; ig0 = nil; ig1 = nil; ir0 = nil; ir1 = nil; rOut = nil; s = nil; slots = nil; texSize = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize))))
     cur = rt.texture(_u_inputTex, uv)
     slots = rt.new_array(rt.i(9), 4)
     slots[(rt.i(0)).to_i].replace((cur).map { |c| rt.f32(c) })
@@ -70,7 +70,7 @@ run_pixel = lambda do |ctx, out|
     ib0 = rt.construct(1, rt.component_wise('floor', db), 'int')
     ib1 = rt.component_wise('min', rt.binary('+', ib0, rt.i(1), 1, 'int'), rt.i(8))
     bOut = rt.swizzle(rt.component_wise('mix', rt.array_index(slots, ib0), rt.array_index(slots, ib1), rt.binary('-', db, rt.construct(1, ib0), 1, 'float')), 'b')
-    g['fragColor'][0] = rt.f32(rOut); g['fragColor'][1] = rt.f32(gOut); g['fragColor'][2] = rt.f32(bOut); g['fragColor'][3] = rt.f32(rt.swizzle(cur, 'a'))
+    (begin g['fragColor'][0] = rt.f32(rOut); g['fragColor'][1] = rt.f32(gOut); g['fragColor'][2] = rt.f32(bOut); g['fragColor'][3] = rt.f32(rt.swizzle(cur, 'a')); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

@@ -19,8 +19,8 @@ run_pixel = lambda do |ctx, out|
     __sc1 = nil; _for0_first = nil; _t = nil; bloomAccum = nil; globalCoord = nil; i = nil; offset = nil; r = nil; radiusUV = nil; sampleColor = nil; sampleUV = nil; sigma = nil; tapCount = nil; texSize = nil; texelSize = nil; theta = nil; uv = nil; weight = nil; weightSum = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.construct(2, rt.texture_size(_u_inputTex))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), texSize, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), texSize))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), texSize))
     radiusUV = rt.construct(2, rt.binary_raw('*', rt.binary('*', _u_radius, _u_renderScale, 1, 'float'), texelSize, 2, 'float'))
     tapCount = rt.component_wise('clamp', _u_taps, rt.i(1), g['MAX_TAPS'])
     bloomAccum = rt.construct(3, rt.f(0))
@@ -38,7 +38,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', i, tapCount))
         break
       end
-      _t = rt.binary('/', rt.construct(1, i), rt.construct(1, tapCount), 1, 'float')
+      _t = rt.fdiv(rt.construct(1, i), rt.construct(1, tapCount))
       r = rt.component_wise('sqrt', _t)
       theta = rt.binary('*', rt.construct(1, i), g['GOLDEN_ANGLE'], 1, 'float')
       offset = rt.construct(2, rt.binary_raw('*', rt.construct_raw(2, rt.component_wise('cos', theta), rt.component_wise('sin', theta)), r, 2, 'float'))

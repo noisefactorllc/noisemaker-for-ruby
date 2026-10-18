@@ -36,7 +36,7 @@ run_pixel = lambda do |ctx, out|
       end
       _t = rt.binary('+', rt.binary('*', rt.binary('-', rt.binary('/', rt.construct(1, i), rt.construct(1, rt.binary('-', g['N'], rt.i(1), 1, 'int')), 1, 'float'), rt.f(0.5), 1, 'float'), _u_blurDistance, 1, 'float'), jitter, 1, 'float')
       offset = rt.construct(2, rt.binary_raw('*', dir, _t, 2, 'float'))
-      __hoistv2 = rt.texture(_u_inputTex, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), offset, 2, 'float'), _u_resolution, 2, 'float')); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv2[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv2[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv2[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoistv2[3], 1, 'float'))
+      __hoistv2 = rt.texture(_u_inputTex, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), offset, 2, 'float'), _u_resolution)); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv2[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv2[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv2[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoistv2[3], 1, 'float'))
     end
     g['fragColor'].replace((rt.binary_raw('/', sum, rt.construct(1, g['N']), 4, 'float')).map { |c| rt.f32(c) })
   end

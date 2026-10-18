@@ -70,7 +70,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _for0_first = nil; _t = nil; a = nil; col = nil; dt = nil; i = nil; outc = nil; rd = nil; res = nil; ro = nil; s = nil; t0 = nil; tb = nil; trans = nil; uv = nil
     res = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.binary_raw('*', rt.f(0.5), res, 2, 'float'), 2, 'float'), rt.binary('*', rt.f(0.5), rt.swizzle(res, 'y'), 1, 'float'), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('-', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.binary_raw('*', rt.f(0.5), res, 2, 'float'), 2, 'float'), rt.binary('*', rt.f(0.5), rt.swizzle(res, 'y'), 1, 'float')))
     ro = rt.construct(3, rt.f(0))
     rd = rt.normalize(rt.matrix_mult(_u_cubeBasis, rt.construct(3, rt.swizzle(uv, 'x'), rt.unary('-', rt.swizzle(uv, 'y')), rt.f(1)), 3))
     col = rt.construct(3, rt.f(0))
@@ -105,7 +105,7 @@ run_pixel = lambda do |ctx, out|
     end
     outc = rt.construct(3, rt.binary_raw('+', col, rt.binary_raw('*', _u_bgColor, trans, 3, 'float'), 3, 'float'))
     g['fragColor'].replace((rt.construct(4, outc, rt.binary('+', rt.binary('-', rt.f(1), trans, 1, 'float'), rt.binary('*', _u_bgAlpha, trans, 1, 'float'), 1, 'float'))).map { |c| rt.f32(c) })
-    g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(1))
+    (begin g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(1)); g['geoOut'] end)
   end
   main__void.call
   c0 = g['fragColor']

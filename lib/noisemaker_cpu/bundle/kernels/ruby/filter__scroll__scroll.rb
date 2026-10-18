@@ -20,15 +20,15 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     globalCoord = nil; globalUV = nil; localUV = nil; offset = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    globalUV = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     globalUV = rt.assign_swizzle(globalUV, 'x', rt.binary_raw('*', rt.swizzle(globalUV, 'x'), _u_aspect, 1, 'float'))
     offset = rt.construct(2, rt.binary('+', rt.unary('-', _u_x), rt.binary('*', _u_time, rt.unary('-', _u_speedX), 1, 'float'), 1, 'float'), rt.binary('+', _u_y, rt.binary('*', _u_time, _u_speedY, 1, 'float'), 1, 'float'))
     offset = rt.assign_swizzle(offset, 'x', rt.binary_raw('*', rt.swizzle(offset, 'x'), _u_aspect, 1, 'float'))
     globalUV[0] = rt.f32(rt.binary('+', globalUV[0], offset[0], 1, 'float')); globalUV[1] = rt.f32(rt.binary('+', globalUV[1], offset[1], 1, 'float'))
     globalUV = rt.assign_swizzle(globalUV, 'x', rt.binary_raw('/', rt.swizzle(globalUV, 'x'), _u_aspect, 1, 'float'))
-    localUV = rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', globalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    localUV = rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', globalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      localUV.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((localUV[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((localUV[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
+      localUV.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((localUV[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((localUV[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((localUV[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((localUV[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         localUV.replace((rt.component_wise('fract', localUV)).map { |c| rt.f32(c) })

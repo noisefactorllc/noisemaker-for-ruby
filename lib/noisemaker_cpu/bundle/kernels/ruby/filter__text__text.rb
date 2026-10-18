@@ -16,8 +16,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     alpha = nil; globalCoord = nil; inputColor = nil; matteAlpha = nil; rgb = nil; st = nil; text = nil; textPresence = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    inputColor = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    inputColor = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
     text = rt.texture(_u_textTex, st)
     textPresence = rt.swizzle(text, 'a')
     matteAlpha = _u_matteOpacity

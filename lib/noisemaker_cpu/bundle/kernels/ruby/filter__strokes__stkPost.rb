@@ -14,7 +14,7 @@ run_pixel = lambda do |ctx, out|
   tent3x3__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     __hoistv1 = nil; _for0_first = nil; _for1_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
-    px = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    px = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     sum = rt.construct(3, rt.f(0))
     wsum = rt.f(0)
     dy = rt.unary('-', rt.i(1))
@@ -46,7 +46,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     c = nil; sharpened = nil; src = nil; tent = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     c = rt.swizzle(rt.texture(_u_smearTex, uv), 'rgb')
     tent = tent3x3__vec2.call(uv)

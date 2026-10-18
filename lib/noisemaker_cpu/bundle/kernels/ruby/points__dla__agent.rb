@@ -89,12 +89,12 @@ run_pixel = lambda do |ctx, out|
     seed = rt.binary('-', rt.uint_bits_to_float(rt.binary('|', rt.binary('&', frameSeed, rt.i(8388607), 1, 'uint'), rt.i(1065353216), 1, 'uint')), rt.f(1), 1, 'float')
     if rt.bool(rt.binary('<', alive, rt.f(0.5)))
       g['outXYZ'].replace((xyz).map { |c| rt.f32(c) })
-      g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand)
+      (begin g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand); g['outVel'] end)
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
       return
     end
     gridDims = rt.construct(2, rt.texture_size(_u_gridTex))
-    texel = rt.binary('/', rt.f(1), rt.component_wise('max', rt.swizzle(gridDims, 'x'), rt.swizzle(gridDims, 'y')), 1, 'float')
+    texel = rt.fdiv(rt.f(1), rt.component_wise('max', rt.swizzle(gridDims, 'x'), rt.swizzle(gridDims, 'y')))
     local = neighborhood__vec2_float.call(pos, rt.f(2))
     proximity = rt.component_wise('smoothstep', rt.f(0.014999999664723873), rt.f(0.11999999731779099), local)
     randomDir = (begin _retc, seed = randomDirection__float.call(seed); _retc end)
@@ -131,16 +131,16 @@ run_pixel = lambda do |ctx, out|
     end
     if rt.bool(stuck)
       g['outXYZ'].replace((rt.construct(4, candidate, rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
-      g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(1)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand)
+      (begin g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(1)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand); g['outVel'] end)
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
     else
       if rt.bool(needsRespawn)
         g['outXYZ'].replace((rt.construct(4, candidate, rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
-        g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand)
+        (begin g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand); g['outVel'] end)
         g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
       else
         g['outXYZ'].replace((rt.construct(4, candidate, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
-        g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand)
+        (begin g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand); g['outVel'] end)
         g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
       end
     end

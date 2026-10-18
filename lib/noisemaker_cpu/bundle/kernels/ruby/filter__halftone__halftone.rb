@@ -87,7 +87,7 @@ run_pixel = lambda do |ctx, out|
     cellCenterGc = nil; cellId = nil; cellUV = nil
     cellId = rt.construct(2, rt.binary('+', rt.component_wise('floor', ruv), rt.f(0.5), 2, 'float'))
     cellCenterGc = rotate2D__vec2_float.call(rt.construct(2, ((cellId[0]) * (_u_frequency)), ((cellId[1]) * (_u_frequency))), rt.unary('-', angleDeg))
-    cellUV = rt.component_wise('clamp', rt.construct(2, ((((cellCenterGc[0]) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((cellCenterGc[1]) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
+    cellUV = rt.component_wise('clamp', rt.construct(2, rt.fdiv(((cellCenterGc[0]) - (_u_tileOffset[0])), _u_resolution[0]), rt.fdiv(((cellCenterGc[1]) - (_u_tileOffset[1])), _u_resolution[1])), rt.f(0), rt.f(1))
     return boxBlur3__vec2_vec2.call(cellUV, texel)
   end
   halftoneCoverage__float_float_float = lambda do |d, value, sharpnessPct|
@@ -114,8 +114,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     alpha = nil; center = nil; d = nil; dotOffset = nil; globalCoord = nil; ink = nil; inkC = nil; inkK = nil; inkM = nil; inkY = nil; off = nil; rd = nil; ruv = nil; ruvC = nil; ruvK = nil; ruvM = nil; ruvY = nil; screened = nil; texel = nil; uv = nil; valC = nil; valK = nil; valM = nil; valY = nil; value = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
+    texel = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     alpha = rt.swizzle(rt.texture(_u_inputTex, uv), 'a')
     d = rt.f(0.0)
     dotOffset = rt.construct(2, 0.0)
@@ -134,10 +134,10 @@ run_pixel = lambda do |ctx, out|
     valY = rt.f(0.0)
     value = rt.f(0.0)
     if rt.bool(rt.binary('==', _u__MODE, rt.i(0)))
-      ruvC = rt.construct(2, rt.binary('/', rotate2D__vec2_float.call(globalCoord, _u_cyanAngle), _u_frequency, 2, 'float'))
-      ruvM = rt.construct(2, rt.binary('/', rotate2D__vec2_float.call(globalCoord, _u_magentaAngle), _u_frequency, 2, 'float'))
-      ruvY = rt.construct(2, rt.binary('/', rotate2D__vec2_float.call(globalCoord, _u_yellowAngle), _u_frequency, 2, 'float'))
-      ruvK = rt.construct(2, rt.binary('/', rotate2D__vec2_float.call(globalCoord, _u_blackAngle), _u_frequency, 2, 'float'))
+      ruvC = rt.construct(2, rt.fdiv(rotate2D__vec2_float.call(globalCoord, _u_cyanAngle), _u_frequency))
+      ruvM = rt.construct(2, rt.fdiv(rotate2D__vec2_float.call(globalCoord, _u_magentaAngle), _u_frequency))
+      ruvY = rt.construct(2, rt.fdiv(rotate2D__vec2_float.call(globalCoord, _u_yellowAngle), _u_frequency))
+      ruvK = rt.construct(2, rt.fdiv(rotate2D__vec2_float.call(globalCoord, _u_blackAngle), _u_frequency))
       valC = rt.swizzle(rgbToCmyk__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruvC, _u_cyanAngle, texel)), 'r')
       valM = rt.swizzle(rgbToCmyk__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruvM, _u_magentaAngle, texel)), 'g')
       valY = rt.swizzle(rgbToCmyk__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruvY, _u_yellowAngle, texel)), 'b')
@@ -160,10 +160,10 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('==', _u__PATTERN, rt.i(2)))
         center = rt.construct(2, rt.binary_raw('*', _u_fullResolution, rt.f(0.5), 2, 'float'))
         value = rt.binary('-', rt.f(1), lum__vec3.call(boxBlur3__vec2_vec2.call(uv, texel)), 1, 'float')
-        rd = rt.binary('/', rt.length(rt.binary_raw('-', globalCoord, center, 2, 'float')), _u_frequency, 1, 'float')
+        rd = rt.fdiv(rt.length(rt.binary_raw('-', globalCoord, center, 2, 'float')), _u_frequency)
         d = rt.component_wise('abs', rt.binary('-', rt.component_wise('fract', rd), rt.f(0.5), 1, 'float'))
       else
-        ruv = rt.construct(2, rt.binary('/', rotate2D__vec2_float.call(globalCoord, _u_monoAngle), _u_frequency, 2, 'float'))
+        ruv = rt.construct(2, rt.fdiv(rotate2D__vec2_float.call(globalCoord, _u_monoAngle), _u_frequency))
         value = rt.binary('-', rt.f(1), lum__vec3.call(cellSampleFromRuv__vec2_float_vec2.call(ruv, _u_monoAngle, texel)), 1, 'float')
         off = rt.construct(2, rt.binary('-', rt.component_wise('fract', ruv), rt.f(0.5), 2, 'float'))
         dotOffset.replace((off).map { |c| rt.f32(c) })

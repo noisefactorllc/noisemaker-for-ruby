@@ -22,7 +22,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; accumColor = nil; accumWeight = nil; activation = nil; alongRun = nil; amount = nil; baseLum = nil; blendAmount = nil; candidate = nil; contrast = nil; decayRate = nil; density = nil; densityRate = nil; distancePx = nil; edge = nil; endTaper = nil; globalCoord = nil; i = nil; integrated = nil; marchDir = nil; methodGain = nil; reach = nil; sampleDistance = nil; sampleUV = nil; src = nil; staggerPhase = nil; streak = nil; taperStart = nil; uv = nil; weight = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     src = rt.texture(_u_inputTex, uv)
     amount = rt.component_wise('clamp', rt.binary('/', _u_strength, rt.f(100), 1, 'float'), rt.f(0), rt.f(1))
@@ -55,11 +55,11 @@ run_pixel = lambda do |ctx, out|
         break
       end
       sampleDistance = rt.binary('+', distancePx, staggerPhase, 1, 'float')
-      sampleUV = rt.component_wise('clamp', rt.construct(2, ((((rt.swizzle(ctx.frag_coord, 'x')) + ((((marchDir) * (sampleDistance)))))) / (_u_resolution[0])), ((((rt.swizzle(ctx.frag_coord, 'y')) + ((rt.f(0))))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
+      sampleUV = rt.component_wise('clamp', rt.construct(2, rt.fdiv(((rt.swizzle(ctx.frag_coord, 'x')) + ((((marchDir) * (sampleDistance))))), _u_resolution[0]), rt.fdiv(((rt.swizzle(ctx.frag_coord, 'y')) + ((rt.f(0)))), _u_resolution[1])), rt.f(0), rt.f(1))
       candidate = rt.swizzle(rt.texture(_u_inputTex, sampleUV), 'rgb')
       contrast = rt.binary('-', rt.binary('-', lum__vec3.call(candidate), baseLum, 1, 'float'), edge, 1, 'float')
       activation = rt.component_wise('smoothstep', rt.f(0), rt.f(0.079999998211860657), contrast)
-      alongRun = rt.binary('/', distancePx, rt.component_wise('max', reach, rt.f(1)), 1, 'float')
+      alongRun = rt.fdiv(distancePx, rt.component_wise('max', reach, rt.f(1)))
       decayRate = rt.f(0.0)
       if rt.bool(rt.binary('==', _u__METHOD, rt.i(1)))
         decayRate = rt.f(0.80000001192092896)

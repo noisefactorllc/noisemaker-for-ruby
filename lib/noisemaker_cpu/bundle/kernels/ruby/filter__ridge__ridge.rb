@@ -21,7 +21,7 @@ run_pixel = lambda do |ctx, out|
     dims = nil; globalCoord = nil; out_color = nil; ridged = nil; texel = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     dims = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, dims)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, dims))))
     texel = rt.texture(_u_inputTex, uv)
     ridged = ridge_transform__vec4_float.call(texel, _u_level)
     out_color = rt.construct(4, rt.swizzle(ridged, 'xyz'), rt.f(1))

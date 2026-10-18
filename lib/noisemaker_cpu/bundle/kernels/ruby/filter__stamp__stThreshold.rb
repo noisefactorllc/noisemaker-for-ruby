@@ -61,7 +61,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _t = nil; aa = nil; b = nil; blur = nil; globalCoord = nil; grain = nil; lumBlur = nil; m = nil; outColor = nil; src = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     blur = rt.texture(_u_blurTex, uv)
     globalCoord = rt.construct(2, rt.binary('+', rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'xy')), _u_tileOffset, 2, 'float'))

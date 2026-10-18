@@ -19,7 +19,7 @@ run_pixel = lambda do |ctx, out|
   end
   toSampleUV__vec2 = lambda do |globalPixelPos|
     globalPixelPos = rt.copy(globalPixelPos, 'float')
-    return rt.component_wise('clamp', rt.construct(2, ((((globalPixelPos[0]) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((globalPixelPos[1]) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
+    return rt.component_wise('clamp', rt.construct(2, rt.fdiv(((globalPixelPos[0]) - (_u_tileOffset[0])), _u_resolution[0]), rt.fdiv(((globalPixelPos[1]) - (_u_tileOffset[1])), _u_resolution[1])), rt.f(0), rt.f(1))
   end
   cellAvgColor3x3__vec2 = lambda do |centerPx|
     centerPx = rt.copy(centerPx, 'float')
@@ -55,11 +55,11 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     a = nil; bevelMul = nil; cellCenter = nil; cellColor = nil; cellIdxF = nil; dBottom = nil; dLeft = nil; dMin = nil; dRight = nil; dTop = nil; dh = nil; edgeNormal = nil; globalCoord = nil; h = nil; hNeighbor = nil; imgCenter = nil; lightDir = nil; localPx = nil; neighborCenter = nil; neighborIdx = nil; relPx = nil; result = nil; rimPx = nil; signTerm = nil; srcOwn = nil; topFaceShade = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     srcOwn = rt.texture(_u_inputTex, uv)
     imgCenter = rt.construct(2, rt.binary_raw('*', _u_fullResolution, rt.f(0.5), 2, 'float'))
     relPx = rt.construct(2, rt.binary_raw('-', globalCoord, imgCenter, 2, 'float'))
-    cellIdxF = rt.component_wise('floor', rt.construct(2, ((relPx[0]) / (_u_squareSize)), ((relPx[1]) / (_u_squareSize))))
+    cellIdxF = rt.component_wise('floor', rt.construct(2, rt.fdiv(relPx[0], _u_squareSize), rt.fdiv(relPx[1], _u_squareSize)))
     localPx = rt.construct(2, rt.binary_raw('-', relPx, rt.binary_raw('*', cellIdxF, _u_squareSize, 2, 'float'), 2, 'float'))
     cellCenter = rt.construct(2, rt.binary_raw('+', imgCenter, rt.binary_raw('*', rt.binary_raw('+', cellIdxF, rt.f(0.5), 2, 'float'), _u_squareSize, 2, 'float'), 2, 'float'))
     cellColor = rt.swizzle(cellAvgColor3x3__vec2.call(cellCenter), 'rgb')
@@ -85,18 +85,18 @@ run_pixel = lambda do |ctx, out|
       edgeNormal = rt.construct(2, 0.0)
       if rt.bool(rt.binary('==', dMin, dLeft))
         neighborIdx = rt.assign_swizzle(neighborIdx, 'x', rt.binary_raw('-', rt.swizzle(neighborIdx, 'x'), rt.f(1), 1, 'float'))
-        edgeNormal[0] = rt.f32(rt.unary('-', rt.f(1))); edgeNormal[1] = rt.f32(rt.f(0))
+        (begin edgeNormal[0] = rt.f32(rt.unary('-', rt.f(1))); edgeNormal[1] = rt.f32(rt.f(0)); edgeNormal end)
       else
         if rt.bool(rt.binary('==', dMin, dRight))
           neighborIdx = rt.assign_swizzle(neighborIdx, 'x', rt.binary_raw('+', rt.swizzle(neighborIdx, 'x'), rt.f(1), 1, 'float'))
-          edgeNormal[0] = rt.f32(rt.f(1)); edgeNormal[1] = rt.f32(rt.f(0))
+          (begin edgeNormal[0] = rt.f32(rt.f(1)); edgeNormal[1] = rt.f32(rt.f(0)); edgeNormal end)
         else
           if rt.bool(rt.binary('==', dMin, dBottom))
             neighborIdx = rt.assign_swizzle(neighborIdx, 'y', rt.binary_raw('-', rt.swizzle(neighborIdx, 'y'), rt.f(1), 1, 'float'))
-            edgeNormal[0] = rt.f32(rt.f(0)); edgeNormal[1] = rt.f32(rt.unary('-', rt.f(1)))
+            (begin edgeNormal[0] = rt.f32(rt.f(0)); edgeNormal[1] = rt.f32(rt.unary('-', rt.f(1))); edgeNormal end)
           else
             neighborIdx = rt.assign_swizzle(neighborIdx, 'y', rt.binary_raw('+', rt.swizzle(neighborIdx, 'y'), rt.f(1), 1, 'float'))
-            edgeNormal[0] = rt.f32(rt.f(0)); edgeNormal[1] = rt.f32(rt.f(1))
+            (begin edgeNormal[0] = rt.f32(rt.f(0)); edgeNormal[1] = rt.f32(rt.f(1)); edgeNormal end)
           end
         end
       end

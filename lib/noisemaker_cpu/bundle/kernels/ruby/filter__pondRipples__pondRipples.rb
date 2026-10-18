@@ -19,9 +19,9 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     __hoistv3 = nil; __hoistv4 = nil; __hoistv5 = nil; __hoistv6 = nil; __sc1 = nil; __sc2 = nil; amountGain = nil; aspectRatio = nil; co = nil; col = nil; damping = nil; dir = nil; dx = nil; dy = nil; globalCoord = nil; phase = nil; r = nil; rDelta = nil; rot = nil; rotDelta = nil; rotatedDir = nil; s = nil; sampleUV = nil; uv = nil; w = nil; x = nil
-    aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    aspectRatio = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     __sc1 = rt.f(0.5); uv[0] = rt.f32(rt.binary('-', uv[0], __sc1, 1, 'float')); uv[1] = rt.f32(rt.binary('-', uv[1], __sc1, 1, 'float'))
     uv = rt.assign_swizzle(uv, 'x', rt.binary_raw('*', rt.swizzle(uv, 'x'), aspectRatio, 1, 'float'))
     r = rt.length(uv)
@@ -49,7 +49,7 @@ run_pixel = lambda do |ctx, out|
         rDelta = rt.binary('*', w, rt.f(0.5), 1, 'float')
       end
     end
-    dir = rt.construct(2, (rt.bool(rt.binary('>', r, rt.f(0))) ? (rt.binary_raw('/', uv, r, 2, 'float')) : (rt.construct(2, rt.f(0)))))
+    dir = rt.construct(2, (rt.bool(rt.binary('>', r, rt.f(0))) ? (rt.fdiv(uv, r)) : (rt.construct(2, rt.f(0)))))
     rot = rt.binary('*', rt.binary('*', rt.binary('*', rotDelta, rt.f(2), 1, 'float'), rt.f(3.1415927410125732), 1, 'float'), rt.f(0.25), 1, 'float')
     s = rt.component_wise('sin', rot)
     co = rt.component_wise('cos', rot)
@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.assign_swizzle(uv, 'x', rt.binary_raw('/', rt.swizzle(uv, 'x'), aspectRatio, 1, 'float'))
     __sc2 = rt.f(0.5); uv[0] = rt.f32(rt.binary('+', uv[0], __sc2, 1, 'float')); uv[1] = rt.f32(rt.binary('+', uv[1], __sc2, 1, 'float'))
     if rt.bool(rt.binary('==', _u__WRAP, rt.i(0)))
-      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
+      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((uv[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((uv[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u__WRAP, rt.i(1)))
         uv.replace((rt.component_wise('mod', uv, rt.f(1))).map { |c| rt.f32(c) })
@@ -66,7 +66,7 @@ run_pixel = lambda do |ctx, out|
         uv.replace((rt.component_wise('clamp', uv, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
       end
     end
-    sampleUV = rt.component_wise('clamp', rt.construct(2, ((((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
+    sampleUV = rt.component_wise('clamp', rt.construct(2, rt.fdiv(((((uv[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0])), _u_resolution[0]), rt.fdiv(((((uv[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1])), _u_resolution[1])), rt.f(0), rt.f(1))
     col = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)

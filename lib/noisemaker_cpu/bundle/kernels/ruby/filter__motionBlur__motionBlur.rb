@@ -13,7 +13,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     current = nil; mixFactor = nil; previous = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     if rt.bool(_u_resetState)
       g['fragColor'].replace((rt.texture(_u_inputTex, uv)).map { |c| rt.f32(c) })
       return

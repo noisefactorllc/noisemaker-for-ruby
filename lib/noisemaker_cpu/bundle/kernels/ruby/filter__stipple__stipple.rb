@@ -116,7 +116,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     aa = nil; alpha = nil; cell = nil; clumpNoise = nil; d = nil; gc = nil; globalCoord = nil; inside = nil; l = nil; n = nil; noiseP = nil; p = nil; radius = nil; result = nil; seedColor = nil; seedGc = nil; seedUV = nil; src = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     alpha = rt.swizzle(rt.texture(_u_inputTex, uv), 'a')
     result = rt.construct(3, 0.0)
     aa = rt.f(0.0)
@@ -135,10 +135,10 @@ run_pixel = lambda do |ctx, out|
     seedUV = rt.construct(2, 0.0)
     src = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', _u__MODE, rt.i(0)))
-      p = rt.construct(2, rt.binary_raw('/', globalCoord, _u_cellSize, 2, 'float'))
+      p = rt.construct(2, rt.fdiv(globalCoord, _u_cellSize))
       cell = voronoiCell__vec2_float_float.call(p, rt.f(0.89999997615814209), rt.construct(1, _u_seed))
       seedGc = rt.construct(2, rt.binary_raw('*', rt.swizzle(cell, 'xy'), _u_cellSize, 2, 'float'))
-      seedUV = rt.component_wise('clamp', rt.construct(2, ((((seedGc[0]) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((seedGc[1]) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
+      seedUV = rt.component_wise('clamp', rt.construct(2, rt.fdiv(((seedGc[0]) - (_u_tileOffset[0])), _u_resolution[0]), rt.fdiv(((seedGc[1]) - (_u_tileOffset[1])), _u_resolution[1])), rt.f(0), rt.f(1))
       seedColor = rt.swizzle(rt.texture(_u_inputTex, seedUV), 'rgb')
       radius = rt.binary('+', rt.f(0.34999999403953552), rt.binary('*', rt.f(0.40000000596046448), rt.binary('-', rt.f(1), lum__vec3.call(seedColor), 1, 'float'), 1, 'float'), 1, 'float')
       d = rt.length(rt.binary_raw('-', p, rt.swizzle(cell, 'xy'), 2, 'float'))
@@ -153,18 +153,18 @@ run_pixel = lambda do |ctx, out|
         end
         noiseP = rt.construct(2, 0.0)
         if rt.bool(rt.binary('==', _u__MODE, rt.i(1)))
-          noiseP.replace((rt.binary_raw('/', gc, _u_grainSize, 2, 'float')).map { |c| rt.f32(c) })
+          noiseP.replace((rt.fdiv(gc, _u_grainSize)).map { |c| rt.f32(c) })
         else
-          noiseP.replace((rt.binary_raw('*', gc, rt.construct_raw(2, rt.binary('/', rt.f(1), _u_grainSize, 1, 'float'), rt.binary('/', rt.f(1), rt.binary('*', _u_grainSize, rt.f(8), 1, 'float'), 1, 'float')), 2, 'float')).map { |c| rt.f32(c) })
+          noiseP.replace((rt.binary_raw('*', gc, rt.construct_raw(2, rt.fdiv(rt.f(1), _u_grainSize), rt.fdiv(rt.f(1), rt.binary('*', _u_grainSize, rt.f(8), 1, 'float'))), 2, 'float')).map { |c| rt.f32(c) })
         end
-        n = vnoise__vec2.call(rt.construct(2, ((noiseP[0]) + ((((_u_seed)) * (rt.f(101.69999694824219))))), ((noiseP[1]) + ((((_u_seed)) * (rt.f(101.69999694824219)))))))
+        n = vnoise__vec2.call(rt.construct(2, ((noiseP[0]) + (((rt.construct(1, _u_seed)) * (rt.f(101.69999694824219))))), ((noiseP[1]) + (((rt.construct(1, _u_seed)) * (rt.f(101.69999694824219)))))))
         n = rt.binary('+', n, rt.binary('/', rt.binary('-', _u_density, rt.f(50), 1, 'float'), rt.f(100), 1, 'float'), 1, 'float')
         src = rt.swizzle(rt.texture(_u_inputTex, uv), 'rgb')
-        result[0] = rt.f32(rt.component_wise('step', n, rt.swizzle(src, 'r'))); result[1] = rt.f32(rt.component_wise('step', n, rt.swizzle(src, 'g'))); result[2] = rt.f32(rt.component_wise('step', n, rt.swizzle(src, 'b')))
+        (begin result[0] = rt.f32(rt.component_wise('step', n, rt.swizzle(src, 'r'))); result[1] = rt.f32(rt.component_wise('step', n, rt.swizzle(src, 'g'))); result[2] = rt.f32(rt.component_wise('step', n, rt.swizzle(src, 'b'))); result end)
       else
         src = rt.swizzle(rt.texture(_u_inputTex, uv), 'rgb')
         l = lum__vec3.call(src)
-        clumpNoise = rt.binary('*', fbm__vec2.call(rt.construct(2, ((((globalCoord[0]) / (((_u_grainSize) * (rt.f(4)))))) + ((((_u_seed)) * (rt.f(101.69999694824219))))), ((((globalCoord[1]) / (((_u_grainSize) * (rt.f(4)))))) + ((((_u_seed)) * (rt.f(101.69999694824219))))))), rt.component_wise('mix', rt.f(1.2000000476837158), rt.f(0.60000002384185791), l), 1, 'float')
+        clumpNoise = rt.binary('*', fbm__vec2.call(rt.construct(2, ((rt.fdiv(globalCoord[0], ((_u_grainSize) * (rt.f(4))))) + (((rt.construct(1, _u_seed)) * (rt.f(101.69999694824219))))), ((rt.fdiv(globalCoord[1], ((_u_grainSize) * (rt.f(4))))) + (((rt.construct(1, _u_seed)) * (rt.f(101.69999694824219))))))), rt.component_wise('mix', rt.f(1.2000000476837158), rt.f(0.60000002384185791), l), 1, 'float')
         clumpNoise = rt.binary('+', clumpNoise, rt.binary('/', rt.binary('-', _u_density, rt.f(50), 1, 'float'), rt.f(100), 1, 'float'), 1, 'float')
         result.replace((tonemap2__float_vec3_vec3.call(rt.component_wise('step', clumpNoise, l), rt.construct(3, (rt.f(0.05000000074505806)), (rt.f(0.05000000074505806)), (rt.f(0.05000000074505806))), rt.construct(3, (rt.f(0.97000002861022949)), (rt.f(0.97000002861022949)), (rt.f(0.97000002861022949))))).map { |c| rt.f32(c) })
       end

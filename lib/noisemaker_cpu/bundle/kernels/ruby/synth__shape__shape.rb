@@ -355,7 +355,7 @@ run_pixel = lambda do |ctx, out|
   diamonds__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
     __sc2 = nil; stLocal = nil
-    stLocal = rt.construct(2, rt.binary_raw('/', g['globalCoord'], rt.swizzle(_u_fullResolution, 'y'), 2, 'float'))
+    stLocal = rt.construct(2, rt.fdiv(g['globalCoord'], rt.swizzle(_u_fullResolution, 'y')))
     stLocal[0] = rt.f32(rt.binary('-', stLocal[0], (((rt.f(0.5)) * (g['aspectRatio']))), 1, 'float')); stLocal[1] = rt.f32(rt.binary('-', stLocal[1], (rt.f(0.5)), 1, 'float'))
     __sc2 = freq; stLocal[0] = rt.f32(rt.binary('*', stLocal[0], __sc2, 1, 'float')); stLocal[1] = rt.f32(rt.binary('*', stLocal[1], __sc2, 1, 'float'))
     return rt.binary('+', rt.component_wise('cos', rt.binary('*', rt.swizzle(stLocal, 'x'), g['PI'], 1, 'float')), rt.component_wise('cos', rt.binary('*', rt.swizzle(stLocal, 'y'), g['PI'], 1, 'float')), 1, 'float')
@@ -420,8 +420,8 @@ run_pixel = lambda do |ctx, out|
     a = nil; amp1 = nil; amp2 = nil; b = nil; color = nil; d = nil; lf1 = nil; lf2 = nil; st = nil; t1 = nil; t2 = nil
     color = rt.construct(4, rt.f(0), rt.f(0), rt.f(0), rt.f(1))
     g['globalCoord'].replace((rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float')).map { |c| rt.f32(c) })
-    st = rt.construct(2, rt.binary_raw('/', g['globalCoord'], rt.swizzle(_u_fullResolution, 'y'), 2, 'float'))
-    g['aspectRatio'] = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    st = rt.construct(2, rt.fdiv(g['globalCoord'], rt.swizzle(_u_fullResolution, 'y')))
+    g['aspectRatio'] = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     lf1 = map__float_float_float_float_float.call(_u_loopAScale, rt.f(1), rt.f(100), rt.f(6), rt.f(1))
     if rt.bool(_u_wrap)
       lf1 = rt.component_wise('floor', lf1)

@@ -29,16 +29,16 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     __hoistv1 = nil; _for0_first = nil; _t = nil; a = nil; bloomed = nil; blurAccum = nil; blurred = nil; boosted = nil; edgeBlended = nil; edgeMask = nil; finalRgb = nil; fullRes = nil; globalCoord = nil; globalUV = nil; i = nil; offset = nil; original = nil; r = nil; radiusUV = nil; sampleGlobalUV = nil; sampleLocalUV = nil; sigma = nil; sourceClamped = nil; texelSize = nil; theta = nil; uv = nil; weight = nil; weightSum = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    globalUV = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
     original = rt.texel_fetch(_u_inputTex, rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int'), rt.i(0))
     a = rt.component_wise('clamp', _u_alpha, rt.f(0), rt.f(1))
     if rt.bool(rt.binary('<=', a, rt.f(0)))
       g['fragColor'].replace((rt.construct(4, clamp01__vec3.call(rt.swizzle(original, 'rgb')), rt.swizzle(original, 'a'))).map { |c| rt.f32(c) })
       return
     end
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_fullResolution, 2, 'float'))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), _u_fullResolution))
     radiusUV = rt.construct(2, rt.binary_raw('*', rt.binary('*', g['RADIUS'], _u_renderScale, 1, 'float'), texelSize, 2, 'float'))
     blurAccum = rt.construct(3, rt.f(0))
     weightSum = rt.f(0)
@@ -59,7 +59,7 @@ run_pixel = lambda do |ctx, out|
       sigma = rt.f(0.40000000596046448)
       weight = rt.component_wise('exp', rt.binary('/', rt.binary('*', rt.unary('-', rt.f(0.5)), rt.binary('*', r, r, 1, 'float'), 1, 'float'), rt.binary('*', sigma, sigma, 1, 'float'), 1, 'float'))
       sampleGlobalUV = rt.component_wise('clamp', rt.construct(2, ((uv[0]) + (((offset[0]) * (radiusUV[0])))), ((uv[1]) + (((offset[1]) * (radiusUV[1]))))), rt.construct(2, rt.f(0)), rt.construct(2, rt.f(1)))
-      sampleLocalUV = rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', sampleGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+      sampleLocalUV = rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', sampleGlobalUV, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))
       __hoistv1 = rt.construct(3, rt.binary('*', rt.swizzle(rt.texture(_u_inputTex, sampleLocalUV), 'rgb'), weight, 3, 'float')); blurAccum[0] = rt.f32(rt.binary('+', blurAccum[0], __hoistv1[0], 1, 'float')); blurAccum[1] = rt.f32(rt.binary('+', blurAccum[1], __hoistv1[1], 1, 'float')); blurAccum[2] = rt.f32(rt.binary('+', blurAccum[2], __hoistv1[2], 1, 'float'))
       weightSum = rt.binary('+', weightSum, weight, 1, 'float')
     end

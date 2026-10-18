@@ -56,21 +56,21 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     a = nil; a2 = nil; b = nil; b2 = nil; bufferIsEmpty = nil; color = nil; f = nil; k = nil; prevFrame = nil; prevFrameCoord = nil; prevLum = nil; r1 = nil; r2 = nil; s = nil; tex = nil; texSize = nil; val = nil
     texSize = rt.texture_size(_u_bufTex)
-    tex = rt.texture(_u_bufTex, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    tex = rt.texture(_u_bufTex, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize))))
     a = rt.swizzle(tex, 'r')
     b = rt.swizzle(tex, 'g')
     bufferIsEmpty = (rt.bool((rt.bool((rt.bool(rt.binary('==', rt.swizzle(tex, 'r'), rt.f(0))) && rt.bool(rt.binary('==', rt.swizzle(tex, 'g'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(tex, 'b'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(tex, 'a'), rt.f(0))) ? 1 : 0)
     if rt.bool((rt.bool(bufferIsEmpty) || rt.bool(_u_resetState) ? 1 : 0))
       a = rt.f(1)
       b = rt.f(0)
-      if rt.bool(rt.binary('>', hash__vec2.call(rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + (((_u_seed)))), ((rt.swizzle(ctx.frag_coord, 'y')) + (((_u_seed)))))), rt.f(0.99000000953674316)))
+      if rt.bool(rt.binary('>', hash__vec2.call(rt.construct(2, ((rt.swizzle(ctx.frag_coord, 'x')) + ((rt.construct(1, _u_seed)))), ((rt.swizzle(ctx.frag_coord, 'y')) + ((rt.construct(1, _u_seed)))))), rt.f(0.99000000953674316)))
         b = rt.f(1)
       end
-      g['fragColor'][0] = rt.f32(a); g['fragColor'][1] = rt.f32(b); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
+      (begin g['fragColor'][0] = rt.f32(a); g['fragColor'][1] = rt.f32(b); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
       return
     end
     color = lp__sampler2D_vec2_vec2.call(_u_bufTex, rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, (texSize[0]), (texSize[1])))
-    prevFrameCoord = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    prevFrameCoord = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize))))
     prevFrame = rt.swizzle(rt.texture(_u_inputTex, prevFrameCoord), 'rgb')
     prevLum = lum__vec3.call(prevFrame)
     f = rt.binary('*', _u_feed, rt.f(0.0010000000474974513), 1, 'float')
@@ -191,7 +191,7 @@ run_pixel = lambda do |ctx, out|
     b2 = rt.binary('+', b, rt.binary('*', rt.binary('-', rt.binary('+', rt.binary('*', r2, rt.swizzle(color, 'g'), 1, 'float'), rt.binary('*', rt.binary('*', a, b, 1, 'float'), b, 1, 'float'), 1, 'float'), rt.binary('*', rt.binary('+', k, f, 1, 'float'), b, 1, 'float'), 1, 'float'), s, 1, 'float'), 1, 'float')
     a2 = rt.component_wise('clamp', a2, rt.f(0), rt.f(1))
     b2 = rt.component_wise('clamp', b2, rt.f(0), rt.f(1))
-    g['fragColor'][0] = rt.f32(a2); g['fragColor'][1] = rt.f32(b2); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(a2); g['fragColor'][1] = rt.f32(b2); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

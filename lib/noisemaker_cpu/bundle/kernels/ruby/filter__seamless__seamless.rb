@@ -29,7 +29,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     c00 = nil; c01 = nil; c10 = nil; c11 = nil; mx0 = nil; mx1 = nil; result = nil; st = nil; texSize = nil; uv = nil; wx = nil; wy = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize))))
     st = rt.construct(2, rt.binary_raw('*', uv, _u_repeat, 2, 'float'))
     st.replace((rt.component_wise('fract', st)).map { |c| rt.f32(c) })
     wx = edgeWeight__float_float.call(rt.swizzle(st, 'x'), _u_blend)

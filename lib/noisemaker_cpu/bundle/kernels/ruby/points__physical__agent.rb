@@ -104,12 +104,12 @@ run_pixel = lambda do |ctx, out|
       needsRespawn = 1
     end
     if rt.bool(needsRespawn)
-      g['outXYZ'][0] = rt.f32(px); g['outXYZ'][1] = rt.f32(py); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(0))
-      g['outVel'][0] = rt.f32(vx); g['outVel'][1] = rt.f32(vy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f)
+      (begin g['outXYZ'][0] = rt.f32(px); g['outXYZ'][1] = rt.f32(py); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(0)); g['outXYZ'] end)
+      (begin g['outVel'][0] = rt.f32(vx); g['outVel'][1] = rt.f32(vy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f); g['outVel'] end)
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
     else
-      g['outXYZ'][0] = rt.f32(px); g['outXYZ'][1] = rt.f32(py); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(1))
-      g['outVel'][0] = rt.f32(vx); g['outVel'][1] = rt.f32(vy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f)
+      (begin g['outXYZ'][0] = rt.f32(px); g['outXYZ'][1] = rt.f32(py); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(1)); g['outXYZ'] end)
+      (begin g['outVel'][0] = rt.f32(vx); g['outVel'][1] = rt.f32(vy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f); g['outVel'] end)
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
     end
   end

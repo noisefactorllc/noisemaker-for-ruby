@@ -75,7 +75,7 @@ run_pixel = lambda do |ctx, out|
     size = rt.copy(_u_imageSize, 'float')
     st.replace((rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), size, 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.f(1), rt.swizzle(st, 'y'), 1, 'float'))
-    scale = rt.binary('/', rt.f(100), _u_scaleAmt, 1, 'float')
+    scale = rt.fdiv(rt.f(100), _u_scaleAmt)
     if rt.bool(rt.binary('==', scale, rt.f(0)))
       scale = rt.f(1)
     end
@@ -210,7 +210,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     st = nil
-    st = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    st = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.f(1), rt.swizzle(st, 'y'), 1, 'float'))
     g['fragColor'].replace((getImage__vec2.call(st)).map { |c| rt.f32(c) })
   end

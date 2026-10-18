@@ -130,13 +130,33 @@ module NoisemakerCpu
       end
 
       def self._adapt_source(effect_id, program, source)
+        source = _lower_seeded_lattice_hashes(effect_id, program, source)
+        source = source.gsub(
+          /\bmod\(\s*([A-Za-z_]\w*(?:\.[xyzw]{1,4})?)\s*\+\s*1\.0\s*,\s*2\.0\s*\)\s*-\s*1\.0\b/,
+          '(\1 - 2.0 * floor((\1 + 1.0) * 0.5))'
+        )
+        if effect_id == "synth/navierStokes" && program == "nsSplat"
+          source = _replace_source_once(effect_id, source,
+            "return fract(sin(x * 12.9898) * 43758.5453);",
+            "return fract(float(float(sin(float(float(x) * 12.9898))) * 43758.5453));")
+        end
+        if effect_id == "filter/scatter" && program == "scatterJitter"
+          source = _replace_source_once(effect_id, source,
+            "hash22(hashCoord + float(seed) * 101.7)", "hash22(hashCoord + float(float(seed) * 101.7))")
+        end
+        if effect_id == "filter/extrude"
+          source = _replace_source_once(effect_id, source,
+            "float s = 1.0 + h * (depth / 100.0) * 0.4;", "float s = float(1.0 + h * (depth / 100.0) * 0.4);")
+          source = _replace_source_once(effect_id, source,
+            "bool topHit = all(lessThanEqual(abs(P - faceCenter), faceHalf));",
+            "bool topHit = all(lessThanEqual(abs((P - imgCenter) - (cellC - imgCenter) * s), faceHalf));")
+        end
         # The generator's preserveVectorAssignmentReads (compile-glsl.js
         # ~199-207) rewrites ONLY single-line `target = vecN(...)` statements
         # whose expression references `target.`: `vec2 temp = expr; target =
-        # temp;` (a snapshot). Multi-line constructors (mandelbrot's
-        # `dz = vec2(\n ..., ...);`) do NOT match and lower to the JS
-        # comma-assign where later components read the ALREADY-STORED earlier
-        # components (dz.y reads the new dz.x).
+        # temp;` (a snapshot). Multi-line constructors do not match this early
+        # pass. The later component-write hazard pass stages their expressions
+        # before stores when a later component reads an earlier written value.
         vtemp_n = 0
         source = source.gsub(
           /^([ \t]*)([A-Za-z_]\w*)\s*=\s*((?:[biu]?vec[234])\s*\([^;\n]*\))[ \t]*;$/m
@@ -176,20 +196,13 @@ module NoisemakerCpu
            source.include?("747796405")
           source = source.gsub(/\bhash_uint\s*\(/, "hash_uint_lcg(")
         end
-        # Match canonical CPU float32 hash and pigment storage boundaries.
-        # The oracle's adaptCanonicalSource applies the float32 hash
-        # boundary patch to EVERY effect except filter/scatter; restricting
-        # it to a hand-picked list left craquelure's hash12/hash22 with
-        # deferred-f64 rounding (2-ulp hash drift).
-        if effect_id != "filter/scatter"
-          source = source.gsub(
-            "return fract((p3.x + p3.y) * p3.z);",
-            "return fract(float(float(p3.x + p3.y) * p3.z));"
-          ).gsub(
-            "return fract((p3.xx + p3.yz) * p3.zy);",
-            "return fract(vec2(float(float(p3.x + p3.y) * p3.z), float(float(p3.x + p3.z) * p3.y)));"
-          )
-        end
+        source = source.gsub(
+          "return fract((p3.x + p3.y) * p3.z);",
+          "return fract(float(float(p3.x + p3.y) * p3.z));"
+        ).gsub(
+          "return fract((p3.xx + p3.yz) * p3.zy);",
+          "return fract(vec2(float(float(p3.x + p3.y) * p3.z), float(float(p3.x + p3.z) * p3.y)));"
+        )
         if effect_id == "filter/strokes" && program == "stkSmear"
           pigment = "pigmentSum += srcSample(centerUV).rgb * mark;"
           raise "strokes canonical pigment pattern changed" unless source.scan(pigment).length == 1
@@ -216,6 +229,8 @@ module NoisemakerCpu
             .gsub(/\.iterRatio\b/, ".z")
         end
         if effect_id == "synth3d/noise3d" && program == "precompute"
+          return source if source.include?("return cpu_noise3d_hash4(ps, 0);")
+
           adapted = source.sub(
             /\bfloat\s+hash4\s*\(\s*vec4\s+p\s*\)\s*\{.*?^\s*\}/m,
             "float hash4(vec4 p) {\n    return cpu_noise3d_hash4(p, seed);\n}"
@@ -225,6 +240,8 @@ module NoisemakerCpu
           return adapted
         end
         if effect_id == "synth/perlin" && program == "perlin"
+          return source if source.include?("return cpu_perlin_hash3(p, 0);")
+
           adapted = source.sub(
             /\bfloat\s+hash3\s*\(\s*vec3\s+p\s*\)\s*\{.*?^\}/m,
             "float hash3(vec3 p) {\n    return cpu_perlin_hash3(p, seed);\n}"
@@ -291,12 +308,76 @@ module NoisemakerCpu
             'if (s.a >= 0.5) { slots[\1] = s; }'
           )
         end
-        return source unless effect_id == "synth/navierStokes" && program == "nsSplat"
+        source
+      end
 
-        source.gsub(
-          "p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));",
-          "p.x = dot(p, vec2(127.1, 311.7)); p.y = dot(p, vec2(269.5, 183.3));"
-        )
+      def self._replace_source_once(effect_id, source, from, to)
+        raise "#{effect_id}: seeded or boundary source changed" unless source.scan(from).length == 1
+
+        source.sub(from, to)
+      end
+
+      def self._lower_seeded_lattice_hashes(effect_id, program, source)
+        replace = ->(from, to) { source = _replace_source_once(effect_id, source, from, to) }
+        if effect_id == "synth3d/noise3d" && program == "precompute" && source.include?("vec4 ps = p + float(seed) * 0.1;")
+          source = source.sub(
+            /\bfloat\s+hash4\s*\(\s*vec4\s+p\s*\)\s*\{.*?^\s*\}/m,
+            "float hash4(vec4 p, vec4 k) {\n" \
+            "    float cpuSeedOffset = float(float(seed) * 0.1);\n" \
+            "    vec4 cpuLatticeOffset = k + cpuSeedOffset;\n" \
+            "    vec4 ps = p + cpuLatticeOffset;\n" \
+            "    return cpu_noise3d_hash4(ps, 0);\n}"
+          )
+          replace.call(
+            "vec4 grad4(vec4 p) {\n    float h1 = hash4(p);\n    float h2 = hash4(p + 127.1);\n    float h3 = hash4(p + 269.5);\n    float h4 = hash4(p + 419.2);",
+            "vec4 grad4(vec4 p, vec4 k) {\n    float h1 = hash4(p, k);\n    float h2 = hash4(p, k + 127.1);\n    float h3 = hash4(p, k + 269.5);\n    float h4 = hash4(p, k + 419.2);"
+          )
+          corners = 0
+          source = source.gsub(/grad4\(vec4\(i\.xyz, (iw[01])\) \+ (vec4\([01],[01],[01],0\))\)/) do
+            corners += 1
+            "grad4(vec4(i.xyz, #{Regexp.last_match(1)}), #{Regexp.last_match(2)})"
+          end
+          raise "#{effect_id}: expected 16 corner hashes, found #{corners}" unless corners == 16
+        elsif effect_id == "synth3d/cell3d" && program == "precompute" && source.include?("p = p + float(seed) * 0.1;")
+          replace.call(
+            "vec3 hash3(vec3 p) {\n    p = p + float(seed) * 0.1;",
+            "vec3 hash3(vec3 base, vec3 neighbor) {\n" \
+            "    float cpuSeedOffset = float(float(seed) * 0.1);\n" \
+            "    vec3 cpuCellPos = base + neighbor;\n" \
+            "    vec3 p = vec3(base.x + float(neighbor.x + cpuSeedOffset), cpuCellPos.y + cpuSeedOffset, cpuCellPos.z + cpuSeedOffset);"
+          )
+          replace.call("vec3 randomOffset = hash3(cellPos);", "vec3 randomOffset = hash3(i, neighbor);")
+        elsif effect_id == "synth/perlin" && program == "perlin" && source.include?("p = p + float(seed) * 0.1;")
+          source = source.sub(
+            /\bfloat\s+hash3\s*\(\s*vec3\s+p\s*\)\s*\{.*?^\}/m,
+            "float hash3(vec3 p, vec3 k) {\n" \
+            "    float cpuSeedOffset = float(float(seed) * 0.1);\n" \
+            "    vec2 cpuLatticeOffset = k.xy + cpuSeedOffset;\n" \
+            "    p = vec3(p.x + cpuLatticeOffset.x, p.y + cpuLatticeOffset.y, float(p.z + cpuSeedOffset) + k.z);\n" \
+            "    return cpu_perlin_hash3(p, 0);\n}"
+          )
+          replace.call(
+            "vec3 grad3(vec3 p) {\n    // Generate 3 independent random values\n    float h1 = hash3(p);\n    float h2 = hash3(p + 127.1);\n    float h3 = hash3(p + 269.5);",
+            "vec3 grad3(vec3 p, vec3 k) {\n    float h1 = hash3(p, k);\n    float h2 = hash3(p, k + 127.1);\n    float h3 = hash3(p, k + 269.5);"
+          )
+          corners = 0
+          source = source.gsub(/grad3\(vec3\(i\.xy, (iz[01])\) \+ (vec3\([01],[01],0\))\)/) do
+            corners += 1
+            "grad3(vec3(i.xy, #{Regexp.last_match(1)}), #{Regexp.last_match(2)})"
+          end
+          raise "#{effect_id}: expected 8 corner hashes, found #{corners}" unless corners == 8
+        elsif %w[synth3d/reactionDiffusion3d synth3d/cellularAutomata3d].include?(effect_id) && program == "simulate"
+          replace.call(
+            "float hash3(vec3 p) {\n    p = p + float(seed) * 0.1;\n" \
+            "    p = fract(p * vec3(0.1031, 0.1030, 0.0973));\n" \
+            "    p += dot(p, p.yxz + 33.33);\n    return fract((p.x + p.y) * p.z);\n}",
+            "float hash3(vec3 p) {\n    p = p + float(float(seed) * 0.1);\n" \
+            "    p = fract(p * vec3(0.1031, 0.1030, 0.0973));\n" \
+            "    float cpuHashDot = dot(p, p.yxz + 33.33);\n" \
+            "    return fract(float(float(float(p.x + p.y) + float(cpuHashDot + cpuHashDot)) * float(p.z + cpuHashDot)));\n}"
+          )
+        end
+        source
       end
 
       # Construct and validate a complete bundle before touching the installed one.
@@ -400,7 +481,9 @@ module NoisemakerCpu
                 adapted = _adapt_source(eid, p["program"], glsl)
                 norm = NoisemakerCpu::Transpiler::Preprocess.normalize(adapted, defines)
                 ast = NoisemakerCpu::Transpiler::Parser.parse(norm["source"])
-                ruby_src = NoisemakerCpu::Transpiler::Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"], eid)
+                ruby_src = NoisemakerCpu::Transpiler::Codegen.emit_ruby(
+                  ast, norm["outputs"], norm["varyings"], eid, constant_divisors: defines
+                )
                 # The upstream JS generator mis-compiles render3d's voxel
                 # DDA (canonical-kernels.js 28046/28074/28075): the initial
                 # `voxelToWorld(voxel + max(step, ivec3(0)))` unwinds to

@@ -18,8 +18,8 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _H = nil; _L = nil; _V = nil; controlledLight = nil; curv = nil; defaultHalf = nil; defaultL = nil; flatSpec = nil; gloss = nil; grad = nil; hB = nil; hC = nil; hL = nil; hR = nil; hT = nil; halfLengthSq = nil; halfVector = nil; lightLengthSq = nil; n = nil; operatorLight = nil; outc = nil; rawSpec = nil; ridge = nil; spec = nil; specColor = nil; src = nil; strength = nil; texel = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
+    texel = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     hC = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, uv), 'rgb'))
     hL = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
@@ -42,7 +42,7 @@ run_pixel = lambda do |ctx, out|
     gloss = rt.component_wise('mix', rt.f(24), rt.f(6), rt.binary('/', _u_smoothness, rt.f(100), 1, 'float'))
     flatSpec = rt.component_wise('pow', rt.swizzle(_H, 'z'), gloss)
     rawSpec = rt.component_wise('pow', rt.component_wise('clamp', rt.dot(n, _H), rt.f(0), rt.f(1)), gloss)
-    spec = rt.component_wise('clamp', rt.binary('/', rt.binary('-', rawSpec, flatSpec, 1, 'float'), rt.component_wise('max', rt.binary('-', rt.f(1), flatSpec, 1, 'float'), rt.f(9.9999997473787516e-05)), 1, 'float'), rt.f(0), rt.f(1))
+    spec = rt.component_wise('clamp', rt.fdiv(rt.binary('-', rawSpec, flatSpec, 1, 'float'), rt.component_wise('max', rt.binary('-', rt.f(1), flatSpec, 1, 'float'), rt.f(9.9999997473787516e-05))), rt.f(0), rt.f(1))
     curv = rt.binary('-', rt.binary('-', rt.binary('-', rt.binary('-', rt.binary('*', rt.f(4), hC, 1, 'float'), hL, 1, 'float'), hR, 1, 'float'), hB, 1, 'float'), hT, 1, 'float')
     ridge = rt.component_wise('clamp', rt.binary('*', rt.binary('*', curv, strength, 1, 'float'), rt.f(2), 1, 'float'), rt.f(0), rt.f(1))
     spec = rt.component_wise('clamp', rt.binary('+', rt.binary('*', spec, rt.f(1.3500000238418579), 1, 'float'), rt.binary('*', ridge, rt.f(0.75), 1, 'float'), 1, 'float'), rt.f(0), rt.f(1))

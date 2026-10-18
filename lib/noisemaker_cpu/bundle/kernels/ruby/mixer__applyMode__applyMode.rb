@@ -36,19 +36,19 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     a = nil; amt = nil; b = nil; color = nil; color1 = nil; color2 = nil; factor = nil; globalCoord = nil; middle = nil; resultHSV = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    color1 = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
-    color2 = rt.texture(_u_tex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    color1 = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
+    color2 = rt.texture(_u_tex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)))))
     a = rgb2hsv__vec3.call(rt.swizzle(color1, 'rgb'))
     b = rgb2hsv__vec3.call(rt.swizzle(color2, 'rgb'))
     resultHSV = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', _u_mode, rt.i(0)))
-      resultHSV[0] = rt.f32(rt.swizzle(a, 'x')); resultHSV[1] = rt.f32(rt.swizzle(a, 'y')); resultHSV[2] = rt.f32(rt.swizzle(b, 'z'))
+      (begin resultHSV[0] = rt.f32(rt.swizzle(a, 'x')); resultHSV[1] = rt.f32(rt.swizzle(a, 'y')); resultHSV[2] = rt.f32(rt.swizzle(b, 'z')); resultHSV end)
     else
       if rt.bool(rt.binary('==', _u_mode, rt.i(1)))
-        resultHSV[0] = rt.f32(rt.swizzle(b, 'x')); resultHSV[1] = rt.f32(rt.swizzle(a, 'y')); resultHSV[2] = rt.f32(rt.swizzle(a, 'z'))
+        (begin resultHSV[0] = rt.f32(rt.swizzle(b, 'x')); resultHSV[1] = rt.f32(rt.swizzle(a, 'y')); resultHSV[2] = rt.f32(rt.swizzle(a, 'z')); resultHSV end)
       else
-        resultHSV[0] = rt.f32(rt.swizzle(a, 'x')); resultHSV[1] = rt.f32(rt.swizzle(b, 'y')); resultHSV[2] = rt.f32(rt.swizzle(a, 'z'))
+        (begin resultHSV[0] = rt.f32(rt.swizzle(a, 'x')); resultHSV[1] = rt.f32(rt.swizzle(b, 'y')); resultHSV[2] = rt.f32(rt.swizzle(a, 'z')); resultHSV end)
       end
     end
     middle = rt.construct(4, hsv2rgb__vec3.call(resultHSV), rt.f(1))

@@ -147,7 +147,7 @@ run_pixel = lambda do |ctx, out|
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
-    straight = rt.construct(3, (rt.bool(rt.binary('>', rt.swizzle(color, 'a'), rt.f(0))) ? (rt.binary_raw('/', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float')) : (rt.construct(3, rt.f(0)))))
+    straight = rt.construct(3, (rt.bool(rt.binary('>', rt.swizzle(color, 'a'), rt.f(0))) ? (rt.fdiv(rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'))) : (rt.construct(3, rt.f(0)))))
     rgb = srgbToLinear__vec3.call(straight)
     rgb.replace((applyWhiteBalance__vec3_float_float.call(rgb, _u_temperature, _u_tint)).map { |c| rt.f32(c) })
     rgb.replace((rt.binary_raw('*', rgb, rt.component_wise('pow', rt.f(2), _u_exposure), 3, 'float')).map { |c| rt.f32(c) })

@@ -84,6 +84,15 @@ class TestTranspilerPipeline < Minitest::Test
       binary(op, a, b)
     end
 
+    def fdiv(a, b)
+      return NoisemakerCpu::MetalDivision.divide(a, b) unless a.is_a?(Array) || b.is_a?(Array)
+
+      width = a.is_a?(Array) ? a.length : b.length
+      Array.new(width) do |i|
+        NoisemakerCpu::MetalDivision.divide(a.is_a?(Array) ? a[i] : a, b.is_a?(Array) ? b[i] : b)
+      end
+    end
+
     def array(elems)
       elems
     end
@@ -1041,11 +1050,8 @@ class TestTranspilerPipeline < Minitest::Test
     assert_equal [3.0, -3.0, 0.0, 1.0], out
   end
 
-  def test_scalar_int_division_rewrite_is_exempt_for_spookyTicker
-    # filter/spookyTicker's pinned M4/Metal authority capture matches the
-    # untruncated lowering (measured in noisemaker-for-cpu), so the
-    # scalar/scalar rewrite must be exempt for that effect id. The
-    # component-selected form still applies everywhere.
+  def test_scalar_int_division_rewrite_applies_to_spookyTicker
+    # The current CPU compiler restores scalar integer division for every effect.
     source = <<~GLSL
       out vec4 fragColor;
       void main() {
@@ -1058,8 +1064,10 @@ class TestTranspilerPipeline < Minitest::Test
 
     norm = Preprocess.normalize(source, {})
     ast = Parser.parse(norm["source"])
-    exempt = Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"], "filter/spookyTicker")
-    refute_includes exempt, "rt.trunc_div("
+    spooky = Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"], "filter/spookyTicker")
+    assert_includes spooky, "rt.trunc_div("
+    out, = run_kernel(spooky, StubCtx.new(StubRuntime.new, uniforms: {}))
+    assert_equal [3.0, 0.0, 0.0, 1.0], out
     regular = Codegen.emit_ruby(ast, norm["outputs"], norm["varyings"])
     assert_includes regular, "rt.trunc_div("
   end

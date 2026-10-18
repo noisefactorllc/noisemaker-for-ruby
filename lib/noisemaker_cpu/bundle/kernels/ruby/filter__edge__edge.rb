@@ -94,7 +94,7 @@ run_pixel = lambda do |ctx, out|
     __hoistv1 = nil; __sc2 = nil; __sc3 = nil; _for0_first = nil; _for1_first = nil; blendMode = nil; blended = nil; centerSample = nil; centerWeight = nil; conv = nil; doInvert = nil; dx = nil; dy = nil; edge = nil; edgeColor = nil; kernelType = nil; localUV = nil; m = nil; mask = nil; origColor = nil; radius = nil; resolution = nil; s = nil; sampleCoord = nil; texSize = nil; texelSize = nil; thresh = nil; useLuma = nil; w = nil
     texSize = rt.texture_size(_u_inputTex)
     resolution = rt.construct(2, texSize)
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), resolution, 2, 'float'))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), resolution))
     origColor = rt.texture(_u_inputTex, rt.binary_raw('*', rt.swizzle(ctx.frag_coord, 'xy'), texelSize, 2, 'float'))
     kernelType = rt.construct(1, _u__kernel, 'int')
     radius = rt.component_wise('min', rt.construct(1, rt.binary('*', rt.binary('+', _u_size, rt.f(1), 1, 'float'), _u_renderScale, 1, 'float'), 'int'), rt.i(256))

@@ -364,33 +364,33 @@ run_pixel = lambda do |ctx, out|
   circles__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
     dist = nil
-    dist = rt.length(rt.binary_raw('-', st, rt.construct_raw(2, rt.binary('/', rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(0.5)), 2, 'float'))
+    dist = rt.length(rt.binary_raw('-', st, rt.construct_raw(2, rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5)), 2, 'float'))
     return rt.binary('*', dist, freq, 1, 'float')
   end
   rings__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
     dist = nil
-    dist = rt.length(rt.binary_raw('-', st, rt.construct_raw(2, rt.binary('/', rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(0.5)), 2, 'float'))
+    dist = rt.length(rt.binary_raw('-', st, rt.construct_raw(2, rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5)), 2, 'float'))
     return rt.component_wise('cos', rt.binary('*', rt.binary('*', dist, rt.f(3.1415927410125732), 1, 'float'), freq, 1, 'float'))
   end
   concentric__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
     dist = nil
-    dist = rt.length(rt.binary_raw('-', st, rt.construct_raw(2, rt.binary('/', rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(0.5)), 2, 'float'))
+    dist = rt.length(rt.binary_raw('-', st, rt.construct_raw(2, rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5)), 2, 'float'))
     return rt.component_wise('cos', rt.binary('*', rt.binary('*', dist, rt.f(3.1415927410125732), 1, 'float'), freq, 1, 'float'))
   end
   diamonds__vec2_float = lambda do |st, freq|
     st = rt.copy(st, 'float')
-    __sc2 = nil
-    st.replace((rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.swizzle(_u_fullResolution, 'y'), 2, 'float')).map { |c| rt.f32(c) })
-    st[0] = rt.f32(rt.binary('-', st[0], (((((rt.f(0.5)) * (rt.swizzle(_u_fullResolution, 'x')))) / (rt.swizzle(_u_fullResolution, 'y')))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
-    __sc2 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc2, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc2, 1, 'float'))
+    __hoistv2 = nil; __sc3 = nil
+    st.replace((rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.swizzle(_u_fullResolution, 'y'))).map { |c| rt.f32(c) })
+    __hoistv2 = rt.construct(2, rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5)); st[0] = rt.f32(rt.binary('-', st[0], __hoistv2[0], 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __hoistv2[1], 1, 'float'))
+    __sc3 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc3, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc3, 1, 'float'))
     return rt.binary('+', rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'x'), rt.f(3.1415927410125732), 1, 'float')), rt.component_wise('cos', rt.binary('*', rt.swizzle(st, 'y'), rt.f(3.1415927410125732), 1, 'float')), 1, 'float')
   end
   shape__vec2_int_float = lambda do |st, sides, blend|
     st = rt.copy(st, 'float')
     a = nil; r = nil
-    st.replace((rt.binary_raw('-', rt.binary_raw('*', st, rt.f(2), 2, 'float'), rt.construct_raw(2, rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(1)), 2, 'float')).map { |c| rt.f32(c) })
+    st.replace((rt.binary_raw('-', rt.binary_raw('*', st, rt.f(2), 2, 'float'), rt.construct_raw(2, rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), rt.f(1)), 2, 'float')).map { |c| rt.f32(c) })
     a = rt.binary('+', rt.component_wise('atan', rt.swizzle(st, 'x'), rt.swizzle(st, 'y')), rt.f(3.1415927410125732), 1, 'float')
     r = rt.binary('/', rt.f(6.2831854820251465), rt.construct(1, sides), 1, 'float')
     return rt.binary('*', rt.binary('*', rt.component_wise('cos', rt.binary('-', rt.binary('*', rt.component_wise('floor', rt.binary('+', rt.f(0.5), rt.binary('/', a, r, 1, 'float'), 1, 'float')), r, 1, 'float'), a, 1, 'float')), rt.length(st), 1, 'float'), blend, 1, 'float')
@@ -398,9 +398,9 @@ run_pixel = lambda do |ctx, out|
   getMetric__vec2 = lambda do |st|
     st = rt.copy(st, 'float')
     diff = nil
-    diff = rt.construct(2, rt.binary_raw('-', rt.construct_raw(2, rt.binary('/', rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(0.5)), st, 2, 'float'))
+    diff = rt.construct(2, rt.binary_raw('-', rt.construct_raw(2, rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5)), st, 2, 'float'))
     if rt.bool(rt.binary('==', _u__METRIC, rt.i(0)))
-      return rt.length(rt.binary_raw('-', st, rt.construct_raw(2, rt.binary('/', rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(0.5)), 2, 'float'))
+      return rt.length(rt.binary_raw('-', st, rt.construct_raw(2, rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5)), 2, 'float'))
     else
       if rt.bool(rt.binary('==', _u__METRIC, rt.i(1)))
         return rt.binary('+', rt.component_wise('abs', rt.swizzle(diff, 'x')), rt.component_wise('abs', rt.swizzle(diff, 'y')), 1, 'float')
@@ -439,7 +439,7 @@ run_pixel = lambda do |ctx, out|
       return st
     end
     r = rt.binary('+', getMetric__vec2.call(st), blendy, 1, 'float')
-    st.replace((rt.binary_raw('-', st, rt.construct_raw(2, rt.binary('/', rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(0.5)), 2, 'float')).map { |c| rt.f32(c) })
+    st.replace((rt.binary_raw('-', st, rt.construct_raw(2, rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5)), 2, 'float')).map { |c| rt.f32(c) })
     st.replace((rotate2D__vec2_float.call(st, rt.f(0.5))).map { |c| rt.f32(c) })
     a = rt.component_wise('atan', rt.swizzle(st, 'y'), rt.swizzle(st, 'x'))
     ma = rt.component_wise('mod', rt.binary('-', a, rt.component_wise('radians', rt.binary('/', rt.f(360), sides, 1, 'float')), 1, 'float'), rt.binary('/', rt.f(6.2831854820251465), sides, 1, 'float'))
@@ -450,6 +450,7 @@ run_pixel = lambda do |ctx, out|
   offset__vec2_vec2 = lambda do |st, freq|
     st = rt.copy(st, 'float')
     freq = rt.copy(freq, 'float')
+    __hoistv4 = nil
     if rt.bool(rt.binary('==', _u__LOOP_OFFSET, rt.i(10)))
       return circles__vec2_float.call(st, rt.swizzle(freq, 'x'))
     else
@@ -457,7 +458,7 @@ run_pixel = lambda do |ctx, out|
         return shape__vec2_int_float.call(st, rt.i(3), rt.binary('*', rt.swizzle(freq, 'x'), rt.f(0.5), 1, 'float'))
       else
         if rt.bool(rt.binary('==', _u__LOOP_OFFSET, rt.i(30)))
-          return rt.binary('*', rt.binary('*', rt.binary('+', rt.component_wise('abs', rt.binary('-', rt.swizzle(st, 'x'), rt.binary('/', rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), 1, 'float')), rt.component_wise('abs', rt.binary('-', rt.swizzle(st, 'y'), rt.f(0.5), 1, 'float')), 1, 'float'), rt.swizzle(freq, 'x'), 1, 'float'), rt.f(0.5), 1, 'float')
+          return rt.binary('*', rt.binary('*', rt.binary('+', rt.component_wise('abs', rt.binary('-', rt.swizzle(st, 'x'), rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), 1, 'float')), rt.component_wise('abs', rt.binary('-', rt.swizzle(st, 'y'), rt.f(0.5), 1, 'float')), 1, 'float'), rt.swizzle(freq, 'x'), 1, 'float'), rt.f(0.5), 1, 'float')
         else
           if rt.bool(rt.binary('==', _u__LOOP_OFFSET, rt.i(40)))
             return shape__vec2_int_float.call(st, rt.i(4), rt.binary('*', rt.swizzle(freq, 'x'), rt.f(0.5), 1, 'float'))
@@ -493,7 +494,7 @@ run_pixel = lambda do |ctx, out|
                                 return rt.binary('*', rt.binary('*', rt.swizzle(st, 'y'), rt.swizzle(freq, 'x'), 1, 'float'), rt.f(0.5), 1, 'float')
                               else
                                 if rt.bool(rt.binary('==', _u__LOOP_OFFSET, rt.i(300)))
-                                  st[0] = rt.f32(rt.binary('-', st[0], (((((rt.swizzle(_u_fullResolution, 'x')) / (rt.swizzle(_u_fullResolution, 'y')))) * (rt.f(0.5)))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
+                                  __hoistv4 = rt.construct(2, rt.binary('*', rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5), 1, 'float'), rt.f(0.5)); st[0] = rt.f32(rt.binary('-', st[0], __hoistv4[0], 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __hoistv4[1], 1, 'float'))
                                   return value__vec2_vec2_float_float.call(st, freq, rt.binary('+', rt.construct(1, _u_seed), rt.f(50), 1, 'float'), rt.f(0))
                                 else
                                   if rt.bool(rt.binary('==', _u__LOOP_OFFSET, rt.i(400)))
@@ -532,24 +533,24 @@ run_pixel = lambda do |ctx, out|
     m = rt.binary('-', v, c, 1, 'float')
     rgb = rt.construct(3, rt.f(0))
     if rt.bool((rt.bool(rt.binary('<=', rt.f(0), h)) && rt.bool(rt.binary('<', h, rt.f(0.1666666716337204))) ? 1 : 0))
-      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
+      (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0)); rgb end)
     else
       if rt.bool((rt.bool(rt.binary('<=', rt.f(0.1666666716337204), h)) && rt.bool(rt.binary('<', h, rt.f(0.3333333432674408))) ? 1 : 0))
-        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
+        (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0)); rgb end)
       else
         if rt.bool((rt.bool(rt.binary('<=', rt.f(0.3333333432674408), h)) && rt.bool(rt.binary('<', h, rt.f(0.5))) ? 1 : 0))
-          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
+          (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x); rgb end)
         else
           if rt.bool((rt.bool(rt.binary('<=', rt.f(0.5), h)) && rt.bool(rt.binary('<', h, rt.f(0.66666668653488159))) ? 1 : 0))
-            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
+            (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c); rgb end)
           else
             if rt.bool((rt.bool(rt.binary('<=', rt.f(0.66666668653488159), h)) && rt.bool(rt.binary('<', h, rt.f(0.83333331346511841))) ? 1 : 0))
-              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
+              (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
               if rt.bool((rt.bool(rt.binary('<=', rt.f(0.83333331346511841), h)) && rt.bool(rt.binary('<', h, rt.f(1))) ? 1 : 0))
-                rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
+                (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
               else
-                rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0))
+                (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0)); rgb end)
               end
             end
           end
@@ -799,9 +800,9 @@ run_pixel = lambda do |ctx, out|
     _t = nil; baseLoop = nil; blend = nil; centered = nil; color = nil; freq = nil; globalCoord = nil; lf = nil; nominalFreq = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     color = rt.construct(4, rt.f(0), rt.f(0), rt.f(0), rt.f(1))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, rt.swizzle(_u_fullResolution, 'y'), 2, 'float'))
+    st = rt.construct(2, rt.fdiv(globalCoord, rt.swizzle(_u_fullResolution, 'y')))
     st.replace((kaleidoscope__vec2_float_float.call(st, _u_kaleido, rt.f(0.5))).map { |c| rt.f32(c) })
-    centered = rt.construct(2, rt.binary_raw('-', st, rt.construct_raw(2, rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(0.5), 1, 'float'), rt.f(0.5)), 2, 'float'))
+    centered = rt.construct(2, rt.binary_raw('-', st, rt.construct_raw(2, rt.binary('*', rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5), 1, 'float'), rt.f(0.5)), 2, 'float'))
     freq = rt.construct(2, rt.f(1))
     lf = rt.construct(2, rt.f(1))
     if rt.bool(rt.binary('==', _u__NOISE_TYPE, rt.i(11)))
@@ -849,7 +850,7 @@ run_pixel = lambda do |ctx, out|
     end
     blend = rt.binary('*', rt.binary('*', periodicFunction__float.call(_t), rt.component_wise('abs', _u_speed), 1, 'float'), rt.f(0.0099999997764825821), 1, 'float')
     color = rt.assign_swizzle(color, 'rgb', multires__vec2_vec2_int_float_float.call(centered, freq, _u_octaves, rt.construct(1, _u_seed), blend))
-    st.replace((rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float')).map { |c| rt.f32(c) })
+    st.replace((rt.fdiv(globalCoord, _u_fullResolution)).map { |c| rt.f32(c) })
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
   end
   main__void.call

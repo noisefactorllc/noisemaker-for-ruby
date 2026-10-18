@@ -87,7 +87,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _for0_first = nil; boundary = nil; controlColor = nil; k = nil; lum = nil; n = nil; result = nil; src = nil; uv = nil; w = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     controlColor = rt.texture(_u_source, uv)
     lum = getLuminosity__vec3.call(rt.swizzle(controlColor, 'rgb'))
     n = rt.component_wise('clamp', _u_layers, rt.i(2), rt.i(8))
@@ -106,7 +106,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       src = rt.construct(4, (rt.bool(rt.binary('==', layerActive__int.call(k), rt.i(1))) ? (sampleLayer__int_vec2.call(k, uv)) : (controlColor)))
-      boundary = rt.binary('/', rt.construct(1, k), rt.construct(1, n), 1, 'float')
+      boundary = rt.fdiv(rt.construct(1, k), rt.construct(1, n))
       w = bandWeight__float_float.call(lum, boundary)
       result.replace((rt.component_wise('mix', result, src, w)).map { |c| rt.f32(c) })
     end

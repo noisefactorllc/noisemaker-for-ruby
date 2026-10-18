@@ -68,6 +68,21 @@ module NoisemakerCpu
       d[source, 4]
     end
 
+    # Measured M4 nearest sampling rounds the scaled coordinate to float32.
+    def self._nearest_texel(coordinate, size)
+      scaled = _f32(coordinate * size)
+      return size - 1 if scaled.nan? || scaled == Float::INFINITY
+      return 0 if scaled == -Float::INFINITY
+
+      _clamp(scaled.floor, 0, size - 1)
+    end
+
+    def self.sample_nearest_texel_bottom_left(surface, u, v)
+      x = _nearest_texel(u, surface.width)
+      y = surface.height - 1 - _nearest_texel(v, surface.height)
+      surface.data[(y * surface.width + x) * 4, 4]
+    end
+
     # Bilinear sample, half-texel-centered, clamped to edge, GL bottom-left
     # row addressing (flips the integer texel row, like
     # sample_nearest_bottom_left).

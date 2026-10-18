@@ -38,9 +38,9 @@ run_pixel = lambda do |ctx, out|
       end
       zr = rt.binary('+', rt.binary('-', rt.binary('*', rt.swizzle(z, 'x'), rt.swizzle(z, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(z, 'y'), rt.swizzle(z, 'y'), 1, 'float'), 1, 'float'), cRe, 1, 'float')
       zi = rt.binary('+', rt.binary('*', rt.binary('*', rt.f(2), rt.swizzle(z, 'x'), 1, 'float'), rt.swizzle(z, 'y'), 1, 'float'), cIm, 1, 'float')
-      z[0] = rt.f32(zr); z[1] = rt.f32(zi)
+      (begin z[0] = rt.f32(zr); z[1] = rt.f32(zi); z end)
     end
-    g['fragColor'][0] = rt.f32(rt.swizzle(z, 'x')); g['fragColor'][1] = rt.f32(rt.swizzle(z, 'y')); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(0))
+    (begin g['fragColor'][0] = rt.f32(rt.swizzle(z, 'x')); g['fragColor'][1] = rt.f32(rt.swizzle(z, 'y')); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(0)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

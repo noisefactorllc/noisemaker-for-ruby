@@ -30,19 +30,19 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     __hoistv1 = nil; __hoistv2 = nil; __hoistv3 = nil; __hoistv4 = nil; aspectRatio = nil; col = nil; displacement = nil; dx = nil; dy = nil; globalCoord = nil; localCoord = nil; maxDisplacementUV = nil; sampleUV = nil; uv = nil
-    aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    aspectRatio = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     uv.replace((rotate2D__vec2_float_float.call(uv, rt.binary('/', _u_rotation, rt.f(180), 1, 'float'), aspectRatio)).map { |c| rt.f32(c) })
     displacement = rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.binary('*', rt.swizzle(uv, 'x'), _u_scale, 1, 'float'), rt.f(10), 1, 'float'), rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), rt.construct(1, _u_speed), 1, 'float'), 1, 'float')), rt.binary('*', _u_strength, rt.f(0.0099999997764825821), 1, 'float'), 1, 'float')
     maxDisplacementUV = rt.f(0.0)
     if rt.bool(rt.component_wise('any', rt.component_wise('notEqual', _u_tileOffset, rt.construct(2, rt.f(0)))))
-      maxDisplacementUV = rt.binary('/', rt.f(256), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+      maxDisplacementUV = rt.fdiv(rt.f(256), rt.swizzle(_u_fullResolution, 'y'))
       displacement = rt.component_wise('clamp', displacement, rt.unary('-', maxDisplacementUV), maxDisplacementUV)
     end
     uv = rt.assign_swizzle(uv, 'y', rt.binary_raw('+', rt.swizzle(uv, 'y'), displacement, 1, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
+      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((uv[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((uv[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         uv.replace((rt.component_wise('mod', uv, rt.f(1))).map { |c| rt.f32(c) })
@@ -51,7 +51,7 @@ run_pixel = lambda do |ctx, out|
       end
     end
     uv.replace((rotate2D__vec2_float_float.call(uv, rt.binary('/', rt.unary('-', _u_rotation), rt.f(180), 1, 'float'), aspectRatio)).map { |c| rt.f32(c) })
-    localCoord = rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    localCoord = rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', uv, _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))
     sampleUV = rt.construct(2, (rt.bool(rt.component_wise('any', rt.component_wise('notEqual', _u_tileOffset, rt.construct(2, rt.f(0))))) ? (rt.component_wise('fract', localCoord)) : (rt.component_wise('clamp', localCoord, rt.f(0), rt.f(1)))))
     col = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)

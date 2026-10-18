@@ -207,7 +207,12 @@ module NoisemakerCpu
             arr = at("]") ? "unsized" : expr
             expect("]")
           end
-          init = eat("=") ? assign_expr : nil
+          init = nil
+          if eat("=")
+            start = @i
+            init = assign_expr
+            init["source_tokens"] = @toks[start...@i].map { |token| token["value"] } if init["k"] == "cond"
+          end
           declarators << { "name" => name, "array" => arr, "init" => init }
           break unless eat(",")
 
@@ -445,6 +450,9 @@ module NoisemakerCpu
           next_tok
           e = expr
           expect(")")
+          if %w[id member index].include?(e["k"]) || (e["k"] == "construct" && e["type"] == "float")
+            e["grouping"] = e.fetch("grouping", 0) + 1
+          end
           return e
         end
         if t["kind"] == "num"

@@ -77,11 +77,11 @@ run_pixel = lambda do |ctx, out|
   end
   cells__vec2_float_float_int = lambda do |st, freq, cellSize, sides|
     st = rt.copy(st, 'float')
-    __hoistv2 = nil; __hoistv3 = nil; __sc1 = nil; _for0_first = nil; _for1_first = nil; d = nil; diff = nil; dist = nil; f = nil; i = nil; n = nil; point = nil; r1 = nil; r2 = nil; spd = nil; wrap = nil; x = nil; y = nil
-    st[0] = rt.f32(rt.binary('-', st[0], (((((rt.f(0.5)) * (rt.swizzle(_u_fullResolution, 'x')))) / (rt.swizzle(_u_fullResolution, 'y')))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
-    __sc1 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc1, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1, 1, 'float'))
-    st[0] = rt.f32(rt.binary('+', st[0], (((((rt.f(0.5)) * (rt.swizzle(_u_fullResolution, 'x')))) / (rt.swizzle(_u_fullResolution, 'y')))), 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], (rt.f(0.5)), 1, 'float'))
-    __hoistv2 = rt.swizzle(prng__vec3.call(rt.construct(3, ((_u_seed)), ((_u_seed)), ((_u_seed)))), 'xy'); st[0] = rt.f32(rt.binary('+', st[0], __hoistv2[0], 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __hoistv2[1], 1, 'float'))
+    __hoistv1 = nil; __hoistv3 = nil; __hoistv4 = nil; __hoistv5 = nil; __sc2 = nil; _for0_first = nil; _for1_first = nil; d = nil; diff = nil; dist = nil; f = nil; i = nil; n = nil; point = nil; r1 = nil; r2 = nil; spd = nil; wrap = nil; x = nil; y = nil
+    __hoistv1 = rt.construct(2, rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5)); st[0] = rt.f32(rt.binary('-', st[0], __hoistv1[0], 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __hoistv1[1], 1, 'float'))
+    __sc2 = freq; st[0] = rt.f32(rt.binary('*', st[0], __sc2, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc2, 1, 'float'))
+    __hoistv3 = rt.construct(2, rt.fdiv(rt.binary('*', rt.f(0.5), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5)); st[0] = rt.f32(rt.binary('+', st[0], __hoistv3[0], 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __hoistv3[1], 1, 'float'))
+    __hoistv4 = rt.swizzle(prng__vec3.call(rt.construct(3, (rt.construct(1, _u_seed)), (rt.construct(1, _u_seed)), (rt.construct(1, _u_seed)))), 'xy'); st[0] = rt.f32(rt.binary('+', st[0], __hoistv4[0], 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], __hoistv4[1], 1, 'float'))
     i = rt.component_wise('floor', st)
     f = rt.component_wise('fract', st)
     d = rt.f(1)
@@ -107,11 +107,11 @@ run_pixel = lambda do |ctx, out|
         end
         n = rt.construct(2, rt.construct(1, x), rt.construct(1, y))
         wrap = rt.construct(2, rt.binary_raw('+', i, n, 2, 'float'))
-        point = rt.swizzle(prng__vec3.call(rt.construct(3, (rt.swizzle(wrap, 'x')), (rt.swizzle(wrap, 'y')), ((_u_seed)))), 'xy')
-        r1 = rt.construct(3, rt.binary('-', rt.construct(3, rt.binary('*', prng__vec3.call(rt.construct(3, ((_u_seed)), (rt.swizzle(wrap, 'x')), (rt.swizzle(wrap, 'y')))), rt.f(0.5), 3, 'float')), rt.f(0.25), 3, 'float'))
-        r2 = rt.construct(3, rt.binary('-', rt.construct(3, rt.binary('*', prng__vec3.call(rt.construct(3, (rt.swizzle(wrap, 'x')), (rt.swizzle(wrap, 'y')), ((_u_seed)))), rt.f(2), 3, 'float')), rt.f(1), 3, 'float'))
+        point = rt.swizzle(prng__vec3.call(rt.construct(3, (rt.swizzle(wrap, 'x')), (rt.swizzle(wrap, 'y')), (rt.construct(1, _u_seed)))), 'xy')
+        r1 = rt.construct(3, rt.binary('-', rt.construct(3, rt.binary('*', prng__vec3.call(rt.construct(3, (rt.construct(1, _u_seed)), (rt.swizzle(wrap, 'x')), (rt.swizzle(wrap, 'y')))), rt.f(0.5), 3, 'float')), rt.f(0.25), 3, 'float'))
+        r2 = rt.construct(3, rt.binary('-', rt.construct(3, rt.binary('*', prng__vec3.call(rt.construct(3, (rt.swizzle(wrap, 'x')), (rt.swizzle(wrap, 'y')), (rt.construct(1, _u_seed)))), rt.f(2), 3, 'float')), rt.f(1), 3, 'float'))
         spd = rt.component_wise('floor', _u_speed)
-        __hoistv3 = rt.construct(2, rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float'), rt.swizzle(r2, 'x'), 1, 'float')), rt.swizzle(r1, 'x'), 1, 'float'), rt.binary('*', rt.component_wise('cos', rt.binary('+', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float'), rt.swizzle(r2, 'y'), 1, 'float')), rt.swizzle(r1, 'y'), 1, 'float')); point[0] = rt.f32(rt.binary('+', point[0], __hoistv3[0], 1, 'float')); point[1] = rt.f32(rt.binary('+', point[1], __hoistv3[1], 1, 'float'))
+        __hoistv5 = rt.construct(2, rt.binary('*', rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float'), rt.swizzle(r2, 'x'), 1, 'float')), rt.swizzle(r1, 'x'), 1, 'float'), rt.binary('*', rt.component_wise('cos', rt.binary('+', rt.binary('*', rt.binary('*', _u_time, rt.f(6.2831854820251465), 1, 'float'), spd, 1, 'float'), rt.swizzle(r2, 'y'), 1, 'float')), rt.swizzle(r1, 'y'), 1, 'float')); point[0] = rt.f32(rt.binary('+', point[0], __hoistv5[0], 1, 'float')); point[1] = rt.f32(rt.binary('+', point[1], __hoistv5[1], 1, 'float'))
         diff = rt.construct(2, rt.binary_raw('-', rt.binary_raw('+', n, point, 2, 'float'), f, 2, 'float'))
         dist = shape__vec2_vec2_int_float.call(rt.construct(2, (rt.swizzle(diff, 'x')), (rt.unary('-', rt.swizzle(diff, 'y')))), rt.construct(2, (rt.f(0)), (rt.f(0))), sides, cellSize)
         if rt.bool(rt.binary('==', _u_metric, rt.i(1)))
@@ -128,7 +128,7 @@ run_pixel = lambda do |ctx, out|
     cellSize = nil; color = nil; d = nil; freq = nil; globalCoord = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     color = rt.construct(4, rt.f(0), rt.f(0), rt.f(1), rt.f(1))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, rt.swizzle(_u_fullResolution, 'y'), 2, 'float'))
+    st = rt.construct(2, rt.fdiv(globalCoord, rt.swizzle(_u_fullResolution, 'y')))
     freq = map__float_float_float_float_float.call(_u_scale, rt.f(1), rt.f(100), rt.f(20), rt.f(1))
     cellSize = map__float_float_float_float_float.call(_u_cellScale, rt.f(1), rt.f(100), rt.f(3), rt.f(0.75))
     d = cells__vec2_float_float_int.call(st, freq, cellSize, _u_metric)

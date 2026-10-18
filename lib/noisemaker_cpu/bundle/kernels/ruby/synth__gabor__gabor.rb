@@ -73,8 +73,8 @@ run_pixel = lambda do |ctx, out|
           if rt.bool(rt.binary('>=', k, impulses))
             break
           end
-          r1 = prng__vec3.call(rt.construct(3, (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')), (((sd) + ((((k)) * (rt.f(7))))))))
-          r2 = prng__vec3.call(rt.construct(3, (((sd) + ((((k)) * (rt.f(13)))))), (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y'))))
+          r1 = prng__vec3.call(rt.construct(3, (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y')), (((sd) + (((rt.construct(1, k)) * (rt.f(7))))))))
+          r2 = prng__vec3.call(rt.construct(3, (((sd) + (((rt.construct(1, k)) * (rt.f(13)))))), (rt.swizzle(cellId, 'x')), (rt.swizzle(cellId, 'y'))))
           impulsePos = rt.swizzle(r1, 'xy')
           __hoistv1 = rt.binary_raw('*', rt.construct_raw(2, rt.component_wise('sin', rt.binary('+', _t, rt.binary('*', rt.swizzle(r2, 'x'), rt.f(6.2831854820251465), 1, 'float'), 1, 'float')), rt.component_wise('cos', rt.binary('+', _t, rt.binary('*', rt.swizzle(r2, 'y'), rt.f(6.2831854820251465), 1, 'float'), 1, 'float'))), rt.f(0.15000000596046448), 2, 'float'); impulsePos[0] = rt.f32(rt.binary('+', impulsePos[0], __hoistv1[0], 1, 'float')); impulsePos[1] = rt.f32(rt.binary('+', impulsePos[1], __hoistv1[1], 1, 'float'))
           delta = rt.construct(2, rt.binary_raw('-', rt.binary_raw('+', neighbor, impulsePos, 2, 'float'), frac, 2, 'float'))
@@ -92,7 +92,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     __sc2 = nil; _for3_first = nil; _t = nil; amplitude = nil; baseAngle = nil; fi = nil; freq = nil; globalCoord = nil; i = nil; impulses = nil; iso = nil; n = nil; oct = nil; octFreq = nil; octSigma = nil; p = nil; pOct = nil; sigma = nil; spd = nil; st = nil; totalAmp = nil; value = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, rt.swizzle(_u_fullResolution, 'y'), 2, 'float'))
+    st = rt.construct(2, rt.fdiv(globalCoord, rt.swizzle(_u_fullResolution, 'y')))
     freq = map__float_float_float_float_float.call(_u_scale, rt.f(1), rt.f(100), rt.f(20), rt.f(1))
     sigma = map__float_float_float_float_float.call(_u_bandwidth, rt.f(1), rt.f(100), rt.f(0.05000000074505806), rt.f(0.34999999403953552))
     baseAngle = rt.binary('/', rt.binary('*', _u_orientation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')

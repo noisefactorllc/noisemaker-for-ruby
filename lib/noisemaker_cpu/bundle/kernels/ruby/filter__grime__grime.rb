@@ -139,8 +139,8 @@ run_pixel = lambda do |ctx, out|
     __sc2 = nil; base_color = nil; blend_mask = nil; dropout = nil; dusty = nil; final_rgb = nil; freq_mask = nil; freq_specks = nil; globalCoord = nil; globalUV = nil; mask_gradient = nil; mask_power = nil; mask_refracted = nil; mask_value = nil; px = nil; s = nil; sparse_mask = nil; sparse_noise = nil; specks = nil; specks_field = nil; str = nil; tileSize = nil; trimmed = nil
     tileSize = rt.construct(2, rt.texture_size(_u_inputTex))
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.binary_raw('*', ctx.uv, tileSize, 2, 'float'), _u_tileOffset, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    px = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_fullResolution, 2, 'float'))
+    globalUV = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    px = rt.construct(2, rt.fdiv(rt.f(1), _u_fullResolution))
     base_color = rt.texture(_u_inputTex, ctx.uv)
     str = rt.component_wise('max', _u_strength, rt.f(0))
     s = _u_seed

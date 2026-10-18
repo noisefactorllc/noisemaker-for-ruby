@@ -20,12 +20,12 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _t = nil; animPos = nil; aspect = nil; c = nil; centered = nil; color = nil; colorA = nil; colorB = nil; cycle = nil; d = nil; extent = nil; flipCycle = nil; fullRes = nil; globalCoord = nil; globalUV = nil; halfSoft = nil; mask = nil; rad = nil; rotated = nil; s = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    colorA = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
-    colorB = rt.texture(_u_tex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    colorA = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
+    colorB = rt.texture(_u_tex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)))))
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    aspect = rt.fdiv(rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'))
+    globalUV = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
     centered = rt.construct(2, rt.binary_raw('*', rt.binary_raw('-', globalUV, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float'))
     centered = rt.assign_swizzle(centered, 'x', rt.binary_raw('*', rt.swizzle(centered, 'x'), aspect, 1, 'float'))
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')

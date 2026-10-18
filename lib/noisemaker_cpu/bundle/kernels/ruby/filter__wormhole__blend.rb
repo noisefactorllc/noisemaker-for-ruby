@@ -15,9 +15,9 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _for0_first = nil; _for1_first = nil; accum = nil; count = nil; globalCoord = nil; gx = nil; gy = nil; mean = nil; normalized = nil; s = nil; sampleUV = nil; sqrtVal = nil; src = nil; sum = nil; uv = nil; v = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    src = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
-    accum = rt.texture(_u_accumTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_accumTex)), 2, 'float')))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    src = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
+    accum = rt.texture(_u_accumTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_accumTex)))))
     sum = rt.f(0)
     count = rt.f(0)
     gy = rt.i(0)

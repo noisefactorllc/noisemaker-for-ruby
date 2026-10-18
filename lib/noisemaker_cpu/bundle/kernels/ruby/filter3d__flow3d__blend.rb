@@ -13,7 +13,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     baseColor = nil; baseSample = nil; combinedRgb = nil; finalAlpha = nil; inputIntensityValue = nil; outputSize = nil; trailColor = nil; uv = nil
     outputSize = rt.texture_size(_u_trailTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, outputSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, outputSize))))
     inputIntensityValue = rt.binary('/', _u_inputIntensity, rt.f(100), 1, 'float')
     baseSample = rt.texture(_u_mixerTex, uv)
     baseColor = rt.construct(4, rt.binary_raw('*', rt.swizzle(baseSample, 'rgb'), inputIntensityValue, 3, 'float'), rt.swizzle(baseSample, 'a'))

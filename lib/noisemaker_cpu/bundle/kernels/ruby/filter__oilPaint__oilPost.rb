@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
   lumGradientFlat__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     _t = nil; b = nil; bl = nil; br = nil; l = nil; px = nil; r = nil; tl = nil; tr = nil
-    px = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    px = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     tl = lum__vec3.call(rt.swizzle(rt.texture(_u_flatTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.f(1)), 2, 'float'), 2, 'float')), 'rgb'))
     l = lum__vec3.call(rt.swizzle(rt.texture(_u_flatTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.f(0)), 2, 'float'), 2, 'float')), 'rgb'))
     bl = lum__vec3.call(rt.swizzle(rt.texture(_u_flatTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.unary('-', rt.f(1))), 2, 'float'), 2, 'float')), 'rgb'))
@@ -72,7 +72,7 @@ run_pixel = lambda do |ctx, out|
   tent3x3__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     __hoistv3 = nil; _for1_first = nil; _for2_first = nil; dx = nil; dy = nil; px = nil; sum = nil; w = nil; wsum = nil
-    px = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    px = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     sum = rt.construct(3, rt.f(0))
     wsum = rt.f(0)
     dy = rt.unary('-', rt.i(1))
@@ -143,7 +143,7 @@ run_pixel = lambda do |ctx, out|
               blurred = tent3x3__vec2.call(uv)
               return rt.component_wise('mix', c, blurred, rt.binary('/', _u_detail, rt.f(100), 1, 'float'))
             else
-              band = fbm__vec2.call(rt.construct(2, ((((globalCoord[0]) + ((((_u_seed)) * (rt.f(37)))))) / (((rt.f(4)) + (_u_size)))), ((((globalCoord[1]) + ((((_u_seed)) * (rt.f(37)))))) / (((rt.f(4)) + (_u_size))))))
+              band = fbm__vec2.call(rt.construct(2, rt.fdiv(((globalCoord[0]) + (((rt.construct(1, _u_seed)) * (rt.f(37))))), ((rt.f(4)) + (_u_size))), rt.fdiv(((globalCoord[1]) + (((rt.construct(1, _u_seed)) * (rt.f(37))))), ((rt.f(4)) + (_u_size)))))
               shift = rt.binary('*', rt.binary('*', rt.binary('-', rt.binary('*', band, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), rt.binary('/', _u_detail, rt.f(100), 1, 'float'), 1, 'float'), rt.f(0.25), 1, 'float')
               return rt.component_wise('clamp', rt.construct(3, ((c[0]) + ((shift))), ((c[1]) + ((shift))), ((c[2]) + ((shift)))), rt.f(0), rt.f(1))
             end
@@ -154,7 +154,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     c = nil; globalCoord = nil; grained = nil; outc = nil; src = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     c = rt.swizzle(rt.texture(_u_flatTex, uv), 'rgb')
     globalCoord = rt.construct(2, rt.binary('+', rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'xy')), _u_tileOffset, 2, 'float'))

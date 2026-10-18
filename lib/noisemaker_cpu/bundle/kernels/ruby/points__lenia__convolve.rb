@@ -21,8 +21,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _U = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; density = nil; densitySize = nil; dr = nil; dx = nil; dy = nil; i = nil; iRadius = nil; kVal = nil; numSamples = nil; r = nil; sampleUV = nil; texelSize = nil; uv = nil; wK = nil
     densitySize = rt.construct(2, rt.texture_size(_u_densityTex))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), densitySize, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), densitySize, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), densitySize))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), densitySize))
     wK = rt.f(0)
     numSamples = rt.i(64)
     dr = rt.binary('/', _u_searchRadius, rt.construct(1, numSamples), 1, 'float')
@@ -66,13 +66,13 @@ run_pixel = lambda do |ctx, out|
         if rt.bool(rt.binary('>', r, _u_searchRadius))
           next
         end
-        sampleUV = rt.component_wise('fract', rt.construct(2, ((uv[0]) + (((((dx))) * (texelSize[0])))), ((uv[1]) + (((((dy))) * (texelSize[1]))))))
+        sampleUV = rt.component_wise('fract', rt.construct(2, ((uv[0]) + ((((rt.construct(1, dx))) * (texelSize[0])))), ((uv[1]) + ((((rt.construct(1, dy))) * (texelSize[1]))))))
         density = rt.swizzle(rt.texture(_u_densityTex, sampleUV), 'r')
         kVal = rt.binary('*', _kernel__float_float_float.call(r, _u_muK, _u_sigmaK), wK, 1, 'float')
         _U = rt.binary('+', _U, rt.binary('*', density, kVal, 1, 'float'), 1, 'float')
       end
     end
-    g['fragColor'][0] = rt.f32(_U); g['fragColor'][1] = rt.f32(rt.f(0)); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(_U); g['fragColor'][1] = rt.f32(rt.f(0)); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

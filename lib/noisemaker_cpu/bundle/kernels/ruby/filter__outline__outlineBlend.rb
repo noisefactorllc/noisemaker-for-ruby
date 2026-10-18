@@ -19,7 +19,7 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, dimensions)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, dimensions))))
     base = rt.texture(_u_inputTex, uv)
     edges = rt.texture(_u_edgesTexture, uv)
     strength = rt.component_wise('clamp', rt.swizzle(edges, 'r'), rt.f(0), rt.f(1))

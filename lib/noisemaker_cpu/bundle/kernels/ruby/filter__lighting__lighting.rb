@@ -94,7 +94,7 @@ run_pixel = lambda do |ctx, out|
     normal = rt.copy(normal, 'float')
     refractionOffset = nil
     refractionOffset = rt.construct(2, rt.binary_raw('*', rt.swizzle(normal, 'xy'), rt.binary('*', _u_refraction, rt.f(0.012500000186264515), 1, 'float'), 2, 'float'))
-    return rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, refractionOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    return rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, refractionOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)))))
   end
   applyReflection__vec2_vec2_vec3 = lambda do |uv, globalUV, normal|
     uv = rt.copy(uv, 'float')
@@ -107,10 +107,10 @@ run_pixel = lambda do |ctx, out|
     redOffset = rt.construct(2, rt.binary_raw('*', reflectionOffset, rt.binary('+', rt.f(1), rt.binary('*', _u_aberration, rt.f(0.0074999998323619366), 1, 'float'), 1, 'float'), 2, 'float'))
     greenOffset = rt.copy(reflectionOffset, 'float')
     blueOffset = rt.construct(2, rt.binary_raw('*', reflectionOffset, rt.binary('-', rt.f(1), rt.binary('*', _u_aberration, rt.f(0.0074999998323619366), 1, 'float'), 1, 'float'), 2, 'float'))
-    redChannel = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, redOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))), 'r')
-    greenChannel = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, greenOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))), 'g')
-    blueChannel = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, blueOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))), 'b')
-    alphaChannel = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, reflectionOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))), 'a')
+    redChannel = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, redOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))), 'r')
+    greenChannel = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, greenOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))), 'g')
+    blueChannel = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, blueOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))), 'b')
+    alphaChannel = rt.swizzle(rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, reflectionOffset, 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))), 'a')
     return rt.construct(4, redChannel, greenChannel, blueChannel, alphaChannel)
   end
   main__void = lambda do
@@ -119,10 +119,10 @@ run_pixel = lambda do |ctx, out|
     texSize = rt.texture_size(_u_inputTex)
     resolution = rt.construct(2, texSize)
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (resolution)))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), resolution, 2, 'float'))
-    origColor = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    globalUV = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), resolution))
+    origColor = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
     normal = calculateNormal__vec2_vec2.call(uv, texelSize)
     lightDir = rt.normalize(_u_lightDirection)
     viewDir = rt.construct(3, rt.f(0), rt.f(0), rt.f(1))

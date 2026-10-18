@@ -53,7 +53,7 @@ run_pixel = lambda do |ctx, out|
         globalMax = rt.component_wise('max', globalMax, rt.swizzle(tileStats, 'y'))
       end
     end
-    g['fragColor'][0] = rt.f32(globalMin); g['fragColor'][1] = rt.f32(globalMax); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(globalMin); g['fragColor'][1] = rt.f32(globalMax); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

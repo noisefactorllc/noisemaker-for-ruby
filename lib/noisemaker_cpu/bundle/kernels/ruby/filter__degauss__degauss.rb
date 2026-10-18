@@ -258,16 +258,16 @@ run_pixel = lambda do |ctx, out|
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
     width_f = rt.swizzle(fullRes, 'x')
     height_f = rt.swizzle(fullRes, 'y')
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.construct_raw(2, rt.binary('+', rt.construct(1, rt.swizzle(global_id, 'x')), rt.swizzle(_u_tileOffset, 'x'), 1, 'float'), rt.binary('+', rt.construct(1, rt.swizzle(global_id, 'y')), rt.swizzle(_u_tileOffset, 'y'), 1, 'float')), rt.construct_raw(2, rt.f(0.5), rt.f(0.5)), 2, 'float'), rt.construct_raw(2, rt.component_wise('max', width_f, rt.f(1)), rt.component_wise('max', height_f, rt.f(1))), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.construct_raw(2, rt.binary('+', rt.construct(1, rt.swizzle(global_id, 'x')), rt.swizzle(_u_tileOffset, 'x'), 1, 'float'), rt.binary('+', rt.construct(1, rt.swizzle(global_id, 'y')), rt.swizzle(_u_tileOffset, 'y'), 1, 'float')), rt.construct_raw(2, rt.f(0.5), rt.f(0.5)), 2, 'float'), rt.construct_raw(2, rt.component_wise('max', width_f, rt.f(1)), rt.component_wise('max', height_f, rt.f(1)))))
     mask = singularity_mask__vec2_float_float.call(uv, width_f, height_f)
     if rt.bool(rt.binary('<=', mask, rt.f(0)))
       g['fragColor'].replace((original).map { |c| rt.f32(c) })
       return
     end
-    renderScale = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.f(1)), 1, 'float')) : (rt.f(1)))
+    renderScale = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.f(1)))) : (rt.f(1)))
     isTiling = rt.binary('>', renderScale, rt.f(1.0099999904632568))
     maxOffsetPixels = (rt.bool(isTiling) ? (rt.f(256)) : (rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y'))))
-    maxAllowedDisplacement = (rt.bool(isTiling) ? (rt.binary('/', maxOffsetPixels, rt.component_wise('max', width_f, height_f), 1, 'float')) : (rt.binary('/', maxOffsetPixels, rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.f(1)), 1, 'float')))
+    maxAllowedDisplacement = (rt.bool(isTiling) ? (rt.fdiv(maxOffsetPixels, rt.component_wise('max', width_f, height_f))) : (rt.fdiv(maxOffsetPixels, rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.f(1)))))
     clampedDisplacement = rt.component_wise('min', _u_displacement, maxAllowedDisplacement)
     freq = freq_for_shape__float_float_float.call(rt.f(2), width_f, height_f)
     base_pos = rt.construct(2, rt.construct(1, rt.swizzle(global_id, 'x')), rt.construct(1, rt.swizzle(global_id, 'y')))
@@ -277,7 +277,7 @@ run_pixel = lambda do |ctx, out|
     green = warped_channel_value__uint_uvec2_vec2_float_float_vec2_float_float_float_float.call(rt.i(1), coord, base_pos, width_f, height_f, freq, clampedDisplacement, mask, _u_time, _u_speed)
     blue = warped_channel_value__uint_uvec2_vec2_float_float_vec2_float_float_float_float.call(rt.i(2), coord, base_pos, width_f, height_f, freq, clampedDisplacement, mask, _u_time, _u_speed)
     alpha = clamp01__float.call(rt.swizzle(original, 'w'))
-    g['fragColor'][0] = rt.f32(red); g['fragColor'][1] = rt.f32(green); g['fragColor'][2] = rt.f32(blue); g['fragColor'][3] = rt.f32(alpha)
+    (begin g['fragColor'][0] = rt.f32(red); g['fragColor'][1] = rt.f32(green); g['fragColor'][2] = rt.f32(blue); g['fragColor'][3] = rt.f32(alpha); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

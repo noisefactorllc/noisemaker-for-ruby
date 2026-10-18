@@ -15,7 +15,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     c = nil; globalCoord = nil; st = nil; v = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.swizzle(ctx.frag_coord, 'xy'), rt.f(0.5), 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    st = rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.swizzle(ctx.frag_coord, 'xy'), rt.f(0.5), 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex))))
     c = rt.texture(_u_inputTex, st)
     v = rt.f(0.0)
     if rt.bool(rt.binary('==', _u_channel, rt.i(0)))

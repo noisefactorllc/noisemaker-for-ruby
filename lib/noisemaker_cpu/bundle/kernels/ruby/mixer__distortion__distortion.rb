@@ -212,10 +212,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; fullRes = nil; globalUV = nil; texelSize = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    globalUV = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
     color = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', _u_mode, rt.i(0)))
       if rt.bool(rt.binary('==', _u_mapSource, rt.i(0)))

@@ -15,7 +15,7 @@ run_pixel = lambda do |ctx, out|
     color = nil; fw = nil; globalCoord = nil; texSize = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize))))
     color = rt.texture(_u_inputTex, uv)
     fw = rt.construct(3, 0.0)
     if rt.bool(_u_antialias)

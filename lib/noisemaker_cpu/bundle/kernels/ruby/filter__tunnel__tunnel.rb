@@ -35,9 +35,9 @@ run_pixel = lambda do |ctx, out|
     texSize = rt.texture_size(_u_inputTex)
     tileDims = rt.construct(2, texSize)
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
     centered = rt.construct(2, rt.binary_raw('-', uv, rt.f(0.5), 2, 'float'))
-    aspectRatio = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
+    aspectRatio = rt.fdiv(rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'))
     if rt.bool(_u_aspectLens)
       centered = rt.assign_swizzle(centered, 'x', rt.binary_raw('*', rt.swizzle(centered, 'x'), aspectRatio, 1, 'float'))
     end

@@ -38,7 +38,7 @@ run_pixel = lambda do |ctx, out|
     __sc1 = nil; _u = nil; advected = nil; backUv = nil; dDecay = nil; dt = nil; fragCoord = nil; here = nil; newDye = nil; newVel = nil; texSize = nil; uv = nil; vDecay = nil
     texSize = rt.texture_size(_u_bufTex)
     fragCoord = rt.swizzle(ctx.frag_coord, 'xy')
-    uv = rt.construct(2, rt.binary_raw('/', fragCoord, rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(fragCoord, rt.construct_raw(2, rt.construct(2, texSize))))
     here = rt.texel_fetch(_u_bufTex, rt.component_wise('clamp', rt.construct(2, rt.construct(2, fragCoord), 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', texSize, rt.construct(2, rt.i(1), 'int'), 2, 'int')), rt.i(0))
     _u = rt.swizzle(here, 'rg')
     dt = rt.binary('*', rt.component_wise('clamp', _u_speed, rt.f(0), rt.f(200)), rt.f(9.9999997473787516e-05), 1, 'float')

@@ -79,7 +79,7 @@ run_pixel = lambda do |ctx, out|
     return rt.construct(2, rt.construct(2, rt.component_wise('clamp', rt.construct(2, ((pos[0]) / (cellSize[0])), ((pos[1]) / (cellSize[1]))), rt.construct(2, rt.f(0)), rt.construct(2, rt.construct(1, rt.binary('-', g['GRID_SIZE'], rt.i(1), 1, 'int'))))), 'int')
   end
   main__void = lambda do
-    __sc1 = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; age = nil; alignSteer = nil; alignmentCount = nil; alignmentSum = nil; alive = nil; angle = nil; avgPos = nil; avgVel = nil; away = nil; boidId = nil; cellSeed = nil; checkCell = nil; cohesionCount = nil; cohesionSteer = nil; cohesionSum = nil; coord = nil; desired = nil; diff = nil; dist = nil; distSq = nil; dx = nil; dy = nil; myCell = nil; newPx = nil; newPy = nil; noiseForce = nil; noiseScale = nil; nx = nil; ny = nil; otherPos = nil; otherVel = nil; otherVelocity = nil; otherXyz = nil; perceptionSq = nil; pos = nil; px = nil; py = nil; rgba = nil; s = nil; sampleIdx = nil; sampleSeed = nil; seed = nil; separationCount = nil; separationForce = nil; separationSq = nil; speed = nil; stateSize = nil; steer = nil; sx = nil; sy = nil; totalBoids = nil; turnStrength = nil; vel = nil; velocity = nil; vx = nil; vy = nil; wallForce = nil; xyz = nil
+    __hoistv1 = nil; __sc2 = nil; _for0_first = nil; _for1_first = nil; _for2_first = nil; age = nil; alignSteer = nil; alignmentCount = nil; alignmentSum = nil; alive = nil; angle = nil; avgPos = nil; avgVel = nil; away = nil; boidId = nil; cellSeed = nil; checkCell = nil; cohesionCount = nil; cohesionSteer = nil; cohesionSum = nil; coord = nil; desired = nil; diff = nil; dist = nil; distSq = nil; dx = nil; dy = nil; myCell = nil; newPx = nil; newPy = nil; noiseForce = nil; noiseScale = nil; nx = nil; ny = nil; otherPos = nil; otherVel = nil; otherVelocity = nil; otherXyz = nil; perceptionSq = nil; pos = nil; px = nil; py = nil; rgba = nil; s = nil; sampleIdx = nil; sampleSeed = nil; seed = nil; separationCount = nil; separationForce = nil; separationSq = nil; speed = nil; stateSize = nil; steer = nil; sx = nil; sy = nil; totalBoids = nil; turnStrength = nil; vel = nil; velocity = nil; vx = nil; vy = nil; wallForce = nil; xyz = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
     xyz = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
@@ -191,7 +191,7 @@ run_pixel = lambda do |ctx, out|
           if rt.bool((rt.bool(rt.binary('<', distSq, separationSq)) && rt.bool(rt.binary('>', distSq, rt.f(0))) ? 1 : 0))
             away = rt.construct(2, rt.unary('-', diff))
             dist = rt.component_wise('sqrt', distSq)
-            separationForce[0] = rt.f32(rt.binary('+', separationForce[0], ((away[0]) / (dist)), 1, 'float')); separationForce[1] = rt.f32(rt.binary('+', separationForce[1], ((away[1]) / (dist)), 1, 'float'))
+            __hoistv1 = rt.fdiv(away, dist); separationForce[0] = rt.f32(rt.binary('+', separationForce[0], __hoistv1[0], 1, 'float')); separationForce[1] = rt.f32(rt.binary('+', separationForce[1], __hoistv1[1], 1, 'float'))
             separationCount = rt.binary('+', separationCount, rt.i(1), 1, 'int')
           end
           if rt.bool((rt.bool(rt.binary('<', distSq, perceptionSq)) && rt.bool(rt.binary('>', distSq, rt.f(0))) ? 1 : 0))
@@ -205,7 +205,7 @@ run_pixel = lambda do |ctx, out|
     end
     steer = rt.construct(2, rt.f(0))
     if rt.bool(rt.binary('>', separationCount, rt.i(0)))
-      __sc1 = rt.construct(1, separationCount); separationForce[0] = rt.f32(rt.binary('/', separationForce[0], __sc1, 1, 'float')); separationForce[1] = rt.f32(rt.binary('/', separationForce[1], __sc1, 1, 'float'))
+      __sc2 = rt.construct(1, separationCount); separationForce[0] = rt.f32(rt.binary('/', separationForce[0], __sc2, 1, 'float')); separationForce[1] = rt.f32(rt.binary('/', separationForce[1], __sc2, 1, 'float'))
       if rt.bool(rt.binary('>', rt.length(separationForce), rt.f(0)))
         separationForce.replace((setMag__vec2_float.call(separationForce, _u_maxSpeed)).map { |c| rt.f32(c) })
         separationForce[0] = rt.f32(rt.binary('-', separationForce[0], velocity[0], 1, 'float')); separationForce[1] = rt.f32(rt.binary('-', separationForce[1], velocity[1], 1, 'float'))
@@ -254,17 +254,17 @@ run_pixel = lambda do |ctx, out|
       wallForce = rt.construct(2, rt.f(0))
       turnStrength = rt.binary('*', _u_maxForce, rt.f(2), 1, 'float')
       if rt.bool(rt.binary('<', rt.swizzle(pos, 'x'), _u_wallMargin))
-        wallForce = rt.assign_swizzle(wallForce, 'x', rt.binary('*', turnStrength, rt.binary('-', rt.f(1), rt.binary('/', rt.swizzle(pos, 'x'), _u_wallMargin, 1, 'float'), 1, 'float'), 1, 'float'))
+        wallForce = rt.assign_swizzle(wallForce, 'x', rt.binary('*', turnStrength, rt.binary('-', rt.f(1), rt.fdiv(rt.swizzle(pos, 'x'), _u_wallMargin), 1, 'float'), 1, 'float'))
       else
         if rt.bool(rt.binary('>', rt.swizzle(pos, 'x'), rt.binary('-', rt.swizzle(_u_resolution, 'x'), _u_wallMargin, 1, 'float')))
-          wallForce = rt.assign_swizzle(wallForce, 'x', rt.binary('*', rt.unary('-', turnStrength), rt.binary('-', rt.f(1), rt.binary('/', rt.binary('-', rt.swizzle(_u_resolution, 'x'), rt.swizzle(pos, 'x'), 1, 'float'), _u_wallMargin, 1, 'float'), 1, 'float'), 1, 'float'))
+          wallForce = rt.assign_swizzle(wallForce, 'x', rt.binary('*', rt.unary('-', turnStrength), rt.binary('-', rt.f(1), rt.fdiv(rt.binary('-', rt.swizzle(_u_resolution, 'x'), rt.swizzle(pos, 'x'), 1, 'float'), _u_wallMargin), 1, 'float'), 1, 'float'))
         end
       end
       if rt.bool(rt.binary('<', rt.swizzle(pos, 'y'), _u_wallMargin))
-        wallForce = rt.assign_swizzle(wallForce, 'y', rt.binary('*', turnStrength, rt.binary('-', rt.f(1), rt.binary('/', rt.swizzle(pos, 'y'), _u_wallMargin, 1, 'float'), 1, 'float'), 1, 'float'))
+        wallForce = rt.assign_swizzle(wallForce, 'y', rt.binary('*', turnStrength, rt.binary('-', rt.f(1), rt.fdiv(rt.swizzle(pos, 'y'), _u_wallMargin), 1, 'float'), 1, 'float'))
       else
         if rt.bool(rt.binary('>', rt.swizzle(pos, 'y'), rt.binary('-', rt.swizzle(_u_resolution, 'y'), _u_wallMargin, 1, 'float')))
-          wallForce = rt.assign_swizzle(wallForce, 'y', rt.binary('*', rt.unary('-', turnStrength), rt.binary('-', rt.f(1), rt.binary('/', rt.binary('-', rt.swizzle(_u_resolution, 'y'), rt.swizzle(pos, 'y'), 1, 'float'), _u_wallMargin, 1, 'float'), 1, 'float'), 1, 'float'))
+          wallForce = rt.assign_swizzle(wallForce, 'y', rt.binary('*', rt.unary('-', turnStrength), rt.binary('-', rt.f(1), rt.fdiv(rt.binary('-', rt.swizzle(_u_resolution, 'y'), rt.swizzle(pos, 'y'), 1, 'float'), _u_wallMargin), 1, 'float'), 1, 'float'))
         end
       end
       steer[0] = rt.f32(rt.binary('+', steer[0], wallForce[0], 1, 'float')); steer[1] = rt.f32(rt.binary('+', steer[1], wallForce[1], 1, 'float'))
@@ -278,9 +278,9 @@ run_pixel = lambda do |ctx, out|
       pos.replace((rt.component_wise('clamp', pos, rt.construct(2, rt.f(1)), rt.construct(2, ((_u_resolution[0]) - ((rt.f(1)))), ((_u_resolution[1]) - ((rt.f(1))))))).map { |c| rt.f32(c) })
     end
     age = rt.binary('+', age, rt.f(0.016000000759959221), 1, 'float')
-    newPx = rt.binary('/', rt.swizzle(pos, 'x'), rt.swizzle(_u_resolution, 'x'), 1, 'float')
-    newPy = rt.binary('/', rt.swizzle(pos, 'y'), rt.swizzle(_u_resolution, 'y'), 1, 'float')
-    g['outXYZ'][0] = rt.f32(newPx); g['outXYZ'][1] = rt.f32(newPy); g['outXYZ'][2] = rt.f32(rt.swizzle(xyz, 'z')); g['outXYZ'][3] = rt.f32(rt.f(1))
+    newPx = rt.fdiv(rt.swizzle(pos, 'x'), rt.swizzle(_u_resolution, 'x'))
+    newPy = rt.fdiv(rt.swizzle(pos, 'y'), rt.swizzle(_u_resolution, 'y'))
+    (begin g['outXYZ'][0] = rt.f32(newPx); g['outXYZ'][1] = rt.f32(newPy); g['outXYZ'][2] = rt.f32(rt.swizzle(xyz, 'z')); g['outXYZ'][3] = rt.f32(rt.f(1)); g['outXYZ'] end)
     g['outVel'].replace((rt.construct(4, velocity, age, seed)).map { |c| rt.f32(c) })
     g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
   end

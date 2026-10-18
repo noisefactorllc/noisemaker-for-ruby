@@ -19,7 +19,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _AoverB = nil; _BoverA = nil; background = nil; color = nil; color1 = nil; color2 = nil; maskVal = nil; uv = nil
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex))))
     color1 = rt.texture(_u_inputTex, uv)
     color2 = rt.texture(_u_tex, uv)
     background = rt.construct(4, 0.0)

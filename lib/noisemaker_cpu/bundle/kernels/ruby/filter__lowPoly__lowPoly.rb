@@ -52,12 +52,12 @@ run_pixel = lambda do |ctx, out|
     texSize = rt.texture_size(_u_inputTex)
     tileDims = rt.construct(2, texSize)
     resolution = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (tileDims)))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), tileDims, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), tileDims))
+    globalUV = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), resolution))
     n = rt.component_wise('max', rt.binary('-', rt.f(102), _u_scale, 1, 'float'), rt.f(2))
     s = _u_seed
     spd = rt.binary('*', _u_speed, rt.f(0.30000001192092896), 1, 'float')
-    aspect = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    aspect = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     auv = rt.construct(2, rt.binary('*', rt.swizzle(globalUV, 'x'), aspect, 1, 'float'), rt.swizzle(globalUV, 'y'))
     scaled = rt.construct(2, rt.binary_raw('*', auv, n, 2, 'float'))
     cell = rt.construct(2, rt.construct(2, rt.component_wise('floor', scaled)), 'int')
@@ -101,7 +101,7 @@ run_pixel = lambda do |ctx, out|
           radius = rt.binary('*', rt.swizzle(animRand, 'y'), spd, 1, 'float')
           offset.replace((rt.component_wise('clamp', rt.construct(2, ((offset[0]) + ((((rt.component_wise('cos', angle))) * (radius)))), ((offset[1]) + ((((rt.component_wise('sin', angle))) * (radius))))), rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
         end
-        point = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', neighborF, offset, 2, 'float'), n, 2, 'float'))
+        point = rt.construct(2, rt.fdiv(rt.binary_raw('+', neighborF, offset, 2, 'float'), n))
         d = rt.distance(auv, point)
         if rt.bool(rt.binary('<', d, minDist))
           thirdDist = secondDist
@@ -123,8 +123,8 @@ run_pixel = lambda do |ctx, out|
         end
       end
     end
-    globalUV_sample = rt.construct(2, rt.binary('/', rt.swizzle(nearestPoint, 'x'), aspect, 1, 'float'), rt.swizzle(nearestPoint, 'y'))
-    localUV_sample = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', rt.binary_raw('*', globalUV_sample, resolution, 2, 'float'), _u_tileOffset, 2, 'float'), tileDims, 2, 'float'))
+    globalUV_sample = rt.construct(2, rt.fdiv(rt.swizzle(nearestPoint, 'x'), aspect), rt.swizzle(nearestPoint, 'y'))
+    localUV_sample = rt.construct(2, rt.fdiv(rt.binary_raw('-', rt.binary_raw('*', globalUV_sample, resolution, 2, 'float'), _u_tileOffset, 2, 'float'), tileDims))
     cellColor = rt.texture(_u_inputTex, localUV_sample)
     result = rt.construct(3, 0.0)
     distField = rt.f(0.0)
@@ -216,12 +216,12 @@ run_pixel = lambda do |ctx, out|
             candidatePoint = lowPolySite__ivec2_float_float_float.call(candidateCell, n, s, spd)
             siteVector = rt.construct(2, rt.binary_raw('-', candidatePoint, borderNearestPoint, 2, 'float'))
             siteDistance = rt.component_wise('max', rt.length(siteVector), rt.f(9.9999999392252903e-09))
-            bisectorDistance = rt.dot(rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', borderNearestPoint, candidatePoint, 2, 'float'), rt.f(0.5), 2, 'float'), auv, 2, 'float'), rt.binary_raw('/', siteVector, siteDistance, 2, 'float'))
+            bisectorDistance = rt.dot(rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', borderNearestPoint, candidatePoint, 2, 'float'), rt.f(0.5), 2, 'float'), auv, 2, 'float'), rt.fdiv(siteVector, siteDistance))
             distToEdge = rt.component_wise('min', distToEdge, bisectorDistance)
           end
         end
       end
-      cellRadius = rt.binary('/', rt.f(0.5), n, 1, 'float')
+      cellRadius = rt.fdiv(rt.f(0.5), n)
       borderHalfWidth = rt.binary('*', rt.binary('/', rt.construct(1, _u__LP_BORDER), rt.f(100), 1, 'float'), cellRadius, 1, 'float')
       borderFeather = rt.component_wise('max', rt.fwidth(distToEdge), rt.f(9.9999999747524271e-07))
       borderMask = rt.binary('-', rt.f(1), rt.component_wise('smoothstep', rt.binary('-', borderHalfWidth, borderFeather, 1, 'float'), rt.binary('+', borderHalfWidth, borderFeather, 1, 'float'), distToEdge), 1, 'float')

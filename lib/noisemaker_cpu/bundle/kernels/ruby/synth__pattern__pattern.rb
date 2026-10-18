@@ -163,7 +163,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     centered = nil; color = nil; globalCoord = nil; m = nil; p = nil; panPeriod = nil; rad = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     st.replace((rt.binary_raw('*', rt.binary_raw('-', st, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary_raw('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')

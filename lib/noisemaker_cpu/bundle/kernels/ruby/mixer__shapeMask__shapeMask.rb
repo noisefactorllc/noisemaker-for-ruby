@@ -40,12 +40,12 @@ run_pixel = lambda do |ctx, out|
   end
   sdfTriangle__vec2_float = lambda do |p, r|
     p = rt.copy(p, 'float')
-    k = nil
+    __vector_write_0_0 = nil; __vector_write_0_1 = nil; k = nil
     k = rt.f(1.7320507764816284)
     p = rt.assign_swizzle(p, 'x', rt.binary('-', rt.component_wise('abs', rt.swizzle(p, 'x')), r, 1, 'float'))
     p = rt.assign_swizzle(p, 'y', rt.binary('+', rt.swizzle(p, 'y'), rt.binary('/', r, k, 1, 'float'), 1, 'float'))
     if rt.bool(rt.binary('>', rt.binary('+', rt.swizzle(p, 'x'), rt.binary('*', k, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.f(0)))
-      p[0] = rt.f32(rt.binary('/', rt.binary('-', rt.swizzle(p, 'x'), rt.binary('*', k, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.f(2), 1, 'float')); p[1] = rt.f32(rt.binary('/', rt.binary('-', rt.binary('*', rt.unary('-', k), rt.swizzle(p, 'x'), 1, 'float'), rt.swizzle(p, 'y'), 1, 'float'), rt.f(2), 1, 'float'))
+      (begin __vector_write_0_0 = rt.binary('/', rt.binary('-', rt.swizzle(p, 'x'), rt.binary('*', k, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.f(2), 1, 'float'); __vector_write_0_1 = rt.binary('/', rt.binary('-', rt.binary('*', rt.unary('-', k), rt.swizzle(p, 'x'), 1, 'float'), rt.swizzle(p, 'y'), 1, 'float'), rt.f(2), 1, 'float'); p[0] = rt.f32(__vector_write_0_0); p[1] = rt.f32(__vector_write_0_1); p end)
     end
     p = rt.assign_swizzle(p, 'x', rt.binary_raw('-', rt.swizzle(p, 'x'), rt.component_wise('clamp', rt.swizzle(p, 'x'), rt.binary('*', rt.unary('-', rt.f(2)), r, 1, 'float'), rt.f(0)), 1, 'float'))
     return rt.binary('*', rt.unary('-', rt.length(p)), rt.component_wise('sign', rt.swizzle(p, 'y')), 1, 'float')
@@ -85,17 +85,17 @@ run_pixel = lambda do |ctx, out|
     return rt.binary('-', rt.component_wise('abs', rt.binary('-', rt.length(p), r, 1, 'float')), ringWidth, 1, 'float')
   end
   main__void = lambda do
-    __hoistv1 = nil; aspect = nil; color = nil; colorA = nil; colorB = nil; d = nil; fullRes = nil; globalCoord = nil; globalUV = nil; mask = nil; p = nil; r = nil; rad = nil; st = nil
+    __hoistv2 = nil; aspect = nil; color = nil; colorA = nil; colorB = nil; d = nil; fullRes = nil; globalCoord = nil; globalUV = nil; mask = nil; p = nil; r = nil; rad = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    colorA = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
-    colorB = rt.texture(_u_tex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    colorA = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
+    colorB = rt.texture(_u_tex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)))))
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    aspect = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    aspect = rt.fdiv(rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'))
+    globalUV = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
     p = rt.construct(2, rt.binary_raw('*', rt.binary_raw('-', globalUV, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float'))
     p = rt.assign_swizzle(p, 'x', rt.binary_raw('*', rt.swizzle(p, 'x'), aspect, 1, 'float'))
-    __hoistv1 = rt.construct(2, rt.binary('*', _u_posX, aspect, 1, 'float'), rt.unary('-', _u_posY)); p[0] = rt.f32(rt.binary('-', p[0], __hoistv1[0], 1, 'float')); p[1] = rt.f32(rt.binary('-', p[1], __hoistv1[1], 1, 'float'))
+    __hoistv2 = rt.construct(2, rt.binary('*', _u_posX, aspect, 1, 'float'), rt.unary('-', _u_posY)); p[0] = rt.f32(rt.binary('-', p[0], __hoistv2[0], 1, 'float')); p[1] = rt.f32(rt.binary('-', p[1], __hoistv2[1], 1, 'float'))
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')
     p.replace((rotate2D__vec2_float.call(p, rad)).map { |c| rt.f32(c) })
     r = _u_radius

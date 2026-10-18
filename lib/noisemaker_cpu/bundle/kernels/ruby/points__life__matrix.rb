@@ -40,7 +40,7 @@ run_pixel = lambda do |ctx, out|
     end
     prefDist = rt.binary('+', rt.f(0.30000001192092896), rt.binary('*', hash__uint.call(rt.binary('+', seed, rt.i(1), 1, 'uint')), rt.f(0.5), 1, 'float'), 1, 'float')
     curveShape = hash__uint.call(rt.binary('+', seed, rt.i(2), 1, 'uint'))
-    g['fragColor'][0] = rt.f32(strength); g['fragColor'][1] = rt.f32(prefDist); g['fragColor'][2] = rt.f32(curveShape); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(strength); g['fragColor'][1] = rt.f32(prefDist); g['fragColor'][2] = rt.f32(curveShape); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

@@ -24,6 +24,7 @@
 #
 require_relative "uint_math"
 require_relative "sampler"
+require_relative "metal_division"
 
 module NoisemakerCpu
   class Runtime
@@ -673,7 +674,11 @@ module NoisemakerCpu
       filt = sampler.filter || "nearest"
       return NoisemakerCpu::Sampler.sample_bilinear(sampler, u, v) if filt == "linear"
 
-      NoisemakerCpu::Sampler.sample_nearest_bottom_left(sampler, u, v)
+      NoisemakerCpu::Sampler.sample_nearest_texel_bottom_left(sampler, u, v)
+    end
+
+    def fdiv(dividend, divisor)
+      _bcn(NoisemakerCpu::MetalDivision.method(:divide), dividend, divisor)
     end
 
     def texture_size(sampler)

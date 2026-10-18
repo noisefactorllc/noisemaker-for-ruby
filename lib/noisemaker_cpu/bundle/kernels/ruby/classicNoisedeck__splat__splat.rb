@@ -93,7 +93,7 @@ run_pixel = lambda do |ctx, out|
   shape__vec2_int_float = lambda do |st, sides, blend|
     st = rt.copy(st, 'float')
     a = nil; r = nil
-    st.replace((rt.binary_raw('-', rt.binary_raw('*', st, rt.f(2), 2, 'float'), rt.construct_raw(2, rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(1)), 2, 'float')).map { |c| rt.f32(c) })
+    st.replace((rt.binary_raw('-', rt.binary_raw('*', st, rt.f(2), 2, 'float'), rt.construct_raw(2, rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), rt.f(1)), 2, 'float')).map { |c| rt.f32(c) })
     a = rt.binary('+', rt.component_wise('atan', rt.swizzle(st, 'x'), rt.swizzle(st, 'y')), rt.f(3.1415927410125732), 1, 'float')
     r = rt.binary('/', rt.f(6.2831854820251465), rt.construct(1, sides), 1, 'float')
     return rt.binary('*', rt.binary('*', rt.component_wise('cos', rt.binary('-', rt.binary('*', rt.component_wise('floor', rt.binary('+', rt.f(0.5), rt.binary('/', a, r, 1, 'float'), 1, 'float')), r, 1, 'float'), a, 1, 'float')), rt.length(st), 1, 'float'), blend, 1, 'float')
@@ -101,9 +101,9 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     color = nil; globalCoord = nil; noiseCoord = nil; speckMask = nil; splatMask = nil; texColor = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    color = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
-    noiseCoord = rt.construct(2, rt.binary_raw('*', uv, rt.construct_raw(2, rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), rt.f(1)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    color = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
+    noiseCoord = rt.construct(2, rt.binary_raw('*', uv, rt.construct_raw(2, rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), rt.f(1)), 2, 'float'))
     speckMask = rt.f(0.0)
     if rt.bool(_u_useSpecks)
       speckMask = speckle__vec2_vec2.call(rt.construct(2, ((noiseCoord[0]) + (_u_speckSeed)), ((noiseCoord[1]) + (_u_speckSeed))), rt.construct(2, (((rt.f(32))) * (map__float_float_float_float_float.call(_u_speckScale, rt.f(1), rt.f(5), rt.f(2), rt.f(0.5)))), (((rt.f(32))) * (map__float_float_float_float_float.call(_u_speckScale, rt.f(1), rt.f(5), rt.f(2), rt.f(0.5))))))
@@ -111,7 +111,7 @@ run_pixel = lambda do |ctx, out|
         color = rt.assign_swizzle(color, 'rgb', rt.component_wise('mix', rt.swizzle(color, 'rgb'), _u_speckColor, speckMask))
       else
         if rt.bool(rt.binary('==', _u_speckMode, rt.i(1)))
-          color.replace((rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, rt.binary('*', speckMask, rt.f(0.10000000149011612), 1, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))).map { |c| rt.f32(c) })
+          color.replace((rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, rt.binary('*', speckMask, rt.f(0.10000000149011612), 1, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)))))).map { |c| rt.f32(c) })
         else
           if rt.bool(rt.binary('==', _u_speckMode, rt.i(2)))
             color = rt.assign_swizzle(color, 'rgb', rt.component_wise('mix', rt.swizzle(color, 'rgb'), rt.construct(3, ((rt.f(1)) - (rt.swizzle(color, 'r'))), ((rt.f(1)) - (rt.swizzle(color, 'g'))), ((rt.f(1)) - (rt.swizzle(color, 'b')))), speckMask))
@@ -131,7 +131,7 @@ run_pixel = lambda do |ctx, out|
         color = rt.assign_swizzle(color, 'rgb', rt.component_wise('mix', rt.swizzle(color, 'rgb'), _u_splatColor, splatMask))
       else
         if rt.bool(rt.binary('==', _u_mode, rt.i(1)))
-          texColor = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, rt.binary('*', splatMask, rt.f(0.10000000149011612), 1, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
+          texColor = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('+', uv, rt.binary('*', splatMask, rt.f(0.10000000149011612), 1, 'float'), 2, 'float'), _u_fullResolution, 2, 'float'), _u_tileOffset, 2, 'float')), rt.construct(2, rt.texture_size(_u_inputTex)))))
           color.replace((rt.component_wise('mix', color, texColor, splatMask)).map { |c| rt.f32(c) })
         else
           if rt.bool(rt.binary('==', _u_mode, rt.i(2)))

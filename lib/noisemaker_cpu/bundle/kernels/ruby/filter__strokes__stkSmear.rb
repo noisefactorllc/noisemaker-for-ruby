@@ -43,7 +43,7 @@ run_pixel = lambda do |ctx, out|
   lumGradient__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     _t = nil; b = nil; bl = nil; br = nil; l = nil; px = nil; r = nil; tl = nil; tr = nil
-    px = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    px = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     tl = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.f(1)), 2, 'float'), 2, 'float')), 'rgb'))
     l = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.f(0)), 2, 'float'), 2, 'float')), 'rgb'))
     bl = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.unary('-', rt.f(1))), 2, 'float'), 2, 'float')), 'rgb'))
@@ -118,7 +118,7 @@ run_pixel = lambda do |ctx, out|
         bristle = rt.binary('+', rt.f(0.77999997138977051), rt.binary('*', rt.f(0.2199999988079071), rt.binary('+', rt.f(0.5), rt.binary('*', rt.f(0.5), rt.component_wise('sin', rt.binary('+', rt.binary('*', rt.swizzle(local, 'y'), rt.f(5.1999998092651367), 1, 'float'), rt.binary('*', hash12__vec2.call(rt.construct(2, ((cell[0]) + (rt.f(97.300003051757812))), ((cell[1]) + (rt.f(97.300003051757812))))), rt.f(6.2831854820251465), 1, 'float'), 1, 'float')), 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float')
         mark = rt.binary('*', body, bristle, 1, 'float')
         centerGlobal = rt.construct(2, rt.binary_raw('+', rt.binary_raw('*', dirUnit, rt.swizzle(center, 'x'), 2, 'float'), rt.binary_raw('*', across, rt.swizzle(center, 'y'), 2, 'float'), 2, 'float'))
-        centerUV = rt.construct(2, rt.binary_raw('+', uv, rt.binary_raw('/', rt.binary_raw('-', centerGlobal, gc, 2, 'float'), _u_resolution, 2, 'float'), 2, 'float'))
+        centerUV = rt.construct(2, rt.binary_raw('+', uv, rt.fdiv(rt.binary_raw('-', centerGlobal, gc, 2, 'float'), _u_resolution), 2, 'float'))
         __hoistv3 = rt.construct(3, rt.construct(3, rt.binary('*', rt.swizzle(srcSample__vec2.call(centerUV), 'rgb'), mark, 3, 'float'))); pigmentSum[0] = rt.f32(rt.binary('+', pigmentSum[0], __hoistv3[0], 1, 'float')); pigmentSum[1] = rt.f32(rt.binary('+', pigmentSum[1], __hoistv3[1], 1, 'float')); pigmentSum[2] = rt.f32(rt.binary('+', pigmentSum[2], __hoistv3[2], 1, 'float'))
         pigmentWeight = rt.binary('+', pigmentWeight, mark, 1, 'float')
         field = rt.component_wise('max', field, mark)
@@ -140,7 +140,7 @@ run_pixel = lambda do |ctx, out|
     px = rt.construct(2, 0.0)
     s = rt.construct(4, 0.0)
     if rt.bool(rt.binary('==', _u__MODE, rt.i(3)))
-      px = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+      px = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
       s = rt.texture(_u_inputTex, sampleUV)
       e = rt.swizzle(s, 'rgb')
       e.replace((rt.component_wise('min', e, rt.swizzle(rt.texture(_u_inputTex, rt.binary_raw('+', sampleUV, rt.construct_raw(2, rt.swizzle(px, 'x'), rt.f(0)), 2, 'float')), 'rgb'))).map { |c| rt.f32(c) })
@@ -157,7 +157,7 @@ run_pixel = lambda do |ctx, out|
     gc = rt.copy(gc, 'float')
     dirUnit = rt.copy(dirUnit, 'float')
     __hoistv4 = nil; _for2_first = nil; fi = nil; i = nil; jn = nil; jp = nil; px = nil; sampN = nil; sampP = nil; sum = nil; w = nil; wsum = nil
-    px = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    px = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     sum = srcSample__vec2.call(uv)
     wsum = rt.f(1)
     i = rt.i(1)
@@ -190,7 +190,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _L = nil; _t = nil; b = nil; bAmt = nil; c = nil; dir = nil; dir135 = nil; dir45 = nil; edgeAngle = nil; exponent = nil; field135 = nil; field45 = nil; gc = nil; grad = nil; gradMag = nil; jitterPx = nil; l135 = nil; l45 = nil; layer = nil; layer135 = nil; layer45 = nil; outc = nil; pigment = nil; pigment135 = nil; pigment45 = nil; runBase = nil; shadowMask = nil; side = nil; smeared = nil; src = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     gc = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     runBase = rt.component_wise('mix', rt.f(3), rt.f(50), rt.binary('/', _u_strokeLength, rt.f(100), 1, 'float'))
@@ -252,7 +252,7 @@ run_pixel = lambda do |ctx, out|
           c = rt.component_wise('mix', src, pigment, rt.swizzle(layer, 'a'))
           _t = lum__vec3.call(rt.swizzle(c, 'rgb'))
           bAmt = rt.binary('/', _u_balance, rt.f(100), 1, 'float')
-          exponent = (rt.bool(rt.binary('<', _t, bAmt)) ? (rt.binary('+', rt.f(1), rt.binary('/', _u_intensity, rt.f(50), 1, 'float'), 1, 'float')) : (rt.binary('/', rt.f(1), rt.binary('+', rt.f(1), rt.binary('/', _u_intensity, rt.f(100), 1, 'float'), 1, 'float'), 1, 'float')))
+          exponent = (rt.bool(rt.binary('<', _t, bAmt)) ? (rt.binary('+', rt.f(1), rt.binary('/', _u_intensity, rt.f(50), 1, 'float'), 1, 'float')) : (rt.fdiv(rt.f(1), rt.binary('+', rt.f(1), rt.binary('/', _u_intensity, rt.f(100), 1, 'float'), 1, 'float'))))
           c = rt.assign_swizzle(c, 'rgb', rt.component_wise('pow', rt.component_wise('max', rt.swizzle(c, 'rgb'), rt.construct(3, rt.f(0))), rt.construct(3, exponent)))
           outc.replace((c).map { |c| rt.f32(c) })
         else

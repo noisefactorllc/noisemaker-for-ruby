@@ -108,7 +108,7 @@ run_pixel = lambda do |ctx, out|
     newPos = wrapPosition__vec2.call(rt.construct(2, ((pos[0]) + (((moveDir[0]) * (normalizedSpeed)))), ((pos[1]) + (((moveDir[1]) * (normalizedSpeed))))))
     newAge = rt.binary('+', age, rt.f(0.016000000759959221), 1, 'float')
     g['outXYZ'].replace((rt.construct(4, newPos, newHeading, rt.f(1))).map { |c| rt.f32(c) })
-    g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(newAge); g['outVel'][3] = rt.f32(seed)
+    (begin g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(newAge); g['outVel'][3] = rt.f32(seed); g['outVel'] end)
     g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
   end
   main__void.call

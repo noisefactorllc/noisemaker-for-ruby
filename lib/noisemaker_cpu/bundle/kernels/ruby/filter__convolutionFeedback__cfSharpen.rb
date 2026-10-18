@@ -47,7 +47,7 @@ run_pixel = lambda do |ctx, out|
         samplePos = rt.binary('+', coord, rt.construct(2, kx, ky, 'int'), 2, 'int')
         samplePos.replace(rt.component_wise('clamp', samplePos, rt.construct(2, rt.i(0), 'int'), rt.binary('-', texSize, rt.i(1), 2, 'int')))
         dist2 = rt.construct(1, rt.binary('+', rt.binary('*', kx, kx, 1, 'int'), rt.binary('*', ky, ky, 1, 'int'), 1, 'int'))
-        weight = rt.component_wise('exp', rt.binary('/', rt.unary('-', dist2), rt.binary('*', rt.f(2), sigma2, 1, 'float'), 1, 'float'))
+        weight = rt.component_wise('exp', rt.fdiv(rt.unary('-', dist2), rt.binary('*', rt.f(2), sigma2, 1, 'float')))
         texSample = rt.texel_fetch(_u_inputTex, samplePos, rt.i(0))
         blurSum[0] = rt.f32(rt.binary('+', blurSum[0], ((rt.swizzle(texSample, 'r')) * (weight)), 1, 'float')); blurSum[1] = rt.f32(rt.binary('+', blurSum[1], ((rt.swizzle(texSample, 'g')) * (weight)), 1, 'float')); blurSum[2] = rt.f32(rt.binary('+', blurSum[2], ((rt.swizzle(texSample, 'b')) * (weight)), 1, 'float'))
         weightSum = rt.binary('+', weightSum, weight, 1, 'float')

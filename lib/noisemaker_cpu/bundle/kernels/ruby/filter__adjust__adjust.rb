@@ -32,21 +32,21 @@ run_pixel = lambda do |ctx, out|
     m = rt.binary('-', v, c, 1, 'float')
     rgb = rt.construct(3, 0.0)
     if rt.bool(rt.binary('<', h, rt.f(0.1666666716337204)))
-      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
+      (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0)); rgb end)
     else
       if rt.bool(rt.binary('<', h, rt.f(0.3333333432674408)))
-        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
+        (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0)); rgb end)
       else
         if rt.bool(rt.binary('<', h, rt.f(0.5)))
-          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
+          (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x); rgb end)
         else
           if rt.bool(rt.binary('<', h, rt.f(0.66666668653488159)))
-            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
+            (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c); rgb end)
           else
             if rt.bool(rt.binary('<', h, rt.f(0.83333331346511841)))
-              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
+              (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
-              rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
+              (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
             end
           end
         end
@@ -110,9 +110,9 @@ run_pixel = lambda do |ctx, out|
     _C = nil; _H = nil; _L = nil; a = nil; b = nil; color = nil; contrastFactor = nil; globalCoord = nil; hsv = nil; texSize = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize))))
     color = rt.texture(_u_inputTex, uv)
-    color = rt.assign_swizzle(color, 'rgb', (rt.bool(rt.binary('>', rt.swizzle(color, 'a'), rt.f(0))) ? (rt.binary_raw('/', rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'), 3, 'float')) : (rt.construct(3, rt.f(0)))))
+    color = rt.assign_swizzle(color, 'rgb', (rt.bool(rt.binary('>', rt.swizzle(color, 'a'), rt.f(0))) ? (rt.fdiv(rt.swizzle(color, 'rgb'), rt.swizzle(color, 'a'))) : (rt.construct(3, rt.f(0)))))
     _C = rt.f(0.0)
     _H = rt.f(0.0)
     _L = rt.f(0.0)

@@ -17,13 +17,13 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     cycles = nil; grad = nil; h2 = nil; hB = nil; hL = nil; hR = nil; hT = nil; outColor = nil; src = nil; texel = nil; uv = nil; uv2 = nil; v = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
-    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
+    texel = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     hL = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
     hR = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'rgb'))
     hB = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
     hT = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'rgb'))
-    grad = rt.construct(2, rt.binary('/', rt.binary('-', hR, hL, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texel, 'x'), 1, 'float'), 1, 'float'), rt.binary('/', rt.binary('-', hT, hB, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texel, 'y'), 1, 'float'), 1, 'float'))
+    grad = rt.construct(2, rt.fdiv(rt.binary('-', hR, hL, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texel, 'x'), 1, 'float')), rt.fdiv(rt.binary('-', hT, hB, 1, 'float'), rt.binary('*', rt.f(2), rt.swizzle(texel, 'y'), 1, 'float')))
     uv2 = rt.construct(2, rt.binary_raw('+', uv, rt.binary_raw('*', rt.binary_raw('*', grad, texel, 2, 'float'), rt.binary('/', _u_distortion, rt.f(100), 1, 'float'), 2, 'float'), 2, 'float'))
     h2 = lum__vec3.call(rt.swizzle(rt.texture(_u_blurTex, uv2), 'rgb'))
     cycles = rt.component_wise('mix', rt.f(1), rt.f(7), rt.binary('/', _u_detail, rt.f(100), 1, 'float'))

@@ -375,7 +375,7 @@ run_pixel = lambda do |ctx, out|
     a = nil; base_color = nil; base_factor = nil; base_freq = nil; dims = nil; factor = nil; freq_scale = nil; gain = nil; globalDims = nil; globalPixel = nil; gradient = nil; gx = nil; gy = nil; h_center = nil; h_down = nil; h_left = nil; h_right = nil; h_up = nil; highlight_mix = nil; material = nil; materialMotion = nil; motion = nil; pixel_step = nil; r = nil; scaled_rgb = nil; shade_base = nil
     base_color = rt.texture(_u_inputTex, ctx.uv)
     dims = rt.construct(2, rt.texture_size(_u_inputTex))
-    pixel_step = rt.construct(2, rt.binary_raw('/', rt.f(1), dims, 2, 'float'))
+    pixel_step = rt.construct(2, rt.fdiv(rt.f(1), dims))
     a = rt.component_wise('clamp', _u_alpha, rt.f(0), rt.f(1))
     if rt.bool(rt.binary('<=', a, rt.f(0)))
       g['fragColor'].replace((base_color).map { |c| rt.f32(c) })

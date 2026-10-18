@@ -21,7 +21,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     color = nil; energy = nil; persistence = nil; prev = nil; prevColor = nil; prevGrid = nil; radial = nil; rng = nil; seedThreshold = nil; seedWeight = nil; strength = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     if rt.bool(_u_resetState)
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return

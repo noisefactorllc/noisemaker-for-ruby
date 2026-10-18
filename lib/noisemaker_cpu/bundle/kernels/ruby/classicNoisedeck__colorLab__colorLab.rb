@@ -107,24 +107,24 @@ run_pixel = lambda do |ctx, out|
     m = rt.binary('-', v, c, 1, 'float')
     rgb = rt.construct(3, 0.0)
     if rt.bool((rt.bool(rt.binary('<=', rt.f(0), h)) && rt.bool(rt.binary('<', h, rt.f(0.1666666716337204))) ? 1 : 0))
-      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
+      (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0)); rgb end)
     else
       if rt.bool((rt.bool(rt.binary('<=', rt.f(0.1666666716337204), h)) && rt.bool(rt.binary('<', h, rt.f(0.3333333432674408))) ? 1 : 0))
-        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
+        (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0)); rgb end)
       else
         if rt.bool((rt.bool(rt.binary('<=', rt.f(0.3333333432674408), h)) && rt.bool(rt.binary('<', h, rt.f(0.5))) ? 1 : 0))
-          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
+          (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x); rgb end)
         else
           if rt.bool((rt.bool(rt.binary('<=', rt.f(0.5), h)) && rt.bool(rt.binary('<', h, rt.f(0.66666668653488159))) ? 1 : 0))
-            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
+            (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c); rgb end)
           else
             if rt.bool((rt.bool(rt.binary('<=', rt.f(0.66666668653488159), h)) && rt.bool(rt.binary('<', h, rt.f(0.83333331346511841))) ? 1 : 0))
-              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
+              (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
               if rt.bool((rt.bool(rt.binary('<=', rt.f(0.83333331346511841), h)) && rt.bool(rt.binary('<', h, rt.f(1))) ? 1 : 0))
-                rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
+                (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
               else
-                rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0))
+                (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0)); rgb end)
               end
             end
           end
@@ -239,10 +239,10 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     blendy = nil; bright = nil; color = nil; coord = nil; d = nil; globalCoord = nil; hsv = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     color = rt.construct(4, rt.f(0))
     blendy = periodicFunction__float.call(rt.binary('-', _u_time, offsets__vec2.call(uv), 1, 'float'))
-    color.replace((rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))).map { |c| rt.f32(c) })
+    color.replace((rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))).map { |c| rt.f32(c) })
     if rt.bool(rt.binary('!=', _u_levels, rt.f(0)))
       color = rt.assign_swizzle(color, 'rgb', posterize__vec3_float.call(rt.swizzle(color, 'rgb'), _u_levels))
     end
@@ -258,7 +258,7 @@ run_pixel = lambda do |ctx, out|
           color = rt.assign_swizzle(color, 'rgb', rt.binary_raw('*', rt.swizzle(color, 'rgb'), rt.construct(3, rt.component_wise('step', periodicFunction__float.call(rt.binary('+', random__vec2.call(globalCoord), _u_time, 1, 'float')), bright)), 3, 'float'))
         else
           if rt.bool(rt.binary('==', _u_dither, rt.i(4)))
-            coord = rt.construct(2, rt.binary('-', rt.swizzle(rt.component_wise('mod', rt.construct(2, ((globalCoord[0]) / (_u_renderScale)), ((globalCoord[1]) / (_u_renderScale))), rt.f(4)), 'xy'), rt.f(0.5), 2, 'float'))
+            coord = rt.construct(2, rt.binary('-', rt.swizzle(rt.component_wise('mod', rt.construct(2, rt.fdiv(globalCoord[0], _u_renderScale), rt.fdiv(globalCoord[1], _u_renderScale)), rt.f(4)), 'xy'), rt.f(0.5), 2, 'float'))
             if rt.bool(rt.binary('<', bright, rt.f(0.11999999731779099)))
               color = rt.assign_swizzle(color, 'rgb', rt.construct(3, rt.f(0)))
             else

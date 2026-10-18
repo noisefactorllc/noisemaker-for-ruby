@@ -34,7 +34,7 @@ run_pixel = lambda do |ctx, out|
   end
   toSampleUV__vec2 = lambda do |globalPixelPos|
     globalPixelPos = rt.copy(globalPixelPos, 'float')
-    return rt.component_wise('clamp', rt.construct(2, ((((globalPixelPos[0]) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((globalPixelPos[1]) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
+    return rt.component_wise('clamp', rt.construct(2, rt.fdiv(((globalPixelPos[0]) - (_u_tileOffset[0])), _u_resolution[0]), rt.fdiv(((globalPixelPos[1]) - (_u_tileOffset[1])), _u_resolution[1])), rt.f(0), rt.f(1))
   end
   cellAvgColor3x3__vec2 = lambda do |centerPx|
     centerPx = rt.copy(centerPx, 'float')
@@ -149,7 +149,7 @@ run_pixel = lambda do |ctx, out|
     halfCell = rt.construct(2, rt.binary('*', _u_size, rt.f(0.5), 1, 'float'))
     toCenter = rt.construct(2, rt.binary_raw('-', imgCenter, _P, 2, 'float'))
     distToCenter = rt.length(toCenter)
-    stepDir = rt.construct(2, (rt.bool(rt.binary('>', distToCenter, rt.f(0))) ? (rt.binary_raw('/', toCenter, distToCenter, 2, 'float')) : (rt.construct(2, rt.f(0)))))
+    stepDir = rt.construct(2, (rt.bool(rt.binary('>', distToCenter, rt.f(0))) ? (rt.fdiv(toCenter, distToCenter)) : (rt.construct(2, rt.f(0)))))
     bestPriority = rt.unary('-', rt.f(1000000000))
     bestCenterPx = rt.construct(2, rt.f(0))
     bestS = rt.f(1)
@@ -168,10 +168,10 @@ run_pixel = lambda do |ctx, out|
       end
       _t = rt.component_wise('min', rt.binary('*', rt.construct(1, i), _u_size, 1, 'float'), distToCenter)
       samplePos = rt.construct(2, rt.binary_raw('+', _P, rt.binary_raw('*', stepDir, _t, 2, 'float'), 2, 'float'))
-      cellIdxF = rt.component_wise('floor', rt.construct(2, ((((samplePos[0]) - (imgCenter[0]))) / (_u_size)), ((((samplePos[1]) - (imgCenter[1]))) / (_u_size))))
+      cellIdxF = rt.component_wise('floor', rt.construct(2, rt.fdiv(((samplePos[0]) - (imgCenter[0])), _u_size), rt.fdiv(((samplePos[1]) - (imgCenter[1])), _u_size)))
       cellC = rt.construct(2, rt.binary_raw('+', imgCenter, rt.binary_raw('*', rt.binary_raw('+', cellIdxF, rt.f(0.5), 2, 'float'), _u_size, 2, 'float'), 2, 'float'))
       h = cellHeight__vec2_vec2.call(cellC, cellIdxF)
-      s = rt.binary('+', rt.f(1), rt.binary('*', rt.binary('*', h, rt.binary('/', _u_depth, rt.f(100), 1, 'float'), 1, 'float'), rt.f(0.40000000596046448), 1, 'float'), 1, 'float')
+      s = rt.construct(1, rt.binary('+', rt.f(1), rt.binary('*', rt.binary('*', h, rt.binary('/', _u_depth, rt.f(100), 1, 'float'), 1, 'float'), rt.f(0.40000000596046448), 1, 'float'), 1, 'float'))
       apex = rt.construct(2, 0.0)
       faceCenter = rt.construct(2, 0.0)
       faceHalf = rt.construct(2, 0.0)
@@ -191,7 +191,7 @@ run_pixel = lambda do |ctx, out|
       else
         faceCenter = rt.construct(2, rt.binary_raw('+', imgCenter, rt.binary_raw('*', rt.binary_raw('-', cellC, imgCenter, 2, 'float'), s, 2, 'float'), 2, 'float'))
         faceHalf = rt.construct(2, rt.binary_raw('*', halfCell, s, 2, 'float'))
-        topHit = rt.component_wise('all', rt.component_wise('lessThanEqual', rt.component_wise('abs', rt.construct(2, ((_P[0]) - (faceCenter[0])), ((_P[1]) - (faceCenter[1])))), faceHalf))
+        topHit = rt.component_wise('all', rt.component_wise('lessThanEqual', rt.component_wise('abs', rt.construct(2, ((((_P[0]) - (imgCenter[0]))) - (((((cellC[0]) - (imgCenter[0]))) * (s)))), ((((_P[1]) - (imgCenter[1]))) - (((((cellC[1]) - (imgCenter[1]))) * (s)))))), faceHalf))
         sideHit = (rt.bool((rt.bool(topHit) ? 0 : 1)) && rt.bool(rt.component_wise('all', rt.component_wise('lessThanEqual', rt.component_wise('abs', rt.construct(2, ((_P[0]) - (cellC[0])), ((_P[1]) - (cellC[1])))), halfCell))) ? 1 : 0)
         priority = rt.f(0.0)
         if rt.bool((rt.bool(topHit) || rt.bool(sideHit) ? 1 : 0))
@@ -212,7 +212,7 @@ run_pixel = lambda do |ctx, out|
     outColor = rt.construct(4, 0.0)
     cellC = rt.construct(2, 0.0)
     if rt.bool((rt.bool(found) ? 0 : 1))
-      cellC = rt.construct(2, rt.binary('+', imgCenter, rt.construct(2, rt.binary('*', rt.construct(2, rt.binary('+', rt.component_wise('floor', rt.construct(2, ((((_P[0]) - (imgCenter[0]))) / (_u_size)), ((((_P[1]) - (imgCenter[1]))) / (_u_size)))), rt.f(0.5), 2, 'float')), _u_size, 2, 'float')), 2, 'float'))
+      cellC = rt.construct(2, rt.binary('+', imgCenter, rt.construct(2, rt.binary('*', rt.construct(2, rt.binary('+', rt.component_wise('floor', rt.construct(2, rt.fdiv(((_P[0]) - (imgCenter[0])), _u_size), rt.fdiv(((_P[1]) - (imgCenter[1])), _u_size))), rt.f(0.5), 2, 'float')), _u_size, 2, 'float')), 2, 'float'))
       outColor.replace((cellAvgColor3x3__vec2.call(cellC)).map { |c| rt.f32(c) })
     else
       _Cbl = rt.construct(2, 0.0)

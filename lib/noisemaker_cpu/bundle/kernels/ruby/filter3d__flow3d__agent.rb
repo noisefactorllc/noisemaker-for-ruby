@@ -195,7 +195,7 @@ run_pixel = lambda do |ctx, out|
       age = rt.f(0)
       initialized = rt.f(1)
     end
-    agentPhase = rt.binary('/', rt.construct(1, agentIndex), rt.construct(1, rt.component_wise('max', totalAgents, rt.i(1))), 1, 'float')
+    agentPhase = rt.fdiv(rt.construct(1, agentIndex), rt.construct(1, rt.component_wise('max', totalAgents, rt.i(1))))
     staggeredAge = rt.binary('+', age, rt.binary('*', agentPhase, _u_lifetime, 1, 'float'), 1, 'float')
     shouldRespawn = (rt.bool(rt.binary('>', _u_lifetime, rt.f(0))) && rt.bool(rt.binary('>=', staggeredAge, _u_lifetime)) ? 1 : 0)
     if rt.bool(shouldRespawn)
@@ -233,9 +233,9 @@ run_pixel = lambda do |ctx, out|
     newY = wrap_float__float_float.call(newY, volSizeF)
     newZ = wrap_float__float_float.call(newZ, volSizeF)
     age = rt.binary('+', age, rt.f(0.016000000759959221), 1, 'float')
-    g['outState1'][0] = rt.f32(newX); g['outState1'][1] = rt.f32(newY); g['outState1'][2] = rt.f32(newZ); g['outState1'][3] = rt.f32(rotRand)
-    g['outState2'][0] = rt.f32(cr); g['outState2'][1] = rt.f32(cg); g['outState2'][2] = rt.f32(cb); g['outState2'][3] = rt.f32(seed_f)
-    g['outState3'][0] = rt.f32(age); g['outState3'][1] = rt.f32(initialized); g['outState3'][2] = rt.f32(strideRand); g['outState3'][3] = rt.f32(rt.f(0))
+    (begin g['outState1'][0] = rt.f32(newX); g['outState1'][1] = rt.f32(newY); g['outState1'][2] = rt.f32(newZ); g['outState1'][3] = rt.f32(rotRand); g['outState1'] end)
+    (begin g['outState2'][0] = rt.f32(cr); g['outState2'][1] = rt.f32(cg); g['outState2'][2] = rt.f32(cb); g['outState2'][3] = rt.f32(seed_f); g['outState2'] end)
+    (begin g['outState3'][0] = rt.f32(age); g['outState3'][1] = rt.f32(initialized); g['outState3'][2] = rt.f32(strideRand); g['outState3'][3] = rt.f32(rt.f(0)); g['outState3'] end)
   end
   main__void.call
   c0 = g['outState1']

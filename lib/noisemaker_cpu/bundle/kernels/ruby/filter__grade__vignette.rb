@@ -101,8 +101,8 @@ run_pixel = lambda do |ctx, out|
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.construct(2, rt.texture_size(_u_inputTex))
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (texSize)))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), texSize))
+    globalUV = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     color = rt.texel_fetch(_u_inputTex, coord, rt.i(0))
     if rt.bool(rt.binary('<', rt.component_wise('abs', _u_vignetteAmount), rt.f(0.0010000000474974513)))
@@ -112,9 +112,9 @@ run_pixel = lambda do |ctx, out|
     rgb = srgbToLinear__vec3.call(rt.swizzle(color, 'rgb'))
     aspectRatio = rt.construct(2, rt.f(1))
     if rt.bool(rt.binary('>', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y')))
-      aspectRatio[0] = rt.f32(rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')); aspectRatio[1] = rt.f32(rt.f(1))
+      (begin aspectRatio[0] = rt.f32(rt.fdiv(rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'))); aspectRatio[1] = rt.f32(rt.f(1)); aspectRatio end)
     else
-      aspectRatio[0] = rt.f32(rt.f(1)); aspectRatio[1] = rt.f32(rt.binary('/', rt.swizzle(fullRes, 'y'), rt.swizzle(fullRes, 'x'), 1, 'float'))
+      (begin aspectRatio[0] = rt.f32(rt.f(1)); aspectRatio[1] = rt.f32(rt.fdiv(rt.swizzle(fullRes, 'y'), rt.swizzle(fullRes, 'x'))); aspectRatio end)
     end
     vignetteMask = computeVignette__vec2_vec2_float_float_float.call(globalUV, aspectRatio, _u_vignetteMidpoint, _u_vignetteRoundness, _u_vignetteFeather)
     rgb.replace((applyVignette__vec3_float_float_float.call(rgb, vignetteMask, _u_vignetteAmount, _u_vigHiProtect)).map { |c| rt.f32(c) })

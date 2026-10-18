@@ -262,13 +262,13 @@ run_pixel = lambda do |ctx, out|
       cs = rt.component_wise('min', cs, rt.i(512))
     end
     csf = rt.construct(1, cs)
-    cellIndex = rt.component_wise('floor', rt.construct(2, ((pixelCoord[0]) / (csf)), ((pixelCoord[1]) / (csf))))
-    localPos = rt.component_wise('fract', rt.construct(2, ((pixelCoord[0]) / (csf)), ((pixelCoord[1]) / (csf))))
+    cellIndex = rt.component_wise('floor', rt.construct(2, rt.fdiv(pixelCoord[0], csf), rt.fdiv(pixelCoord[1], csf)))
+    localPos = rt.component_wise('fract', rt.construct(2, rt.fdiv(pixelCoord[0], csf), rt.fdiv(pixelCoord[1], csf)))
     gx = rt.construct(1, rt.component_wise('floor', rt.binary('*', rt.swizzle(localPos, 'x'), rt.f(5), 1, 'float')), 'int')
     gy = rt.binary('-', rt.i(6), rt.component_wise('clamp', rt.construct(1, rt.component_wise('floor', rt.binary('*', rt.swizzle(localPos, 'y'), rt.f(7), 1, 'float')), 'int'), rt.i(0), rt.i(6)), 1, 'int')
     gx = rt.component_wise('clamp', gx, rt.i(0), rt.i(4))
     cellCenter = rt.construct(2, rt.binary_raw('*', rt.binary_raw('+', cellIndex, rt.f(0.5), 2, 'float'), csf, 2, 'float'))
-    sampleUV = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', cellCenter, _u_tileOffset, 2, 'float'), resolution, 2, 'float'))
+    sampleUV = rt.construct(2, rt.fdiv(rt.binary_raw('-', cellCenter, _u_tileOffset, 2, 'float'), resolution))
     if rt.bool(isTileRendering)
       sampleUV.replace((rt.component_wise('clamp', sampleUV, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     end
@@ -276,7 +276,7 @@ run_pixel = lambda do |ctx, out|
     luma = rt.dot(rt.swizzle(srcColor, 'rgb'), rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))
     glyphIdx = rt.construct(1, rt.component_wise('floor', rt.binary('*', luma, rt.construct(1, g['GLYPH_COUNT']), 1, 'float')), 'int')
     glyphIdx = rt.component_wise('clamp', glyphIdx, rt.i(0), rt.binary('-', g['GLYPH_COUNT'], rt.i(1), 1, 'int'))
-    cellHash = hash__vec2.call(rt.construct(2, ((cellIndex[0]) + ((((_u_seed)) * (rt.f(0.37000000476837158))))), ((cellIndex[1]) + ((((_u_seed)) * (rt.f(0.37000000476837158)))))))
+    cellHash = hash__vec2.call(rt.construct(2, ((cellIndex[0]) + (((rt.construct(1, _u_seed)) * (rt.f(0.37000000476837158))))), ((cellIndex[1]) + (((rt.construct(1, _u_seed)) * (rt.f(0.37000000476837158)))))))
     variant = rt.construct(1, rt.component_wise('floor', rt.binary('*', cellHash, rt.f(3), 1, 'float')), 'int')
     if rt.bool((rt.bool((rt.bool(rt.binary('==', variant, rt.i(1))) && rt.bool(rt.binary('>', glyphIdx, rt.i(0))) ? 1 : 0)) && rt.bool(rt.binary('<', glyphIdx, rt.binary('-', g['GLYPH_COUNT'], rt.i(1), 1, 'int'))) ? 1 : 0))
       glyphIdx = glyphIdx

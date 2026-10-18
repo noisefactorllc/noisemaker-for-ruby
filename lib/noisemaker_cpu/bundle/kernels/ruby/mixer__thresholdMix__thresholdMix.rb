@@ -49,9 +49,9 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     blendB = nil; blendFactor = nil; blendG = nil; blendR = nil; colorA = nil; colorB = nil; globalCoord = nil; lum = nil; mapColor = nil; result = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    colorA = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
-    colorB = rt.texture(_u_tex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    colorA = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
+    colorB = rt.texture(_u_tex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)))))
     mapColor = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', _u_mapSource, rt.i(0)))
       mapColor.replace((rt.swizzle(colorA, 'rgb')).map { |c| rt.f32(c) })

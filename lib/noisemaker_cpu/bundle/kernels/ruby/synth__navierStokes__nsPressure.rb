@@ -12,15 +12,15 @@ run_pixel = lambda do |ctx, out|
     div = nil; fragCoord = nil; p = nil; pB = nil; pL = nil; pR = nil; pT = nil; texSize = nil; texel = nil; uv = nil
     texSize = rt.texture_size(_u_bufTex)
     fragCoord = rt.swizzle(ctx.frag_coord, 'xy')
-    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', fragCoord, rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    texel = rt.construct(2, rt.fdiv(rt.f(1), rt.construct_raw(2, rt.construct(2, texSize))))
+    uv = rt.construct(2, rt.fdiv(fragCoord, rt.construct_raw(2, rt.construct(2, texSize))))
     pR = rt.swizzle(rt.texture(_u_bufTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
     pL = rt.swizzle(rt.texture(_u_bufTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
     pT = rt.swizzle(rt.texture(_u_bufTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')
     pB = rt.swizzle(rt.texture(_u_bufTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')
     div = rt.swizzle(rt.texture(_u_bufTex, uv), 'g')
     p = rt.binary('*', rt.binary('-', rt.binary('+', rt.binary('+', rt.binary('+', pR, pL, 1, 'float'), pT, 1, 'float'), pB, 1, 'float'), div, 1, 'float'), rt.f(0.25), 1, 'float')
-    g['fragColor'][0] = rt.f32(p); g['fragColor'][1] = rt.f32(div); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(p); g['fragColor'][1] = rt.f32(div); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

@@ -23,7 +23,7 @@ run_pixel = lambda do |ctx, out|
   rotate2D__vec2_float = lambda do |st, angle|
     st = rt.copy(st, 'float')
     aspectRatio = nil; c = nil; s = nil
-    aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    aspectRatio = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     st = rt.assign_swizzle(st, 'x', rt.binary_raw('*', rt.swizzle(st, 'x'), aspectRatio, 1, 'float'))
     st[0] = rt.f32(rt.binary('-', st[0], (((aspectRatio) * (rt.f(0.5)))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
     c = rt.component_wise('cos', angle)
@@ -70,7 +70,7 @@ run_pixel = lambda do |ctx, out|
   end
   hash2D__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
-    return rt.swizzle(prng__vec3.call(rt.construct(3, (rt.swizzle(p, 'x')), (rt.swizzle(p, 'y')), ((_u_seed)))), 'x')
+    return rt.swizzle(prng__vec3.call(rt.construct(3, (rt.swizzle(p, 'x')), (rt.swizzle(p, 'y')), (rt.construct(1, _u_seed)))), 'x')
   end
   valueNoise__vec2 = lambda do |p|
     p = rt.copy(p, 'float')
@@ -111,8 +111,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _t = nil; a = nil; angle = nil; aspectRatio = nil; bottom = nil; c = nil; cBL = nil; cBR = nil; cTL = nil; cTR = nil; centered = nil; color = nil; cornerSt = nil; dist = nil; globalCoord = nil; noiseSt = nil; rotatedCentered = nil; rotatedPoint = nil; rotatedSt = nil; s = nil; st = nil; timeOffset = nil; top = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    aspectRatio = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', _u_rotation), rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')
     rotatedSt = rotate2D__vec2_float.call(st, angle)
     centered = rt.construct(2, rt.binary_raw('-', st, rt.f(0.5), 2, 'float'))

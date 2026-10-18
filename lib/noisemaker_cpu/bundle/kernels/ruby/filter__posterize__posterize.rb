@@ -44,7 +44,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     blend = nil; f = nil; fw = nil; gamma_value = nil; globalCoord = nil; half_step = nil; inv_factor = nil; inv_gamma = nil; level_factor = nil; levels_quantized = nil; levels_raw = nil; quantized_rgb = nil; scaled = nil; texel = nil; uv = nil; working_rgb = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex))))
     texel = rt.texture(_u_inputTex, uv)
     levels_raw = rt.component_wise('max', _u_levels, rt.f(0))
     levels_quantized = rt.component_wise('max', rt.component_wise('round', levels_raw), g['MIN_LEVELS'])
@@ -53,10 +53,10 @@ run_pixel = lambda do |ctx, out|
       return
     end
     level_factor = levels_quantized
-    inv_factor = rt.binary('/', rt.f(1), level_factor, 1, 'float')
+    inv_factor = rt.fdiv(rt.f(1), level_factor)
     half_step = rt.binary('*', inv_factor, rt.f(0.5), 1, 'float')
     gamma_value = rt.component_wise('max', _u_gamma, g['MIN_GAMMA'])
-    inv_gamma = rt.binary('/', rt.f(1), gamma_value, 1, 'float')
+    inv_gamma = rt.fdiv(rt.f(1), gamma_value)
     working_rgb = srgb_to_linear_rgb__vec3.call(rt.swizzle(texel, 'xyz'))
     working_rgb.replace((pow_vec3__vec3_float.call(rt.component_wise('clamp', working_rgb, rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))), gamma_value)).map { |c| rt.f32(c) })
     scaled = rt.construct(3, rt.binary_raw('+', rt.binary_raw('*', working_rgb, level_factor, 3, 'float'), rt.construct_raw(3, half_step), 3, 'float'))
@@ -74,7 +74,7 @@ run_pixel = lambda do |ctx, out|
     end
     quantized_rgb.replace((pow_vec3__vec3_float.call(rt.component_wise('clamp', quantized_rgb, rt.construct(3, rt.f(0)), rt.construct(3, rt.f(1))), inv_gamma)).map { |c| rt.f32(c) })
     quantized_rgb.replace((linear_to_srgb_rgb__vec3.call(quantized_rgb)).map { |c| rt.f32(c) })
-    g['fragColor'][0] = rt.f32(clamp_01__float.call(rt.swizzle(quantized_rgb, 'x'))); g['fragColor'][1] = rt.f32(clamp_01__float.call(rt.swizzle(quantized_rgb, 'y'))); g['fragColor'][2] = rt.f32(clamp_01__float.call(rt.swizzle(quantized_rgb, 'z'))); g['fragColor'][3] = rt.f32(rt.swizzle(texel, 'w'))
+    (begin g['fragColor'][0] = rt.f32(clamp_01__float.call(rt.swizzle(quantized_rgb, 'x'))); g['fragColor'][1] = rt.f32(clamp_01__float.call(rt.swizzle(quantized_rgb, 'y'))); g['fragColor'][2] = rt.f32(clamp_01__float.call(rt.swizzle(quantized_rgb, 'z'))); g['fragColor'][3] = rt.f32(rt.swizzle(texel, 'w')); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

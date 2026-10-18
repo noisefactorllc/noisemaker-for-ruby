@@ -20,7 +20,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     bottom = nil; center = nil; color = nil; dist = nil; dx = nil; dy = nil; localUV = nil; radiusPixels = nil; right = nil; texSize = nil; texelSize = nil
     texSize = rt.texture_size(_u_inputTex)
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), rt.construct_raw(2, rt.construct(2, texSize))))
     localUV = rt.construct(2, rt.binary_raw('*', rt.swizzle(ctx.frag_coord, 'xy'), texelSize, 2, 'float'))
     radiusPixels = rt.binary('*', _u_amount, _u_renderScale, 1, 'float')
     radiusPixels = rt.component_wise('min', radiusPixels, rt.f(256))

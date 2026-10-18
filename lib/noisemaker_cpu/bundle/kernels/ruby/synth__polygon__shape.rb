@@ -28,7 +28,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     bgMask = nil; c = nil; cpu_vector_assignment_1 = nil; cpu_vector_assignment_2 = nil; d = nil; fgMask = nil; globalCoord = nil; m = nil; outColor = nil; s = nil; sidesF = nil; st = nil; totalAlpha = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     st.replace((rt.binary_raw('*', rt.binary_raw('-', st, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary_raw('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     c = rt.component_wise('cos', rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float'))
@@ -41,12 +41,12 @@ run_pixel = lambda do |ctx, out|
       cpu_vector_assignment_2 = rt.construct(2, rt.swizzle(st, 'y'), rt.unary('-', rt.swizzle(st, 'x')))
       st.replace((cpu_vector_assignment_2).map { |c| rt.f32(c) })
     end
-    d = rt.binary('/', polygon__vec2_float.call(st, sidesF), rt.component_wise('cos', rt.binary('/', rt.f(3.1415927410125732), sidesF, 1, 'float')), 1, 'float')
+    d = rt.fdiv(polygon__vec2_float.call(st, sidesF), rt.component_wise('cos', rt.fdiv(rt.f(3.1415927410125732), sidesF)))
     m = (rt.bool(rt.binary('==', _u_smoothing, rt.f(0))) ? ((rt.bool(rt.binary('<=', d, _u_radius)) ? (rt.f(1)) : (rt.f(0)))) : (rt.component_wise('smoothstep', _u_radius, rt.binary('-', _u_radius, _u_smoothing, 1, 'float'), d)))
     fgMask = rt.binary('*', m, _u_fgAlpha, 1, 'float')
     bgMask = rt.binary('*', rt.binary('-', rt.f(1), m, 1, 'float'), _u_bgAlpha, 1, 'float')
     totalAlpha = rt.binary('+', fgMask, bgMask, 1, 'float')
-    outColor = rt.construct(3, (rt.bool(rt.binary('>', totalAlpha, rt.f(0))) ? (rt.binary_raw('/', rt.binary_raw('+', rt.binary_raw('*', _u_fgColor, fgMask, 3, 'float'), rt.binary_raw('*', _u_bgColor, bgMask, 3, 'float'), 3, 'float'), totalAlpha, 3, 'float')) : (rt.construct(3, rt.f(0)))))
+    outColor = rt.construct(3, (rt.bool(rt.binary('>', totalAlpha, rt.f(0))) ? (rt.fdiv(rt.binary_raw('+', rt.binary_raw('*', _u_fgColor, fgMask, 3, 'float'), rt.binary_raw('*', _u_bgColor, bgMask, 3, 'float'), 3, 'float'), totalAlpha)) : (rt.construct(3, rt.f(0)))))
     g['fragColor'].replace((rt.construct(4, rt.binary_raw('*', outColor, totalAlpha, 3, 'float'), totalAlpha)).map { |c| rt.f32(c) })
   end
   main__void.call

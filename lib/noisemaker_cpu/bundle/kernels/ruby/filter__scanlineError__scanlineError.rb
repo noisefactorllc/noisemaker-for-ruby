@@ -219,7 +219,7 @@ run_pixel = lambda do |ctx, out|
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
       return
     end
-    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (rt.binary_raw('/', _u_fullResolution, _u_renderScale, 2, 'float')) : (rt.construct(2, input_size))))
+    fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (rt.fdiv(_u_fullResolution, _u_renderScale)) : (rt.construct(2, input_size))))
     width_f = rt.swizzle(fullRes, 'x')
     height_f = rt.swizzle(fullRes, 'y')
     dims = rt.construct(2, width_f, height_f)
@@ -266,16 +266,16 @@ run_pixel = lambda do |ctx, out|
     xNorm = rt.f(0.0)
     yNorm = rt.f(0.0)
     if rt.bool(rt.binary('==', m, rt.i(1)))
-      yNorm = rt.binary('/', rt.binary('+', rt.construct(1, rt.swizzle(globalGid, 'y')), rt.f(0.5), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
-      xNorm = rt.binary('/', rt.binary('+', rt.construct(1, rt.swizzle(globalGid, 'x')), rt.f(0.5), 1, 'float'), rt.swizzle(_u_fullResolution, 'x'), 1, 'float')
+      yNorm = rt.fdiv(rt.binary('+', rt.construct(1, rt.swizzle(globalGid, 'y')), rt.f(0.5), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'))
+      xNorm = rt.fdiv(rt.binary('+', rt.construct(1, rt.swizzle(globalGid, 'x')), rt.f(0.5), 1, 'float'), rt.swizzle(_u_fullResolution, 'x'))
       destCoord = rt.construct(2, xNorm, yNorm)
       gradDest = vhs_gradValue__float_float_float_float.call(yNorm, rt.f(5), time_value, speed_value)
       scanBase = rt.binary('+', rt.component_wise('floor', rt.binary('*', height_f, rt.f(0.5), 1, 'float')), rt.f(1), 1, 'float')
       scanFreq = rt.construct(2, 0.0)
       if rt.bool(rt.binary('<', height_f, width_f))
-        scanFreq[0] = rt.f32(rt.binary('*', scanBase, rt.binary('/', height_f, width_f, 1, 'float'), 1, 'float')); scanFreq[1] = rt.f32(scanBase)
+        (begin scanFreq[0] = rt.f32(rt.binary('*', scanBase, rt.fdiv(height_f, width_f), 1, 'float')); scanFreq[1] = rt.f32(scanBase); scanFreq end)
       else
-        scanFreq[0] = rt.f32(scanBase); scanFreq[1] = rt.f32(rt.binary('*', scanBase, rt.binary('/', width_f, height_f, 1, 'float'), 1, 'float'))
+        (begin scanFreq[0] = rt.f32(scanBase); scanFreq[1] = rt.f32(rt.binary('*', scanBase, rt.fdiv(width_f, height_f), 1, 'float')); scanFreq end)
       end
       scanDest = vhs_scanNoise__vec2_vec2_float_float.call(destCoord, scanFreq, time_value, rt.binary('*', speed_value, rt.f(100), 1, 'float'))
       fullWidth = (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (rt.swizzle(_u_fullResolution, 'x')) : (width_f))
@@ -288,7 +288,7 @@ run_pixel = lambda do |ctx, out|
       end
       localSampleX = rt.component_wise('clamp', localSampleX, rt.i(0), rt.binary('-', rt.construct(1, tile_width, 'int'), rt.i(1), 1, 'int'))
       srcTexel = rt.texel_fetch(_u_inputTex, rt.construct(2, localSampleX, rt.construct(1, rt.swizzle(gid, 'y'), 'int'), 'int'), rt.i(0))
-      srcXNorm = rt.binary('/', rt.binary('+', rt.construct(1, wrappedGlobalX), rt.f(0.5), 1, 'float'), rt.swizzle(_u_fullResolution, 'x'), 1, 'float')
+      srcXNorm = rt.fdiv(rt.binary('+', rt.construct(1, wrappedGlobalX), rt.f(0.5), 1, 'float'), rt.swizzle(_u_fullResolution, 'x'))
       scanSource = vhs_scanNoise__vec2_vec2_float_float.call(rt.construct(2, (srcXNorm), (yNorm)), scanFreq, time_value, rt.binary('*', speed_value, rt.f(100), 1, 'float'))
       gradSource = vhs_gradValue__float_float_float_float.call(yNorm, rt.f(5), time_value, speed_value)
       noiseColor = rt.construct(3, scanSource)

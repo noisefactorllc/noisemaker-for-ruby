@@ -59,7 +59,7 @@ run_pixel = lambda do |ctx, out|
     end
     norm = rt.binary('/', value, limit, 1, 'float')
     if rt.bool(rt.binary('==', mode, rt.i(0)))
-      norm = rt.component_wise('abs', rt.binary('-', rt.component_wise('mod', rt.binary('+', norm, rt.f(1), 1, 'float'), rt.f(2)), rt.f(1), 1, 'float'))
+      norm = rt.component_wise('abs', rt.binary('-', norm, rt.binary('*', rt.f(2), rt.component_wise('floor', rt.binary('*', rt.binary('+', norm, rt.f(1), 1, 'float'), rt.f(0.5), 1, 'float')), 1, 'float'), 1, 'float'))
     else
       if rt.bool(rt.binary('==', mode, rt.i(1)))
         norm = rt.component_wise('mod', norm, rt.f(1))
@@ -79,14 +79,14 @@ run_pixel = lambda do |ctx, out|
     width = rt.swizzle(dims, 'x')
     height = rt.swizzle(dims, 'y')
     baseFreq = rt.binary('-', rt.f(11), _u_frequency, 1, 'float')
-    aspect = rt.binary('/', width, height, 1, 'float')
+    aspect = rt.fdiv(width, height)
     freq = rt.construct(2, baseFreq)
     if rt.bool(rt.binary('>', aspect, rt.f(1)))
       freq = rt.assign_swizzle(freq, 'y', rt.binary_raw('*', rt.swizzle(freq, 'y'), aspect, 1, 'float'))
     else
       freq = rt.assign_swizzle(freq, 'x', rt.binary_raw('/', rt.swizzle(freq, 'x'), aspect, 1, 'float'))
     end
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
     sampleCoord = rt.construct(2, rt.binary_raw('*', uv, dims, 2, 'float'))
     numOctaves = rt.component_wise('max', rt.construct(1, _u_octaves, 'int'), rt.i(1))
     displaceBase = _u_displacement
@@ -110,7 +110,7 @@ run_pixel = lambda do |ctx, out|
       end
       phase = rt.binary('*', rt.construct(1, octave), rt.f(2.3989999294281006), 1, 'float')
       radius = rt.binary('/', rt.f(0.5), rt.component_wise('sqrt', multiplier), 1, 'float')
-      noiseCoord = rt.construct(2, rt.binary_raw('*', rt.binary_raw('/', sampleCoord, dims, 2, 'float'), freqScaled, 2, 'float'))
+      noiseCoord = rt.construct(2, rt.binary_raw('*', rt.fdiv(sampleCoord, dims), freqScaled, 2, 'float'))
       refX = simplexNoise__vec2_float_float_float.call(rt.construct(2, ((noiseCoord[0]) + ((rt.f(17)))), ((noiseCoord[1]) + ((rt.f(29))))), rt.binary('*', _u_time, _u_speed, 1, 'float'), phase, radius)
       refY = simplexNoise__vec2_float_float_float.call(rt.construct(2, ((noiseCoord[0]) + ((rt.f(23)))), ((noiseCoord[1]) + ((rt.f(31))))), rt.binary('*', _u_time, _u_speed, 1, 'float'), phase, radius)
       refX = rt.binary('-', rt.binary('*', refX, rt.f(2), 1, 'float'), rt.f(1), 1, 'float')
@@ -118,9 +118,9 @@ run_pixel = lambda do |ctx, out|
       displaceScale = rt.binary('/', displaceBase, multiplier, 1, 'float')
       offset = rt.construct(2, rt.binary('*', rt.binary('*', refX, displaceScale, 1, 'float'), width, 1, 'float'), rt.binary('*', rt.binary('*', refY, displaceScale, 1, 'float'), height, 1, 'float'))
       sampleCoord[0] = rt.f32(rt.binary('+', sampleCoord[0], offset[0], 1, 'float')); sampleCoord[1] = rt.f32(rt.binary('+', sampleCoord[1], offset[1], 1, 'float'))
-      sampleCoord[0] = rt.f32(wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'x'), width, rt.construct(1, _u_wrap, 'int'))); sampleCoord[1] = rt.f32(wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'y'), height, rt.construct(1, _u_wrap, 'int')))
+      (begin sampleCoord[0] = rt.f32(wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'x'), width, rt.construct(1, _u_wrap, 'int'))); sampleCoord[1] = rt.f32(wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'y'), height, rt.construct(1, _u_wrap, 'int'))); sampleCoord end)
     end
-    finalUV = rt.construct(2, rt.binary_raw('/', rt.construct_raw(2, wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'x'), width, rt.construct(1, _u_wrap, 'int')), wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'y'), height, rt.construct(1, _u_wrap, 'int'))), dims, 2, 'float'))
+    finalUV = rt.construct(2, rt.fdiv(rt.construct_raw(2, wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'x'), width, rt.construct(1, _u_wrap, 'int')), wrapFloat__float_float_int.call(rt.swizzle(sampleCoord, 'y'), height, rt.construct(1, _u_wrap, 'int'))), dims))
     col = rt.construct(4, 0.0)
     dx = rt.construct(2, 0.0)
     dy = rt.construct(2, 0.0)

@@ -12,7 +12,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     alpha = nil; color = nil; grid = nil; gridColor = nil; gridStrength = nil; inputCol = nil; matteAlpha = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     inputCol = rt.texture(_u_inputTex, uv)
     grid = rt.texture(_u_gridTex, uv)
     gridStrength = rt.component_wise('clamp', rt.swizzle(grid, 'a'), rt.f(0), rt.f(1))

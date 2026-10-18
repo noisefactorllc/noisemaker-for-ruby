@@ -21,7 +21,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.construct(2, rt.binary_raw('/', coord, size, 2, 'float'))
     mode = rt.construct(1, _u_wrap, 'int')
     if rt.bool(rt.binary('==', mode, rt.i(0)))
-      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
+      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((uv[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((uv[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', mode, rt.i(1)))
         uv.replace((rt.component_wise('fract', uv)).map { |c| rt.f32(c) })
@@ -44,7 +44,7 @@ run_pixel = lambda do |ctx, out|
     srcCoord = rt.assign_swizzle(srcCoord, 'x', rt.binary('-', rt.binary('*', c, rt.swizzle(pixelCoord, 'x'), 1, 'float'), rt.binary('*', s, rt.swizzle(pixelCoord, 'y'), 1, 'float'), 1, 'float'))
     srcCoord = rt.assign_swizzle(srcCoord, 'y', rt.binary('+', rt.binary('*', s, rt.swizzle(pixelCoord, 'x'), 1, 'float'), rt.binary('*', c, rt.swizzle(pixelCoord, 'y'), 1, 'float'), 1, 'float'))
     srcCoord[0] = rt.f32(rt.binary('+', srcCoord[0], center[0], 1, 'float')); srcCoord[1] = rt.f32(rt.binary('+', srcCoord[1], center[1], 1, 'float'))
-    originalColor = rt.texture(_u_originalTex, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    originalColor = rt.texture(_u_originalTex, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     wrappedUV = applyWrap__vec2_vec2.call(srcCoord, texSize)
     sortedColor = rt.texture(_u_inputTex, wrappedUV)
     working_source = rt.copy(originalColor, 'float')

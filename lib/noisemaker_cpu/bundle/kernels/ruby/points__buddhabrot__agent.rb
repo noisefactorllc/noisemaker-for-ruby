@@ -73,7 +73,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool((rt.bool(rt.binary('==', _u_mode, rt.i(0))) && rt.bool(inMandelbrotInterior__float_float.call(cRe, cIm)) ? 1 : 0))
         g['outXYZ'].replace((rt.construct(4, rt.swizzle(pos, 'xy'), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
         g['outVel'].replace((vel).map { |c| rt.f32(c) })
-        g['outRGBA'][0] = rt.f32(rt.f(0)); g['outRGBA'][1] = rt.f32(rt.f(0)); g['outRGBA'][2] = rt.f32(rt.f(0)); g['outRGBA'][3] = rt.f32(rt.f(0))
+        (begin g['outRGBA'][0] = rt.f32(rt.f(0)); g['outRGBA'][1] = rt.f32(rt.f(0)); g['outRGBA'][2] = rt.f32(rt.f(0)); g['outRGBA'][3] = rt.f32(rt.f(0)); g['outRGBA'] end)
         return
       end
       z = rt.construct(2, rt.f(0))
@@ -94,7 +94,7 @@ run_pixel = lambda do |ctx, out|
         end
         zr = rt.binary('+', rt.binary('-', rt.binary('*', rt.swizzle(z, 'x'), rt.swizzle(z, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(z, 'y'), rt.swizzle(z, 'y'), 1, 'float'), 1, 'float'), cRe, 1, 'float')
         zi = rt.binary('+', rt.binary('*', rt.binary('*', rt.f(2), rt.swizzle(z, 'x'), 1, 'float'), rt.swizzle(z, 'y'), 1, 'float'), cIm, 1, 'float')
-        z[0] = rt.f32(zr); z[1] = rt.f32(zi)
+        (begin z[0] = rt.f32(zr); z[1] = rt.f32(zi); z end)
         if rt.bool(rt.binary('>', rt.dot(z, z), rt.f(4)))
           escapeAt = rt.binary('+', i, rt.i(1), 1, 'int')
           break
@@ -117,13 +117,13 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('==', brightness, rt.f(0)))
         g['outXYZ'].replace((rt.construct(4, rt.swizzle(pos, 'xy'), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
         g['outVel'].replace((vel).map { |c| rt.f32(c) })
-        g['outRGBA'][0] = rt.f32(rt.f(0)); g['outRGBA'][1] = rt.f32(rt.f(0)); g['outRGBA'][2] = rt.f32(rt.f(0)); g['outRGBA'][3] = rt.f32(rt.f(0))
+        (begin g['outRGBA'][0] = rt.f32(rt.f(0)); g['outRGBA'][1] = rt.f32(rt.f(0)); g['outRGBA'][2] = rt.f32(rt.f(0)); g['outRGBA'][3] = rt.f32(rt.f(0)); g['outRGBA'] end)
         return
       end
       screen = complexToScreen__vec2.call(rt.construct(2, (cRe), (cIm)))
       g['outXYZ'].replace((rt.construct(4, screen, rt.f(0.5), rt.f(1))).map { |c| rt.f32(c) })
-      g['outVel'][0] = rt.f32(cRe); g['outVel'][1] = rt.f32(cIm); g['outVel'][2] = rt.f32(rt.f(1)); g['outVel'][3] = rt.f32(escapeStep)
-      g['outRGBA'][0] = rt.f32(brightness); g['outRGBA'][1] = rt.f32(brightness); g['outRGBA'][2] = rt.f32(brightness); g['outRGBA'][3] = rt.f32(rt.f(1))
+      (begin g['outVel'][0] = rt.f32(cRe); g['outVel'][1] = rt.f32(cIm); g['outVel'][2] = rt.f32(rt.f(1)); g['outVel'][3] = rt.f32(escapeStep); g['outVel'] end)
+      (begin g['outRGBA'][0] = rt.f32(brightness); g['outRGBA'][1] = rt.f32(brightness); g['outRGBA'][2] = rt.f32(brightness); g['outRGBA'][3] = rt.f32(rt.f(1)); g['outRGBA'] end)
       return
     end
     cRe = rt.swizzle(vel, 'x')
@@ -147,7 +147,7 @@ run_pixel = lambda do |ctx, out|
       end
       zr = rt.binary('+', rt.binary('-', rt.binary('*', rt.swizzle(z, 'x'), rt.swizzle(z, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(z, 'y'), rt.swizzle(z, 'y'), 1, 'float'), 1, 'float'), cRe, 1, 'float')
       zi = rt.binary('+', rt.binary('*', rt.binary('*', rt.f(2), rt.swizzle(z, 'x'), 1, 'float'), rt.swizzle(z, 'y'), 1, 'float'), cIm, 1, 'float')
-      z[0] = rt.f32(zr); z[1] = rt.f32(zi)
+      (begin z[0] = rt.f32(zr); z[1] = rt.f32(zi); z end)
     end
     s = rt.i(0)
     _for2_first = true
@@ -162,17 +162,17 @@ run_pixel = lambda do |ctx, out|
       step = rt.binary('+', step, rt.f(1), 1, 'float')
       if rt.bool(rt.binary('>=', step, escapeStep))
         g['outXYZ'].replace((rt.construct(4, rt.swizzle(pos, 'xy'), rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
-        g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(step); g['outVel'][3] = rt.f32(rt.f(0))
-        g['outRGBA'][0] = rt.f32(rt.f(0)); g['outRGBA'][1] = rt.f32(rt.f(0)); g['outRGBA'][2] = rt.f32(rt.f(0)); g['outRGBA'][3] = rt.f32(rt.f(0))
+        (begin g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(step); g['outVel'][3] = rt.f32(rt.f(0)); g['outVel'] end)
+        (begin g['outRGBA'][0] = rt.f32(rt.f(0)); g['outRGBA'][1] = rt.f32(rt.f(0)); g['outRGBA'][2] = rt.f32(rt.f(0)); g['outRGBA'][3] = rt.f32(rt.f(0)); g['outRGBA'] end)
         return
       end
       zr = rt.binary('+', rt.binary('-', rt.binary('*', rt.swizzle(z, 'x'), rt.swizzle(z, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(z, 'y'), rt.swizzle(z, 'y'), 1, 'float'), 1, 'float'), cRe, 1, 'float')
       zi = rt.binary('+', rt.binary('*', rt.binary('*', rt.f(2), rt.swizzle(z, 'x'), 1, 'float'), rt.swizzle(z, 'y'), 1, 'float'), cIm, 1, 'float')
-      z[0] = rt.f32(zr); z[1] = rt.f32(zi)
+      (begin z[0] = rt.f32(zr); z[1] = rt.f32(zi); z end)
     end
     screen = complexToScreen__vec2.call(z)
     g['outXYZ'].replace((rt.construct(4, screen, rt.f(0.5), rt.f(1))).map { |c| rt.f32(c) })
-    g['outVel'][0] = rt.f32(cRe); g['outVel'][1] = rt.f32(cIm); g['outVel'][2] = rt.f32(step); g['outVel'][3] = rt.f32(escapeStep)
+    (begin g['outVel'][0] = rt.f32(cRe); g['outVel'][1] = rt.f32(cIm); g['outVel'][2] = rt.f32(step); g['outVel'][3] = rt.f32(escapeStep); g['outVel'] end)
     g['outRGBA'].replace((col).map { |c| rt.f32(c) })
   end
   main__void.call

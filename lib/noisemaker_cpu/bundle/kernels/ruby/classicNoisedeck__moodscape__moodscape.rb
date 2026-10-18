@@ -63,24 +63,24 @@ run_pixel = lambda do |ctx, out|
     m = rt.binary('-', v, c, 1, 'float')
     rgb = rt.construct(3, 0.0)
     if rt.bool((rt.bool(rt.binary('<=', rt.f(0), h)) && rt.bool(rt.binary('<', h, rt.f(0.1666666716337204))) ? 1 : 0))
-      rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0))
+      (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(x); rgb[2] = rt.f32(rt.f(0)); rgb end)
     else
       if rt.bool((rt.bool(rt.binary('<=', rt.f(0.1666666716337204), h)) && rt.bool(rt.binary('<', h, rt.f(0.3333333432674408))) ? 1 : 0))
-        rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0))
+        (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(c); rgb[2] = rt.f32(rt.f(0)); rgb end)
       else
         if rt.bool((rt.bool(rt.binary('<=', rt.f(0.3333333432674408), h)) && rt.bool(rt.binary('<', h, rt.f(0.5))) ? 1 : 0))
-          rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x)
+          (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(c); rgb[2] = rt.f32(x); rgb end)
         else
           if rt.bool((rt.bool(rt.binary('<=', rt.f(0.5), h)) && rt.bool(rt.binary('<', h, rt.f(0.66666668653488159))) ? 1 : 0))
-            rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c)
+            (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(x); rgb[2] = rt.f32(c); rgb end)
           else
             if rt.bool((rt.bool(rt.binary('<=', rt.f(0.66666668653488159), h)) && rt.bool(rt.binary('<', h, rt.f(0.83333331346511841))) ? 1 : 0))
-              rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c)
+              (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
               if rt.bool((rt.bool(rt.binary('<=', rt.f(0.83333331346511841), h)) && rt.bool(rt.binary('<', h, rt.f(1))) ? 1 : 0))
-                rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x)
+                (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
               else
-                rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0))
+                (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0)); rgb end)
               end
             end
           end
@@ -441,11 +441,11 @@ run_pixel = lambda do |ctx, out|
     end
   end
   main__void = lambda do
-    color = nil; globalCoord = nil; ref = nil; s = nil; st = nil; uv = nil; xFreq = nil; xRef = nil; yFreq = nil; yRef = nil
+    __hoistv1 = nil; color = nil; globalCoord = nil; ref = nil; s = nil; st = nil; uv = nil; xFreq = nil; xRef = nil; yFreq = nil; yRef = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     color = rt.construct(4, rt.f(0), rt.f(0), rt.f(1), rt.f(1))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, rt.swizzle(_u_fullResolution, 'y'), 2, 'float'))
-    st[0] = rt.f32(rt.binary('-', st[0], (((((rt.swizzle(_u_fullResolution, 'x')) / (rt.swizzle(_u_fullResolution, 'y')))) * (rt.f(0.5)))), 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], (rt.f(0.5)), 1, 'float'))
+    st = rt.construct(2, rt.fdiv(globalCoord, rt.swizzle(_u_fullResolution, 'y')))
+    __hoistv1 = rt.construct(2, rt.binary('*', rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), rt.f(0.5), 1, 'float'), rt.f(0.5)); st[0] = rt.f32(rt.binary('-', st[0], __hoistv1[0], 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __hoistv1[1], 1, 'float'))
     xFreq = rt.f(1)
     yFreq = rt.f(1)
     if rt.bool(rt.binary('==', _u__NOISE_TYPE, rt.i(10)))
@@ -473,7 +473,7 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(rt.binary('==', _u__COLOR_MODE, rt.i(0)))
       color = rt.assign_swizzle(color, 'rgb', rt.construct(3, value__vec2_float_float_float.call(uv, xFreq, yFreq, s)))
     else
-      color[0] = rt.f32(value__vec2_float_float_float.call(uv, xFreq, yFreq, s)); color[1] = rt.f32(value__vec2_float_float_float.call(uv, xFreq, yFreq, rt.binary('+', rt.f(10), s, 1, 'float'))); color[2] = rt.f32(value__vec2_float_float_float.call(uv, xFreq, yFreq, rt.binary('+', rt.f(20), s, 1, 'float'))); color[3] = rt.f32(rt.f(1))
+      (begin color[0] = rt.f32(value__vec2_float_float_float.call(uv, xFreq, yFreq, s)); color[1] = rt.f32(value__vec2_float_float_float.call(uv, xFreq, yFreq, rt.binary('+', rt.f(10), s, 1, 'float'))); color[2] = rt.f32(value__vec2_float_float_float.call(uv, xFreq, yFreq, rt.binary('+', rt.f(20), s, 1, 'float'))); color[3] = rt.f32(rt.f(1)); color end)
     end
     if rt.bool(rt.binary('==', _u__COLOR_MODE, rt.i(0)))
       if rt.bool(_u_ridges)

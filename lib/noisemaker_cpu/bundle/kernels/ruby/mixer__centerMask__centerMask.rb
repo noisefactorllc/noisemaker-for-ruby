@@ -101,13 +101,13 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     blended = nil; centerColor = nil; color = nil; corner = nil; dist01 = nil; edgeColor = nil; f_high = nil; f_low = nil; globalCoord = nil; h = nil; mask = nil; minRes = nil; p = nil; scaledPower = nil; st = nil; width = nil
-    st = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    st = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     edgeColor = rt.texture(_u_inputTex, st)
     centerColor = rt.texture(_u_tex, st)
     minRes = rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    p = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', globalCoord, rt.binary_raw('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.binary('*', rt.f(0.5), minRes, 1, 'float'), 2, 'float'))
-    corner = rt.construct(2, rt.binary_raw('/', _u_fullResolution, minRes, 2, 'float'))
+    p = rt.construct(2, rt.fdiv(rt.binary_raw('-', globalCoord, rt.binary_raw('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.binary('*', rt.f(0.5), minRes, 1, 'float')))
+    corner = rt.construct(2, rt.fdiv(_u_fullResolution, minRes))
     dist01 = clamp01__float.call(distanceMetric__vec2_vec2_int.call(p, corner, _u_shape))
     scaledPower = rt.component_wise('mix', rt.f(0.10000000149011612), rt.f(25.049999237060547), rt.binary('/', rt.binary('+', _u_power, rt.f(100), 1, 'float'), rt.f(200), 1, 'float'))
     mask = rt.component_wise('pow', dist01, scaledPower)

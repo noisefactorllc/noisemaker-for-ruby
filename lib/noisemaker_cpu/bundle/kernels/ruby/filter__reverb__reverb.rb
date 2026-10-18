@@ -18,7 +18,7 @@ run_pixel = lambda do |ctx, out|
     mode = nil
     mode = rt.construct(1, _u_wrap, 'int')
     if rt.bool(rt.binary('==', mode, rt.i(0)))
-      return rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))
+      return rt.component_wise('abs', rt.construct(2, rt.f32(((uv[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((uv[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))
     else
       if rt.bool(rt.binary('==', mode, rt.i(1)))
         return rt.component_wise('fract', uv)
@@ -34,8 +34,8 @@ run_pixel = lambda do |ctx, out|
     _for0_first = nil; accum = nil; current = nil; dims = nil; globalCoord = nil; globalUV = nil; i = nil; iters = nil; localUV = nil; original = nil; result = nil; sampledLocalUV = nil; scale = nil; scaled = nil; totalWeight = nil; warpedGlobalUV = nil; weight = nil; wrappedGlobalUV = nil
     dims = rt.texture_size(_u_inputTex)
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    localUV = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, dims)), 2, 'float'))
+    globalUV = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    localUV = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, dims))))
     original = rt.texture(_u_inputTex, localUV)
     current = rt.copy(original, 'float')
     if rt.bool(_u_ridges)
@@ -58,7 +58,7 @@ run_pixel = lambda do |ctx, out|
       end
       warpedGlobalUV = rt.construct(2, rt.binary_raw('*', globalUV, scale, 2, 'float'))
       wrappedGlobalUV = applyWrap__vec2.call(warpedGlobalUV)
-      sampledLocalUV = rt.component_wise('fract', rt.construct(2, ((((((wrappedGlobalUV[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / ((dims[0]))), ((((((wrappedGlobalUV[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / ((dims[1])))))
+      sampledLocalUV = rt.component_wise('fract', rt.construct(2, rt.fdiv(((((wrappedGlobalUV[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0])), (dims[0])), rt.fdiv(((((wrappedGlobalUV[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1])), (dims[1]))))
       scaled = rt.texture(_u_inputTex, sampledLocalUV)
       if rt.bool(_u_ridges)
         scaled.replace((ridge_transform__vec4.call(scaled)).map { |c| rt.f32(c) })

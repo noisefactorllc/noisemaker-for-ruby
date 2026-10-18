@@ -39,9 +39,9 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     __hoistv2 = nil; _for0_first = nil; angularStep = nil; arc = nil; aspectRatio = nil; center = nil; distorted = nil; globalCoord = nil; i = nil; jitter = nil; jitterCoord = nil; sampleUV = nil; sum = nil; theta = nil; uv = nil
-    aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    aspectRatio = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     center = rt.construct(2, _u_centerX, _u_centerY)
     arc = rt.component_wise('radians', _u_amount)
     angularStep = rt.binary('/', arc, rt.construct(1, rt.binary('-', g['N'], rt.i(1), 1, 'int')), 1, 'float')
@@ -60,7 +60,7 @@ run_pixel = lambda do |ctx, out|
       end
       theta = rt.binary('+', rt.binary('*', rt.binary('-', rt.binary('/', rt.construct(1, i), rt.construct(1, rt.binary('-', g['N'], rt.i(1), 1, 'int')), 1, 'float'), rt.f(0.5), 1, 'float'), arc, 1, 'float'), jitter, 1, 'float')
       distorted = rt.component_wise('clamp', rotateAround__vec2_vec2_float_float.call(uv, center, theta, aspectRatio), rt.f(0), rt.f(1))
-      sampleUV = rt.component_wise('clamp', rt.construct(2, ((((((distorted[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0]))) / (_u_resolution[0])), ((((((distorted[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1]))) / (_u_resolution[1]))), rt.f(0), rt.f(1))
+      sampleUV = rt.component_wise('clamp', rt.construct(2, rt.fdiv(((((distorted[0]) * (_u_fullResolution[0]))) - (_u_tileOffset[0])), _u_resolution[0]), rt.fdiv(((((distorted[1]) * (_u_fullResolution[1]))) - (_u_tileOffset[1])), _u_resolution[1])), rt.f(0), rt.f(1))
       __hoistv2 = rt.texture(_u_inputTex, sampleUV); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv2[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv2[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv2[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoistv2[3], 1, 'float'))
     end
     g['fragColor'].replace((rt.binary_raw('/', sum, rt.construct(1, g['N']), 4, 'float')).map { |c| rt.f32(c) })

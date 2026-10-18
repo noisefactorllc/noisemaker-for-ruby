@@ -75,9 +75,9 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     amt = nil; baseColor = nil; blended = nil; color1 = nil; color2 = nil; globalCoord = nil; opacity = nil; source = nil; sourceAlpha = nil; sourceColor = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    color1 = rt.texture(_u_inputTex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)), 2, 'float')))
-    color2 = rt.texture(_u_tex, rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)), 2, 'float')))
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    color1 = rt.texture(_u_inputTex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_inputTex)))))
+    color2 = rt.texture(_u_tex, rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.texture_size(_u_tex)))))
     amt = map__float_float_float_float_float.call(_u_mixAmt, rt.unary('-', rt.f(100)), rt.f(100), rt.f(0), rt.f(1))
     opacity = (rt.bool(rt.binary('==', _u_mode, rt.i(8))) ? (amt) : (rt.component_wise('min', rt.binary('*', amt, rt.f(2), 1, 'float'), rt.f(1))))
     sourceAlpha = rt.binary('*', rt.swizzle(color2, 'a'), opacity, 1, 'float')
@@ -86,8 +86,8 @@ run_pixel = lambda do |ctx, out|
     blended = rt.construct(3, 0.0)
     sourceColor = rt.construct(4, 0.0)
     if rt.bool(rt.binary('!=', _u_mode, rt.i(8)))
-      baseColor = rt.construct(4, (rt.bool(rt.binary('>', rt.swizzle(color1, 'a'), rt.f(0))) ? (rt.binary_raw('/', rt.swizzle(color1, 'rgb'), rt.swizzle(color1, 'a'), 3, 'float')) : (rt.construct(3, rt.f(0)))), rt.f(1))
-      sourceColor = rt.construct(4, (rt.bool(rt.binary('>', rt.swizzle(color2, 'a'), rt.f(0))) ? (rt.binary_raw('/', rt.swizzle(color2, 'rgb'), rt.swizzle(color2, 'a'), 3, 'float')) : (rt.construct(3, rt.f(0)))), rt.f(1))
+      baseColor = rt.construct(4, (rt.bool(rt.binary('>', rt.swizzle(color1, 'a'), rt.f(0))) ? (rt.fdiv(rt.swizzle(color1, 'rgb'), rt.swizzle(color1, 'a'))) : (rt.construct(3, rt.f(0)))), rt.f(1))
+      sourceColor = rt.construct(4, (rt.bool(rt.binary('>', rt.swizzle(color2, 'a'), rt.f(0))) ? (rt.fdiv(rt.swizzle(color2, 'rgb'), rt.swizzle(color2, 'a'))) : (rt.construct(3, rt.f(0)))), rt.f(1))
       blended = rt.swizzle(applyBlendMode__vec4_vec4_int.call(baseColor, sourceColor, _u_mode), 'rgb')
       blended.replace((rt.component_wise('mix', blended, rt.swizzle(sourceColor, 'rgb'), rt.component_wise('max', rt.binary('-', rt.binary('*', amt, rt.f(2), 1, 'float'), rt.f(1), 1, 'float'), rt.f(0)))).map { |c| rt.f32(c) })
       source.replace((rt.binary_raw('+', rt.binary_raw('*', source, rt.binary('-', rt.f(1), rt.swizzle(color1, 'a'), 1, 'float'), 3, 'float'), rt.binary_raw('*', rt.binary_raw('*', blended, sourceAlpha, 3, 'float'), rt.swizzle(color1, 'a'), 3, 'float'), 3, 'float')).map { |c| rt.f32(c) })

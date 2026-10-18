@@ -222,10 +222,10 @@ run_pixel = lambda do |ctx, out|
     z = rt.trunc_div(rt.swizzle(pixelCoord, 'y'), volSize)
     if rt.bool((rt.bool((rt.bool(rt.binary('>=', x, volSize)) || rt.bool(rt.binary('>=', y, volSize)) ? 1 : 0)) || rt.bool(rt.binary('>=', z, volSize)) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
-      g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))
+      (begin g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0)); g['geoOut'] end)
       return
     end
-    p = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('/', rt.construct_raw(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)), rt.binary('-', volSizeF, rt.f(1), 1, 'float'), 3, 'float'), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'), rt.f(1.5), 3, 'float'))
+    p = rt.construct(3, rt.binary_raw('*', rt.binary_raw('-', rt.binary_raw('*', rt.fdiv(rt.construct_raw(3, rt.construct(1, x), rt.construct(1, y), rt.construct(1, z)), rt.binary('-', volSizeF, rt.f(1), 1, 'float')), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'), rt.f(1.5), 3, 'float'))
     juliaC = rt.construct(3, rt.binary_raw('*', rt.construct_raw(3, _u_juliaX, _u_juliaY, _u_juliaZ), rt.f(0.0099999997764825821), 3, 'float'))
     result = computeFractal__vec3_vec3.call(p, juliaC)
     dist = rt.swizzle(result, 'x')
@@ -239,9 +239,9 @@ run_pixel = lambda do |ctx, out|
     gradient = rt.construct(3, rt.binary_raw('/', rt.construct_raw(3, rt.binary('-', dxp, dist, 1, 'float'), rt.binary('-', dyp, dist, 1, 'float'), rt.binary('-', dzp, dist, 1, 'float')), eps, 3, 'float'))
     normal = rt.normalize(rt.binary_raw('+', gradient, rt.construct_raw(3, rt.f(9.9999999747524271e-07)), 3, 'float'))
     if rt.bool(rt.binary('==', _u_colorMode, rt.i(0)))
-      g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(normalizedDist); g['fragColor'][2] = rt.f32(normalizedDist); g['fragColor'][3] = rt.f32(rt.f(1))
+      (begin g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(normalizedDist); g['fragColor'][2] = rt.f32(normalizedDist); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
     else
-      g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(trap); g['fragColor'][2] = rt.f32(iterRatio); g['fragColor'][3] = rt.f32(rt.f(1))
+      (begin g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(trap); g['fragColor'][2] = rt.f32(iterRatio); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
     end
     g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), normalizedDist)).map { |c| rt.f32(c) })
   end

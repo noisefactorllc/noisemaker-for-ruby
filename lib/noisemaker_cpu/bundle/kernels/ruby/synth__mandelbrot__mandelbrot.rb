@@ -102,39 +102,39 @@ run_pixel = lambda do |ctx, out|
     cX_df = rt.copy(cX_df, 'float')
     cY_df = rt.copy(cY_df, 'float')
     if rt.bool(rt.binary('==', index, rt.i(1)))
-      cX_df[0] = rt.f32(rt.unary('-', rt.f(0.74453985691070557))); cX_df[1] = rt.f32(rt.unary('-', rt.f(3.4452027897202697e-09)))
-      cY_df[0] = rt.f32(rt.f(0.12172377109527588)); cY_df[1] = rt.f32(rt.f(2.7991489126577562e-09))
+      (begin cX_df[0] = rt.f32(rt.unary('-', rt.f(0.74453985691070557))); cX_df[1] = rt.f32(rt.unary('-', rt.f(3.4452027897202697e-09))); cX_df end)
+      (begin cY_df[0] = rt.f32(rt.f(0.12172377109527588)); cY_df[1] = rt.f32(rt.f(2.7991489126577562e-09)); cY_df end)
     else
       if rt.bool(rt.binary('==', index, rt.i(2)))
-        cX_df[0] = rt.f32(rt.f(0.29833000898361206)); cX_df[1] = rt.f32(rt.unary('-', rt.f(8.9836120764630323e-09)))
-        cY_df[0] = rt.f32(rt.f(0.0011099999537691474)); cY_df[1] = rt.f32(rt.f(4.6230852479567375e-11))
+        (begin cX_df[0] = rt.f32(rt.f(0.29833000898361206)); cX_df[1] = rt.f32(rt.unary('-', rt.f(8.9836120764630323e-09))); cX_df end)
+        (begin cY_df[0] = rt.f32(rt.f(0.0011099999537691474)); cY_df[1] = rt.f32(rt.f(4.6230852479567375e-11)); cY_df end)
       else
         if rt.bool(rt.binary('==', index, rt.i(3)))
-          cX_df[0] = rt.f32(rt.unary('-', rt.f(1.7548776865005493))); cX_df[1] = rt.f32(rt.f(2.0253857258012431e-08))
-          cY_df[0] = rt.f32(rt.f(0)); cY_df[1] = rt.f32(rt.f(0))
+          (begin cX_df[0] = rt.f32(rt.unary('-', rt.f(1.7548776865005493))); cX_df[1] = rt.f32(rt.f(2.0253857258012431e-08)); cX_df end)
+          (begin cY_df[0] = rt.f32(rt.f(0)); cY_df[1] = rt.f32(rt.f(0)); cY_df end)
         else
           if rt.bool(rt.binary('==', index, rt.i(4)))
-            cX_df[0] = rt.f32(rt.unary('-', rt.f(1.7400623559951782))); cX_df[1] = rt.f32(rt.unary('-', rt.f(2.6584162426956937e-08)))
-            cY_df[0] = rt.f32(rt.f(0.028175339102745056)); cY_df[1] = rt.f32(rt.f(6.7646593882031425e-10))
+            (begin cX_df[0] = rt.f32(rt.unary('-', rt.f(1.7400623559951782))); cX_df[1] = rt.f32(rt.unary('-', rt.f(2.6584162426956937e-08))); cX_df end)
+            (begin cY_df[0] = rt.f32(rt.f(0.028175339102745056)); cY_df[1] = rt.f32(rt.f(6.7646593882031425e-10)); cY_df end)
           else
             if rt.bool(rt.binary('==', index, rt.i(5)))
-              cX_df[0] = rt.f32(rt.unary('-', rt.f(1.4011552333831787))); cX_df[1] = rt.f32(rt.f(4.4291127210271952e-08))
-              cY_df[0] = rt.f32(rt.f(0)); cY_df[1] = rt.f32(rt.f(0))
+              (begin cX_df[0] = rt.f32(rt.unary('-', rt.f(1.4011552333831787))); cX_df[1] = rt.f32(rt.f(4.4291127210271952e-08)); cX_df end)
+              (begin cY_df[0] = rt.f32(rt.f(0)); cY_df[1] = rt.f32(rt.f(0)); cY_df end)
             else
               if rt.bool(rt.binary('==', index, rt.i(6)))
-                cX_df[0] = rt.f32(rt.f(0.37500011920928955)); cX_df[1] = rt.f32(rt.f(8.5257595427989941e-10))
-                cY_df[0] = rt.f32(rt.unary('-', rt.f(0.21663938462734222))); cY_df[1] = rt.f32(rt.unary('-', rt.f(3.8103706856418285e-09)))
+                (begin cX_df[0] = rt.f32(rt.f(0.37500011920928955)); cX_df[1] = rt.f32(rt.f(8.5257595427989941e-10)); cX_df end)
+                (begin cY_df[0] = rt.f32(rt.unary('-', rt.f(0.21663938462734222))); cY_df[1] = rt.f32(rt.unary('-', rt.f(3.8103706856418285e-09))); cY_df end)
               else
                 if rt.bool(rt.binary('==', index, rt.i(7)))
-                  cX_df[0] = rt.f32(rt.unary('-', rt.f(0.74453890323638916))); cX_df[1] = rt.f32(rt.unary('-', rt.f(1.6763610943826279e-08)))
-                  cY_df[0] = rt.f32(rt.f(0.12172418087720871)); cY_df[1] = rt.f32(rt.unary('-', rt.f(8.7720869457186268e-10)))
+                  (begin cX_df[0] = rt.f32(rt.unary('-', rt.f(0.74453890323638916))); cX_df[1] = rt.f32(rt.unary('-', rt.f(1.6763610943826279e-08))); cX_df end)
+                  (begin cY_df[0] = rt.f32(rt.f(0.12172418087720871)); cY_df[1] = rt.f32(rt.unary('-', rt.f(8.7720869457186268e-10))); cY_df end)
                 else
                   if rt.bool(rt.binary('==', index, rt.i(8)))
-                    cX_df[0] = rt.f32(rt.unary('-', rt.f(1.2553445100784302))); cX_df[1] = rt.f32(rt.unary('-', rt.f(1.4721569741027452e-08)))
-                    cY_df[0] = rt.f32(rt.unary('-', rt.f(0.3822004497051239))); cY_df[1] = rt.f32(rt.unary('-', rt.f(1.3294876310965265e-08)))
+                    (begin cX_df[0] = rt.f32(rt.unary('-', rt.f(1.2553445100784302))); cX_df[1] = rt.f32(rt.unary('-', rt.f(1.4721569741027452e-08))); cX_df end)
+                    (begin cY_df[0] = rt.f32(rt.unary('-', rt.f(0.3822004497051239))); cY_df[1] = rt.f32(rt.unary('-', rt.f(1.3294876310965265e-08))); cY_df end)
                   else
-                    cX_df[0] = rt.f32(_u_centerHiX); cX_df[1] = rt.f32(_u_centerLoX)
-                    cY_df[0] = rt.f32(_u_centerHiY); cY_df[1] = rt.f32(_u_centerLoY)
+                    (begin cX_df[0] = rt.f32(_u_centerHiX); cX_df[1] = rt.f32(_u_centerLoX); cX_df end)
+                    (begin cY_df[0] = rt.f32(_u_centerHiY); cY_df[1] = rt.f32(_u_centerLoY); cY_df end)
                   end
                 end
               end
@@ -152,7 +152,7 @@ run_pixel = lambda do |ctx, out|
     re_df = rt.copy(re_df, 'float')
     im_df = rt.copy(im_df, 'float')
     angle = nil; c = nil; s = nil; scale = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', fragCoord, rt.binary_raw('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('-', fragCoord, rt.binary_raw('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', rot), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
@@ -190,7 +190,7 @@ run_pixel = lambda do |ctx, out|
     c_im = rt.copy(c_im, 'float')
     z_final = rt.copy(z_final, 'float')
     dz_final = rt.copy(dz_final, 'float')
-    _for0_first = nil; cx = nil; cy = nil; dz = nil; fx = nil; fy = nil; i = nil; log_zn = nil; mag2 = nil; n = nil; new_zi = nil; new_zr = nil; nu = nil; post_mag2 = nil; post_zx = nil; post_zy = nil; stripe = nil; trap = nil; zi = nil; zi2 = nil; zr = nil; zr2 = nil; zri = nil; zx = nil; zy = nil
+    __vector_write_0_0 = nil; __vector_write_0_1 = nil; _for0_first = nil; cx = nil; cy = nil; dz = nil; fx = nil; fy = nil; i = nil; log_zn = nil; mag2 = nil; n = nil; new_zi = nil; new_zr = nil; nu = nil; post_mag2 = nil; post_zx = nil; post_zy = nil; stripe = nil; trap = nil; zi = nil; zi2 = nil; zr = nil; zr2 = nil; zri = nil; zx = nil; zy = nil
     cx = df64_to_float__vec2.call(c_re)
     cy = df64_to_float__vec2.call(c_im)
     if rt.bool((rt.bool(inCardioid__float_float.call(cx, cy)) || rt.bool(inPeriod2Bulb__float_float.call(cx, cy)) ? 1 : 0))
@@ -223,7 +223,7 @@ run_pixel = lambda do |ctx, out|
       end
       zx = df64_to_float__vec2.call(zr)
       zy = df64_to_float__vec2.call(zi)
-      dz[0] = rt.f32(rt.binary('+', rt.binary('*', rt.f(2), rt.binary('-', rt.binary('*', zx, rt.swizzle(dz, 'x'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'y'), 1, 'float'), 1, 'float'), 1, 'float'), rt.f(1), 1, 'float')); dz[1] = rt.f32(rt.binary('*', rt.f(2), rt.binary('+', rt.binary('*', zx, rt.swizzle(dz, 'y'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'x'), 1, 'float'), 1, 'float'), 1, 'float'))
+      (begin __vector_write_0_0 = rt.binary('+', rt.binary('*', rt.f(2), rt.binary('-', rt.binary('*', zx, rt.swizzle(dz, 'x'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'y'), 1, 'float'), 1, 'float'), 1, 'float'), rt.f(1), 1, 'float'); __vector_write_0_1 = rt.binary('*', rt.f(2), rt.binary('+', rt.binary('*', zx, rt.swizzle(dz, 'y'), 1, 'float'), rt.binary('*', zy, rt.swizzle(dz, 'x'), 1, 'float'), 1, 'float'), 1, 'float'); dz[0] = rt.f32(__vector_write_0_0); dz[1] = rt.f32(__vector_write_0_1); dz end)
       zr2 = df64_mul__vec2_vec2.call(zr, zr)
       zi2 = df64_mul__vec2_vec2.call(zi, zi)
       zri = df64_mul__vec2_vec2.call(zr, zi)
@@ -246,7 +246,7 @@ run_pixel = lambda do |ctx, out|
     rawIter = i
     fx = df64_to_float__vec2.call(zr)
     fy = df64_to_float__vec2.call(zi)
-    z_final[0] = rt.f32(fx); z_final[1] = rt.f32(fy)
+    (begin z_final[0] = rt.f32(fx); z_final[1] = rt.f32(fy); z_final end)
     dz_final.replace((dz).map { |c| rt.f32(c) })
     stripeAcc = stripe
     trapMin = trap
@@ -321,7 +321,7 @@ run_pixel = lambda do |ctx, out|
     cX_df = rt.copy(cX_df, 'float')
     cY_df = rt.copy(cY_df, 'float')
     diffuse = nil; eps = nil; h0 = nil; hx = nil; hy = nil; lightDir = nil; normal = nil; rad = nil
-    eps = rt.binary('/', rt.f(1), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 1, 'float')
+    eps = rt.fdiv(rt.f(1), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')))
     h0 = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(fragCoord, cX_df, cY_df, z_zoom, rot, maxIter)
     hx = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(rt.construct(2, ((fragCoord[0]) + ((rt.f(1)))), ((fragCoord[1]) + ((rt.f(0))))), cX_df, cY_df, z_zoom, rot, maxIter)
     hy = computeValueAt_df64__vec2_vec2_vec2_float_float_int.call(rt.construct(2, ((fragCoord[0]) + ((rt.f(0)))), ((fragCoord[1]) + ((rt.f(1))))), cX_df, cY_df, z_zoom, rot, maxIter)

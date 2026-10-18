@@ -28,7 +28,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', luma, threshHigh))
         bloomFactor = rt.f(1)
       else
-        _t = rt.binary('/', rt.binary('-', luma, threshLow, 1, 'float'), rt.binary('-', threshHigh, threshLow, 1, 'float'), 1, 'float')
+        _t = rt.fdiv(rt.binary('-', luma, threshLow, 1, 'float'), rt.binary('-', threshHigh, threshLow, 1, 'float'))
         bloomFactor = rt.binary('*', rt.binary('*', _t, _t, 1, 'float'), rt.binary('-', rt.f(3), rt.binary('*', rt.f(2), _t, 1, 'float'), 1, 'float'), 1, 'float')
       end
     end

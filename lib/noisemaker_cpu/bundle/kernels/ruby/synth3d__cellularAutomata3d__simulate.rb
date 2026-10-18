@@ -19,11 +19,11 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   hash3__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    __sc1 = nil
-    p.replace((rt.binary_raw('+', p, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float'), 3, 'float')).map { |c| rt.f32(c) })
+    cpuHashDot = nil
+    p.replace((rt.binary_raw('+', p, rt.construct(1, rt.binary('*', rt.construct(1, _u_seed), rt.f(0.10000000149011612), 1, 'float')), 3, 'float')).map { |c| rt.f32(c) })
     p.replace((rt.component_wise('fract', rt.construct(3, ((p[0]) * ((rt.f(0.1031000018119812)))), ((p[1]) * ((rt.f(0.10300000011920929)))), ((p[2]) * ((rt.f(0.097300000488758087))))))).map { |c| rt.f32(c) })
-    __sc1 = rt.dot(p, rt.binary_raw('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float')); p[0] = rt.f32(rt.binary('+', p[0], __sc1, 1, 'float')); p[1] = rt.f32(rt.binary('+', p[1], __sc1, 1, 'float')); p[2] = rt.f32(rt.binary('+', p[2], __sc1, 1, 'float'))
-    return rt.component_wise('fract', rt.binary('*', rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float'), rt.swizzle(p, 'z'), 1, 'float'))
+    cpuHashDot = rt.dot(p, rt.binary_raw('+', rt.swizzle(p, 'yxz'), rt.f(33.330001831054688), 3, 'float'))
+    return rt.component_wise('fract', rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.construct(1, rt.binary('+', rt.swizzle(p, 'x'), rt.swizzle(p, 'y'), 1, 'float')), rt.construct(1, rt.binary('+', cpuHashDot, cpuHashDot, 1, 'float')), 1, 'float')), rt.construct(1, rt.binary('+', rt.swizzle(p, 'z'), cpuHashDot, 1, 'float')), 1, 'float')))
   end
   atlasTexel__ivec3_int = lambda do |p, volSize|
     p = rt.copy(p, 'int')
@@ -235,7 +235,7 @@ run_pixel = lambda do |ctx, out|
           age = rt.f(0)
         end
       end
-      g['fragColor'][0] = rt.f32(alive); g['fragColor'][1] = rt.f32(alive); g['fragColor'][2] = rt.f32(alive); g['fragColor'][3] = rt.f32(rt.f(1))
+      (begin g['fragColor'][0] = rt.f32(alive); g['fragColor'][1] = rt.f32(alive); g['fragColor'][2] = rt.f32(alive); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
       return
     end
     neighbors = 0
@@ -272,7 +272,7 @@ run_pixel = lambda do |ctx, out|
       seedLum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
       finalAlive = rt.component_wise('mix', finalAlive, seedLum, rt.binary('*', _u_weight, rt.f(0.0099999997764825821), 1, 'float'))
     end
-    g['fragColor'][0] = rt.f32(finalAlive); g['fragColor'][1] = rt.f32(finalAlive); g['fragColor'][2] = rt.f32(finalAlive); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(finalAlive); g['fragColor'][1] = rt.f32(finalAlive); g['fragColor'][2] = rt.f32(finalAlive); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

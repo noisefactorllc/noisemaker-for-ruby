@@ -144,13 +144,13 @@ run_pixel = lambda do |ctx, out|
     end
     scale = rt.component_wise('max', rt.binary('/', rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y')), rt.f(1024), 1, 'float'), rt.f(1))
     devFactor = rt.binary('+', rt.f(1), rt.binary('*', rt.binary('*', strideRand, rt.f(2), 1, 'float'), _u_strideDeviation, 1, 'float'), 1, 'float')
-    actualStride = rt.component_wise('max', rt.f(9.9999997473787516e-05), rt.binary('/', rt.binary('*', rt.binary('*', rt.binary('*', _u_stride, rt.f(0.10000000149011612), 1, 'float'), scale, 1, 'float'), devFactor, 1, 'float'), rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y')), 1, 'float'))
+    actualStride = rt.component_wise('max', rt.f(9.9999997473787516e-05), rt.fdiv(rt.binary('*', rt.binary('*', rt.binary('*', _u_stride, rt.f(0.10000000149011612), 1, 'float'), scale, 1, 'float'), devFactor, 1, 'float'), rt.component_wise('max', rt.swizzle(_u_resolution, 'x'), rt.swizzle(_u_resolution, 'y'))))
     newX = rt.binary('+', px, rt.binary('*', rt.component_wise('sin', finalAngle), actualStride, 1, 'float'), 1, 'float')
     newY = rt.binary('+', py, rt.binary('*', rt.component_wise('cos', finalAngle), actualStride, 1, 'float'), 1, 'float')
     newX = rt.component_wise('fract', newX)
     newY = rt.component_wise('fract', newY)
-    g['outXYZ'][0] = rt.f32(newX); g['outXYZ'][1] = rt.f32(newY); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(1))
-    g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rotRand); g['outVel'][3] = rt.f32(strideRand)
+    (begin g['outXYZ'][0] = rt.f32(newX); g['outXYZ'][1] = rt.f32(newY); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(1)); g['outXYZ'] end)
+    (begin g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rotRand); g['outVel'][3] = rt.f32(strideRand); g['outVel'] end)
     g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
   end
   main__void.call

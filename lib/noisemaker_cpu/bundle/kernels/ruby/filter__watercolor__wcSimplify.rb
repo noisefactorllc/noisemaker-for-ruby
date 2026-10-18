@@ -22,8 +22,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     p0 = nil; p1 = nil; p2 = nil; p3 = nil; p4 = nil; p5 = nil; p6 = nil; p7 = nil; p8 = nil; s0 = nil; s1 = nil; s2 = nil; s3 = nil; s4 = nil; s5 = nil; s6 = nil; s7 = nil; s8 = nil; stride = nil; texel = nil; uv = nil
     stride = rt.component_wise('mix', rt.f(3), rt.f(1), rt.binary('/', rt.component_wise('clamp', _u_detail, rt.f(0), rt.f(100)), rt.f(100), 1, 'float'))
-    texel = rt.construct(2, rt.binary_raw('/', stride, _u_resolution, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    texel = rt.construct(2, rt.fdiv(stride, _u_resolution))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     s0 = rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.unary('-', rt.swizzle(texel, 'x')), rt.unary('-', rt.swizzle(texel, 'y'))), 2, 'float'))
     s1 = rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.f(0), rt.unary('-', rt.swizzle(texel, 'y'))), 2, 'float'))
     s2 = rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.unary('-', rt.swizzle(texel, 'y'))), 2, 'float'))

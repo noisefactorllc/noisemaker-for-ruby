@@ -13,7 +13,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     _t = nil; blur = nil; diff = nil; gate = nil; mag = nil; outc = nil; src = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     blur = rt.texture(_u_blurTex, uv)
     diff = rt.construct(3, rt.binary_raw('-', rt.swizzle(src, 'rgb'), rt.swizzle(blur, 'rgb'), 3, 'float'))

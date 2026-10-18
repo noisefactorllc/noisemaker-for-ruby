@@ -17,7 +17,7 @@ run_pixel = lambda do |ctx, out|
     celColor = nil; edgeStrength = nil; finalColor = nil; globalCoord = nil; origColor = nil; texSize = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize))))
     origColor = rt.texture(_u_inputTex, uv)
     celColor = rt.texture(_u_colorTex, uv)
     edgeStrength = rt.swizzle(rt.texture(_u_edgeTex, uv), 'r')

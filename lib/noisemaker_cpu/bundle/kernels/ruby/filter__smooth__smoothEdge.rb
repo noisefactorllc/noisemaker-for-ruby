@@ -33,7 +33,7 @@ run_pixel = lambda do |ctx, out|
     _Le = luminance__vec3.call(rt.swizzle(rt.texel_fetch(_u_inputTex, rt.component_wise('clamp', rt.binary('+', coord, rt.construct(2, rt.i(1), rt.i(0), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), maxCoord), rt.i(0)), 'rgb'))
     edgeH = rt.component_wise('step', _u_threshold, rt.component_wise('max', rt.component_wise('abs', rt.binary('-', _L, _Ln, 1, 'float')), rt.component_wise('abs', rt.binary('-', _L, _Ls, 1, 'float'))))
     edgeV = rt.component_wise('step', _u_threshold, rt.component_wise('max', rt.component_wise('abs', rt.binary('-', _L, _Lw, 1, 'float')), rt.component_wise('abs', rt.binary('-', _L, _Le, 1, 'float'))))
-    g['fragColor'][0] = rt.f32(edgeH); g['fragColor'][1] = rt.f32(edgeV); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(edgeH); g['fragColor'][1] = rt.f32(edgeV); g['fragColor'][2] = rt.f32(rt.f(0)); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

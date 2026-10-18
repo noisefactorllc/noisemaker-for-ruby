@@ -55,15 +55,15 @@ run_pixel = lambda do |ctx, out|
     corner = rt.construct(1, rt.binary('*', h, rt.f(4), 1, 'float'), 'int')
     origin = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', corner, rt.i(0)))
-      origin[0] = rt.f32(rt.unary('-', halfW)); origin[1] = rt.f32(rt.unary('-', halfH))
+      (begin origin[0] = rt.f32(rt.unary('-', halfW)); origin[1] = rt.f32(rt.unary('-', halfH)); origin end)
     else
       if rt.bool(rt.binary('==', corner, rt.i(1)))
-        origin[0] = rt.f32(halfW); origin[1] = rt.f32(rt.unary('-', halfH))
+        (begin origin[0] = rt.f32(halfW); origin[1] = rt.f32(rt.unary('-', halfH)); origin end)
       else
         if rt.bool(rt.binary('==', corner, rt.i(2)))
-          origin[0] = rt.f32(rt.unary('-', halfW)); origin[1] = rt.f32(halfH)
+          (begin origin[0] = rt.f32(rt.unary('-', halfW)); origin[1] = rt.f32(halfH); origin end)
         else
-          origin[0] = rt.f32(halfW); origin[1] = rt.f32(halfH)
+          (begin origin[0] = rt.f32(halfW); origin[1] = rt.f32(halfH); origin end)
         end
       end
     end
@@ -109,14 +109,14 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     _for0_first = nil; bgShade = nil; blend = nil; canSplitH = nil; canSplitV = nil; cellAspect = nil; cellH = nil; cellMax = nil; cellMin = nil; cellPixelH = nil; cellPixelW = nil; cellSize = nil; cellUv = nil; cellW = nil; centered = nil; color = nil; curCorner = nil; curMask = nil; curShapeType = nil; curTexScale = nil; curVisualTime = nil; dens = nil; dir = nil; fillType = nil; globalCoord = nil; h = nil; halfH = nil; halfW = nil; inputColor = nil; isOutline = nil; level = nil; levelTime = nil; maxDepth = nil; mid = nil; minDim = nil; modeType = nil; nextCorner = nil; nextMask = nil; nextShapeType = nil; nextTexScale = nil; nextVisualTime = nil; outlineWidthX = nil; outlineWidthY = nil; ratio = nil; result = nil; shade = nil; shapeMask = nil; spd = nil; splitDir = nil; st = nil; texAspect = nil; texScale = nil; texUv = nil; visualBlend = nil; visualT = nil; wrapMode = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     maxDepth = rt.construct(1, _u_depth, 'int')
     dens = rt.binary('/', _u_density, rt.f(100), 1, 'float')
     fillType = rt.construct(1, _u_fill, 'int')
     modeType = rt.construct(1, _u_mode, 'int')
     spd = rt.binary('*', rt.component_wise('floor', _u_speed), rt.f(2), 1, 'float')
-    outlineWidthX = rt.binary('/', rt.binary('*', _u_outline, _u_renderScale, 1, 'float'), rt.swizzle(_u_fullResolution, 'x'), 1, 'float')
-    outlineWidthY = rt.binary('/', rt.binary('*', _u_outline, _u_renderScale, 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    outlineWidthX = rt.fdiv(rt.binary('*', _u_outline, _u_renderScale, 1, 'float'), rt.swizzle(_u_fullResolution, 'x'))
+    outlineWidthY = rt.fdiv(rt.binary('*', _u_outline, _u_renderScale, 1, 'float'), rt.swizzle(_u_fullResolution, 'y'))
     cellMin = rt.construct(2, rt.f(0))
     cellMax = rt.construct(2, rt.f(1))
     isOutline = 0
@@ -142,8 +142,8 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('<', h, dens))
         cellW = rt.binary('*', rt.binary('-', rt.swizzle(cellMax, 'x'), rt.swizzle(cellMin, 'x'), 1, 'float'), rt.swizzle(_u_fullResolution, 'x'), 1, 'float')
         cellH = rt.binary('*', rt.binary('-', rt.swizzle(cellMax, 'y'), rt.swizzle(cellMin, 'y'), 1, 'float'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
-        canSplitH = rt.binary('>=', rt.binary('/', rt.component_wise('min', cellW, rt.binary('*', cellH, rt.f(0.5), 1, 'float')), rt.component_wise('max', cellW, rt.binary('*', cellH, rt.f(0.5), 1, 'float')), 1, 'float'), rt.f(0.20000000298023224))
-        canSplitV = rt.binary('>=', rt.binary('/', rt.component_wise('min', rt.binary('*', cellW, rt.f(0.5), 1, 'float'), cellH), rt.component_wise('max', rt.binary('*', cellW, rt.f(0.5), 1, 'float'), cellH), 1, 'float'), rt.f(0.20000000298023224))
+        canSplitH = rt.binary('>=', rt.fdiv(rt.component_wise('min', cellW, rt.binary('*', cellH, rt.f(0.5), 1, 'float')), rt.component_wise('max', cellW, rt.binary('*', cellH, rt.f(0.5), 1, 'float'))), rt.f(0.20000000298023224))
+        canSplitV = rt.binary('>=', rt.fdiv(rt.component_wise('min', rt.binary('*', cellW, rt.f(0.5), 1, 'float'), cellH), rt.component_wise('max', rt.binary('*', cellW, rt.f(0.5), 1, 'float'), cellH)), rt.f(0.20000000298023224))
         dir = rt.f(0.0)
         splitDir = 0
         if rt.bool(rt.binary('==', modeType, rt.i(0)))
@@ -217,10 +217,10 @@ run_pixel = lambda do |ctx, out|
     cellPixelH = rt.binary('*', rt.swizzle(cellSize, 'y'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
     minDim = rt.component_wise('min', cellPixelW, cellPixelH)
     centered = rt.construct(2, rt.binary_raw('-', cellUv, rt.f(0.5), 2, 'float'))
-    centered = rt.assign_swizzle(centered, 'x', rt.binary_raw('*', rt.swizzle(centered, 'x'), rt.binary('/', cellPixelW, minDim, 1, 'float'), 1, 'float'))
-    centered = rt.assign_swizzle(centered, 'y', rt.binary_raw('*', rt.swizzle(centered, 'y'), rt.binary('/', cellPixelH, minDim, 1, 'float'), 1, 'float'))
-    halfW = rt.binary('*', rt.binary('/', cellPixelW, minDim, 1, 'float'), rt.f(0.5), 1, 'float')
-    halfH = rt.binary('*', rt.binary('/', cellPixelH, minDim, 1, 'float'), rt.f(0.5), 1, 'float')
+    centered = rt.assign_swizzle(centered, 'x', rt.binary_raw('*', rt.swizzle(centered, 'x'), rt.fdiv(cellPixelW, minDim), 1, 'float'))
+    centered = rt.assign_swizzle(centered, 'y', rt.binary_raw('*', rt.swizzle(centered, 'y'), rt.fdiv(cellPixelH, minDim), 1, 'float'))
+    halfW = rt.binary('*', rt.fdiv(cellPixelW, minDim), rt.f(0.5), 1, 'float')
+    halfH = rt.binary('*', rt.fdiv(cellPixelH, minDim), rt.f(0.5), 1, 'float')
     visualT = rt.binary('+', rt.binary('*', _u_time, spd, 1, 'float'), rt.binary('*', g['PHI'], rt.f(7), 1, 'float'), 1, 'float')
     curVisualTime = rt.component_wise('floor', visualT)
     nextVisualTime = rt.binary('+', curVisualTime, rt.f(1), 1, 'float')
@@ -260,20 +260,20 @@ run_pixel = lambda do |ctx, out|
       nextTexScale = rt.binary('+', rt.f(0.30000001192092896), rt.binary('*', cellRand__vec2_float_float_float.call(cellMin, rt.f(0), rt.f(5), nextVisualTime), rt.f(0.69999998807907104), 1, 'float'), 1, 'float')
       texScale = rt.component_wise('mix', curTexScale, nextTexScale, visualBlend)
       texUv = rt.copy(cellUv, 'float')
-      cellAspect = rt.binary('/', rt.binary('*', rt.swizzle(cellSize, 'x'), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(cellSize, 'y'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'), 1, 'float')
-      texAspect = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
-      ratio = rt.binary('/', cellAspect, texAspect, 1, 'float')
+      cellAspect = rt.fdiv(rt.binary('*', rt.swizzle(cellSize, 'x'), rt.swizzle(_u_fullResolution, 'x'), 1, 'float'), rt.binary('*', rt.swizzle(cellSize, 'y'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float'))
+      texAspect = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
+      ratio = rt.fdiv(cellAspect, texAspect)
       if rt.bool(rt.binary('>', ratio, rt.f(1)))
         texUv = rt.assign_swizzle(texUv, 'x', rt.binary('+', rt.f(0.5), rt.binary('*', rt.binary('-', rt.swizzle(texUv, 'x'), rt.f(0.5), 1, 'float'), ratio, 1, 'float'), 1, 'float'))
       else
-        texUv = rt.assign_swizzle(texUv, 'y', rt.binary('+', rt.f(0.5), rt.binary('/', rt.binary('-', rt.swizzle(texUv, 'y'), rt.f(0.5), 1, 'float'), ratio, 1, 'float'), 1, 'float'))
+        texUv = rt.assign_swizzle(texUv, 'y', rt.binary('+', rt.f(0.5), rt.fdiv(rt.binary('-', rt.swizzle(texUv, 'y'), rt.f(0.5), 1, 'float'), ratio), 1, 'float'))
       end
       texUv.replace((rt.binary_raw('*', texUv, texScale, 2, 'float')).map { |c| rt.f32(c) })
       texUv = rt.assign_swizzle(texUv, 'x', rt.binary_raw('+', rt.swizzle(texUv, 'x'), rt.binary('*', rt.component_wise('mix', cellRand__vec2_float_float_float.call(cellMin, rt.f(0), rt.f(6), curVisualTime), cellRand__vec2_float_float_float.call(cellMin, rt.f(0), rt.f(6), nextVisualTime), visualBlend), rt.binary('-', rt.f(1), texScale, 1, 'float'), 1, 'float'), 1, 'float'))
       texUv = rt.assign_swizzle(texUv, 'y', rt.binary_raw('+', rt.swizzle(texUv, 'y'), rt.binary('*', rt.component_wise('mix', cellRand__vec2_float_float_float.call(cellMin, rt.f(0), rt.f(7), curVisualTime), cellRand__vec2_float_float_float.call(cellMin, rt.f(0), rt.f(7), nextVisualTime), visualBlend), rt.binary('-', rt.f(1), texScale, 1, 'float'), 1, 'float'), 1, 'float'))
       wrapMode = rt.construct(1, _u_wrap, 'int')
       if rt.bool(rt.binary('==', wrapMode, rt.i(0)))
-        texUv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((texUv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((texUv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
+        texUv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((texUv[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((texUv[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((texUv[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((texUv[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))).map { |c| rt.f32(c) })
       else
         if rt.bool(rt.binary('==', wrapMode, rt.i(1)))
           texUv.replace((rt.component_wise('mod', texUv, rt.f(1))).map { |c| rt.f32(c) })

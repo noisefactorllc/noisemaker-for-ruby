@@ -44,10 +44,10 @@ run_pixel = lambda do |ctx, out|
     dimensions = nil; globalCoord = nil; texel = nil; uv = nil; value = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     dimensions = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.f(0.5)), 2, 'float'), rt.construct_raw(2, rt.construct(1, rt.component_wise('max', rt.swizzle(dimensions, 'x'), rt.i(1))), rt.construct(1, rt.component_wise('max', rt.swizzle(dimensions, 'y'), rt.i(1)))), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('-', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.f(0.5)), 2, 'float'), rt.construct_raw(2, rt.construct(1, rt.component_wise('max', rt.swizzle(dimensions, 'x'), rt.i(1))), rt.construct(1, rt.component_wise('max', rt.swizzle(dimensions, 'y'), rt.i(1))))))
     texel = rt.texture(_u_inputTex, uv)
     value = valueMapComponent__vec4.call(texel)
-    g['fragColor'][0] = rt.f32(value); g['fragColor'][1] = rt.f32(value); g['fragColor'][2] = rt.f32(value); g['fragColor'][3] = rt.f32(rt.swizzle(texel, 'a'))
+    (begin g['fragColor'][0] = rt.f32(value); g['fragColor'][1] = rt.f32(value); g['fragColor'][2] = rt.f32(value); g['fragColor'][3] = rt.f32(rt.swizzle(texel, 'a')); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

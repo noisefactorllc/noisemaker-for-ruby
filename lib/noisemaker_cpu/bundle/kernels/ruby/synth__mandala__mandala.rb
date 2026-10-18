@@ -36,12 +36,12 @@ run_pixel = lambda do |ctx, out|
   end
   sdEquilateralTriangle__vec2_float = lambda do |p, r|
     p = rt.copy(p, 'float')
-    k = nil
+    __vector_write_0_0 = nil; __vector_write_0_1 = nil; k = nil
     k = rt.f(1.7320507764816284)
     p = rt.assign_swizzle(p, 'x', rt.binary('-', rt.component_wise('abs', rt.swizzle(p, 'x')), r, 1, 'float'))
     p = rt.assign_swizzle(p, 'y', rt.binary('+', rt.swizzle(p, 'y'), rt.binary('/', r, k, 1, 'float'), 1, 'float'))
     if rt.bool(rt.binary('>', rt.binary('+', rt.swizzle(p, 'x'), rt.binary('*', k, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.f(0)))
-      p[0] = rt.f32(rt.binary('/', rt.binary('-', rt.swizzle(p, 'x'), rt.binary('*', k, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.f(2), 1, 'float')); p[1] = rt.f32(rt.binary('/', rt.binary('-', rt.binary('*', rt.unary('-', k), rt.swizzle(p, 'x'), 1, 'float'), rt.swizzle(p, 'y'), 1, 'float'), rt.f(2), 1, 'float'))
+      (begin __vector_write_0_0 = rt.binary('/', rt.binary('-', rt.swizzle(p, 'x'), rt.binary('*', k, rt.swizzle(p, 'y'), 1, 'float'), 1, 'float'), rt.f(2), 1, 'float'); __vector_write_0_1 = rt.binary('/', rt.binary('-', rt.binary('*', rt.unary('-', k), rt.swizzle(p, 'x'), 1, 'float'), rt.swizzle(p, 'y'), 1, 'float'), rt.f(2), 1, 'float'); p[0] = rt.f32(__vector_write_0_0); p[1] = rt.f32(__vector_write_0_1); p end)
     end
     p = rt.assign_swizzle(p, 'x', rt.binary_raw('-', rt.swizzle(p, 'x'), rt.component_wise('clamp', rt.swizzle(p, 'x'), rt.binary('*', rt.unary('-', rt.f(2)), r, 1, 'float'), rt.f(0)), 1, 'float'))
     return rt.binary('*', rt.unary('-', rt.length(p)), rt.component_wise('sign', rt.swizzle(p, 'y')), 1, 'float')
@@ -54,7 +54,7 @@ run_pixel = lambda do |ctx, out|
     _Rlayer = nil; _for0_first = nil; baseSize = nil; d = nil; dBindu = nil; dir = nil; dynTwistRad = nil; folded = nil; i = nil; layerAnimRot = nil; layerTheta = nil; lt = nil; m = nil; q = nil; r = nil; radial = nil; shapeSize = nil; tangent = nil; theta = nil; twistRad = nil; wedge = nil
     r = rt.length(p)
     theta = rt.binary('-', rt.component_wise('atan', rt.swizzle(p, 'y'), rt.swizzle(p, 'x')), rt.f(1.5707963705062866), 1, 'float')
-    wedge = rt.binary('/', rt.f(6.2831854820251465), rt.construct(1, _u_symmetry), 1, 'float')
+    wedge = rt.fdiv(rt.f(6.2831854820251465), rt.construct(1, _u_symmetry))
     twistRad = rt.binary('/', rt.binary('*', _u_twist, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')
     baseSize = rt.binary('+', rt.f(0.25), rt.binary('*', _u_thickness, rt.f(0.64999997615814209), 1, 'float'), 1, 'float')
     dynTwistRad = twistRad
@@ -97,7 +97,7 @@ run_pixel = lambda do |ctx, out|
       tangent = rt.binary('*', folded, _Rlayer, 1, 'float')
       lt = rt.f(0)
       if rt.bool(rt.binary('>', _u_layers, rt.i(1)))
-        lt = rt.binary('-', rt.binary('/', rt.construct(1, i), rt.construct(1, rt.binary('-', _u_layers, rt.i(1), 1, 'int')), 1, 'float'), rt.f(0.5), 1, 'float')
+        lt = rt.binary('-', rt.fdiv(rt.construct(1, i), rt.construct(1, rt.binary('-', _u_layers, rt.i(1), 1, 'int'))), rt.f(0.5), 1, 'float')
       end
       shapeSize = rt.binary('*', baseSize, rt.binary('+', rt.f(1), rt.binary('*', _u_shapeGrowth, lt, 1, 'float'), 1, 'float'), 1, 'float')
       if rt.bool(rt.binary('==', _u_animation, rt.i(6)))
@@ -124,7 +124,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     color = nil; globalCoord = nil; m = nil; p = nil; rad = nil; scaleFactor = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
+    st = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
     st.replace((rt.binary_raw('*', rt.binary_raw('-', st, rt.f(0.5), 2, 'float'), rt.f(2), 2, 'float')).map { |c| rt.f32(c) })
     st = rt.assign_swizzle(st, 'x', rt.binary_raw('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     rad = rt.binary('/', rt.binary('*', _u_rotation, rt.f(3.1415927410125732), 1, 'float'), rt.f(180), 1, 'float')

@@ -85,7 +85,7 @@ run_pixel = lambda do |ctx, out|
     uvw = nil; volSize = nil
     volSize = _u_volumeSize
     uvw = rt.construct(3, rt.binary_raw('+', rt.binary_raw('*', worldPos, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'))
-    return rt.construct(3, rt.construct(3, rt.component_wise('floor', rt.construct(3, ((uvw[0]) * ((volSize))), ((uvw[1]) * ((volSize))), ((uvw[2]) * ((volSize)))))), 'int')
+    return rt.construct(3, rt.construct(3, rt.component_wise('floor', rt.construct(3, ((uvw[0]) * (rt.construct(1, volSize))), ((uvw[1]) * (rt.construct(1, volSize))), ((uvw[2]) * (rt.construct(1, volSize)))))), 'int')
   end
   voxelToWorld__ivec3 = lambda do |voxel|
     voxel = rt.copy(voxel, 'int')
@@ -157,24 +157,24 @@ run_pixel = lambda do |ctx, out|
           tStart = rt.swizzle(tMaxVec, 'x')
           tMaxVec = rt.assign_swizzle(tMaxVec, 'x', rt.binary_raw('+', rt.swizzle(tMaxVec, 'x'), rt.swizzle(tDelta, 'x'), 1, 'float'))
           voxel = rt.assign_swizzle(voxel, 'x', rt.scalar_vec_coerce('+', rt.swizzle(voxel, 'x'), step, 1))
-          lastNormal[0] = rt.scalar_vec_coerce('-', rt.f(0), step, 1); lastNormal[1] = rt.f32(rt.f(0)); lastNormal[2] = rt.f32(rt.f(0))
+          (begin lastNormal[0] = rt.scalar_vec_coerce('-', rt.f(0), step, 1); lastNormal[1] = rt.f32(rt.f(0)); lastNormal[2] = rt.f32(rt.f(0)); lastNormal end)
         else
           tStart = rt.swizzle(tMaxVec, 'z')
           tMaxVec = rt.assign_swizzle(tMaxVec, 'z', rt.binary_raw('+', rt.swizzle(tMaxVec, 'z'), rt.swizzle(tDelta, 'z'), 1, 'float'))
           voxel = rt.assign_swizzle(voxel, 'z', rt.binary('+', rt.swizzle(voxel, 'z'), rt.swizzle(step, 'z'), 1, 'int'))
-          lastNormal[0] = rt.f32(rt.f(0)); lastNormal[1] = rt.f32(rt.f(0)); lastNormal[2] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'z'))))
+          (begin lastNormal[0] = rt.f32(rt.f(0)); lastNormal[1] = rt.f32(rt.f(0)); lastNormal[2] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'z')))); lastNormal end)
         end
       else
         if rt.bool(rt.binary('<', rt.swizzle(tMaxVec, 'y'), rt.swizzle(tMaxVec, 'z')))
           tStart = rt.swizzle(tMaxVec, 'y')
           tMaxVec = rt.assign_swizzle(tMaxVec, 'y', rt.binary_raw('+', rt.swizzle(tMaxVec, 'y'), rt.swizzle(tDelta, 'y'), 1, 'float'))
           voxel = rt.assign_swizzle(voxel, 'y', rt.binary('+', rt.swizzle(voxel, 'y'), rt.swizzle(step, 'y'), 1, 'int'))
-          lastNormal[0] = rt.f32(rt.f(0)); lastNormal[1] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'y')))); lastNormal[2] = rt.f32(rt.f(0))
+          (begin lastNormal[0] = rt.f32(rt.f(0)); lastNormal[1] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'y')))); lastNormal[2] = rt.f32(rt.f(0)); lastNormal end)
         else
           tStart = rt.swizzle(tMaxVec, 'z')
           tMaxVec = rt.assign_swizzle(tMaxVec, 'z', rt.binary_raw('+', rt.swizzle(tMaxVec, 'z'), rt.swizzle(tDelta, 'z'), 1, 'float'))
           voxel = rt.assign_swizzle(voxel, 'z', rt.binary('+', rt.swizzle(voxel, 'z'), rt.swizzle(step, 'z'), 1, 'int'))
-          lastNormal[0] = rt.f32(rt.f(0)); lastNormal[1] = rt.f32(rt.f(0)); lastNormal[2] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'z'))))
+          (begin lastNormal[0] = rt.f32(rt.f(0)); lastNormal[1] = rt.f32(rt.f(0)); lastNormal[2] = rt.f32(rt.unary('-', rt.construct(1, rt.swizzle(step, 'z')))); lastNormal end)
         end
       end
       if rt.bool(rt.binary('>', tStart, tExit))
@@ -186,7 +186,7 @@ run_pixel = lambda do |ctx, out|
   calcNormal__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     dx = nil; dy = nil; dz = nil; eps = nil; len = nil; n = nil
-    eps = rt.binary('/', rt.f(2), rt.construct(1, _u_volumeSize), 1, 'float')
+    eps = rt.fdiv(rt.f(2), rt.construct(1, _u_volumeSize))
     dx = rt.binary('-', getField__vec3.call(rt.construct(3, ((p[0]) + ((eps))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((rt.f(0)))))), getField__vec3.call(rt.construct(3, ((p[0]) - ((eps))), ((p[1]) - ((rt.f(0)))), ((p[2]) - ((rt.f(0)))))), 1, 'float')
     dy = rt.binary('-', getField__vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((eps))), ((p[2]) + ((rt.f(0)))))), getField__vec3.call(rt.construct(3, ((p[0]) - ((rt.f(0)))), ((p[1]) - ((eps))), ((p[2]) - ((rt.f(0)))))), 1, 'float')
     dz = rt.binary('-', getField__vec3.call(rt.construct(3, ((p[0]) + ((rt.f(0)))), ((p[1]) + ((rt.f(0)))), ((p[2]) + ((eps))))), getField__vec3.call(rt.construct(3, ((p[0]) - ((rt.f(0)))), ((p[1]) - ((rt.f(0)))), ((p[2]) - ((eps))))), 1, 'float')
@@ -216,7 +216,7 @@ run_pixel = lambda do |ctx, out|
       return result
     end
     tStart = rt.component_wise('max', tEnter, rt.f(0))
-    stepSize = rt.binary('/', rt.f(1.5), rt.construct(1, _u_volumeSize), 1, 'float')
+    stepSize = rt.fdiv(rt.f(1.5), rt.construct(1, _u_volumeSize))
     _t = tStart
     prevField = getField__vec3.call(rt.construct(3, ((ro[0]) + (((rd[0]) * (_t)))), ((ro[1]) + (((rd[1]) * (_t)))), ((ro[2]) + (((rd[2]) * (_t))))))
     if rt.bool(rt.binary('<', prevField, rt.f(0)))
@@ -316,10 +316,10 @@ run_pixel = lambda do |ctx, out|
     alpha = nil; angle = nil; camDist = nil; color = nil; depth = nil; forward = nil; fullRes = nil; globalCoord = nil; hit = nil; lookAt = nil; normal = nil; p = nil; rd = nil; right = nil; ro = nil; up = nil; uv = nil
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
     if rt.bool(rt.binary('<', rt.swizzle(fullRes, 'x'), rt.f(1)))
-      fullRes[0] = rt.f32(rt.f(1024)); fullRes[1] = rt.f32(rt.f(1024))
+      (begin fullRes[0] = rt.f32(rt.f(1024)); fullRes[1] = rt.f32(rt.f(1024)); fullRes end)
     end
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', globalCoord, rt.binary_raw('*', rt.f(0.5), fullRes, 2, 'float'), 2, 'float'), rt.swizzle(fullRes, 'y'), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('-', globalCoord, rt.binary_raw('*', rt.f(0.5), fullRes, 2, 'float'), 2, 'float'), rt.swizzle(fullRes, 'y')))
     camDist = rt.f(3.5)
     angle = rt.binary('*', rt.binary('*', rt.unary('-', _u_time), g['TAU'], 1, 'float'), rt.construct(1, _u_orbitSpeed), 1, 'float')
     ro = rt.construct(3, rt.binary('*', rt.component_wise('sin', angle), camDist, 1, 'float'), rt.f(0.5), rt.binary('*', rt.component_wise('cos', angle), camDist, 1, 'float'))

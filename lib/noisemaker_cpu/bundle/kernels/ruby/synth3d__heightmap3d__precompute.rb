@@ -39,7 +39,7 @@ run_pixel = lambda do |ctx, out|
     p = rt.construct(3, rt.swizzle(atlas, 'x'), rt.binary('%', rt.swizzle(atlas, 'y'), _u_volumeSize, 1, 'int'), rt.binary('/', rt.swizzle(atlas, 'y'), _u_volumeSize, 1, 'int'), 'int')
     occupied = density__ivec3.call(p)
     g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
-    g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(1)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))
+    (begin g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(1)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0)); g['geoOut'] end)
     if rt.bool(rt.binary('==', occupied, rt.f(0)))
       return
     end

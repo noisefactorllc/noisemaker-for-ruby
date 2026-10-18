@@ -71,10 +71,10 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     __hoistv1 = nil; __hoistv10 = nil; __hoistv11 = nil; __hoistv12 = nil; __hoistv13 = nil; __hoistv14 = nil; __hoistv15 = nil; __hoistv16 = nil; __hoistv2 = nil; __hoistv3 = nil; __hoistv4 = nil; __hoistv5 = nil; __hoistv6 = nil; __hoistv7 = nil; __hoistv8 = nil; __hoistv9 = nil; _g = nil; aFlare = nil; aMirror = nil; aspectRatio = nil; d0 = nil; dc = nil; delta0 = nil; flare = nil; flarePos = nil; globalCoord = nil; localUV = nil; mirrorPos = nil; outFlare = nil; p = nil; src = nil; streakVal = nil; uv = nil
-    aspectRatio = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    aspectRatio = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    localUV = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    localUV = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, localUV)
     flarePos = rt.construct(2, _u_centerX, _u_centerY)
     mirrorPos = rt.construct(2, rt.binary_raw('-', rt.construct_raw(2, rt.f(1)), flarePos, 2, 'float'))

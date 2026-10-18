@@ -176,10 +176,10 @@ run_pixel = lambda do |ctx, out|
     end
     effective_time = (rt.bool(rt.binary('>', _u_pause, rt.f(0.5))) ? (rt.f(0)) : (_u_time))
     rs = rt.component_wise('max', _u_renderScale, rt.f(1))
-    noise_value = sample_grain_noise__uvec2_vec2_float_float.call(global_pixel, rt.construct(2, ((((u_width)) / (rs))), ((((u_height)) / (rs)))), effective_time, rt.f(100))
+    noise_value = sample_grain_noise__uvec2_vec2_float_float.call(global_pixel, rt.construct(2, (rt.fdiv(rt.construct(1, u_width), rs)), (rt.fdiv(rt.construct(1, u_height), rs))), effective_time, rt.f(100))
     noise_rgb = rt.construct(3, noise_value)
     mixed_rgb = rt.component_wise('mix', rt.swizzle(texel, 'rgb'), noise_rgb, blend_alpha)
-    g['fragColor'][0] = rt.f32(clamp01__float.call(rt.swizzle(mixed_rgb, 'x'))); g['fragColor'][1] = rt.f32(clamp01__float.call(rt.swizzle(mixed_rgb, 'y'))); g['fragColor'][2] = rt.f32(clamp01__float.call(rt.swizzle(mixed_rgb, 'z'))); g['fragColor'][3] = rt.f32(rt.swizzle(texel, 'a'))
+    (begin g['fragColor'][0] = rt.f32(clamp01__float.call(rt.swizzle(mixed_rgb, 'x'))); g['fragColor'][1] = rt.f32(clamp01__float.call(rt.swizzle(mixed_rgb, 'y'))); g['fragColor'][2] = rt.f32(clamp01__float.call(rt.swizzle(mixed_rgb, 'z'))); g['fragColor'][3] = rt.f32(rt.swizzle(texel, 'a')); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

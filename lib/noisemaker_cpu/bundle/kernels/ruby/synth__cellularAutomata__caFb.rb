@@ -191,17 +191,17 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     alive = nil; animSpeed = nil; bufState = nil; bufferIsEmpty = nil; currentState = nil; neighbors = nil; newState = nil; nextState = nil; prevFrame = nil; prevLum = nil; r = nil; state = nil; texSize = nil; texelSize = nil; uv = nil
     texSize = rt.construct(2, rt.texture_size(_u_bufTex))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
-    texelSize = rt.construct(2, rt.binary_raw('/', rt.f(1), texSize, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), texSize))
+    texelSize = rt.construct(2, rt.fdiv(rt.f(1), texSize))
     state = rt.swizzle(rt.texture(_u_bufTex, uv), 'r')
     bufState = rt.texture(_u_bufTex, uv)
     bufferIsEmpty = (rt.bool((rt.bool((rt.bool(rt.binary('==', rt.swizzle(bufState, 'r'), rt.f(0))) && rt.bool(rt.binary('==', rt.swizzle(bufState, 'g'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(bufState, 'b'), rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('==', rt.swizzle(bufState, 'a'), rt.f(0))) ? 1 : 0)
     alive = rt.f(0.0)
     r = rt.f(0.0)
     if rt.bool((rt.bool(_u_resetState) || rt.bool(bufferIsEmpty) ? 1 : 0))
-      r = random__vec2.call(rt.construct(2, ((uv[0]) + (((_u_seed)))), ((uv[1]) + (((_u_seed))))))
+      r = random__vec2.call(rt.construct(2, ((uv[0]) + ((rt.construct(1, _u_seed)))), ((uv[1]) + ((rt.construct(1, _u_seed))))))
       alive = rt.component_wise('step', rt.f(0.5), r)
-      g['fragColor'][0] = rt.f32(alive); g['fragColor'][1] = rt.f32(alive); g['fragColor'][2] = rt.f32(alive); g['fragColor'][3] = rt.f32(rt.f(1))
+      (begin g['fragColor'][0] = rt.f32(alive); g['fragColor'][1] = rt.f32(alive); g['fragColor'][2] = rt.f32(alive); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
       return
     end
     prevFrame = rt.swizzle(rt.texture(_u_tex, uv), 'rgb')

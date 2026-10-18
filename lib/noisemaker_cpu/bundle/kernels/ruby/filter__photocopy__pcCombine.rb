@@ -23,7 +23,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     band = nil; blur = nil; edgeGain = nil; edgeInk = nil; ink = nil; lumBlur = nil; lumSrc = nil; outColor = nil; src = nil; toneHi = nil; toneInk = nil; toneLo = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     blur = rt.texture(_u_blurTex, uv)
     lumSrc = lum__vec3.call(rt.swizzle(src, 'rgb'))

@@ -458,7 +458,7 @@ run_pixel = lambda do |ctx, out|
   end
   fsScale__void = lambda do
     if rt.bool(rt.binary('==', _u_palette, g['PALETTE_INPUT']))
-      return rt.binary('/', rt.f(1), rt.construct(1, _u_levels), 1, 'float')
+      return rt.fdiv(rt.f(1), rt.construct(1, _u_levels))
     end
     return rt.f(0.25)
   end
@@ -565,7 +565,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     color = nil; ditherValue = nil; globalCoord = nil; result = nil; texSize = nil; uv = nil
     texSize = rt.texture_size(_u_inputTex)
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct_raw(2, rt.construct(2, texSize))))
     color = rt.texture(_u_inputTex, uv)
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     result = rt.construct(3, 0.0)

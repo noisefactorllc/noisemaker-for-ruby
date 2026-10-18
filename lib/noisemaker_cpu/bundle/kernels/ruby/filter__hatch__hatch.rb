@@ -59,7 +59,7 @@ run_pixel = lambda do |ctx, out|
   lumGradient__vec2 = lambda do |uv|
     uv = rt.copy(uv, 'float')
     _t = nil; b = nil; bl = nil; br = nil; l = nil; px = nil; r = nil; tl = nil; tr = nil
-    px = rt.construct(2, rt.binary_raw('/', rt.f(1), _u_resolution, 2, 'float'))
+    px = rt.construct(2, rt.fdiv(rt.f(1), _u_resolution))
     tl = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.f(1)), 2, 'float'), 2, 'float')), 'rgb'))
     l = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.f(0)), 2, 'float'), 2, 'float')), 'rgb'))
     bl = lum__vec3.call(rt.swizzle(rt.texture(_u_inputTex, rt.binary_raw('+', uv, rt.binary_raw('*', px, rt.construct_raw(2, rt.unary('-', rt.f(1)), rt.unary('-', rt.f(1))), 2, 'float'), 2, 'float')), 'rgb'))
@@ -103,7 +103,7 @@ run_pixel = lambda do |ctx, out|
   end
   main__void = lambda do
     _t = nil; aa = nil; band1 = nil; band2 = nil; band3 = nil; bgGate = nil; bgMask = nil; coverage = nil; darkGain = nil; darkness = nil; edgeAngle = nil; edgeBoost = nil; f0 = nil; f1 = nil; f2 = nil; fgGate = nil; fgMask = nil; gc = nil; grad = nil; gradMag = nil; inkC = nil; inkMask = nil; level = nil; midGray = nil; outColor = nil; pb = nil; rough = nil; s = nil; s2 = nil; s45a = nil; s45b = nil; sBg = nil; sCombined = nil; sEdge = nil; shadow = nil; src = nil; stretchAmt = nil; strokeMask = nil; texture2 = nil; theta = nil; toneGate = nil; uv = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     src = rt.texture(_u_inputTex, uv)
     gc = rt.construct(2, rt.binary('+', rt.component_wise('floor', rt.swizzle(ctx.frag_coord, 'xy')), _u_tileOffset, 2, 'float'))
     theta = dirAngle__int.call(_u_direction)
@@ -173,7 +173,7 @@ run_pixel = lambda do |ctx, out|
         else
           if rt.bool(rt.binary('==', _u__MODE, rt.i(3)))
             toneGate = rt.component_wise('smoothstep', rt.f(0.30000001192092896), rt.f(0.69999998807907104), _t)
-            texture2 = rt.component_wise('mix', s, fbm__vec2.call(rt.construct(2, ((((gc[0]) / (((stretchAmt) * (rt.f(0.60000002384185791)))))) + (rt.f(41))), ((((gc[1]) / (((stretchAmt) * (rt.f(0.60000002384185791)))))) + (rt.f(41))))), rt.f(0.5))
+            texture2 = rt.component_wise('mix', s, fbm__vec2.call(rt.construct(2, ((rt.fdiv(gc[0], ((stretchAmt) * (rt.f(0.60000002384185791))))) + (rt.f(41))), ((rt.fdiv(gc[1], ((stretchAmt) * (rt.f(0.60000002384185791))))) + (rt.f(41))))), rt.f(0.5))
             level = rt.component_wise('mix', texture2, toneGate, rt.component_wise('abs', rt.binary('-', rt.binary('*', toneGate, rt.f(2), 1, 'float'), rt.f(1), 1, 'float')))
             level = rt.component_wise('clamp', rt.binary('+', level, rt.binary('*', pb, rt.f(0.15000000596046448), 1, 'float'), 1, 'float'), rt.f(0), rt.f(1))
             outColor.replace((tonemap2__float_vec3_vec3.call(level, _u_inkColor, _u_paperColor)).map { |c| rt.f32(c) })

@@ -70,7 +70,7 @@ run_pixel = lambda do |ctx, out|
     gy = rt.binary('+', rt.binary('+', rt.binary('+', rt.binary('-', rt.binary('-', rt.unary('-', rt.array_index(samples, rt.i(0))), rt.binary('*', rt.f(2), rt.array_index(samples, rt.i(1)), 1, 'float'), 1, 'float'), rt.array_index(samples, rt.i(2)), 1, 'float'), rt.array_index(samples, rt.i(6)), 1, 'float'), rt.binary('*', rt.f(2), rt.array_index(samples, rt.i(7)), 1, 'float'), 1, 'float'), rt.array_index(samples, rt.i(8)), 1, 'float')
     magnitude = rt.component_wise('sqrt', rt.binary('+', rt.binary('*', gx, gx, 1, 'float'), rt.binary('*', gy, gy, 1, 'float'), 1, 'float'))
     edge = rt.component_wise('smoothstep', rt.binary('*', _u_edgeThreshold, rt.f(0.5), 1, 'float'), rt.binary('*', _u_edgeThreshold, rt.f(1.5), 1, 'float'), magnitude)
-    g['fragColor'][0] = rt.f32(edge); g['fragColor'][1] = rt.f32(edge); g['fragColor'][2] = rt.f32(edge); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(edge); g['fragColor'][1] = rt.f32(edge); g['fragColor'][2] = rt.f32(edge); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
   end
   main__void.call
   c = g['fragColor']

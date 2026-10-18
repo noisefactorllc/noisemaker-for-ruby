@@ -79,7 +79,7 @@ run_pixel = lambda do |ctx, out|
     realUp = nil; right = nil; up = nil; wobbleAmp = nil; wx = nil; wy = nil
     up = rt.construct(3, rt.f(0), rt.f(1), rt.f(0))
     if rt.bool(rt.binary('>', rt.component_wise('abs', rt.dot(tangent, up)), rt.f(0.99000000953674316)))
-      up[0] = rt.f32(rt.f(1)); up[1] = rt.f32(rt.f(0)); up[2] = rt.f32(rt.f(0))
+      (begin up[0] = rt.f32(rt.f(1)); up[1] = rt.f32(rt.f(0)); up[2] = rt.f32(rt.f(0)); up end)
     end
     right = rt.normalize(rt.cross(tangent, up))
     realUp = rt.normalize(rt.cross(right, tangent))
@@ -243,7 +243,7 @@ run_pixel = lambda do |ctx, out|
     vz = rt.trunc_div(rt.swizzle(pixelCoord, 'y'), volSize)
     if rt.bool((rt.bool((rt.bool(rt.binary('>=', vx, volSize)) || rt.bool(rt.binary('>=', vy, volSize)) ? 1 : 0)) || rt.bool(rt.binary('>=', vz, volSize)) ? 1 : 0))
       g['fragColor'].replace((rt.construct(4, rt.f(0))).map { |c| rt.f32(c) })
-      g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0))
+      (begin g['geoOut'][0] = rt.f32(rt.f(0.5)); g['geoOut'][1] = rt.f32(rt.f(0.5)); g['geoOut'][2] = rt.f32(rt.f(0.5)); g['geoOut'][3] = rt.f32(rt.f(0)); g['geoOut'] end)
       return
     end
     camPos = rt.construct(3, 0.0)
@@ -253,7 +253,7 @@ run_pixel = lambda do |ctx, out|
     camPos.replace((applyCollisionAvoidance__vec3.call(camPos)).map { |c| rt.f32(c) })
     camRight = rt.normalize(rt.cross(camDir, camUp))
     camUp.replace((rt.normalize(rt.cross(camRight, camDir))).map { |c| rt.f32(c) })
-    normalizedCoord = rt.construct(3, rt.binary_raw('-', rt.binary_raw('*', rt.binary_raw('/', rt.construct_raw(3, rt.construct(1, vx), rt.construct(1, vy), rt.construct(1, vz)), rt.binary('-', volSizeF, rt.f(1), 1, 'float'), 3, 'float'), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'))
+    normalizedCoord = rt.construct(3, rt.binary_raw('-', rt.binary_raw('*', rt.fdiv(rt.construct_raw(3, rt.construct(1, vx), rt.construct(1, vy), rt.construct(1, vz)), rt.binary('-', volSizeF, rt.f(1), 1, 'float')), rt.f(2), 3, 'float'), rt.f(1), 3, 'float'))
     halfExtent = rt.binary('*', _u_voiSize, rt.f(0.5), 1, 'float')
     voiOffset = rt.construct(3, rt.binary_raw('*', camDir, halfExtent, 3, 'float'))
     worldPos = rt.construct(3, rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('+', rt.binary_raw('+', camPos, voiOffset, 3, 'float'), rt.binary_raw('*', rt.binary_raw('*', camRight, rt.swizzle(normalizedCoord, 'x'), 3, 'float'), halfExtent, 3, 'float'), 3, 'float'), rt.binary_raw('*', rt.binary_raw('*', camUp, rt.swizzle(normalizedCoord, 'y'), 3, 'float'), halfExtent, 3, 'float'), 3, 'float'), rt.binary_raw('*', rt.binary_raw('*', camDir, rt.swizzle(normalizedCoord, 'z'), 3, 'float'), halfExtent, 3, 'float'), 3, 'float'))
@@ -265,7 +265,7 @@ run_pixel = lambda do |ctx, out|
     eps = rt.f(0.019999999552965164)
     gradient = computeGradient__vec3_float.call(worldPos, eps)
     normal = rt.normalize(rt.binary_raw('+', gradient, rt.construct_raw(3, rt.f(9.9999999747524271e-07)), 3, 'float'))
-    g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(trap); g['fragColor'][2] = rt.f32(iterRatio); g['fragColor'][3] = rt.f32(rt.f(1))
+    (begin g['fragColor'][0] = rt.f32(normalizedDist); g['fragColor'][1] = rt.f32(trap); g['fragColor'][2] = rt.f32(iterRatio); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
     g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), normalizedDist)).map { |c| rt.f32(c) })
   end
   main__void.call

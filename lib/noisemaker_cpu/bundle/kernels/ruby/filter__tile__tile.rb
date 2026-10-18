@@ -54,8 +54,8 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     __sc1 = nil; aspect = nil; effectiveScale = nil; globalCoord = nil; globalUV = nil; local = nil; localUV = nil; rep = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    globalUV = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    aspect = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    globalUV = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    aspect = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     st = rt.construct(2, rt.binary_raw('-', globalUV, rt.f(0.5), 2, 'float'))
     if rt.bool(_u_aspectLens)
       st = rt.assign_swizzle(st, 'x', rt.binary_raw('*', rt.swizzle(st, 'x'), aspect, 1, 'float'))
@@ -70,13 +70,13 @@ run_pixel = lambda do |ctx, out|
     local = rt.construct(2, 0.0)
     if rt.bool(rt.binary('==', _u_symmetry, rt.i(3)))
       local = hexCoord__vec2.call(rt.construct(2, ((((st[0]) + ((_u_offsetX)))) * (rep[0])), ((((st[1]) + ((_u_offsetY)))) * (rep[1]))))
-      local.replace((rt.binary_raw('/', local, _u_scale, 2, 'float')).map { |c| rt.f32(c) })
+      local.replace((rt.fdiv(local, _u_scale)).map { |c| rt.f32(c) })
       st.replace((rotationalFold__vec2_int.call(rt.construct(2, ((local[0]) + (rt.f(0.5))), ((local[1]) + (rt.f(0.5)))), rt.i(6))).map { |c| rt.f32(c) })
     else
       st.replace((rt.binary_raw('*', st, rep, 2, 'float')).map { |c| rt.f32(c) })
       st.replace((rt.component_wise('fract', st)).map { |c| rt.f32(c) })
       effectiveScale = (rt.bool(rt.binary('==', _u_symmetry, rt.i(0))) ? (rt.binary('*', _u_scale, rt.f(0.5), 1, 'float')) : (_u_scale))
-      st.replace((rt.binary_raw('/', rt.binary_raw('-', st, rt.f(0.5), 2, 'float'), effectiveScale, 2, 'float')).map { |c| rt.f32(c) })
+      st.replace((rt.fdiv(rt.binary_raw('-', st, rt.f(0.5), 2, 'float'), effectiveScale)).map { |c| rt.f32(c) })
       st[0] = rt.f32(rt.binary('+', st[0], ((rt.f(0.5)) + ((_u_offsetX))), 1, 'float')); st[1] = rt.f32(rt.binary('+', st[1], ((rt.f(0.5)) + ((_u_offsetY))), 1, 'float'))
       if rt.bool(rt.binary('==', _u_symmetry, rt.i(0)))
         st = rt.assign_swizzle(st, 'x', mirrorFold__float.call(rt.swizzle(st, 'x')))

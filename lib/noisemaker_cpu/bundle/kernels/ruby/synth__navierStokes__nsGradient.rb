@@ -13,8 +13,8 @@ run_pixel = lambda do |ctx, out|
     _u = nil; fragCoord = nil; grad = nil; here = nil; pB = nil; pL = nil; pR = nil; pT = nil; texSize = nil; texel = nil; uv = nil
     texSize = rt.texture_size(_u_velTex)
     fragCoord = rt.swizzle(ctx.frag_coord, 'xy')
-    texel = rt.construct(2, rt.binary_raw('/', rt.f(1), rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', fragCoord, rt.construct_raw(2, rt.construct(2, texSize)), 2, 'float'))
+    texel = rt.construct(2, rt.fdiv(rt.f(1), rt.construct_raw(2, rt.construct(2, texSize))))
+    uv = rt.construct(2, rt.fdiv(fragCoord, rt.construct_raw(2, rt.construct(2, texSize))))
     pR = rt.swizzle(rt.texture(_u_pressureTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
     pL = rt.swizzle(rt.texture(_u_pressureTex, rt.binary_raw('-', uv, rt.construct_raw(2, rt.swizzle(texel, 'x'), rt.f(0)), 2, 'float')), 'r')
     pT = rt.swizzle(rt.texture(_u_pressureTex, rt.binary_raw('+', uv, rt.construct_raw(2, rt.f(0), rt.swizzle(texel, 'y')), 2, 'float')), 'r')

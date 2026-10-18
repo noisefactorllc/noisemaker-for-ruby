@@ -62,16 +62,16 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     __hoistv1 = nil; __hoistv2 = nil; __hoistv3 = nil; __hoistv4 = nil; aspectRatio = nil; col = nil; dx = nil; dy = nil; fullRes = nil; noiseCoord = nil; noiseScale = nil; uv = nil
     fullRes = rt.construct(2, (rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) ? (_u_fullResolution) : (_u_resolution)))
-    aspectRatio = rt.binary('/', rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'), 1, 'float')
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes, 2, 'float'))
+    aspectRatio = rt.fdiv(rt.swizzle(fullRes, 'x'), rt.swizzle(fullRes, 'y'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), fullRes))
     noiseCoord = rt.construct(2, rt.binary_raw('*', uv, rt.construct_raw(2, aspectRatio, rt.f(1)), 2, 'float'))
     noiseScale = rt.construct(2, rt.component_wise('abs', rt.binary('*', _u_scale, rt.f(3), 1, 'float')))
-    dx = rt.binary('*', rt.binary('*', rt.binary('-', perlinNoise__vec2_vec2.call(rt.construct(2, ((noiseCoord[0]) + ((_u_seed))), ((noiseCoord[1]) + ((_u_seed)))), noiseScale), rt.f(0.5), 1, 'float'), _u_strength, 1, 'float'), rt.f(0.0099999997764825821), 1, 'float')
-    dy = rt.binary('*', rt.binary('*', rt.binary('-', perlinNoise__vec2_vec2.call(rt.construct(2, ((((noiseCoord[0]) + ((_u_seed)))) + (rt.f(10))), ((((noiseCoord[1]) + ((_u_seed)))) + (rt.f(10)))), noiseScale), rt.f(0.5), 1, 'float'), _u_strength, 1, 'float'), rt.f(0.0099999997764825821), 1, 'float')
+    dx = rt.binary('*', rt.binary('*', rt.binary('-', perlinNoise__vec2_vec2.call(rt.construct(2, ((noiseCoord[0]) + (rt.construct(1, _u_seed))), ((noiseCoord[1]) + (rt.construct(1, _u_seed)))), noiseScale), rt.f(0.5), 1, 'float'), _u_strength, 1, 'float'), rt.f(0.0099999997764825821), 1, 'float')
+    dy = rt.binary('*', rt.binary('*', rt.binary('-', perlinNoise__vec2_vec2.call(rt.construct(2, ((((noiseCoord[0]) + (rt.construct(1, _u_seed)))) + (rt.f(10))), ((((noiseCoord[1]) + (rt.construct(1, _u_seed)))) + (rt.f(10)))), noiseScale), rt.f(0.5), 1, 'float'), _u_strength, 1, 'float'), rt.f(0.0099999997764825821), 1, 'float')
     uv = rt.assign_swizzle(uv, 'x', rt.binary_raw('+', rt.swizzle(uv, 'x'), dx, 1, 'float'))
     uv = rt.assign_swizzle(uv, 'y', rt.binary_raw('+', rt.swizzle(uv, 'y'), dy, 1, 'float'))
     if rt.bool(rt.binary('==', _u_wrap, rt.i(0)))
-      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((rt.component_wise('mod', rt.f32(((uv[0]) + (rt.f(1)))), rt.f(2))) - (rt.f(1)))), rt.f32(((rt.component_wise('mod', rt.f32(((uv[1]) + (rt.f(1)))), rt.f(2))) - (rt.f(1))))))).map { |c| rt.f32(c) })
+      uv.replace((rt.component_wise('abs', rt.construct(2, rt.f32(((uv[0]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[0]) + (rt.f(1)))) * (rt.f(0.5))))))))))), rt.f32(((uv[1]) - (rt.f32(((rt.f(2)) * (rt.component_wise('floor', rt.f32(((((uv[1]) + (rt.f(1)))) * (rt.f(0.5)))))))))))))).map { |c| rt.f32(c) })
     else
       if rt.bool(rt.binary('==', _u_wrap, rt.i(1)))
         uv.replace((rt.component_wise('mod', uv, rt.f(1))).map { |c| rt.f32(c) })

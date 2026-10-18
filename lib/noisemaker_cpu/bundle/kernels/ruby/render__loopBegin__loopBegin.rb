@@ -13,7 +13,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     a = nil; accum = nil; blended = nil; i = nil; inputColor = nil; result = nil; st = nil
-    st = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    st = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     inputColor = rt.texture(_u_inputTex, st)
     accum = rt.texture(_u_accumTex, st)
     a = rt.binary('/', _u_alpha, rt.f(100), 1, 'float')

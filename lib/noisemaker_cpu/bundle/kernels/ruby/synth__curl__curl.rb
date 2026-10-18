@@ -131,12 +131,12 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     aspect = nil; centered = nil; color = nil; curl = nil; curlCentered = nil; globalCoord = nil; mag = nil; p = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    uv = rt.construct(2, rt.binary_raw('/', globalCoord, _u_fullResolution, 2, 'float'))
-    aspect = rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'), 1, 'float')
+    uv = rt.construct(2, rt.fdiv(globalCoord, _u_fullResolution))
+    aspect = rt.fdiv(rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))
     centered = rt.construct(2, rt.binary_raw('*', rt.binary_raw('-', uv, rt.f(0.5), 2, 'float'), rt.construct_raw(2, aspect, rt.f(1)), 2, 'float'))
     p = rt.construct(3, rt.binary_raw('*', centered, rt.binary('-', rt.f(21), _u_scale, 1, 'float'), 2, 'float'), rt.f(0.5))
     curl = curlNoise3D__vec3.call(p)
-    curl[0] = rt.f32(rt.binary('+', rt.binary('*', rt.component_wise('tanh', rt.binary('*', rt.swizzle(curl, 'x'), _u_intensity, 1, 'float')), rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float')); curl[1] = rt.f32(rt.binary('+', rt.binary('*', rt.component_wise('tanh', rt.binary('*', rt.swizzle(curl, 'y'), _u_intensity, 1, 'float')), rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float')); curl[2] = rt.f32(rt.binary('+', rt.binary('*', rt.component_wise('tanh', rt.binary('*', rt.swizzle(curl, 'z'), _u_intensity, 1, 'float')), rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float'))
+    (begin curl[0] = rt.f32(rt.binary('+', rt.binary('*', rt.component_wise('tanh', rt.binary('*', rt.swizzle(curl, 'x'), _u_intensity, 1, 'float')), rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float')); curl[1] = rt.f32(rt.binary('+', rt.binary('*', rt.component_wise('tanh', rt.binary('*', rt.swizzle(curl, 'y'), _u_intensity, 1, 'float')), rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float')); curl[2] = rt.f32(rt.binary('+', rt.binary('*', rt.component_wise('tanh', rt.binary('*', rt.swizzle(curl, 'z'), _u_intensity, 1, 'float')), rt.f(0.5), 1, 'float'), rt.f(0.5), 1, 'float')); curl end)
     color = rt.construct(3, 0.0)
     if rt.bool(rt.binary('==', _u__OUTPUT_MODE, rt.i(0)))
       color.replace((rt.construct(3, rt.swizzle(curl, 'x'))).map { |c| rt.f32(c) })

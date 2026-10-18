@@ -11,7 +11,7 @@ run_pixel = lambda do |ctx, out|
   g['fragColor'] = rt.construct(4, 0.0)
   main__void = lambda do
     __hoistv1 = nil; _for0_first = nil; dirPx = nil; fTaps = nil; i = nil; o = nil; sigma = nil; stride = nil; sum = nil; uv = nil; w = nil; wsum = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     dirPx = rt.construct(2, rt.f(1), rt.f(0))
     sigma = rt.component_wise('max', rt.binary('*', _u_radius, rt.f(0.5), 1, 'float'), rt.f(0.0010000000474974513))
     fTaps = rt.component_wise('min', _u_radius, rt.f(32))
@@ -31,8 +31,8 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>', rt.construct(1, i), fTaps))
         break
       end
-      w = rt.component_wise('exp', rt.binary('/', rt.unary('-', rt.construct(1, rt.binary('*', i, i, 1, 'int'))), rt.binary('*', rt.binary('*', rt.f(2), sigma, 1, 'float'), sigma, 1, 'float'), 1, 'float'))
-      o = rt.construct(2, rt.binary_raw('/', rt.binary_raw('*', rt.binary_raw('*', dirPx, rt.construct(1, i), 2, 'float'), stride, 2, 'float'), _u_resolution, 2, 'float'))
+      w = rt.component_wise('exp', rt.fdiv(rt.unary('-', rt.construct(1, rt.binary('*', i, i, 1, 'int'))), rt.binary('*', rt.binary('*', rt.f(2), sigma, 1, 'float'), sigma, 1, 'float')))
+      o = rt.construct(2, rt.fdiv(rt.binary_raw('*', rt.binary_raw('*', dirPx, rt.construct(1, i), 2, 'float'), stride, 2, 'float'), _u_resolution))
       __hoistv1 = rt.binary_raw('*', rt.construct(4, rt.binary('+', rt.texture(_u_inputTex, rt.binary_raw('+', uv, o, 2, 'float')), rt.texture(_u_inputTex, rt.binary_raw('-', uv, o, 2, 'float')), 4, 'float')), w, 4, 'float'); sum[0] = rt.f32(rt.binary('+', sum[0], __hoistv1[0], 1, 'float')); sum[1] = rt.f32(rt.binary('+', sum[1], __hoistv1[1], 1, 'float')); sum[2] = rt.f32(rt.binary('+', sum[2], __hoistv1[2], 1, 'float')); sum[3] = rt.f32(rt.binary('+', sum[3], __hoistv1[3], 1, 'float'))
       wsum = rt.binary('+', wsum, rt.binary('*', rt.f(2), w, 1, 'float'), 1, 'float')
     end

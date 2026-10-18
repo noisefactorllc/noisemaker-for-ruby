@@ -66,9 +66,9 @@ run_pixel = lambda do |ctx, out|
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     res = rt.copy(_u_fullResolution, 'float')
     if rt.bool(rt.binary('<', rt.swizzle(res, 'x'), rt.f(1)))
-      res[0] = rt.f32(rt.f(1024)); res[1] = rt.f32(rt.f(1024))
+      (begin res[0] = rt.f32(rt.f(1024)); res[1] = rt.f32(rt.f(1024)); res end)
     end
-    st = rt.construct(2, rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), res, 2, 'float'))
+    st = rt.construct(2, rt.fdiv(rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), res))
     __sc1 = rt.f(0.5); st[0] = rt.f32(rt.binary('-', st[0], __sc1, 1, 'float')); st[1] = rt.f32(rt.binary('-', st[1], __sc1, 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary_raw('*', rt.swizzle(st, 'x'), _u_aspect, 1, 'float'))
     rotRad = rt.binary('/', rt.binary('*', _u_rotation, g['PI'], 1, 'float'), rt.f(180), 1, 'float')

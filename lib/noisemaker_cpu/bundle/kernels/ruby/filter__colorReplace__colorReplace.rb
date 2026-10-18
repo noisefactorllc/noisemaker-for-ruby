@@ -19,7 +19,7 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     dist = nil; edge0 = nil; edge1 = nil; globalCoord = nil; halfBand = nil; match = nil; outA = nil; outRgb = nil; src = nil; st = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.component_wise('max', rt.texture_size(_u_inputTex), rt.construct(2, rt.i(1), 'int'))), 2, 'float'))
+    st = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.component_wise('max', rt.texture_size(_u_inputTex), rt.construct(2, rt.i(1), 'int')))))
     src = rt.texture(_u_inputTex, st)
     dist = rt.binary('/', rt.length(rt.binary_raw('-', rt.swizzle(src, 'rgb'), _u_targetColor, 3, 'float')), rt.f(1.7320507764816284), 1, 'float')
     halfBand = rt.binary('*', _u_smoothing, rt.f(0.5), 1, 'float')

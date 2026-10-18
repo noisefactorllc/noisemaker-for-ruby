@@ -50,7 +50,7 @@ run_pixel = lambda do |ctx, out|
     _t = nil; blendedColor = nil; globalCoord = nil; idx = nil; inputColor = nil; lum = nil; pal = nil; paletteColor = nil; texSize = nil; uv = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     texSize = rt.construct(2, rt.texture_size(_u_inputTex))
-    uv = rt.construct(2, rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), texSize, 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), texSize))
     inputColor = rt.texture(_u_inputTex, uv)
     idx = rt.component_wise('clamp', _u_paletteIndex, rt.i(0), rt.binary('-', g['PALETTE_COUNT'], rt.i(1), 1, 'int'))
     lum = rt.dot(rt.swizzle(inputColor, 'rgb'), rt.construct(3, rt.f(0.29899999499320984), rt.f(0.58700001239776611), rt.f(0.11400000005960464)))

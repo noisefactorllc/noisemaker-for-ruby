@@ -109,7 +109,7 @@ run_pixel = lambda do |ctx, out|
     re_df = rt.copy(re_df, 'float')
     im_df = rt.copy(im_df, 'float')
     angle = nil; c = nil; s = nil; scale = nil; uv = nil; uv_im_df = nil; uv_re_df = nil
-    uv = rt.construct(2, rt.binary_raw('/', rt.binary_raw('-', fragCoord, rt.binary_raw('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y')), 2, 'float'))
+    uv = rt.construct(2, rt.fdiv(rt.binary_raw('-', fragCoord, rt.binary_raw('*', rt.f(0.5), _u_fullResolution, 2, 'float'), 2, 'float'), rt.component_wise('min', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_fullResolution, 'y'))))
     angle = rt.binary('/', rt.binary('*', rt.unary('-', rot), g['TAU'], 1, 'float'), rt.f(360), 1, 'float')
     c = rt.component_wise('cos', angle)
     s = rt.component_wise('sin', angle)
@@ -170,8 +170,8 @@ run_pixel = lambda do |ctx, out|
       effDegree = p[1]
       effZoomDepth = rt.component_wise('min', _u_zoomDepth, p[2])
     else
-      cHi[0] = rt.f32(_u_centerHiX); cHi[1] = rt.f32(_u_centerHiY)
-      cLo[0] = rt.f32(_u_centerLoX); cLo[1] = rt.f32(_u_centerLoY)
+      (begin cHi[0] = rt.f32(_u_centerHiX); cHi[1] = rt.f32(_u_centerHiY); cHi end)
+      (begin cLo[0] = rt.f32(_u_centerLoX); cLo[1] = rt.f32(_u_centerLoY); cLo end)
     end
     zoom = rt.f(0.0)
     zoomPhase = rt.f(0.0)
@@ -200,7 +200,7 @@ run_pixel = lambda do |ctx, out|
       if rt.bool(rt.binary('>=', k, numRoots))
         break
       end
-      angle = rt.binary('/', rt.binary('*', g['TAU'], rt.construct(1, k), 1, 'float'), rt.construct(1, intDeg), 1, 'float')
+      angle = rt.fdiv(rt.binary('*', g['TAU'], rt.construct(1, k), 1, 'float'), rt.construct(1, intDeg))
       roots[(k).to_i].replace((rt.construct(2, rt.component_wise('cos', angle), rt.component_wise('sin', angle))).map { |c| rt.f32(c) })
     end
     iter = rt.f(0)
@@ -256,7 +256,7 @@ run_pixel = lambda do |ctx, out|
         break
       end
       denom = rt.binary('+', rt.binary('*', fpzr_f, fpzr_f, 1, 'float'), rt.binary('*', fpzi_f, fpzi_f, 1, 'float'), 1, 'float')
-      inv_denom = rt.binary('/', rt.f(1), denom, 1, 'float')
+      inv_denom = rt.fdiv(rt.f(1), denom)
       nr = df64_add__vec2_vec2.call(df64_mul__vec2_vec2.call(fzr, fpzr), df64_mul__vec2_vec2.call(fzi, fpzi))
       ni = df64_sub__vec2_vec2.call(df64_mul__vec2_vec2.call(fzi, fpzr), df64_mul__vec2_vec2.call(fzr, fpzi))
       dr = df64_mul_f__vec2_float.call(nr, inv_denom)
@@ -297,21 +297,21 @@ run_pixel = lambda do |ctx, out|
     end
     smoothIter = iter
     if rt.bool((rt.bool((rt.bool(rt.binary('>=', convergedRoot, rt.i(0))) && rt.bool(rt.binary('>', convergeDist, rt.f(0))) ? 1 : 0)) && rt.bool(rt.binary('<', convergeDist, _u_tolerance)) ? 1 : 0))
-      smoothIter = rt.binary('-', iter, rt.component_wise('log2', rt.binary('/', rt.component_wise('log', convergeDist), rt.component_wise('log', _u_tolerance), 1, 'float')), 1, 'float')
+      smoothIter = rt.binary('-', iter, rt.component_wise('log2', rt.fdiv(rt.component_wise('log', convergeDist), rt.component_wise('log', _u_tolerance))), 1, 'float')
     end
     value = rt.f(0)
     maxIterF = rt.construct(1, maxIter)
     numRootsF = rt.construct(1, numRoots)
     if rt.bool(rt.binary('==', outMode, rt.i(0)))
-      value = rt.binary('/', smoothIter, maxIterF, 1, 'float')
+      value = rt.fdiv(smoothIter, maxIterF)
     else
       if rt.bool(rt.binary('==', outMode, rt.i(1)))
         if rt.bool(rt.binary('>=', convergedRoot, rt.i(0)))
-          value = rt.binary('/', rt.construct(1, convergedRoot), numRootsF, 1, 'float')
+          value = rt.fdiv(rt.construct(1, convergedRoot), numRootsF)
         end
       else
         if rt.bool(rt.binary('>=', convergedRoot, rt.i(0)))
-          value = rt.binary('/', rt.binary('+', rt.construct(1, convergedRoot), rt.binary('/', smoothIter, maxIterF, 1, 'float'), 1, 'float'), numRootsF, 1, 'float')
+          value = rt.fdiv(rt.binary('+', rt.construct(1, convergedRoot), rt.fdiv(smoothIter, maxIterF), 1, 'float'), numRootsF)
         end
       end
     end

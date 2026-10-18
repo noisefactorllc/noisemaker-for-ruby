@@ -62,9 +62,9 @@ run_pixel = lambda do |ctx, out|
   main__void = lambda do
     base = nil; base_hsv = nil; base_rgb = nil; globalCoord = nil; m = nil; rgb = nil; st = nil; tintHue = nil; tinted = nil
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
-    st = rt.construct(2, rt.binary('/', rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.component_wise('max', rt.texture_size(_u_inputTex), rt.construct(2, rt.i(1), 'int'))), 2, 'float'))
+    st = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), rt.construct(2, rt.component_wise('max', rt.texture_size(_u_inputTex), rt.construct(2, rt.i(1), 'int')))))
     base = rt.texture(_u_inputTex, st)
-    base_rgb = rt.construct(3, (rt.bool(rt.binary('>', rt.swizzle(base, 'a'), rt.f(0))) ? (rt.component_wise('clamp', rt.construct(3, ((rt.swizzle(base, 'r')) / (rt.swizzle(base, 'a'))), ((rt.swizzle(base, 'g')) / (rt.swizzle(base, 'a'))), ((rt.swizzle(base, 'b')) / (rt.swizzle(base, 'a')))), rt.f(0), rt.f(1))) : (rt.construct(3, rt.f(0)))))
+    base_rgb = rt.construct(3, (rt.bool(rt.binary('>', rt.swizzle(base, 'a'), rt.f(0))) ? (rt.component_wise('clamp', rt.construct(3, rt.fdiv(rt.swizzle(base, 'r'), rt.swizzle(base, 'a')), rt.fdiv(rt.swizzle(base, 'g'), rt.swizzle(base, 'a')), rt.fdiv(rt.swizzle(base, 'b'), rt.swizzle(base, 'a'))), rt.f(0), rt.f(1))) : (rt.construct(3, rt.f(0)))))
     m = rt.construct(1, _u_mode, 'int')
     tinted = rt.construct(3, 0.0)
     base_hsv = rt.construct(3, 0.0)
