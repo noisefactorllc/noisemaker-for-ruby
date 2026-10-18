@@ -8,7 +8,7 @@ module NoisemakerCpu
     DATA = JSON.parse(<<~'JSON').freeze
 {
   "capture": {
-    "host": "zig.local",
+    "host": "Apple M4 Mac",
     "os": "macOS 26.6.2 (25G83)",
     "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
     "browser": "HeadlessChrome 156.0.8078.4 (--use-angle=metal)",
