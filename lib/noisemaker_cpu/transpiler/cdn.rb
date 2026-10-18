@@ -381,7 +381,7 @@ module NoisemakerCpu
           # use negative-exponent constants). Perl's own CDN.pm has the
           # identical gap and would corrupt/fail identically against this
           # live content -- it only ever looked correct off a python-seeded
-          # warm cache that no longer exists. The scaffold's standing rule
+          # warm cache that no longer exists. The project's standing rule
           # is durable, reproducible builds, so a cold fetch must succeed
           # AND be correct on its own; Python's `json5` library -- a real
           # JSON5 parser, and the reference for what this CDN content means
@@ -515,7 +515,7 @@ module NoisemakerCpu
       # write, and only the *next* fetch self-heals (fetch_effect's
       # cache-hit branch below re-derives it via params_key_order against
       # that now-quoted JSON text, where the identical bareword gap doesn't
-      # apply). That seed cache no longer exists, and the scaffold calls for
+      # apply). That seed cache no longer exists, and the project calls for
       # durable, reproducible builds, so a genuinely cold fetch must derive
       # the same paramOrder a warm one does -- this recognizes bareword
       # identifier keys too, using the same identifier grammar
