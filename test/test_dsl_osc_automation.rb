@@ -264,3 +264,23 @@ class TestDslOscAutomation < Minitest::Test
     refute_equal early.to_rgba8, mid.to_rgba8
   end
 end
+
+
+class TestUnsupportedRealtimeInput < Minitest::Test
+  ["midi(channel: 1, min: 0.8)", "audio(band: audioBand.low, min: 0.8)"].each_with_index do |call, index|
+    [false, true].each do |binding|
+      define_method("test_unsupported_input_#{index}_binding_#{binding}") do
+        prefix = binding ? "let input = #{call}\n" : ""
+        value = binding ? "input" : call
+        result = nil
+        out, err = capture_io do
+          result = NoisemakerCpu::Renderer.render_dsl("search synth\n#{prefix}noise(seed: 1, scaleX: #{value}).write(o0)\nrender(o0)", width: 8, height: 8, seed: 1, time: 0.25)
+        end
+        assert_empty out
+        assert_match(/Warning: (midi|audio)\(\) is unsupported in CPU ports; real-time input is unavailable/, err)
+        baseline = NoisemakerCpu::Renderer.render_dsl("search synth\nnoise(seed: 1).write(o0)\nrender(o0)", width: 8, height: 8, seed: 1, time: 0.25)
+        assert_equal baseline.to_rgba8, result.to_rgba8
+      end
+    end
+  end
+end

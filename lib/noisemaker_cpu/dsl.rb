@@ -47,6 +47,8 @@ require_relative "automation"
 
 module NoisemakerCpu
   module DSL
+    UNSUPPORTED_INPUT = Object.new.freeze
+    VALUE_CALLS = %w[osc midi audio].freeze
     KEYWORDS = %w[search let render true false].each_with_object({}) { |k, h| h[k] = true }.freeze
     PUNCTUATION = "()[],.:=;".each_char.each_with_object({}) { |c, h| h[c] = true }.freeze
     OPERATORS = "+-*/".each_char.each_with_object({}) { |c, h| h[c] = true }.freeze
@@ -400,7 +402,7 @@ module NoisemakerCpu
           loop do
             is_named = peek["type"] == "identifier" && peek(1)["lexeme"] == ":"
             next_mode = is_named ? "named" : "positional"
-            if mode && mode != next_mode
+            if mode && mode != next_mode && !%w[midi audio].include?(name["lexeme"])
               DSL._throw("Cannot mix positional and named arguments", DSL._location(peek))
             end
             mode = next_mode
@@ -517,11 +519,8 @@ module NoisemakerCpu
             return { "kind" => "vector", "width" => Integer(name[-1], 10), "values" => values,
                       "loc" => DSL._location(token) }
           end
-          # `osc(...)` is the one value-position call the DSL supports (oscillator
-          # automation, matching upstream's parser); it parses as a regular call and
-          # the compiler turns it into an Oscillator automation value. Every other
-          # call in a value position stays a parse error via the dangling '('.
-          if name == "osc" && peek["lexeme"] == "("
+          # MIDI/audio calls are parsed only for unsupported-input warnings.
+          if VALUE_CALLS.include?(name) && peek["lexeme"] == "("
             @current -= 1
             return parse_call
           end
@@ -619,6 +618,7 @@ module NoisemakerCpu
         return fallback if node.nil?
 
         value = _evaluate_value(node, bindings, depth + 1)
+        return fallback if value.equal?(UNSUPPORTED_INPUT)
         return value if Automation.automation_value?(value)
         return 1 if value == true
         return 0 if value == false
@@ -693,8 +693,10 @@ module NoisemakerCpu
       when "surface"
         value
       when "Call"
-        # `osc(...)` is the one value-position call the DSL supports; every
-        # other call stays the unsupported-value error (dsl/compiler.js).
+        if %w[midi audio].include?(value["name"])
+          warn "Warning: #{value['name']}() is unsupported in CPU ports; real-time input is unavailable. Ignoring this unsupported input value."
+          return UNSUPPORTED_INPUT
+        end
         if value["name"] == "osc"
           return _compile_oscillator(value, bindings, osc_depth)
         end
@@ -811,6 +813,8 @@ module NoisemakerCpu
           bad = (!supplied.nil? && supplied != "") ? supplied : "argument #{index + 1}"
           _throw("Unknown parameter \"#{bad}\" for #{effect_id}; accepted: #{param_names.join(', ')}", arg["loc"])
         end
+        next if arg["value"].equal?(UNSUPPORTED_INPUT)
+
         provided[supplied] = true
         pspec = param_specs[supplied]
         if pspec.is_a?(Hash) && pspec["type"] == "surface"
@@ -929,10 +933,7 @@ module NoisemakerCpu
 
         value = binding["value"]
         bindings[binding["name"]] =
-          # A Call binding stays an effect partial -- except `osc(...)`, which
-          # compiles into an Oscillator automation VALUE (reusable via the
-          # binding), matching the CPU compiler's `name !== 'osc'` guard.
-          if value.is_a?(Hash) && value["kind"] == "Call" && value["name"] != "osc"
+          if value.is_a?(Hash) && value["kind"] == "Call" && !VALUE_CALLS.include?(value["name"])
             { "kind" => "partial", "call" => value.merge("args" => _resolve_args(value["args"], bindings)) }
           else
             { "kind" => "value", "value" => _evaluate_value(value, bindings) }
