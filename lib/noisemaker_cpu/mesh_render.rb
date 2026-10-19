@@ -175,7 +175,8 @@ module NoisemakerCpu
 
     def self.mesh_render_triangles_adapter(destination, resolved_uniforms, external_inputs)
       mesh_data = external_inputs && (external_inputs["meshData"] || external_inputs[:meshData])
-      raise "render/meshRender requires external mesh data (externalInputs.meshData)" unless mesh_data
+      # With no meshData, draw the zero mesh upstream samples before an upload.
+      mesh_data ||= NoisemakerCpu::ExternalInput.empty_mesh_data
 
       positions = mesh_data["positions"] || mesh_data["positionData"]
       normals = mesh_data["normalData"]

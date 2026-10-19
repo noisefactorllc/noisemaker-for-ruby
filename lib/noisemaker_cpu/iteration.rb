@@ -13,6 +13,19 @@ module NoisemakerCpu
       ((value % 1) + 1) % 1
     end
 
+    # The built-in surface I/O steps: read/write for images, read3d/write3d for a
+    # volume and its geometry.
+    def self.surface_io?(step)
+      %w[read write read3d write3d].include?(step["kind"])
+    end
+
+    def self._animated_image_generator?(step)
+      definition = step["definition"] || {}
+      definition["kind"] == "generator" && (definition["domain"] || "image") == "image" &&
+        definition["iterated"] != true &&
+        step["params"].key?("speed") && step["params"]["speed"] != 0
+    end
+
     def self.time_for(render_time, iteration_count, index)
       wrap01(render_time - ((iteration_count - 1 - index) * DELTA_TIME))
     end
@@ -30,7 +43,7 @@ module NoisemakerCpu
 
       steps.each do |step|
         if open_loop
-          raise "Loop iteration group cannot cross a read/write boundary" if step["kind"] == "read" || step["kind"] == "write"
+          raise "Loop iteration group cannot cross a read/write boundary" if surface_io?(step)
           raise "Nested loop iteration groups are not supported" if step.dig("definition", "loopRole") == "begin"
 
           open_loop["steps"] << step
@@ -40,7 +53,7 @@ module NoisemakerCpu
           end
           next
         end
-        if step["kind"] == "read" || step["kind"] == "write"
+        if surface_io?(step)
           close_group.call
           groups << { "steps" => [step], "iterated" => false }
           next
@@ -57,6 +70,18 @@ module NoisemakerCpu
         declares_xyz = (definition["textures"] || {}).key?("global_xyz")
         if declares_xyz
           close_group.call
+          # The authority renders the whole chain every frame, and pointsEmit colors
+          # each agent it spawns from its input at that frame's time. An animated
+          # image generator that feeds the group therefore re-runs with it, once per
+          # iteration.
+          previous = groups.last
+          if (step["params"] || {})["iterationCount"].to_f > 0 && previous &&
+             previous["steps"].length == 1 && previous["iterated"] != true &&
+             _animated_image_generator?(previous["steps"][0])
+            groups.pop
+            open_group = { "steps" => [previous["steps"][0], step], "iterated" => definition["iterated"] == true }
+            next
+          end
           open_group = { "steps" => [step], "iterated" => definition["iterated"] == true }
           next
         end

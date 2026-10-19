@@ -120,15 +120,30 @@ class TestExternalInput < Minitest::Test
     assert_equal 2, surf.height
   end
 
-  def test_renderer_binds_reactive_defaults_and_requires_mesh_data
+  def test_renderer_binds_reactive_defaults_and_renders_an_empty_mesh_without_mesh_data
     # No external state: reactive uniforms zero-bind like WebGL uniform arrays.
     scope = NoisemakerCpu::Renderer.render_effect("synth/scope", {}, nil, width: 4, height: 4)
     assert_equal 64, scope.to_rgba8.bytesize
-    # Mesh effects refuse to render without external mesh data.
-    error = assert_raises(RuntimeError) do
-      NoisemakerCpu::Renderer.render_effect("render/meshRender", {}, nil, width: 4, height: 4)
-    end
-    assert_match(/requires external mesh data/, error.message)
+    # With no meshData, upstream still renders: it creates each mesh surface as
+    # zero-filled 256x256 rgba32f textures (pipeline.js createSurfaces), so
+    # every vertex has w = 0 and no triangle is drawn (GAP-043).
+    rendered = NoisemakerCpu::Renderer.render_effect("render/meshRender", {}, nil, width: 4, height: 4)
+    assert_equal 64, rendered.to_rgba8.bytesize
+    meshless = NoisemakerCpu::Renderer.render_dsl(
+      "search render\n\nmeshLoader()\n  .meshRender()\n  .write(o0)\n\nrender(o0)\n",
+      width: 4, height: 4, seed: 1, time: 0.25
+    )
+    assert_equal 64, meshless.to_rgba8.bytesize
+  end
+
+  def test_empty_mesh_data_matches_the_zero_filled_mesh_surfaces_upstream_creates
+    empty = NoisemakerCpu::ExternalInput.empty_mesh_data
+    assert_equal 256, empty["texWidth"]
+    assert_equal 256, empty["texHeight"]
+    assert_equal 0, empty["vertexCount"]
+    assert_equal 256 * 256 * 4, empty["positionData"].length
+    assert empty["positionData"].all?(&:zero?), "positions must be zero-filled"
+    assert empty["uvData"].all?(&:zero?), "uvs must be zero-filled"
   end
 
   def test_reactive_dsl_cases_render_with_fixtures

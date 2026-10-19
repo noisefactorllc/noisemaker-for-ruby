@@ -554,11 +554,13 @@ module NoisemakerCpu
             sizes = destinations.map { |surface| [surface.width, surface.height] }.uniq
             raise "#{eff['func']} pass #{pass['name'].inspect} MRT dimensions differ" unless sizes.length == 1
 
+            # Upstream binds the canvas size as `resolution` to every pass; the pixel
+            # loop still covers the state-sized MRT destinations.
             pass_uniforms = _pass_uniforms(
               pass,
               state["params"],
               _canonical_uniforms(
-                destinations[0].width, destinations[0].height, time, seed, state["effect_uniforms"],
+                width, height, time, seed, state["effect_uniforms"],
                 frame: frame, delta_time: delta_time, full_width: width, full_height: height
               )
             )
@@ -838,8 +840,8 @@ module NoisemakerCpu
       end
       mesh_names = pass_input_names.keys.select { |n| n.start_with?("global_mesh0_") }
       unless mesh_names.empty?
-        mesh_data = external_inputs["meshData"]
-        raise "#{effect_id} requires external mesh data (renderOptions.externalInputs.meshData)" unless mesh_data
+        # With no meshData, bind the zero mesh upstream samples before an upload.
+        mesh_data = external_inputs["meshData"] || NoisemakerCpu::ExternalInput.empty_mesh_data
 
         tex_width = mesh_data["texWidth"] || MESH_TEX_WIDTH
         tex_height = mesh_data["texHeight"] || MESH_TEX_HEIGHT
@@ -1060,8 +1062,24 @@ module NoisemakerCpu
       owner_step = group["steps"].find { |step| step.dig("definition", "iterated") == true } ||
                    group["steps"][0]
       owner_index = group["steps"].index(owner_step)
-      states = []
+      # A particle group's owner is its pointsEmit step, which an animated input
+      # generator may precede (upstream groupOwnerStateSize): the shared stateSize
+      # comes from the step that declares `global_xyz`, not from the group's first
+      # step.
       owner_size = nil
+      if group["steps"].length > 1
+        owner_state_step = group["steps"].find do |step|
+          (step.dig("definition", "textures") || {}).key?("global_xyz")
+        end || group["steps"][0]
+        owner_size =
+          if owner_state_step["params"].key?("stateSize")
+            owner_state_step["params"]["stateSize"]
+          else
+            spec = (owner_state_step.dig("definition", "params") || {})["stateSize"]
+            spec.is_a?(Hash) && spec.key?("default") ? spec["default"] : nil
+          end
+      end
+      states = []
       group["steps"].each_with_index do |step, index|
         inputs = _iteration_step_inputs(step, group_input, surfaces, external_textures)
         if index.zero?
@@ -1114,48 +1132,85 @@ module NoisemakerCpu
       result
     end
 
+    # Run one compiled chain and return its final value. A step's `inline_chains`
+    # (chain arguments such as `tex: solid(color: #f00)`) run before the iteration
+    # group that holds the step, and each writes the hidden surface that the step's
+    # argument names. Upstream compiles those chains into steps directly ahead of the
+    # consuming effect; they read nothing that the group itself writes.
+    # The built-in surface I/O steps. read3d starts a chain bundle from a stored
+    # volume and geometry; write3d stores the current bundle's volume and geometry
+    # under its two names (`none` stores nothing) and passes the chain through, as
+    # upstream's `_write3d` blits and passes through.
+    def self._render_chain(chain, surfaces, external_textures, width, height, seed, time, external_inputs)
+      current = nil
+      steps = chain["steps"].map do |step|
+        next step unless step["kind"] == "effect"
+
+        step.merge("definition" => meta["effects"].fetch(step["effect_id"]))
+      end
+      NoisemakerCpu::Iteration.compute_groups(steps).each do |group|
+        step = group["steps"][0]
+        case step["kind"]
+        when "read"
+          current = surfaces[step["surface"]]
+          raise "Surface #{step['surface']} has not been written" if current.nil?
+        when "read3d"
+          volume = surfaces[step["volume"]]
+          raise "Surface #{step['volume']} has not been written" if volume.nil?
+
+          current = {
+            "image" => nil, "volume" => volume, "geometry" => surfaces[step["geometry"]],
+            "volumeSize" => volume.width,
+          }
+        when "write"
+          image = _chain_bundle(current)["image"]
+          raise "write(surface) requires a current image" if image.nil?
+
+          surfaces[step["surface"]] = image
+        when "write3d"
+          bundle = _chain_bundle(current)
+          surfaces[step["volume"]] = bundle["volume"] if step["volume"] != "none" && bundle["volume"]
+          surfaces[step["geometry"]] = bundle["geometry"] if step["geometry"] != "none" && bundle["geometry"]
+        else
+          group["steps"].each do |effect_step|
+            (effect_step["inline_chains"] || []).each do |inline|
+              value = _render_chain(
+                inline["chain"], surfaces, external_textures, width, height, seed, time, external_inputs
+              )
+              image = _chain_bundle(value)["image"]
+              raise "write(surface) requires a current image" if image.nil?
+
+              surfaces[inline["surface"]] = image
+            end
+          end
+          if group["iterated"]
+            current = _render_iteration_group(
+              group, current, surfaces, external_textures, width, height, seed, time
+            )
+          else
+            group["steps"].each do |effect_step|
+              current = _run_effect_step(
+                effect_step, current, surfaces, external_textures, width, height, seed, time,
+                external_inputs: external_inputs
+              )
+            end
+          end
+        end
+      end
+      current
+    end
+
     # Render a Polymorphic DSL program on the CPU -- the Ruby counterpart of
     # noisemaker-cpu's CpuRenderer.render(). Compiles the program to a plan,
-    # then threads each chain's `current` surface through read/write/effect
-    # steps over a named-surface map (o0..o7), running one render_effect per
-    # effect step.
+    # then threads each chain's `current` surface through read/write/read3d/
+    # write3d/effect steps over a named-surface map (o0..o7, volN/geoN, inline:N),
+    # running one render_effect per effect step.
     def self.render_dsl(source, width: 512, height: 512, seed: 1, time: 0.0, external_textures: nil,
       seed_surfaces: nil, external_inputs: nil)
       surfaces = (seed_surfaces || {}).dup
       plan = NoisemakerCpu::DSL.compile_dsl(source, meta["effects"])
       plan["chains"].each do |chain|
-        current = nil
-        steps = chain["steps"].map do |step|
-          next step unless step["kind"] == "effect"
-
-          step.merge("definition" => meta["effects"].fetch(step["effect_id"]))
-        end
-        NoisemakerCpu::Iteration.compute_groups(steps).each do |group|
-          step = group["steps"][0]
-          case step["kind"]
-          when "read"
-            current = surfaces[step["surface"]]
-            raise "Surface #{step['surface']} has not been written" if current.nil?
-          when "write"
-            image = _chain_bundle(current)["image"]
-            raise "write(surface) requires a current image" if image.nil?
-
-            surfaces[step["surface"]] = image
-          else
-            if group["iterated"]
-              current = _render_iteration_group(
-                group, current, surfaces, external_textures, width, height, seed, time
-              )
-            else
-              group["steps"].each do |effect_step|
-                current = _run_effect_step(
-                  effect_step, current, surfaces, external_textures, width, height, seed, time,
-                  external_inputs: external_inputs
-                )
-              end
-            end
-          end
-        end
+        _render_chain(chain, surfaces, external_textures, width, height, seed, time, external_inputs)
       end
       rendered = surfaces[plan["render_surface"]]
       raise "Surface #{plan['render_surface']} has not been written" if rendered.nil?

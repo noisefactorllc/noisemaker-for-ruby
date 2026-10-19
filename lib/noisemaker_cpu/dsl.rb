@@ -49,8 +49,8 @@ module NoisemakerCpu
   module DSL
     UNSUPPORTED_INPUT = Object.new.freeze
     VALUE_CALLS = %w[osc midi audio].freeze
-    KEYWORDS = %w[search let render true false].each_with_object({}) { |k, h| h[k] = true }.freeze
-    PUNCTUATION = "()[],.:=;".each_char.each_with_object({}) { |c, h| h[c] = true }.freeze
+    KEYWORDS = %w[search let render true false subchain].each_with_object({}) { |k, h| h[k] = true }.freeze
+    PUNCTUATION = "()[],.:=;{}".each_char.each_with_object({}) { |c, h| h[c] = true }.freeze
     OPERATORS = "+-*/".each_char.each_with_object({}) { |c, h| h[c] = true }.freeze
 
     # JSON-style string quoting for diagnostic text, matching Python
@@ -165,6 +165,17 @@ module NoisemakerCpu
             _throw("Colors must use #RGB, #RRGGBB, or #RRGGBBAA", location)
           end
           push_tok.call("color", lexeme, location, nil)
+          next
+        end
+        # A triple-quoted string (upstream `String ::= '"""' .* '"""'`) may span lines.
+        # Upstream's lexer keeps its content raw, without escape processing, and its
+        # unparser writes a multi-line string in this form.
+        if char == "\"" && at.call(1) == "\"" && at.call(2) == "\""
+          closing = source.index("\"\"\"", index + 3)
+          _throw("Unterminated string", location) if closing.nil?
+          value = source[(index + 3)...closing]
+          advance.call while index < closing + 3
+          push_tok.call("string", value, location, value)
           next
         end
         if char == "\""
@@ -298,12 +309,14 @@ module NoisemakerCpu
         peek["type"] == "eof"
       end
 
+      # A string token's lexeme is its content, so a string never matches
+      # punctuation, an operator or a keyword: `text(")")` holds the string ")".
       def check(lexeme)
-        peek["lexeme"] == lexeme
+        peek["type"] != "string" && peek["lexeme"] == lexeme
       end
 
       def match(*lexemes)
-        return false unless lexemes.include?(peek["lexeme"])
+        return false if peek["type"] == "string" || !lexemes.include?(peek["lexeme"])
 
         @current += 1
         true
@@ -389,8 +402,117 @@ module NoisemakerCpu
       def parse_chain
         first = parse_call
         calls = [first]
-        calls << parse_call while match(".")
+        loop do
+          break unless match(".")
+
+          if at_subchain?
+            calls << parse_subchain
+          elsif peek["lexeme"] == "write3d" && peek["type"] == "identifier"
+            calls << parse_write3d
+          else
+            calls << parse_call
+          end
+        end
         { "kind" => "Chain", "calls" => calls, "loc" => first["loc"] }
+      end
+
+      # Port of upstream parseWriteCall for write3d: two positional references, a
+      # volume and a geometry (`write3d(vol0, geo0)`), each an identifier or a
+      # surface.
+      def parse_write3d
+        name = identifier
+        consume("(")
+        reference = lambda do
+          token = peek
+          return parse_surface if token["type"] == "surface"
+          DSL._throw("Expected surface reference", DSL._location(token)) unless token["type"] == "identifier"
+
+          @current += 1
+          { "kind" => "identifier", "name" => token["lexeme"], "loc" => DSL._location(token) }
+        end
+        volume = reference.call
+        consume(",")
+        geometry = reference.call
+        consume(")")
+        args = [volume, geometry].map { |value| { "name" => nil, "value" => value, "loc" => value["loc"] } }
+        { "kind" => "Call", "name" => "write3d", "args" => args, "argMode" => "positional",
+          "loc" => DSL._location(name) }
+      end
+
+      def at_subchain?
+        peek["type"] == "keyword" && peek["lexeme"] == "subchain"
+      end
+
+      def is_punctuation(lexeme)
+        peek["type"] == "punctuation" && peek["lexeme"] == lexeme
+      end
+
+      # A chain in a value position (upstream parseChain in its 'expression'
+      # context). It may hold subchain blocks, and it cannot hold write() or
+      # write3d().
+      def parse_expression_chain(first)
+        calls = [first]
+        while is_punctuation(".")
+          @current += 1
+          if at_subchain?
+            calls << parse_subchain
+            next
+          end
+          call = parse_call
+          # Upstream allows write() and write3d() only in statement context.
+          if call["name"] == "write" || call["name"] == "write3d"
+            DSL._throw("Expected effect or IO function name", call["loc"])
+          end
+          calls << call
+        end
+        { "kind" => "Chain", "calls" => calls, "loc" => first["loc"] }
+      end
+
+      # Port of upstream parseSubchainCall: `subchain(name: "...", id: "...") { .a() .b() }`.
+      # A single leading string is shorthand for `name`. Unknown keys, duplicate keys and
+      # a missing ',' between keys are upstream warnings (P008-P010): the program still
+      # compiles, an unknown key's value is discarded and the last duplicate wins. The
+      # body holds one or more '.'-prefixed calls and cannot hold write(), write3d() or
+      # another subchain, which upstream's lexer reserves as keywords.
+      def parse_subchain
+        start_tok = @tokens[@current]
+        @current += 1
+        consume("(")
+        meta = { "name" => nil, "id" => nil }
+        if peek["type"] == "string"
+          meta["name"] = @tokens[@current]["value"]
+          @current += 1
+        else
+          while peek["type"] == "identifier" && peek(1)["lexeme"] == ":"
+            key = identifier["lexeme"]
+            consume(":")
+            # A value that is not a string ends the arguments, so the closing ')'
+            # check below reports it.
+            break unless peek["type"] == "string"
+
+            value = @tokens[@current]["value"]
+            @current += 1
+            meta[key] = value if key == "name" || key == "id"
+            match(",")
+          end
+        end
+        consume(")")
+        consume("{")
+        # The body holds at least one element, so an empty block fails on its
+        # missing '.'.
+        body = []
+        loop do
+          consume(".")
+          call = parse_call
+          if call["name"] == "write" || call["name"] == "write3d"
+            DSL._throw("Expected effect or IO function name", call["loc"])
+          end
+          body << call
+          break if check("}")
+        end
+        consume("}")
+        { "kind" => "Subchain", "name" => meta["name"] || nil, "id" => meta["id"] || nil, "body" => body,
+          "loc" => DSL._location(start_tok) }
       end
 
       def parse_call
@@ -398,14 +520,17 @@ module NoisemakerCpu
         consume("(")
         args = []
         mode = nil
+        # Upstream's parseCall lets the midi() and audio() value calls mix positional
+        # and keyword arguments (`allowMixed`); every other call keeps one form.
+        allow_mixed = name["lexeme"] == "midi" || name["lexeme"] == "audio"
         unless check(")")
           loop do
             is_named = peek["type"] == "identifier" && peek(1)["lexeme"] == ":"
             next_mode = is_named ? "named" : "positional"
-            if mode && mode != next_mode && !%w[midi audio].include?(name["lexeme"])
+            if mode && mode != next_mode && !allow_mixed
               DSL._throw("Cannot mix positional and named arguments", DSL._location(peek))
             end
-            mode = next_mode
+            mode = mode && mode != next_mode ? "mixed" : next_mode
             arg_name = nil
             if is_named
               arg_name = identifier["lexeme"]
@@ -417,14 +542,39 @@ module NoisemakerCpu
           end
         end
         consume(")")
-        { "kind" => "Call", "name" => name["lexeme"], "args" => args, "argMode" => mode, "loc" => DSL._location(name) }
+        call = { "kind" => "Call", "name" => name["lexeme"], "args" => args, "argMode" => mode,
+                 "loc" => DSL._location(name) }
+        call["name"] == "from" ? from_call(call) : call
+      end
+
+      # Port of upstream transformFromInvocation: `from(namespace, effect(...))` is the
+      # effect call, resolved in that one namespace instead of the search order. It
+      # takes exactly two positional arguments, an identifier and one call; upstream's
+      # read(), read3d(), osc(), midi() and audio() nodes are not Call nodes. Any
+      # other from(...) stays a call named `from`, which no namespace defines, so the
+      # compiler rejects it as an unknown effect.
+      def from_call(call)
+        return call if call["argMode"] != "positional" || call["args"].length != 2
+
+        namespace, target = call["args"].map { |arg| arg["value"] }
+        inner = nil
+        if target.is_a?(Hash) && target["kind"] == "Chain" && target["calls"].length == 1
+          inner = target["calls"][0]
+        end
+        return call if !namespace.is_a?(Hash) || namespace["kind"] != "identifier" ||
+                       !inner.is_a?(Hash) || inner["kind"] != "Call" ||
+                       %w[read read3d write write3d].include?(inner["name"])
+
+        inner.merge("namespace" => namespace["name"])
       end
 
       def parse_value_expression(min_precedence = 0)
         left = parse_value_unary
         loop do
           lex = peek["lexeme"]
-          prec = PRECEDENCE.key?(lex) ? PRECEDENCE[lex] : -1
+          break unless peek["type"] == "operator" && PRECEDENCE.key?(lex)
+
+          prec = PRECEDENCE[lex]
           break if prec < min_precedence
 
           operator = @tokens[@current]
@@ -495,6 +645,23 @@ module NoisemakerCpu
         if token["type"] == "identifier"
           @current += 1
           name = token["lexeme"]
+          # `Math.PI` is the one numeric constant of upstream's grammar
+          # (`NumberExpr ::= Number | 'Math.PI' | ...`).
+          if name == "Math" && is_punctuation(".") && peek(1)["type"] == "identifier" && peek(1)["lexeme"] == "PI"
+            @current += 2
+            return Math::PI
+          end
+          # A one-argument `read3d(vol0)` names a volume or geometry for a parameter,
+          # as upstream's validator reads it. With two arguments it starts a chain.
+          if name == "read3d" && is_punctuation("(")
+            @current -= 1
+            call = parse_call
+            first = call["args"][0]
+            if call["args"].length == 1 && first["value"].is_a?(Hash) && first["value"]["kind"] == "identifier"
+              return first["value"]
+            end
+            return parse_expression_chain(call)
+          end
           if name == "read" && match("(")
             if peek["type"] == "identifier" && peek(1)["lexeme"] == ":"
               argument_name = identifier["lexeme"]
@@ -505,6 +672,16 @@ module NoisemakerCpu
             end
             surface = parse_surface
             consume(")")
+            # `read(oN).effect()` in a value position is a chain argument that starts
+            # from the surface. A bare `read(oN)` stays a plain surface reference.
+            if is_punctuation(".")
+              read_call = {
+                "kind" => "Call", "name" => "read",
+                "args" => [{ "name" => nil, "value" => surface, "loc" => surface["loc"] }],
+                "argMode" => "positional", "loc" => DSL._location(token),
+              }
+              return parse_expression_chain(read_call)
+            end
             return surface
           end
           if %w[vec2 vec3 vec4].include?(name) && match("(")
@@ -523,6 +700,12 @@ module NoisemakerCpu
           if VALUE_CALLS.include?(name) && peek["lexeme"] == "("
             @current -= 1
             return parse_call
+          end
+          # Any other call in a value position starts a chain argument
+          # (upstream `Expr ::= Chain`), for example `tex: solid(color: #f00)`.
+          if is_punctuation("(")
+            @current -= 1
+            return parse_expression_chain(parse_call)
           end
           path = name
           while match(".")
@@ -569,6 +752,31 @@ module NoisemakerCpu
     }.freeze
     OSC_PARAM_ORDER = %w[type min max speed offset seed].freeze
     MAX_AUTOMATION_DEPTH = 8
+
+    # The `let` bindings of a program, plus the compiler of chain arguments. A chain in
+    # an argument (`tex: solid(color: #f00)`) compiles to its own chain that writes a
+    # hidden surface. The consuming step carries it in `inline_chains`, and the
+    # renderer runs it before the step, as upstream's validator compiles the chain into
+    # temporary steps ahead of the consuming effect.
+    class Scope < Hash
+      attr_accessor :registry, :search, :pending, :inline_count
+
+      def initialize(registry, search)
+        super()
+        @registry = registry
+        @search = search
+        @pending = nil
+        @inline_count = 0
+      end
+
+      def compile_inline_chain(chain)
+        compiled = DSL._compile_chain(chain, self, inline: true)
+        surface = "inline:#{@inline_count}"
+        @inline_count += 1
+        @pending << { "surface" => surface, "chain" => compiled }
+        { "kind" => "surface", "name" => surface, "loc" => chain["loc"] }
+      end
+    end
 
     # Compiles an `osc(...)` value-position call into the automation value shape the
     # runtime evaluator consumes ({"type" => "Oscillator", "oscType" =>, "min" =>,
@@ -708,10 +916,17 @@ module NoisemakerCpu
           if binding["kind"] == "partial"
             _throw("Effect partial \"#{name}\" cannot be used as a value", value["loc"])
           end
+          # An effect alias used as a value stays the effect's bare name.
+          return binding["name"] if binding["kind"] == "alias"
+
           binding["value"]
         else
           name
         end
+      when "Chain"
+        return bindings.compile_inline_chain(value) if bindings.respond_to?(:pending) && bindings.pending
+
+        _throw("Unsupported DSL value #{kind}", value["loc"])
       when "vector"
         # JS's evaluateValue recursion here resets the osc depth (vector,
         # unary and binary operands call evaluateValue without the depth
@@ -751,7 +966,7 @@ module NoisemakerCpu
       args.map { |arg| arg.merge("value" => _evaluate_value(arg["value"], bindings)) }
     end
 
-    def self._merge_partial(stored, call)
+    def self._merge_args(stored, call)
       return call.merge("name" => stored["name"]) unless stored["argMode"]
       return stored.merge("loc" => call["loc"]) unless call["argMode"]
 
@@ -771,6 +986,19 @@ module NoisemakerCpu
         merged[arg["name"]] = arg
       end
       call.merge("name" => stored["name"], "args" => order.map { |n| merged[n] }, "argMode" => "named")
+    end
+
+    # A `from(ns, ...)` namespace on the call site wins over one stored in the
+    # partial, as in upstream's resolveCall.
+    def self._merge_partial(stored, call)
+      merged = _merge_args(stored, call)
+      namespace = call["namespace"] || stored["namespace"]
+      if namespace
+        merged["namespace"] = namespace
+      else
+        merged.delete("namespace")
+      end
+      merged
     end
 
     def self._resolve_effect(func, search, effects)
@@ -835,21 +1063,67 @@ module NoisemakerCpu
       [params, surfaces]
     end
 
-    def self._compile_chain(chain, bindings, search, effects)
+    # `read3d(vol, geo)` and `write3d(vol, geo)` take two positional references:
+    # identifiers such as vol0 and geo0, or surface references (upstream parseWriteCall
+    # and the validator's Read3D handling).
+    def self._volume_references(call)
+      return nil if call["argMode"] != "positional" || call["args"].length != 2
+
+      names = call["args"].map do |arg|
+        value = arg["value"]
+        if value.is_a?(Hash) && value["kind"] == "surface"
+          value["name"]
+        elsif value.is_a?(Hash) && value["kind"] == "identifier" && !value["name"].include?(".")
+          value["name"]
+        end
+      end
+      names.include?(nil) ? nil : names
+    end
+
+    def self._read3d_references(call)
+      if call["argMode"] == "named"
+        named = call["args"].each_with_object({}) { |arg, map| map[arg["name"]] = arg }
+        return nil unless named.key?("tex3d") && named.key?("geo")
+
+        return _volume_references("argMode" => "positional", "args" => [named["tex3d"], named["geo"]])
+      end
+      _volume_references(call)
+    end
+
+    # Compiles one chain. A statement chain that begins with a generator must end with
+    # write(oN). A chain argument (`inline`) needs no write(): its last image is the
+    # argument's surface.
+    def self._compile_chain(chain, bindings, inline: false)
+      search = bindings.search
+      effects = bindings.registry
       steps = []
       has_image = false
       has_volume = false
       starts_with_generator = false
       open_loop = nil
-      chain["calls"].each_with_index do |raw_call, index|
+      # A subchain block contributes its body calls in place. Upstream's validator
+      # wraps them in `_subchain_begin`/`_subchain_end` markers, which its expander
+      # passes through without a render pass.
+      calls = chain["calls"].flat_map { |element| element["kind"] == "Subchain" ? element["body"] : [element] }
+      calls.each_with_index do |raw_call, index|
         call = raw_call
         binding = bindings[call["name"]]
-        if binding
+        if binding && binding["kind"] == "alias"
+          call = call.merge("name" => binding["name"])
+        elsif binding
           _throw("Binding \"#{call['name']}\" is not callable", call["loc"]) unless binding["kind"] == "partial"
 
           call = _merge_partial(binding["call"], call)
         end
-        args = _resolve_args(call["args"], bindings)
+        # Chain arguments compile while the arguments resolve; they belong to this call.
+        outer_pending = bindings.pending
+        bindings.pending = []
+        begin
+          args = _resolve_args(call["args"], bindings)
+        ensure
+          inline_chains = bindings.pending
+          bindings.pending = outer_pending
+        end
         if call["name"] == "read"
           if index != 0 || args.length != 1 || !_is_surface(args[0]["value"])
             _throw("read(surface) must begin a chain", call["loc"])
@@ -866,9 +1140,31 @@ module NoisemakerCpu
           steps << { "kind" => "write", "surface" => args[0]["value"]["name"], "loc" => call["loc"] }
           next
         end
-        effect_id = _resolve_effect(call["name"], search, effects)
+        # Built-in volume I/O (upstream `_write3d` and `_read3d`). write3d stores the
+        # current volume and geometry under the two names and passes the chain through;
+        # read3d starts a chain from them. A mid-chain read3d() is not a starter, so it
+        # fails below as an unknown effect, as a one-argument read3d() at a chain start
+        # does.
+        if call["name"] == "write3d"
+          # Upstream's lexer reserves write3d, so it cannot start a chain.
+          _throw("Expected effect or IO function name", call["loc"]) if index == 0
+          _throw("loopBegin must be closed by loopEnd before write", call["loc"]) if open_loop
+          references = _volume_references(call)
+          _throw("Expected surface reference", call["loc"]) unless references
+          steps << { "kind" => "write3d", "volume" => references[0], "geometry" => references[1],
+                     "loc" => call["loc"] }
+          next
+        end
+        if index == 0 && call["name"] == "read3d" && (references = _read3d_references(call))
+          steps << { "kind" => "read3d", "volume" => references[0], "geometry" => references[1],
+                     "loc" => call["loc"] }
+          has_volume = true
+          next
+        end
+        namespaces = call["namespace"] ? [call["namespace"]] : search
+        effect_id = _resolve_effect(call["name"], namespaces, effects)
         if effect_id.nil?
-          _throw("Unknown effect \"#{call['name']}\" in search namespaces #{search.join(', ')}", call["loc"])
+          _throw("Unknown effect \"#{call['name']}\" in search namespaces #{namespaces.join(', ')}", call["loc"])
         end
         spec = effects[effect_id]
         domain = spec["domain"] || "image"
@@ -907,16 +1203,19 @@ module NoisemakerCpu
           has_image = true
         end
         params, surfaces = _normalize_effect(effect_id, spec, args)
-        steps << {
+        step = {
           "kind" => "effect",
           "effect_id" => effect_id,
           "params" => params,
           "surfaces" => surfaces,
           "loc" => call["loc"],
         }
+        step["inline_chains"] = inline_chains unless inline_chains.empty?
+        steps << step
       end
       _throw("loopBegin must be closed by loopEnd before the chain ends", open_loop) if open_loop
-      if starts_with_generator && (steps.empty? || steps[-1]["kind"] != "write")
+      terminal = steps.empty? ? nil : steps[-1]["kind"]
+      if !inline && starts_with_generator && terminal != "write" && terminal != "write3d"
         _throw("Generator chain must end with write(oN)", chain["loc"])
       end
       { "steps" => steps, "loc" => chain["loc"] }
@@ -927,20 +1226,25 @@ module NoisemakerCpu
       ast = parse_dsl(source, options)
       _throw("Missing required search directive", ast["loc"]) if ast["search"].empty?
 
-      bindings = {}
+      bindings = Scope.new(effects, ast["search"])
       ast["bindings"].each do |binding|
         _throw("Duplicate binding \"#{binding['name']}\"", binding["loc"]) if bindings.key?(binding["name"])
 
         value = binding["value"]
-        bindings[binding["name"]] =
-          if value.is_a?(Hash) && value["kind"] == "Call" && !VALUE_CALLS.include?(value["name"])
-            { "kind" => "partial", "call" => value.merge("args" => _resolve_args(value["args"], bindings)) }
-          else
-            { "kind" => "value", "value" => _evaluate_value(value, bindings) }
-          end
+        if value.is_a?(Hash) && value["kind"] == "Call" && !VALUE_CALLS.include?(value["name"])
+          # A partial keeps its call unresolved. Its arguments resolve where it is
+          # called, as upstream's validator substitutes a symbol at each use.
+          bindings[binding["name"]] = { "kind" => "partial", "call" => value }
+        elsif (alias_binding = _alias_binding(value, bindings))
+          bindings[binding["name"]] = alias_binding
+        else
+          bindings[binding["name"]] = {
+            "kind" => "value", "value" => _evaluate_value(value, bindings), "ast" => value,
+          }
+        end
       end
 
-      chains = ast["chains"].map { |chain| _compile_chain(chain, bindings, ast["search"], effects) }
+      chains = ast["chains"].map { |chain| _compile_chain(chain, bindings) }
 
       last_written = nil
       chains.each do |chain|
@@ -954,6 +1258,21 @@ module NoisemakerCpu
       end
 
       { "search" => ast["search"].dup, "chains" => chains, "render_surface" => render_surface }
+    end
+
+    # Upstream `let x = noise` makes `x` an alias of the effect function, and
+    # `let y = x` copies a partial or an alias (the validator stores the symbol's
+    # expression and substitutes it where `y` is used).
+    def self._alias_binding(value, bindings)
+      return nil unless value.is_a?(Hash) && value["kind"] == "identifier" && !value["name"].include?(".")
+
+      bound = bindings[value["name"]]
+      if bound
+        return bound if bound["kind"] == "partial" || bound["kind"] == "alias"
+
+        return nil
+      end
+      _resolve_effect(value["name"], bindings.search, bindings.registry) ? { "kind" => "alias", "name" => value["name"] } : nil
     end
 
     # ---- diagnostic error object ----

@@ -343,6 +343,15 @@ module NoisemakerCpu
       }
     end
 
+    # The mesh a program samples before any OBJ upload. Upstream creates each
+    # mesh surface as zero-filled 256x256 rgba32f textures (pipeline.js
+    # createSurfaces), so every vertex has w = 0 and no triangle is drawn.
+    def self.empty_mesh_data(tex_width = 256, tex_height = 256)
+      pack_mesh_data_for_textures([], [], [], tex_width, tex_height).merge(
+        "texWidth" => tex_width, "texHeight" => tex_height
+      )
+    end
+
     # Smooth vertex normals for un-normalized OBJ files: face normals from
     # reversed-winding triangles, averaged per rounded position key,
     # threshold 1e-4. JS arithmetic is f64 with Float32Array stores.

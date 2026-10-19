@@ -50,6 +50,19 @@ module NoisemakerCpu
 
       case type
       when "float"
+        # A float parameter may declare inline choices (the `rotation` parameter
+        # of the palette filters). Upstream's validator resolves a bare
+        # identifier against them and its unparser writes the choice name, so
+        # they resolve here as for `int`.
+        if spec["choices"].is_a?(Hash) && (value.is_a?(String) || value.is_a?(Symbol))
+          options = spec["choices"]
+          key = value.to_s.split(".").last
+          names = options.select { |_name, item| !item.nil? }.keys
+          unless options.key?(key) && !options[key].nil?
+            raise ArgumentError, "expected a number or one of: #{names.join(', ')}"
+          end
+          value = options[key]
+        end
         number(value.nil? ? 0 : value)
       when "int", "enum", "member", "palette"
         options = choices(spec)

@@ -12,12 +12,12 @@ class TestIteration < Minitest::Test
     flunk "NoisemakerCpu::Iteration is not implemented"
   end
 
-  def step(id, textures: {}, passes: [], iterated: false, params: {})
+  def step(id, textures: {}, passes: [], iterated: false, params: {}, definition: nil)
     {
       "kind" => "effect",
       "effect_id" => id,
       "params" => params,
-      "definition" => {
+      "definition" => definition || {
         "textures" => textures,
         "passes" => passes,
         "iterated" => iterated,
@@ -49,6 +49,59 @@ class TestIteration < Minitest::Test
 
     groups = iteration.compute_groups([emit, flock, solid])
     assert_equal [[true, 2], [false, 1]], groups.map { |group| [group["iterated"], group["steps"].length] }
+  end
+
+  def test_points_emit_merges_a_preceding_animated_image_generator_per_iteration
+    emit = step(
+      "render/pointsEmit",
+      textures: { "global_xyz" => {} },
+      passes: [{ "outputs" => { "outXYZ" => "global_xyz" } }],
+      iterated: true,
+      params: { "iterationCount" => 3 }
+    )
+    generator = step(
+      "synth/perlin",
+      params: { "speed" => 0.25 },
+      # PointsEmit (kind: "points") declares global_xyz, so an animated image
+      # generator before it joins the loop group and re-runs each iteration
+      # (upstream isAnimatedImageGenerator + runIterationGroupSync).
+      definition: {
+        "kind" => "generator",
+        "domain" => "image",
+        "iterated" => false,
+      }
+    )
+
+    groups = iteration.compute_groups([generator, emit])
+    assert_equal [[true, 2]], groups.map { |group| [group["iterated"], group["steps"].length] }
+    assert_equal generator, groups[0]["steps"][0]
+    assert_equal emit, groups[0]["steps"][1]
+  end
+
+  def test_a_static_or_speed_zero_generator_before_points_emit_stays_outside_the_group
+    emit = step(
+      "render/pointsEmit",
+      textures: { "global_xyz" => {} },
+      passes: [{ "outputs" => { "outXYZ" => "global_xyz" } }],
+      iterated: true,
+      params: { "iterationCount" => 3 }
+    )
+    static = step("synth/perlin", params: {}, definition: { "kind" => "generator", "domain" => "image" })
+    stopped = step(
+      "synth/perlin", params: { "speed" => 0 }, definition: { "kind" => "generator", "domain" => "image" }
+    )
+    points_kind = step(
+      "synth/perlin", params: { "speed" => 0.5 }, definition: { "kind" => "points", "domain" => "image" }
+    )
+    volume_kind = step(
+      "synth/perlin", params: { "speed" => 0.5 }, definition: { "kind" => "generator", "domain" => "volume" }
+    )
+
+    %w[static stopped points_kind volume_kind].each do |name|
+      input = binding.local_variable_get(name)
+      assert_equal [[false, 1], [true, 1]],
+        iteration.compute_groups([input, emit]).map { |g| [g["iterated"], g["steps"].length] }, name
+    end
   end
 
   def test_flow3d_reruns_animated_noise3d_per_tick
