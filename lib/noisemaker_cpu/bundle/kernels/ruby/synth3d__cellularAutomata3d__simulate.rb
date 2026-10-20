@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash3__vec3 = atlasTexel__ivec3_int = sampleState__ivec3_int = sampleSeed__ivec3_int = countMooreNeighbors__ivec3_int = countVonNeumannNeighbors__ivec3_int = shouldBeBorn__int_int = shouldSurvive__int_int = main__void = nil
+  hash3__vec3 = atlasTexel__ivec3_int = sampleState__ivec3_int = sampleSeed__ivec3_int = packState__float_float = countMooreNeighbors__ivec3_int = countVonNeumannNeighbors__ivec3_int = shouldBeBorn__int_int = shouldSurvive__int_int = main__void = nil
   _retc = nil
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
   _u_seed = u.key?('seed') ? u['seed'] : 0
@@ -13,6 +13,7 @@ run_pixel = lambda do |ctx, out|
   _u_speed = u.key?('speed') ? u['speed'] : rt.f(0.0)
   _u_density = u.key?('density') ? u['density'] : rt.f(0.0)
   _u_weight = u.key?('weight') ? u['weight'] : rt.f(0.0)
+  _u_colorMode = u.key?('colorMode') ? u['colorMode'] : 0
   _u_resetState = u.key?('resetState') ? u['resetState'] : 0
   _u_stateTex = ctx.texture_binding('stateTex')
   _u_seedTex = ctx.texture_binding('seedTex')
@@ -38,6 +39,12 @@ run_pixel = lambda do |ctx, out|
   sampleSeed__ivec3_int = lambda do |voxel, volSize|
     voxel = rt.copy(voxel, 'int')
     return rt.texel_fetch(_u_seedTex, atlasTexel__ivec3_int.call(voxel, volSize), rt.i(0))
+  end
+  packState__float_float = lambda do |alive, age|
+    if rt.bool(rt.binary('==', _u_colorMode, rt.i(1)))
+      return rt.construct(4, alive, age, rt.f(0), rt.f(1))
+    end
+    return rt.construct(4, alive, alive, alive, rt.f(1))
   end
   countMooreNeighbors__ivec3_int = lambda do |voxel, volSize|
     voxel = rt.copy(voxel, 'int')
@@ -235,7 +242,7 @@ run_pixel = lambda do |ctx, out|
           age = rt.f(0)
         end
       end
-      (begin g['fragColor'][0] = rt.f32(alive); g['fragColor'][1] = rt.f32(alive); g['fragColor'][2] = rt.f32(alive); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
+      g['fragColor'].replace((packState__float_float.call(alive, age)).map { |c| rt.f32(c) })
       return
     end
     neighbors = 0
@@ -272,7 +279,7 @@ run_pixel = lambda do |ctx, out|
       seedLum = rt.binary('+', rt.binary('+', rt.binary('*', rt.f(0.29899999499320984), rt.swizzle(seedVal, 'r'), 1, 'float'), rt.binary('*', rt.f(0.58700001239776611), rt.swizzle(seedVal, 'g'), 1, 'float'), 1, 'float'), rt.binary('*', rt.f(0.11400000005960464), rt.swizzle(seedVal, 'b'), 1, 'float'), 1, 'float')
       finalAlive = rt.component_wise('mix', finalAlive, seedLum, rt.binary('*', _u_weight, rt.f(0.0099999997764825821), 1, 'float'))
     end
-    (begin g['fragColor'][0] = rt.f32(finalAlive); g['fragColor'][1] = rt.f32(finalAlive); g['fragColor'][2] = rt.f32(finalAlive); g['fragColor'][3] = rt.f32(rt.f(1)); g['fragColor'] end)
+    g['fragColor'].replace((packState__float_float.call(finalAlive, finalAge)).map { |c| rt.f32(c) })
   end
   main__void.call
   c = g['fragColor']

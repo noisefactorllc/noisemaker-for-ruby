@@ -290,7 +290,7 @@
     "synth/subdivide:subdivide": "c4ad631bbdbc1adff613a0a284c122c87f18e043ee8c9556995effd80e404cd2",
     "synth/testPattern:testPattern": "f913300a1312c6630d56fa1cc2faf2cb17fe0643d832473fdec7b66dd373cb20",
     "synth3d/cell3d:precompute": "9ae4b67a3ef3db9030be6cb2b7d9d6283b0faf7d1b10f9c9c4e9d29709ffe912",
-    "synth3d/cellularAutomata3d:simulate": "d5533f317f8ffe545386591fa317750bdca679402d027740b2d2488978575482",
+    "synth3d/cellularAutomata3d:simulate": "d1f88b1bb7eedf31cedd23e59996d54efef8f3eb84bc24a3bed3a1cde0bc2b64",
     "synth3d/flythrough3d:precompute": "2694825664eef632449b197e1bce585f7878c6358a4d5260c72729b015d02a62",
     "synth3d/fractal3d:precompute": "4bc39fb7920cf0829cc6a6fc4670cdac9f5ea68c5438f569050a4732c1e6de19",
     "synth3d/heightmap3d:precompute": "85d3d98f08181500765e54b01153163ac6a18a1db7766e88a32fa7de0628e0dc",
