@@ -43,6 +43,8 @@
 #   arithmetic explicitly numifies through _to_number where Perl's operators
 #   would do so implicitly.
 
+require "set"
+
 require_relative "automation"
 
 module NoisemakerCpu
@@ -368,7 +370,14 @@ module NoisemakerCpu
           if match(";")
             next
           elsif match("let")
-            ast["bindings"] << parse_binding(previous)
+            binding = parse_binding(previous)
+            # Upstream 9cc041d0: statement order matters. A let's planIndex is
+            # the number of chain statements written before it; a chain sees
+            # only the lets declared at or before its own index. (The JS port
+            # stores it non-enumerably so the AST JSON form stays unchanged;
+            # this AST is never serialized, so the key is plain.)
+            binding["planIndex"] = ast["chains"].length
+            ast["bindings"] << binding
           elsif match("render")
             DSL._throw("Program may only declare one render surface", DSL._location(previous)) if ast["render"]
 
@@ -760,6 +769,9 @@ module NoisemakerCpu
     # temporary steps ahead of the consuming effect.
     class Scope < Hash
       attr_accessor :registry, :search, :pending, :inline_count
+      # Names of the program's lets that a later statement declares. Reading one
+      # before its let reports S003, as upstream's validator does.
+      attr_accessor :pending_names
 
       def initialize(registry, search)
         super()
@@ -767,6 +779,7 @@ module NoisemakerCpu
         @search = search
         @pending = nil
         @inline_count = 0
+        @pending_names = nil
       end
 
       def compile_inline_chain(chain)
@@ -787,7 +800,7 @@ module NoisemakerCpu
     # [0,1], nested osc() fields are allowed, and the oscType resolves from an
     # integer 0..6 or an oscKind name (bare or oscKind-qualified). Invalid
     # programs raise a located Error, as everywhere else in this compiler.
-    def self._compile_oscillator(call, bindings, depth)
+    def self._compile_oscillator(call, bindings, depth, resolving = [])
       if depth > MAX_AUTOMATION_DEPTH
         _throw("Automation nesting exceeds the maximum depth of #{MAX_AUTOMATION_DEPTH}", call["loc"])
       end
@@ -805,7 +818,7 @@ module NoisemakerCpu
         end
       end
 
-      raw_type = fields.key?("type") ? _evaluate_value(fields["type"], bindings, depth + 1) : 0
+      raw_type = fields.key?("type") ? _evaluate_value(fields["type"], bindings, depth + 1, resolving) : 0
       osc_type =
         if raw_type.is_a?(Numeric) && raw_type.to_f.finite? && raw_type == raw_type.to_i
           unless raw_type.to_i >= 0 && raw_type.to_i <= 6
@@ -825,7 +838,7 @@ module NoisemakerCpu
       number_field = lambda do |node, name, fallback, clamp|
         return fallback if node.nil?
 
-        value = _evaluate_value(node, bindings, depth + 1)
+        value = _evaluate_value(node, bindings, depth + 1, resolving)
         return fallback if value.equal?(UNSUPPORTED_INPUT)
         return value if Automation.automation_value?(value)
         return 1 if value == true
@@ -891,9 +904,12 @@ module NoisemakerCpu
       end
     end
 
-    def self._evaluate_value(value, bindings, osc_depth = 0)
+    # `resolving` threads the chain of binding names currently being resolved so a
+    # cyclic let set (`let a = b`, `let b = a`) fails instead of looping forever,
+    # as upstream's validator substitution detects the same cycle.
+    def self._evaluate_value(value, bindings, osc_depth = 0, resolving = [])
       # JS's Array branch recurses without the depth argument (mirrored).
-      return value.map { |item| _evaluate_value(item, bindings) } if value.is_a?(Array)
+      return value.map { |item| _evaluate_value(item, bindings, osc_depth, resolving) } if value.is_a?(Array)
       return value unless value.is_a?(Hash)
 
       kind = value["kind"] || ""
@@ -906,7 +922,7 @@ module NoisemakerCpu
           return UNSUPPORTED_INPUT
         end
         if value["name"] == "osc"
-          return _compile_oscillator(value, bindings, osc_depth)
+          return _compile_oscillator(value, bindings, osc_depth, resolving)
         end
         _throw("Unsupported DSL value #{kind} \"#{value['name']}\"", value["loc"])
       when "identifier"
@@ -919,10 +935,23 @@ module NoisemakerCpu
           # An effect alias used as a value stays the effect's bare name.
           return binding["name"] if binding["kind"] == "alias"
 
-          binding["value"]
-        else
-          name
+          # A value binding resolves lazily at its first use. Statement order
+          # (upstream 9cc041d0) makes a chain see only lets declared at or before
+          # its own index, so a name declared by a later let is pending here and
+          # reading it reports S003, as upstream does.
+          return binding["value"] if binding["resolved"]
+
+          if resolving.include?(name)
+            _throw("Automation cycle detected: #{(resolving + [name]).join(' -> ')}", value["loc"])
+          end
+          binding["value"] = _evaluate_value(binding["expr"], bindings, osc_depth, resolving + [name])
+          binding["resolved"] = true
+          return binding["value"]
         end
+        if bindings.respond_to?(:pending_names) && bindings.pending_names&.include?(name)
+          _throw("Variable used before assignment: '#{name}'", value["loc"])
+        end
+        name
       when "Chain"
         return bindings.compile_inline_chain(value) if bindings.respond_to?(:pending) && bindings.pending
 
@@ -931,21 +960,21 @@ module NoisemakerCpu
         # JS's evaluateValue recursion here resets the osc depth (vector,
         # unary and binary operands call evaluateValue without the depth
         # argument); mirror that exactly.
-        components = value["values"].map { |item| _evaluate_value(item, bindings) }
+        components = value["values"].map { |item| _evaluate_value(item, bindings, 0, resolving) }
         width = value["width"]
         if components.length != width || components.any? { |c| !_is_number(c) }
           _throw("vec#{width} requires #{width} numeric values", value["loc"])
         end
         components
       when "unary"
-        operand = _evaluate_value(value["argument"], bindings)
+        operand = _evaluate_value(value["argument"], bindings, 0, resolving)
         _throw("Unary arithmetic requires a number", value["loc"]) unless _is_number(operand)
         # Perl's unary '+' is a passthrough (does not force numeric
         # conversion); only '-' does, via negation. Preserve that asymmetry.
         value["operator"] == "-" ? -_to_number(operand) : operand
       when "binary"
-        left = _evaluate_value(value["left"], bindings)
-        right = _evaluate_value(value["right"], bindings)
+        left = _evaluate_value(value["left"], bindings, 0, resolving)
+        right = _evaluate_value(value["right"], bindings, 0, resolving)
         unless _is_number(left) && _is_number(right)
           _throw("Arithmetic requires numeric values", value["loc"])
         end
@@ -1227,24 +1256,51 @@ module NoisemakerCpu
       _throw("Missing required search directive", ast["loc"]) if ast["search"].empty?
 
       bindings = Scope.new(effects, ast["search"])
-      ast["bindings"].each do |binding|
-        _throw("Duplicate binding \"#{binding['name']}\"", binding["loc"]) if bindings.key?(binding["name"])
-
+      next_binding = 0
+      declare_binding = lambda do |binding|
         value = binding["value"]
         if value.is_a?(Hash) && value["kind"] == "Call" && !VALUE_CALLS.include?(value["name"])
           # A partial keeps its call unresolved. Its arguments resolve where it is
           # called, as upstream's validator substitutes a symbol at each use.
           bindings[binding["name"]] = { "kind" => "partial", "call" => value }
-        elsif (alias_binding = _alias_binding(value, bindings))
-          bindings[binding["name"]] = alias_binding
+        elsif (alias_result = _alias_binding(value, bindings))
+          bindings[binding["name"]] = alias_result
         else
+          # A bare identifier value must name something resolvable now (an
+          # earlier binding, an alias, or an effect), as upstream's declareVar
+          # requires.
+          if value.is_a?(Hash) && value["kind"] == "identifier" && !value["name"].include?(".") &&
+             !bindings.key?(value["name"]) && _resolve_effect(value["name"], bindings.search, bindings.registry).nil?
+            _throw("Variable used before assignment: '#{value['name']}'", value["loc"])
+          end
           bindings[binding["name"]] = {
-            "kind" => "value", "value" => _evaluate_value(value, bindings), "ast" => value,
+            "kind" => "value", "expr" => value, "resolved" => false, "value" => nil,
           }
         end
       end
+      # Statement order (upstream 9cc041d0): a chain sees only the lets declared
+      # at or before its own statement index; a later `let` of the same name
+      # reassigns it for later statements; reading a pending name reports S003.
+      declare_through = lambda do |chain_index|
+        while next_binding < ast["bindings"].length &&
+              (ast["bindings"][next_binding]["planIndex"] || 0) <= chain_index
+          declare_binding.call(ast["bindings"][next_binding])
+          next_binding += 1
+        end
+      end
 
-      chains = ast["chains"].map { |chain| _compile_chain(chain, bindings) }
+      chains = ast["chains"].map.with_index do |chain, chain_index|
+        declare_through.call(chain_index)
+        # pendingNames covers the whole chain compile, including inline chains:
+        # every argument position reports a pending read, as upstream does.
+        bindings.pending_names = ast["bindings"].slice(next_binding..).map { |b| b["name"] }.to_set
+        begin
+          _compile_chain(chain, bindings)
+        ensure
+          bindings.pending_names = nil
+        end
+      end
+      declare_through.call(Float::INFINITY)
 
       last_written = nil
       chains.each do |chain|

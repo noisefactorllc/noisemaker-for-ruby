@@ -108,7 +108,9 @@ GRAMMAR_REJECTED = [
   ["search synth\nnoise(seed: 1, scaleX: Math.E).write(o0)\nrender(o0)\n", /parameter "scaleX"/],
   ["search synth\nnoise(seed: 1, scaleX: Math.PI()).write(o0)\nrender(o0)\n", /Expected "\)"/],
   ["search synth, filter\nsolid(color: #000).text(text: \"\"\"open\n", /Unterminated string/],
-  ["search synth\nlet pattern = wobble\npattern().write(o0)\nrender(o0)\n", /Binding "pattern" is not callable/],
+  # Upstream's validator reports S003 for a bare identifier value that names
+  # nothing resolvable at declaration (no earlier binding, no effect).
+  ["search synth\nlet pattern = wobble\npattern().write(o0)\nrender(o0)\n", /Variable used before assignment: 'wobble'/],
   # An alias used as a value stays the effect's bare name, which is not a
   # number; the port's float coercion rejects it at render time.
   ["search synth\nlet pattern = noise\nnoise(seed: 1, scaleX: pattern).write(o0)\nrender(o0)\n", /parameter "scaleX"/],

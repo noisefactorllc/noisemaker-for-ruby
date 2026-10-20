@@ -667,6 +667,14 @@ module NoisemakerCpu
     # ---- texture ----
 
     def texture(sampler, uv)
+      # A sampler binding that the pass lists no input for reads transparent
+      # black, as upstream's backends bind their default texture for a declared
+      # sampler outside pass.inputs (upstream be8ed4cd). A non-Surface binding
+      # that does exist stays an error.
+      return [0.0, 0.0, 0.0, 0.0].map { |c| f32(c) } if sampler.nil?
+      unless sampler.respond_to?(:data) && sampler.data
+        raise TypeError, "GLSL texture sampler must be a Surface"
+      end
       # Sample at f32 coords -- JS reads the uv from a stored Float32Array
       # (binary defers the round).
       u = f32(uv[0])
@@ -686,6 +694,12 @@ module NoisemakerCpu
     end
 
     def texel_fetch(sampler, coord, lod = nil)
+      # Mirror texture(): an unbound sampler reads transparent black
+      # (upstream be8ed4cd); a non-Surface binding that exists stays an error.
+      return [0.0, 0.0, 0.0, 0.0].map { |c| f32(c) } if sampler.nil?
+      unless sampler.respond_to?(:data) && sampler.data
+        raise TypeError, "GLSL texelFetch sampler must be a Surface"
+      end
       w = sampler.width
       h = sampler.height
       x = _safe_to_i(coord[0])
