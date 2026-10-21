@@ -363,7 +363,11 @@ module NoisemakerCpu
     # ---- literals ----
 
     def f(x) # float literal
-      f32(x)
+      # Literals repeat every agent/voxel iteration; memoize the f32 rounding.
+      # Zero bypasses the cache: 0.0 and -0.0 collide in a Hash (eql?), so
+      # caching them could lose the -0.0 sign.
+      return f32(x) if x == 0
+      (@f_memo ||= {})[x] ||= f32(x)
     end
 
     def i(x) # int literal
@@ -560,11 +564,25 @@ module NoisemakerCpu
       # compiled kernels (deferred rounding until a store), but VECTOR ops
       # go through the runtime's #binary, which F32-rounds each component
       # (out[index] = F32(operation(...))). Only round vector results.
+      # Scalar-scalar fast path: skip closure construction and the
+      # broadcast dispatch for the common hot-kernel case. Semantics are
+      # identical to BINARY_FLOAT_OPS[op] applied to scalars (the lambdas
+      # are pure arithmetic and fdiv), and _bc2 only routes non-Array
+      # scalars straight to fn.call(a, b).
+      if !a.is_a?(Array) && !b.is_a?(Array)
+        case op
+        when "+" then return a + b
+        when "-" then return a - b
+        when "*" then return a * b
+        when "/" then return NoisemakerCpu::UintMath.fdiv(a, b)
+        when "%" then return b == 0 ? NAN : a.remainder(b)
+        end
+      end
       fn = BINARY_FLOAT_OPS[op] or raise "unsupported binary op '#{op}'"
       r = _bc2(fn, a, b)
       return r if !_is_vec(a) && !_is_vec(b)
 
-      r.map { |c| f32(c) }
+      r.pack("e*").unpack("e*")
     end
 
     # The oracle's compiled JS keeps a float-vector arithmetic chain RAW f64
@@ -624,7 +642,7 @@ module NoisemakerCpu
 
       if name == "atan" && args.length == 2 # atan(y, x) -> atan2
         r = _bcn(->(y, x) { Math.atan2(y, x) }, *args)
-        return _is_vec(r) ? r.map { |c| f32(c) } : f32(r)
+        return _is_vec(r) ? r.pack("e*").unpack("e*") : f32(r)
       end
       if (rel = RELATIONAL[name]) # lessThan/equal/... -> bvec
         a, b = args.map { |x| _snap32(x) }
@@ -657,11 +675,23 @@ module NoisemakerCpu
         # ~2^-12 relative precision (hash3's fract(2203.1862...) → wrong
         # hash bit). fract the raw value, then round the RESULT.
         r = _bcn(fn, *args)
-        return _is_vec(r) ? r.map { |c| f32(c) } : f32(r)
+        return _is_vec(r) ? r.pack("e*").unpack("e*") : f32(r)
       end
-      snapped = args.any? { |x| _is_vec(x) } ? args.map { |x| _is_vec(x) ? _snap32(x) : x } : args
-      r = _bcn(fn, *snapped)
-      _is_vec(r) ? r.map { |c| f32(c) } : f32(r)
+      # Single-pass snap: avoid the any? + map double traversal; non-vector
+      # args keep their original objects, vector args are snapped in place on
+      # a shallow copy. Values are identical.
+      snapped = nil
+      i = 0
+      n = args.length
+      while i < n
+        x = args[i]
+        if x.is_a?(Array)
+          (snapped ||= args.dup)[i] = _snap32(x)
+        end
+        i += 1
+      end
+      r = _bcn(fn, *(snapped || args))
+      _is_vec(r) ? r.pack("e*").unpack("e*") : f32(r)
     end
 
     # ---- texture ----
@@ -743,7 +773,7 @@ module NoisemakerCpu
 
     def unpack_half_2x16(u)
       r = NoisemakerCpu::UintMath.unpack_half_2x16(NoisemakerCpu::UintMath.u32(u))
-      r.map { |c| f32(c) }
+      r.pack("e*").unpack("e*")
     end
 
     def to_int(x)
@@ -1096,18 +1126,39 @@ module NoisemakerCpu
     # once on the plain scalars.
     def _bcn(fn, *args)
       w = nil
-      args.each { |a| w = a.length if _is_vec(a) && w.nil? }
+      vec_idx = nil
+      i = 0
+      n = args.length
+      while i < n
+        a = args[i]
+        if a.is_a?(Array)
+          w = a.length if w.nil?
+          (vec_idx ||= []) << i
+        end
+        i += 1
+      end
       return fn.call(*args) if w.nil?
 
       # Reuse one scratch row across component iterations instead of
       # allocating a fresh `args.map` array per component; fn.call consumes
       # the row before it is overwritten. Values are identical.
-      row = Array.new(args.length)
-      vec_mask = args.map { |a| _is_vec(a) }
-      (0...w).map do |idx|
-        args.each_with_index { |a, j| row[j] = vec_mask[j] ? a[idx] : a }
-        fn.call(*row)
+      # Vector positions are precomputed once, so each component iteration
+      # only overwrites the row slots that actually vary.
+      row = args.dup
+      out = Array.new(w)
+      idx = 0
+      while idx < w
+        j = 0
+        n = vec_idx.length
+        while j < n
+          p = vec_idx[j]
+          row[p] = args[p][idx]
+          j += 1
+        end
+        out[idx] = fn.call(*row)
+        idx += 1
       end
+      out
     end
 
     def _int_binary(op, a, b, base)
@@ -1125,6 +1176,22 @@ module NoisemakerCpu
         # << >> apply ToInt32 (signed). Uint wraps happen only at explicit
         # uint() casts / uint-typed stores (spookyTicker's hash_mix relies
         # on the unwrapped f64 product feeding ToInt32 shifts).
+        # Scalar-scalar fast path: identical to the js lambda below, without
+        # the per-call closure allocation and broadcast dispatch.
+        if !a.is_a?(Array) && !b.is_a?(Array)
+          x = a.nil? ? 0 : a
+          y = b.nil? ? 0 : b
+          case op
+          when "+" then return x + y
+          when "-" then return x - y
+          when "*" then return x * y
+          when "&" then return _s32(_s32(x) & _s32(y))
+          when "|" then return _s32(_s32(x) | _s32(y))
+          when "^" then return _s32(_s32(x) ^ _s32(y))
+          when "<<" then return _s32(_s32(x) << (_s32(y) & 31))
+          else return _s32(_s32(x) >> (_s32(y) & 31))
+          end
+        end
         js = lambda do |x, y|
           x = 0 if x.nil?
           y = 0 if y.nil?
@@ -1143,6 +1210,19 @@ module NoisemakerCpu
         return _is_vec(a) || _is_vec(b) ? IVec.new(r) : r
       end
       if (base == "int" || base == "uint") && (op == "/" || op == "%")
+        # Scalar-scalar fast path: identical to the js lambdas below.
+        if !a.is_a?(Array) && !b.is_a?(Array)
+          x = a.nil? ? 0 : a
+          y = b.nil? ? 0 : b
+          if op == "/"
+            return x.fdiv(y) unless y.zero?
+            return Float::NAN if x.zero? || x.nan?
+            return x.positive? ? Float::INFINITY : -Float::INFINITY
+          else
+            return Float::NAN if y.zero?
+            return x - x.fdiv(y).truncate * y
+          end
+        end
         js = if op == "/"
                ->(x, y) do
                  x = 0 if x.nil?
@@ -1165,6 +1245,12 @@ module NoisemakerCpu
       # JS + - * on int-typed values also run in f64 (e.g. spookyTicker's
       # `localX = sx - cellX * CELL_W` keeps cellX fractional).
       if base == "int" && %w[+ - *].include?(op)
+        # Scalar-scalar fast path: identical to the js lambda below.
+        if !a.is_a?(Array) && !b.is_a?(Array)
+          x = a.nil? ? 0 : a
+          y = b.nil? ? 0 : b
+          return op == "+" ? x + y : (op == "-" ? x - y : x * y)
+        end
         js = ->(x, y) do
           x = 0 if x.nil?
           y = 0 if y.nil?

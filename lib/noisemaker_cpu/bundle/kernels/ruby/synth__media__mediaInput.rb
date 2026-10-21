@@ -8,6 +8,8 @@ run_pixel = lambda do |ctx, out|
   _u_imageTex = ctx.texture_binding('imageTex')
   _u_imageSize = u.key?('imageSize') ? u['imageSize'] : rt.construct(2, 0.0)
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
+  _u_tileOffset = u.key?('tileOffset') ? u['tileOffset'] : rt.construct(2, 0.0)
+  _u_fullResolution = u.key?('fullResolution') ? u['fullResolution'] : rt.construct(2, 0.0)
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
   _u_position = u.key?('position') ? u['position'] : 0
   _u_rotation = u.key?('rotation') ? u['rotation'] : rt.f(0.0)
@@ -73,45 +75,51 @@ run_pixel = lambda do |ctx, out|
     st = rt.copy(st, 'float')
     __sc1 = nil; scale = nil; size = nil; text = nil
     size = rt.copy(_u_imageSize, 'float')
-    st.replace((rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), size, 2, 'float')).map { |c| rt.f32(c) })
+    if rt.bool((rt.bool(rt.binary('==', rt.swizzle(_u_tileOffset, 'x'), rt.f(0))) && rt.bool(rt.binary('==', rt.swizzle(_u_tileOffset, 'y'), rt.f(0))) ? 1 : 0))
+      st.replace((rt.binary_raw('/', rt.swizzle(ctx.frag_coord, 'xy'), size, 2, 'float')).map { |c| rt.f32(c) })
+    else
+      st.replace((rt.binary_raw('/', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), size, 2, 'float')).map { |c| rt.f32(c) })
+    end
     st = rt.assign_swizzle(st, 'y', rt.binary('-', rt.f(1), rt.swizzle(st, 'y'), 1, 'float'))
     scale = rt.fdiv(rt.f(100), _u_scaleAmt)
     if rt.bool(rt.binary('==', scale, rt.f(0)))
       scale = rt.f(1)
     end
     __sc1 = scale; st[0] = rt.f32(rt.binary('*', st[0], __sc1, 1, 'float')); st[1] = rt.f32(rt.binary('*', st[1], __sc1, 1, 'float'))
-    if rt.bool(rt.binary('==', _u_position, rt.i(0)))
-      st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
-    else
-      if rt.bool(rt.binary('==', _u_position, rt.i(1)))
-        st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
-        st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+    if rt.bool((rt.bool(rt.binary('>', rt.swizzle(_u_fullResolution, 'x'), rt.f(0))) && rt.bool((rt.bool(rt.binary('!=', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(_u_resolution, 'x'))) || rt.bool(rt.binary('!=', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(_u_resolution, 'y'))) ? 1 : 0)) ? 1 : 0))
+      if rt.bool(rt.binary('==', _u_position, rt.i(0)))
+        st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
       else
-        if rt.bool(rt.binary('==', _u_position, rt.i(2)))
-          st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('-', rt.f(1), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
-          st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+        if rt.bool(rt.binary('==', _u_position, rt.i(1)))
+          st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+          st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
         else
-          if rt.bool(rt.binary('==', _u_position, rt.i(3)))
-            st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('+', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), scale, 1, 'float'), 1, 'float'))
+          if rt.bool(rt.binary('==', _u_position, rt.i(2)))
+            st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('-', rt.f(1), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+            st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
           else
-            if rt.bool(rt.binary('==', _u_position, rt.i(4)))
-              st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
-              st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('+', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), scale, 1, 'float'), 1, 'float'))
+            if rt.bool(rt.binary('==', _u_position, rt.i(3)))
+              st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('+', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), scale, 1, 'float'), 1, 'float'))
             else
-              if rt.bool(rt.binary('==', _u_position, rt.i(5)))
-                st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('-', rt.f(1), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
-                st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('+', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), scale, 1, 'float'), 1, 'float'))
+              if rt.bool(rt.binary('==', _u_position, rt.i(4)))
+                st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('+', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), scale, 1, 'float'), 1, 'float'))
               else
-                if rt.bool(rt.binary('==', _u_position, rt.i(6)))
-                  st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.f(1), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                if rt.bool(rt.binary('==', _u_position, rt.i(5)))
+                  st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('-', rt.f(1), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                  st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('+', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), scale, 1, 'float'), 1, 'float'))
                 else
-                  if rt.bool(rt.binary('==', _u_position, rt.i(7)))
-                    st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                  if rt.bool(rt.binary('==', _u_position, rt.i(6)))
                     st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.f(1), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
                   else
-                    if rt.bool(rt.binary('==', _u_position, rt.i(8)))
-                      st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('-', rt.f(1), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                    if rt.bool(rt.binary('==', _u_position, rt.i(7)))
+                      st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
                       st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.f(1), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                    else
+                      if rt.bool(rt.binary('==', _u_position, rt.i(8)))
+                        st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('-', rt.f(1), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                        st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.f(1), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                      end
                     end
                   end
                 end
@@ -120,9 +128,53 @@ run_pixel = lambda do |ctx, out|
           end
         end
       end
+      st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('*', map__float_float_float_float_float.call(_u_offsetX, rt.unary('-', rt.f(100)), rt.f(100), rt.binary('*', rt.binary('/', rt.unary('-', rt.swizzle(_u_fullResolution, 'x')), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float')), rt.f(1.5), 1, 'float'), 1, 'float'))
+      st = rt.assign_swizzle(st, 'y', rt.binary_raw('-', rt.swizzle(st, 'y'), rt.binary('*', map__float_float_float_float_float.call(_u_offsetY, rt.unary('-', rt.f(100)), rt.f(100), rt.binary('*', rt.binary('/', rt.unary('-', rt.swizzle(_u_fullResolution, 'y')), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('*', rt.binary('/', rt.swizzle(_u_fullResolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float')), rt.f(1.5), 1, 'float'), 1, 'float'))
+    else
+      if rt.bool(rt.binary('==', _u_position, rt.i(0)))
+        st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+      else
+        if rt.bool(rt.binary('==', _u_position, rt.i(1)))
+          st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+          st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+        else
+          if rt.bool(rt.binary('==', _u_position, rt.i(2)))
+            st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('-', rt.f(1), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+            st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+          else
+            if rt.bool(rt.binary('==', _u_position, rt.i(3)))
+              st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('+', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), scale, 1, 'float'), 1, 'float'))
+            else
+              if rt.bool(rt.binary('==', _u_position, rt.i(4)))
+                st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('+', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), scale, 1, 'float'), 1, 'float'))
+              else
+                if rt.bool(rt.binary('==', _u_position, rt.i(5)))
+                  st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('-', rt.f(1), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                  st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.binary('+', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), scale, 1, 'float'), 1, 'float'))
+                else
+                  if rt.bool(rt.binary('==', _u_position, rt.i(6)))
+                    st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.f(1), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                  else
+                    if rt.bool(rt.binary('==', _u_position, rt.i(7)))
+                      st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.f(0.5), 1, 'float'), rt.binary('-', rt.f(0.5), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                      st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.f(1), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                    else
+                      if rt.bool(rt.binary('==', _u_position, rt.i(8)))
+                        st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('-', rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('-', rt.f(1), rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                        st = rt.assign_swizzle(st, 'y', rt.binary_raw('+', rt.swizzle(st, 'y'), rt.binary('-', rt.f(1), rt.binary('-', scale, rt.binary('*', rt.binary('/', rt.f(1), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), 1, 'float'), 1, 'float'), 1, 'float'))
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+      st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('*', map__float_float_float_float_float.call(_u_offsetX, rt.unary('-', rt.f(100)), rt.f(100), rt.binary('*', rt.binary('/', rt.unary('-', rt.swizzle(_u_resolution, 'x')), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float')), rt.f(1.5), 1, 'float'), 1, 'float'))
+      st = rt.assign_swizzle(st, 'y', rt.binary_raw('-', rt.swizzle(st, 'y'), rt.binary('*', map__float_float_float_float_float.call(_u_offsetY, rt.unary('-', rt.f(100)), rt.f(100), rt.binary('*', rt.binary('/', rt.unary('-', rt.swizzle(_u_resolution, 'y')), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float')), rt.f(1.5), 1, 'float'), 1, 'float'))
     end
-    st = rt.assign_swizzle(st, 'x', rt.binary_raw('-', rt.swizzle(st, 'x'), rt.binary('*', map__float_float_float_float_float.call(_u_offsetX, rt.unary('-', rt.f(100)), rt.f(100), rt.binary('*', rt.binary('/', rt.unary('-', rt.swizzle(_u_resolution, 'x')), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float'), rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'x'), rt.swizzle(size, 'x'), 1, 'float'), scale, 1, 'float')), rt.f(1.5), 1, 'float'), 1, 'float'))
-    st = rt.assign_swizzle(st, 'y', rt.binary_raw('-', rt.swizzle(st, 'y'), rt.binary('*', map__float_float_float_float_float.call(_u_offsetY, rt.unary('-', rt.f(100)), rt.f(100), rt.binary('*', rt.binary('/', rt.unary('-', rt.swizzle(_u_resolution, 'y')), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float'), rt.binary('*', rt.binary('/', rt.swizzle(_u_resolution, 'y'), rt.swizzle(size, 'y'), 1, 'float'), scale, 1, 'float')), rt.f(1.5), 1, 'float'), 1, 'float'))
     st = rt.assign_swizzle(st, 'x', rt.binary_raw('*', rt.swizzle(st, 'x'), rt.binary('/', rt.swizzle(size, 'x'), rt.swizzle(size, 'y'), 1, 'float'), 1, 'float'))
     if rt.bool(rt.binary('!=', _u_rotation, rt.f(0)))
       st.replace((rotate2D__vec2_float.call(st, _u_rotation)).map { |c| rt.f32(c) })

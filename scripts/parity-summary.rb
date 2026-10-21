@@ -68,16 +68,24 @@ def provision_oracle
   return nil unless base
 
   dir = File.join(base, "noisemaker-for-cpu")
+  url = lock.fetch("repository")
   unless File.directory?(File.join(dir, ".git"))
-    url = lock.fetch("repository")
     warn "scripts/parity-summary: provisioning the pinned oracle #{revision[0, 12]} from #{url}"
-    return nil unless system("git", "clone", "--quiet", "--filter=blob:none", url, dir,
-                             out: File::NULL, err: File::NULL)
+    # Shallow single-revision fetch: the gate only renders this pinned commit,
+    # so bounded wall time must not pay for the repository's full history.
+    ok = system("git", "init", "--quiet", dir, out: File::NULL, err: File::NULL) &&
+         system("git", "-C", dir, "fetch", "--quiet", "--depth", "1", url, revision,
+                out: File::NULL, err: File::NULL)
+    unless ok
+      FileUtils.rm_rf(dir)
+      return nil unless system("git", "clone", "--quiet", "--filter=blob:none", url, dir,
+                               out: File::NULL, err: File::NULL)
+    end
   end
-  have = system("git", "-C", dir, "cat-file", "-e", "--quiet", "#{revision}^{commit}",
+  have = system("git", "-C", dir, "cat-file", "-e", "#{revision}^{commit}",
                 out: File::NULL, err: File::NULL)
   unless have
-    return nil unless system("git", "-C", dir, "fetch", "--quiet", "origin", revision,
+    return nil unless system("git", "-C", dir, "fetch", "--quiet", "--depth", "1", url, revision,
                              out: File::NULL, err: File::NULL)
   end
   return nil unless system("git", "-C", dir, "checkout", "--quiet", "--detach", revision,
@@ -128,25 +136,78 @@ end
 
 def run_gate(ids)
   out, _err, status = Open3.capture3(
-    RbConfig.ruby, File.expand_path("parity.rb", __dir__), "--only", ids.join(",")
+    RbConfig.ruby, "--yjit", File.expand_path("parity.rb", __dir__), "--only", ids.join(",")
   )
   [out, status.success?]
 end
 
-out, =
-  if executable_ids.empty?
-    ["", true]
-  else
-    run_gate(executable_ids)
-  end
-line = out[/^=== PARITY: (\d+)\/(\d+) pass \(byte-exact\)  \|  (\d+) diff  \|  (\d+) runtime-error  \|  (\d+) oracle-error ===$/, 0]
-abort "parity-summary: could not parse scripts/parity.rb output\n#{out}" unless line
-
-m = line.match(/^=== PARITY: (\d+)\/(\d+) pass \(byte-exact\)  \|  (\d+) diff  \|  (\d+) runtime-error  \|  (\d+) oracle-error ===$/)
-passed, _requested, diff_count, error_count, oracle_count = m.captures.map(&:to_i)
-
 verdicts = {}
-if diff_count.zero? && error_count.zero? && oracle_count.zero?
+if args.empty? && executable_ids.length > 1 &&
+   (shard_n = (ENV["NM_EFF_CORES"]&.to_i || Etc.nprocessors) + 2) > 1
+  # Bounded wall time: the whole-port run is a single test invocation, so it
+  # executes as concurrent workers that each claim the next dynamic batch of
+  # case ids and run this same entrypoint on it (the child takes the serial
+  # path for one batch). Dynamic batches keep the wall near total_work divided
+  # by workers instead of letting a slow static shard gate the whole run.
+  # Every case is still rendered and compared; per-case verdicts and summary
+  # counts are merged here into the same contract output.
+  batch_n = 30
+  next_batch = 0
+  merge = Mutex.new
+  totals = Hash.new(0)
+  shard_err = nil
+  workers = Array.new(shard_n) do
+    Thread.new do
+      loop do
+        group = merge.synchronize do
+          # Measured costs (bounded per-case probe): these cases each render in
+          # 90s or more, so each gets its own batch instead of sharing one with
+          # fast cases; coverage is unchanged, only the claim size differs.
+          slow_one = /\A(?:filter3d\/flow3d|render\/render(?:3d|Lit3d|Landscape3d|Cubemap3d|CubemapSurface)|points\/life)\z/.match?(executable_ids[next_batch].to_s)
+          group = executable_ids[next_batch, slow_one ? 1 : batch_n]
+          next_batch += slow_one ? 1 : batch_n
+          group
+        end
+        break if group.nil? || group.empty?
+        begin
+          out, _err, status = Open3.capture3(
+            RbConfig.ruby, "--yjit", File.expand_path("parity-summary.rb", __dir__), *group
+          )
+          summary = out[/^PARITY-SUMMARY (\{.*\})$/, 1]
+          raise "parity batch exited #{status.exitstatus} without PARITY-SUMMARY:\n#{out}" unless summary && status.success?
+          merge.synchronize do
+            JSON.parse(summary).each { |key, value| totals[key] += value.to_i }
+            out.each_line do |entry|
+              next unless entry =~ /\A(EXACT|STRICT|FAIL|SKIP|MISSING|NEAR|DEFER) (\S+)/
+              verdicts[Regexp.last_match(2)] = Regexp.last_match(1)
+            end
+          end
+        rescue => shard_error
+          merge.synchronize { shard_err ||= shard_error.message }
+          break
+        end
+      end
+    end
+  end
+  workers.each(&:join)
+  abort "parity-summary: parity worker failed:\n#{shard_err}" if shard_err
+  exact = totals["exact"]
+  fail_count = totals["fail"]
+  defer_count = totals["defer"]
+else
+  out, =
+    if executable_ids.empty?
+      ["", true]
+    else
+      run_gate(executable_ids)
+    end
+  line = out[/^=== PARITY: (\d+)\/(\d+) pass \(byte-exact\)  \|  (\d+) diff  \|  (\d+) runtime-error  \|  (\d+) oracle-error ===$/, 0]
+  abort "parity-summary: could not parse scripts/parity.rb output\n#{out}" unless line
+
+  m = line.match(/^=== PARITY: (\d+)\/(\d+) pass \(byte-exact\)  \|  (\d+) diff  \|  (\d+) runtime-error  \|  (\d+) oracle-error ===$/)
+  passed, _requested, diff_count, error_count, oracle_count = m.captures.map(&:to_i)
+
+  if diff_count.zero? && error_count.zero? && oracle_count.zero?
   exact = passed
   fail_count = 0
   defer_count = 0
@@ -169,6 +230,7 @@ else
       verdicts[cid] = "FAIL"
     end
   end
+end
 end
 
 # Per-case verdict lines, the same shapes the CPU port's summary prints so a

@@ -76,13 +76,26 @@ class TestDslFloatChoices < Minitest::Test
   end
 
   def test_each_float_choice_name_renders_the_same_rgba_bytes_as_its_number
-    FLOAT_CHOICE_EFFECTS.each do |id|
+    # Bounded wall time: this loop is the suite's slowest unit, so it can be
+    # executed as concurrent file shards (NOISEMAKER_TEST_FILE_SHARD=i/n).
+    # Every effect still runs exactly once across the shards; the default
+    # (unset) covers all of them in one invocation.
+    ids = FLOAT_CHOICE_EFFECTS
+    pairs = ids.flat_map do |id|
       name, spec = rotation_param(id)
-      spec["choices"].each do |choice_name, number|
-        by_name = "#{program_prefix(id)}(#{name}: #{choice_name})#{program_suffix(id)}"
-        by_number = "#{program_prefix(id)}(#{name}: #{number})#{program_suffix(id)}"
-        assert_equal render_bytes(by_number), render_bytes(by_name), "#{id} #{name}: #{choice_name}"
-      end
+      spec["choices"].map { |choice_name, number| [id, name, choice_name, number] }
+    end
+    if (shard = ENV["NOISEMAKER_TEST_FILE_SHARD"])
+      index, total = shard.split("/").map(&:to_i)
+      # Round-robin over (effect, choice) pairs instead of slicing the effect
+      # list: one 3D palette effect's three heavy choices would otherwise
+      # all land in one contiguous shard and gate the whole suite phase.
+      pairs = pairs.each_with_index.select { |_p, i| i % total == index }.map(&:first)
+    end
+    pairs.each do |id, name, choice_name, number|
+      by_name = "#{program_prefix(id)}(#{name}: #{choice_name})#{program_suffix(id)}"
+      by_number = "#{program_prefix(id)}(#{name}: #{number})#{program_suffix(id)}"
+      assert_equal render_bytes(by_number), render_bytes(by_name), "#{id} #{name}: #{choice_name}"
     end
   end
 

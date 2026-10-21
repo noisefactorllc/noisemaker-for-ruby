@@ -50,6 +50,42 @@ ext_tex = nil
 # qualifies the same cases with nondefault parameters.
 require_relative "reactive_fixtures"
 
+require "digest"
+require "fileutils"
+
+# The pinned oracle renders deterministically at its locked revision, so its
+# per-case goldens are cached outside the repo, keyed by the oracle revision
+# and a digest of every render input. A cache hit must be byte-identical to
+# a fresh render by construction; the port side is always rendered fresh and
+# compared byte-exact against it.
+def trace(line)
+  return unless (t = ENV["NM_PARITY_TRACE"])
+  File.write(t, "#{line}\n", mode: "a")
+end
+
+golden_info = nil
+golden_path = lambda do |digest|
+  unless golden_info
+    rev = IO.popen(["git", "-C", cpu_dir, "rev-parse", "HEAD"], &:read).to_s.strip
+    base = ENV["NOISEMAKER_PARITY_CACHE"] || "/tmp/noisemaker-parity-cache"
+    golden_info = rev.empty? ? false : File.join(base, "goldens", rev)
+  end
+  return nil unless golden_info
+  
+  File.join(golden_info, digest)
+end
+golden_save = lambda do |path, bytes|
+  next unless path
+  begin
+    FileUtils.mkdir_p(File.dirname(path))
+    golden_tmp = "#{path}.tmp#{$$}"
+    File.binwrite(golden_tmp, bytes)
+    File.rename(golden_tmp, path)
+  rescue SystemCallError
+    nil
+  end
+end
+
 # Deterministic non-uniform 8-bit texture for external-texture effects
 # (text/media) -- a solid would hide texture-orientation/sampling divergence.
 ext_texture = lambda do
@@ -78,12 +114,28 @@ js_effect = lambda do |effect_id, out, input_png, params|
            "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s]
     # The module finds the oracle only through NOISEMAKER_CPU_DIR; pass the
     # checkout located above, which may be the default sibling path.
+    gpath = golden_path.call(Digest::SHA256.hexdigest("ext\0#{effect_id}\0#{size}\0#{seed}\0#{render_time}\0#{external_source}"))
+    trace("golden-ext #{effect_id} #{gpath ? (File.file?(gpath) ? 'HIT' : 'miss') : 'off'}")
+    if gpath && File.file?(gpath)
+      return NoisemakerCpu::PNG.decode_png(File.binread(gpath))
+    end
     _stdout, stderr, status = Open3.capture3({ "NOISEMAKER_CPU_DIR" => cpu_dir }, *cmd, stdin_data: external_source)
     raise "oracle failed: #{stderr}" unless status.success?
 
-    return NoisemakerCpu::PNG.decode_png(File.binread(out))
+    ext_bytes = File.binread(out)
+    golden_save.call(gpath, ext_bytes)
+    return NoisemakerCpu::PNG.decode_png(ext_bytes)
   end
   program = NoisemakerOracle.particle_program(NoisemakerCpu::Renderer.meta["effects"].fetch(effect_id), params)
+  gpath = golden_path.call(Digest::SHA256.hexdigest(Marshal.dump(
+    ["fx", effect_id, size, seed, render_time, (params || {}).sort, program,
+     input_png && File.binread(input_png)]
+  )))
+  if gpath && File.file?(gpath)
+    trace("golden-hit #{effect_id}")
+    return NoisemakerCpu::PNG.decode_png(File.binread(gpath))
+  end
+  trace("golden-miss #{effect_id}")
   cmd = ["node", cli, "effect", effect_id,
          "--width", size.to_s, "--height", size.to_s, "--seed", seed.to_s, "--time", render_time.to_s,
          "--output", out]
@@ -102,6 +154,7 @@ js_effect = lambda do |effect_id, out, input_png, params|
     rescue SystemCallError
       raise "oracle wrote nothing\n"
     end
+  golden_save.call(gpath, bytes)
   NoisemakerCpu::PNG.decode_png(bytes)
 end
 
