@@ -265,8 +265,9 @@ while [ "$group" -lt "$shard_n" ]; do
   group=$((group + 1))
 done
 ran_splits=0
-case " $suite_files " in
-  *" test_dsl_float_choices.rb "*)
+# suite_files is newline-separated, so a space-delimited case pattern would
+# never match an entry among several files; grep the exact relative path.
+if printf '%s\n' $suite_files | grep -q '^test/test_dsl_float_choices.rb$'; then
     ran_splits=1
     # The float-choices file's render loop is the slowest single unit; it runs
     # as concurrent file shards of its own (same cases; each shard covers a
@@ -282,8 +283,7 @@ case " $suite_files " in
       ) &
       split_i=$((split_i + 1))
     done
-  ;;
-esac
+fi
 wait || true
 group=0
 suite_ok=1
