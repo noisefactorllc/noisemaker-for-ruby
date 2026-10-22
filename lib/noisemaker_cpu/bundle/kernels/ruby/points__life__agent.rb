@@ -18,12 +18,14 @@ run_pixel = lambda do |ctx, out|
   _u_matrixSeed = u.key?('matrixSeed') ? u['matrixSeed'] : rt.f(0.0)
   _u_symmetricForces = u.key?('symmetricForces') ? u['symmetricForces'] : 0
   _u_useTypeColor = u.key?('useTypeColor') ? u['useTypeColor'] : 0
+  _u_diffuseActive = u.key?('diffuseActive') ? u['diffuseActive'] : rt.f(0.0)
   _u_xyzTex = ctx.texture_binding('xyzTex')
   _u_velTex = ctx.texture_binding('velTex')
   _u_rgbaTex = ctx.texture_binding('rgbaTex')
   _u_dataTex = ctx.texture_binding('dataTex')
   _u_forceMatrix = ctx.texture_binding('forceMatrix')
   _u_inputTex = ctx.texture_binding('inputTex')
+  _u_diffuseTex = ctx.texture_binding('diffuseTex')
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
@@ -264,10 +266,14 @@ run_pixel = lambda do |ctx, out|
     age = rt.binary('+', age, rt.f(0.016000000759959221), 1, 'float')
     g['outXYZ'].replace((rt.construct(4, pos, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
     g['outVel'].replace((rt.construct(4, velocity, age, seed)).map { |c| rt.f32(c) })
-    if rt.bool(_u_useTypeColor)
-      g['outRGBA'].replace((rt.construct(4, typeColor__int_int.call(rt.construct(1, typeId, 'int'), _u_typeCount), rt.f(1))).map { |c| rt.f32(c) })
+    if rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5)))
+      g['outRGBA'].replace((rt.texture(_u_diffuseTex, pos)).map { |c| rt.f32(c) })
     else
-      g['outRGBA'].replace((rt.texture(_u_inputTex, pos)).map { |c| rt.f32(c) })
+      if rt.bool(_u_useTypeColor)
+        g['outRGBA'].replace((rt.construct(4, typeColor__int_int.call(rt.construct(1, typeId, 'int'), _u_typeCount), rt.f(1))).map { |c| rt.f32(c) })
+      else
+        g['outRGBA'].replace((rt.texture(_u_inputTex, pos)).map { |c| rt.f32(c) })
+      end
     end
     (begin g['outData'][0] = rt.f32(typeId); g['outData'][1] = rt.f32(mass); g['outData'][2] = rt.f32(rt.f(0)); g['outData'][3] = rt.f32(rt.f(1)); g['outData'] end)
   end

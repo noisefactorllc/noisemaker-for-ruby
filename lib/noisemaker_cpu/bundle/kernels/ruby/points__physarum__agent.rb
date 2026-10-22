@@ -3,12 +3,13 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint_lcg__uint = hash__uint = hash_f__float = wrapPosition__vec2 = luminance__vec3 = sampleTrail__vec2 = sampleExternalField__vec2_float = main__void = nil
+  selectedDiffuse__vec2 = hash_uint_lcg__uint = hash__uint = hash_f__float = wrapPosition__vec2 = luminance__vec3 = sampleTrail__vec2 = sampleExternalField__vec2_float = main__void = nil
   _retc = nil
   _u_xyzTex = ctx.texture_binding('xyzTex')
   _u_velTex = ctx.texture_binding('velTex')
   _u_rgbaTex = ctx.texture_binding('rgbaTex')
   _u_trailTex = ctx.texture_binding('trailTex')
+  _u_fieldTex = ctx.texture_binding('fieldTex')
   _u_inputTex = ctx.texture_binding('inputTex')
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
@@ -17,10 +18,20 @@ run_pixel = lambda do |ctx, out|
   _u_sensorAngle = u.key?('sensorAngle') ? u['sensorAngle'] : rt.f(0.0)
   _u_sensorDistance = u.key?('sensorDistance') ? u['sensorDistance'] : rt.f(0.0)
   _u_inputWeight = u.key?('inputWeight') ? u['inputWeight'] : rt.f(0.0)
+  _u_fieldActive = u.key?('fieldActive') ? u['fieldActive'] : rt.f(0.0)
+  _u_diffuseTex = ctx.texture_binding('diffuseTex')
+  _u_diffuseActive = u.key?('diffuseActive') ? u['diffuseActive'] : rt.f(0.0)
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
   g['TAU'] = rt.f(6.2831854820251465)
+  selectedDiffuse__vec2 = lambda do |uv|
+    uv = rt.copy(uv, 'float')
+    pixel = nil; size = nil
+    size = rt.texture_size(_u_diffuseTex)
+    pixel = rt.component_wise('clamp', rt.construct(2, rt.construct(2, rt.construct(2, rt.binary('*', rt.component_wise('clamp', uv, rt.construct(2, rt.f(0)), rt.construct(2, rt.f(0.99999898672103882))), rt.construct(2, size), 2, 'float'))), 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int'))
+    return rt.texel_fetch(_u_diffuseTex, pixel, rt.i(0))
+  end
   hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
@@ -47,15 +58,16 @@ run_pixel = lambda do |ctx, out|
   end
   sampleExternalField__vec2_float = lambda do |uv, weight|
     uv = rt.copy(uv, 'float')
-    blend = nil
+    blend = nil; field = nil
     if rt.bool(rt.binary('<=', weight, rt.f(0)))
       return rt.f(0)
     end
     blend = rt.component_wise('clamp', rt.binary('*', weight, rt.f(0.0099999997764825821), 1, 'float'), rt.f(0), rt.f(1))
-    return rt.binary('*', rt.binary('*', luminance__vec3.call(rt.swizzle(rt.texture(_u_inputTex, uv), 'rgb')), blend, 1, 'float'), rt.f(0.05000000074505806), 1, 'float')
+    field = rt.construct(3, (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.swizzle(rt.texture(_u_fieldTex, uv), 'rgb')) : (rt.swizzle(rt.texture(_u_inputTex, uv), 'rgb'))))
+    return rt.binary('*', rt.binary('*', luminance__vec3.call(field), blend, 1, 'float'), rt.f(0.05000000074505806), 1, 'float')
   end
   main__void = lambda do
-    age = nil; alive = nil; blend = nil; coord = nil; forwardDir = nil; heading = nil; leftDir = nil; localInput = nil; moveDir = nil; newAge = nil; newHeading = nil; newPos = nil; normalizedSpeed = nil; pos = nil; rgba = nil; rightDir = nil; seed = nil; sensorPosF = nil; sensorPosL = nil; sensorPosR = nil; speedScale = nil; stateSize = nil; valF = nil; valL = nil; valR = nil; vel = nil; xyz = nil
+    age = nil; alive = nil; blend = nil; coord = nil; field = nil; forwardDir = nil; heading = nil; leftDir = nil; localInput = nil; moveDir = nil; newAge = nil; newHeading = nil; newPos = nil; normalizedSpeed = nil; pos = nil; rgba = nil; rightDir = nil; seed = nil; sensorPosF = nil; sensorPosL = nil; sensorPosR = nil; speedScale = nil; stateSize = nil; valF = nil; valL = nil; valR = nil; vel = nil; xyz = nil
     stateSize = rt.texture_size(_u_xyzTex)
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     xyz = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
@@ -99,9 +111,11 @@ run_pixel = lambda do |ctx, out|
     moveDir = rt.construct(2, rt.component_wise('cos', newHeading), rt.component_wise('sin', newHeading))
     speedScale = rt.f(1)
     blend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.0099999997764825821), 1, 'float'), rt.f(0), rt.f(1))
+    field = rt.construct(3, 0.0)
     localInput = rt.f(0.0)
     if rt.bool(rt.binary('>', blend, rt.f(0)))
-      localInput = luminance__vec3.call(rt.swizzle(rt.texture(_u_inputTex, pos), 'rgb'))
+      field = rt.construct(3, (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.swizzle(rt.texture(_u_fieldTex, pos), 'rgb')) : (rt.swizzle(rt.texture(_u_inputTex, pos), 'rgb'))))
+      localInput = luminance__vec3.call(field)
       speedScale = rt.component_wise('mix', rt.f(1), rt.component_wise('mix', rt.f(1.7999999523162842), rt.f(0.34999999403953552), localInput), blend)
     end
     normalizedSpeed = rt.binary('*', rt.binary('*', _u_moveSpeed, rt.f(0.0010000000474974513), 1, 'float'), speedScale, 1, 'float')
@@ -109,7 +123,7 @@ run_pixel = lambda do |ctx, out|
     newAge = rt.binary('+', age, rt.f(0.016000000759959221), 1, 'float')
     g['outXYZ'].replace((rt.construct(4, newPos, newHeading, rt.f(1))).map { |c| rt.f32(c) })
     (begin g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(newAge); g['outVel'][3] = rt.f32(seed); g['outVel'] end)
-    g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
+    g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(rt.swizzle(g['outXYZ'], 'xy'))) : (rgba))).map { |c| rt.f32(c) })
   end
   main__void.call
   c0 = g['outXYZ']

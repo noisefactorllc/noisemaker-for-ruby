@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint_lcg__uint = hash__uint = srgb_to_linear__float = cube_root__float = oklab_l__vec3 = normalized_sine__float = computeRotationBias__int_float_float_float_int_int = main__void = nil
+  selectedDiffuse__vec2 = hash_uint_lcg__uint = hash__uint = srgb_to_linear__float = cube_root__float = oklab_l__vec3 = normalized_sine__float = computeRotationBias__int_float_float_float_int_int = main__void = nil
   _retc = nil
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
@@ -12,16 +12,27 @@ run_pixel = lambda do |ctx, out|
   _u_kink = u.key?('kink') ? u['kink'] : rt.f(0.0)
   _u_quantize = u.key?('quantize') ? u['quantize'] : rt.f(0.0)
   _u_inputWeight = u.key?('inputWeight') ? u['inputWeight'] : rt.f(0.0)
+  _u_fieldActive = u.key?('fieldActive') ? u['fieldActive'] : rt.f(0.0)
   _u_behavior = u.key?('behavior') ? u['behavior'] : rt.f(0.0)
+  _u_fieldTex = ctx.texture_binding('fieldTex')
   _u_inputTex = ctx.texture_binding('inputTex')
   _u_xyzTex = ctx.texture_binding('xyzTex')
   _u_velTex = ctx.texture_binding('velTex')
   _u_rgbaTex = ctx.texture_binding('rgbaTex')
+  _u_diffuseTex = ctx.texture_binding('diffuseTex')
+  _u_diffuseActive = u.key?('diffuseActive') ? u['diffuseActive'] : rt.f(0.0)
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
   g['TAU'] = rt.f(6.2831854820251465)
   g['RIGHT_ANGLE'] = rt.f(1.5707963705062866)
+  selectedDiffuse__vec2 = lambda do |uv|
+    uv = rt.copy(uv, 'float')
+    pixel = nil; size = nil
+    size = rt.texture_size(_u_diffuseTex)
+    pixel = rt.component_wise('clamp', rt.construct(2, rt.construct(2, rt.construct(2, rt.binary('*', rt.component_wise('clamp', uv, rt.construct(2, rt.f(0)), rt.construct(2, rt.f(0.99999898672103882))), rt.construct(2, size), 2, 'float'))), 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int'))
+    return rt.texel_fetch(_u_diffuseTex, pixel, rt.i(0))
+  end
   hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
@@ -126,10 +137,10 @@ run_pixel = lambda do |ctx, out|
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
       return
     end
-    texSize = rt.texture_size(_u_inputTex)
+    texSize = (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.texture_size(_u_fieldTex)) : (rt.texture_size(_u_inputTex)))
     texCoord = rt.construct(2, rt.binary('*', px, rt.construct(1, rt.swizzle(texSize, 'x')), 1, 'float'), rt.binary('*', py, rt.construct(1, rt.swizzle(texSize, 'y')), 1, 'float'), 'int')
     texCoord.replace(rt.component_wise('clamp', texCoord, rt.construct(2, rt.i(0), 'int'), rt.binary('-', texSize, rt.i(1), 2, 'int')))
-    texel = rt.texel_fetch(_u_inputTex, texCoord, rt.i(0))
+    texel = rt.construct(4, (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.texel_fetch(_u_fieldTex, texCoord, rt.i(0))) : (rt.texel_fetch(_u_inputTex, texCoord, rt.i(0)))))
     inputLuma = oklab_l__vec3.call(rt.swizzle(texel, 'rgb'))
     weightBlend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.0099999997764825821), 1, 'float'), rt.f(0), rt.f(1))
     indexValue = rt.component_wise('mix', rt.f(0.5), inputLuma, weightBlend)
@@ -151,7 +162,7 @@ run_pixel = lambda do |ctx, out|
     newY = rt.component_wise('fract', newY)
     (begin g['outXYZ'][0] = rt.f32(newX); g['outXYZ'][1] = rt.f32(newY); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(1)); g['outXYZ'] end)
     (begin g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rotRand); g['outVel'][3] = rt.f32(strideRand); g['outVel'] end)
-    g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
+    g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(rt.swizzle(g['outXYZ'], 'xy'))) : (rgba))).map { |c| rt.f32(c) })
   end
   main__void.call
   c0 = g['outXYZ']

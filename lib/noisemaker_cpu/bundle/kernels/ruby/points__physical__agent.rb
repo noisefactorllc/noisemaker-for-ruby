@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint_lcg__uint = hash__uint = noise2D__vec2 = fbm__vec2 = main__void = nil
+  selectedDiffuse__vec2 = hash_uint_lcg__uint = hash__uint = noise2D__vec2 = fbm__vec2 = main__void = nil
   _retc = nil
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
@@ -17,9 +17,18 @@ run_pixel = lambda do |ctx, out|
   _u_xyzTex = ctx.texture_binding('xyzTex')
   _u_velTex = ctx.texture_binding('velTex')
   _u_rgbaTex = ctx.texture_binding('rgbaTex')
+  _u_diffuseTex = ctx.texture_binding('diffuseTex')
+  _u_diffuseActive = u.key?('diffuseActive') ? u['diffuseActive'] : rt.f(0.0)
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
+  selectedDiffuse__vec2 = lambda do |uv|
+    uv = rt.copy(uv, 'float')
+    pixel = nil; size = nil
+    size = rt.texture_size(_u_diffuseTex)
+    pixel = rt.component_wise('clamp', rt.construct(2, rt.construct(2, rt.construct(2, rt.binary('*', rt.component_wise('clamp', uv, rt.construct(2, rt.f(0)), rt.construct(2, rt.f(0.99999898672103882))), rt.construct(2, size), 2, 'float'))), 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int'))
+    return rt.texel_fetch(_u_diffuseTex, pixel, rt.i(0))
+  end
   hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
@@ -110,7 +119,7 @@ run_pixel = lambda do |ctx, out|
     else
       (begin g['outXYZ'][0] = rt.f32(px); g['outXYZ'][1] = rt.f32(py); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(1)); g['outXYZ'] end)
       (begin g['outVel'][0] = rt.f32(vx); g['outVel'][1] = rt.f32(vy); g['outVel'][2] = rt.f32(vz); g['outVel'][3] = rt.f32(seed_f); g['outVel'] end)
-      g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
+      g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(rt.swizzle(g['outXYZ'], 'xy'))) : (rgba))).map { |c| rt.f32(c) })
     end
   end
   main__void.call

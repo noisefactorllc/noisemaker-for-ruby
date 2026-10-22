@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint_lcg__uint = hash__uint = complexToScreen__vec2 = inMandelbrotInterior__float_float = main__void = nil
+  selectedDiffuse__vec2 = hash_uint_lcg__uint = hash__uint = complexToScreen__vec2 = inMandelbrotInterior__float_float = main__void = nil
   _retc = nil
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
@@ -16,9 +16,18 @@ run_pixel = lambda do |ctx, out|
   _u_xyzTex = ctx.texture_binding('xyzTex')
   _u_velTex = ctx.texture_binding('velTex')
   _u_rgbaTex = ctx.texture_binding('rgbaTex')
+  _u_diffuseTex = ctx.texture_binding('diffuseTex')
+  _u_diffuseActive = u.key?('diffuseActive') ? u['diffuseActive'] : rt.f(0.0)
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
+  selectedDiffuse__vec2 = lambda do |uv|
+    uv = rt.copy(uv, 'float')
+    pixel = nil; size = nil
+    size = rt.texture_size(_u_diffuseTex)
+    pixel = rt.component_wise('clamp', rt.construct(2, rt.construct(2, rt.construct(2, rt.binary('*', rt.component_wise('clamp', uv, rt.construct(2, rt.f(0)), rt.construct(2, rt.f(0.99999898672103882))), rt.construct(2, size), 2, 'float'))), 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int'))
+    return rt.texel_fetch(_u_diffuseTex, pixel, rt.i(0))
+  end
   hash_uint_lcg__uint = lambda do |s|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', s, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
@@ -123,7 +132,7 @@ run_pixel = lambda do |ctx, out|
       screen = complexToScreen__vec2.call(rt.construct(2, (cRe), (cIm)))
       g['outXYZ'].replace((rt.construct(4, screen, rt.f(0.5), rt.f(1))).map { |c| rt.f32(c) })
       (begin g['outVel'][0] = rt.f32(cRe); g['outVel'][1] = rt.f32(cIm); g['outVel'][2] = rt.f32(rt.f(1)); g['outVel'][3] = rt.f32(escapeStep); g['outVel'] end)
-      (begin g['outRGBA'][0] = rt.f32(brightness); g['outRGBA'][1] = rt.f32(brightness); g['outRGBA'][2] = rt.f32(brightness); g['outRGBA'][3] = rt.f32(rt.f(1)); g['outRGBA'] end)
+      g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (rt.construct(4, rt.construct(3, rt.binary('*', rt.swizzle(selectedDiffuse__vec2.call(screen), 'rgb'), brightness, 3, 'float')), rt.f(1))) : (rt.construct(4, brightness, brightness, brightness, rt.f(1))))).map { |c| rt.f32(c) })
       return
     end
     cRe = rt.swizzle(vel, 'x')
@@ -173,7 +182,7 @@ run_pixel = lambda do |ctx, out|
     screen = complexToScreen__vec2.call(z)
     g['outXYZ'].replace((rt.construct(4, screen, rt.f(0.5), rt.f(1))).map { |c| rt.f32(c) })
     (begin g['outVel'][0] = rt.f32(cRe); g['outVel'][1] = rt.f32(cIm); g['outVel'][2] = rt.f32(step); g['outVel'][3] = rt.f32(escapeStep); g['outVel'] end)
-    g['outRGBA'].replace((col).map { |c| rt.f32(c) })
+    g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (rt.construct(4, rt.construct(3, rt.binary('*', rt.swizzle(selectedDiffuse__vec2.call(screen), 'rgb'), rt.f(0.029999999329447746), 3, 'float')), rt.f(1))) : (col))).map { |c| rt.f32(c) })
   end
   main__void.call
   c0 = g['outXYZ']

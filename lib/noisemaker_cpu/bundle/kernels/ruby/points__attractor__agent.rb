@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint_lcg__uint = hash__uint = lorenz__vec3 = rossler__vec3 = aizawa__vec3 = thomas__vec3 = halvorsen__vec3 = chen__vec3 = dadras__vec3 = stepAttractor__vec3_int_float = main__void = nil
+  selectedDiffuse__vec2 = hash_uint_lcg__uint = hash__uint = lorenz__vec3 = rossler__vec3 = aizawa__vec3 = thomas__vec3 = halvorsen__vec3 = chen__vec3 = dadras__vec3 = stepAttractor__vec3_int_float = main__void = nil
   _retc = nil
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
@@ -13,9 +13,18 @@ run_pixel = lambda do |ctx, out|
   _u_xyzTex = ctx.texture_binding('xyzTex')
   _u_velTex = ctx.texture_binding('velTex')
   _u_rgbaTex = ctx.texture_binding('rgbaTex')
+  _u_diffuseTex = ctx.texture_binding('diffuseTex')
+  _u_diffuseActive = u.key?('diffuseActive') ? u['diffuseActive'] : rt.f(0.0)
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
+  selectedDiffuse__vec2 = lambda do |uv|
+    uv = rt.copy(uv, 'float')
+    pixel = nil; size = nil
+    size = rt.texture_size(_u_diffuseTex)
+    pixel = rt.component_wise('clamp', rt.construct(2, rt.construct(2, rt.construct(2, rt.binary('*', rt.component_wise('clamp', uv, rt.construct(2, rt.f(0)), rt.construct(2, rt.f(0.99999898672103882))), rt.construct(2, size), 2, 'float'))), 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int'))
+    return rt.texel_fetch(_u_diffuseTex, pixel, rt.i(0))
+  end
   hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
@@ -131,7 +140,7 @@ run_pixel = lambda do |ctx, out|
       pos = rt.assign_swizzle(pos, 'z', rt.binary('+', rt.binary('*', hash__uint.call(rt.binary('+', initSeed, rt.i(2), 1, 'uint')), rt.f(30), 1, 'float'), rt.f(10), 1, 'float'))
       g['outXYZ'].replace((rt.construct(4, rt.swizzle(pos, 'xyz'), rt.f(1))).map { |c| rt.f32(c) })
       g['outVel'].replace((vel).map { |c| rt.f32(c) })
-      g['outRGBA'].replace((col).map { |c| rt.f32(c) })
+      g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(rt.component_wise('fract', rt.swizzle(g['outXYZ'], 'xy')))) : (col))).map { |c| rt.f32(c) })
       return
     end
     if rt.bool(rt.binary('<', rt.swizzle(pos, 'w'), rt.f(0.5)))
@@ -151,7 +160,7 @@ run_pixel = lambda do |ctx, out|
     end
     g['outXYZ'].replace((rt.construct(4, newPos, rt.f(1))).map { |c| rt.f32(c) })
     g['outVel'].replace((vel).map { |c| rt.f32(c) })
-    g['outRGBA'].replace((col).map { |c| rt.f32(c) })
+    g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(rt.component_wise('fract', rt.swizzle(g['outXYZ'], 'xy')))) : (col))).map { |c| rt.f32(c) })
   end
   main__void.call
   c0 = g['outXYZ']

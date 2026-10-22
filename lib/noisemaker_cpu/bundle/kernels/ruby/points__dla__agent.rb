@@ -3,13 +3,14 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash_uint_lcg__uint = hash__uint = rand__float = randomDirection__float = wrap01__vec2 = sampleGrid__vec2 = neighborhood__vec2_float = main__void = nil
+  selectedDiffuse__vec2 = hash_uint_lcg__uint = hash__uint = rand__float = randomDirection__float = wrap01__vec2 = sampleGrid__vec2 = neighborhood__vec2_float = main__void = nil
   _retc = nil
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
   _u_frame = u.key?('frame') ? u['frame'] : 0
   _u_stride = u.key?('stride') ? u['stride'] : rt.f(0.0)
   _u_inputWeight = u.key?('inputWeight') ? u['inputWeight'] : rt.f(0.0)
+  _u_fieldActive = u.key?('fieldActive') ? u['fieldActive'] : rt.f(0.0)
   _u_attrition = u.key?('attrition') ? u['attrition'] : rt.f(0.0)
   _u_stateSize = u.key?('stateSize') ? u['stateSize'] : 0
   _u_resetState = u.key?('resetState') ? u['resetState'] : 0
@@ -17,10 +18,20 @@ run_pixel = lambda do |ctx, out|
   _u_velTex = ctx.texture_binding('velTex')
   _u_rgbaTex = ctx.texture_binding('rgbaTex')
   _u_gridTex = ctx.texture_binding('gridTex')
+  _u_fieldTex = ctx.texture_binding('fieldTex')
   _u_inputTex = ctx.texture_binding('inputTex')
+  _u_diffuseTex = ctx.texture_binding('diffuseTex')
+  _u_diffuseActive = u.key?('diffuseActive') ? u['diffuseActive'] : rt.f(0.0)
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
+  selectedDiffuse__vec2 = lambda do |uv|
+    uv = rt.copy(uv, 'float')
+    pixel = nil; size = nil
+    size = rt.texture_size(_u_diffuseTex)
+    pixel = rt.component_wise('clamp', rt.construct(2, rt.construct(2, rt.construct(2, rt.binary('*', rt.component_wise('clamp', uv, rt.construct(2, rt.f(0)), rt.construct(2, rt.f(0.99999898672103882))), rt.construct(2, size), 2, 'float'))), 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int'))
+    return rt.texel_fetch(_u_diffuseTex, pixel, rt.i(0))
+  end
   hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
     state = rt.binary('+', rt.binary('*', seed, rt.i(747796405), 1, 'uint'), rt.i(2891336453), 1, 'uint')
@@ -105,9 +116,9 @@ run_pixel = lambda do |ctx, out|
     inputDir = rt.construct(2, 0.0)
     inputVal = rt.construct(4, 0.0)
     if rt.bool(rt.binary('>', inputW, rt.f(0)))
-      inputDims = rt.texture_size(_u_inputTex)
+      inputDims = (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.texture_size(_u_fieldTex)) : (rt.texture_size(_u_inputTex)))
       inputCoord = rt.construct(2, rt.construct(2, rt.construct(2, rt.binary('*', wrap01__vec2.call(pos), rt.construct(2, inputDims), 2, 'float'))), 'int')
-      inputVal = rt.texel_fetch(_u_inputTex, inputCoord, rt.i(0))
+      inputVal = rt.construct(4, (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.texel_fetch(_u_fieldTex, inputCoord, rt.i(0))) : (rt.texel_fetch(_u_inputTex, inputCoord, rt.i(0)))))
       inputDir = rt.construct(2, rt.binary_raw('-', rt.binary_raw('*', rt.swizzle(inputVal, 'xy'), rt.f(2), 2, 'float'), rt.f(1), 2, 'float'))
       if rt.bool(rt.binary('>', rt.length(inputDir), rt.f(0.0099999997764825821)))
         inputDir.replace((rt.normalize(inputDir)).map { |c| rt.f32(c) })
@@ -132,16 +143,16 @@ run_pixel = lambda do |ctx, out|
     if rt.bool(stuck)
       g['outXYZ'].replace((rt.construct(4, candidate, rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
       (begin g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(1)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand); g['outVel'] end)
-      g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
+      g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(candidate)) : (rgba))).map { |c| rt.f32(c) })
     else
       if rt.bool(needsRespawn)
         g['outXYZ'].replace((rt.construct(4, candidate, rt.f(0), rt.f(0))).map { |c| rt.f32(c) })
         (begin g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand); g['outVel'] end)
-        g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
+        g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(candidate)) : (rgba))).map { |c| rt.f32(c) })
       else
         g['outXYZ'].replace((rt.construct(4, candidate, rt.f(0), rt.f(1))).map { |c| rt.f32(c) })
         (begin g['outVel'][0] = rt.f32(seed); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rt.f(0)); g['outVel'][3] = rt.f32(agentRand); g['outVel'] end)
-        g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
+        g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(candidate)) : (rgba))).map { |c| rt.f32(c) })
       end
     end
   end
