@@ -1055,7 +1055,22 @@ module NoisemakerCpu
     def self._normalize_effect(effect_id, spec, args)
       param_specs = spec["params"]
       param_names = spec["paramOrder"]
+      aliases = spec["paramAliases"]
       named = !args.empty? && !args[0]["name"].nil?
+      # Deprecated aliases resolve exactly as upstream's resolveParamAliases:
+      # an alias present without its canonical name migrates the value; with
+      # both present the canonical name wins; the alias is always consumed.
+      # Only named arguments participate, matching upstream's kwarg-only
+      # resolution.
+      canonical_supplied = {}
+      alias_warned = {}
+      if named && aliases
+        args.each do |arg|
+          next if arg["name"].nil? || arg["value"].nil? || arg["value"].equal?(UNSUPPORTED_INPUT)
+
+          canonical_supplied[arg["name"]] = true
+        end
+      end
       params = {}
       surfaces = {}
       provided = {}
@@ -1066,19 +1081,42 @@ module NoisemakerCpu
           elsif index < param_names.length
             param_names[index]
           end
-        if supplied.nil? || supplied == "" || !param_specs.key?(supplied)
+        # A deprecated alias records its canonical name (upstream's post-
+        # resolution `seen` set does the same for explicit params).
+        name = named && aliases ? (aliases[supplied] || supplied) : supplied
+        if name.nil? || name == "" || !param_specs.key?(name)
           bad = (!supplied.nil? && supplied != "") ? supplied : "argument #{index + 1}"
           _throw("Unknown parameter \"#{bad}\" for #{effect_id}; accepted: #{param_names.join(', ')}", arg["loc"])
         end
         next if arg["value"].equal?(UNSUPPORTED_INPUT)
 
-        provided[supplied] = true
-        pspec = param_specs[supplied]
+        if named && supplied != name
+          # An alias argument migrates its value to the canonical name unless
+          # that name was also supplied directly; the canonical name wins.
+          # Every alias hit warns, as upstream's S007 diagnostic does.
+          if !arg["value"].nil? && !alias_warned.key?(supplied)
+            alias_warned[supplied] = true
+            warn "param '#{supplied}' is deprecated, use '#{name}' instead. Aliases will be removed on 2027-06-01."
+            unless canonical_supplied.key?(name)
+              pspec = param_specs[name]
+              if pspec.is_a?(Hash) && pspec["type"] == "surface"
+                surfaces[name] = _surface_marker(arg["value"], name, arg["loc"])
+              else
+                params[name] = arg["value"]
+              end
+              provided[name] = true
+            end
+          end
+          next
+        end
+
+        provided[name] = true
+        pspec = param_specs[name]
         if pspec.is_a?(Hash) && pspec["type"] == "surface"
-          marker = _surface_marker(arg["value"], supplied, arg["loc"])
-          surfaces[supplied] = marker
+          marker = _surface_marker(arg["value"], name, arg["loc"])
+          surfaces[name] = marker
         else
-          params[supplied] = arg["value"]
+          params[name] = arg["value"]
         end
       end
       param_names.each do |name|

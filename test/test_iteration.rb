@@ -26,7 +26,10 @@ class TestIteration < Minitest::Test
   end
 
   def test_particle_state_name_contract
-    %w[global_xyz global_vel global_rgba global_life_data global_dla_trail].each do |name|
+    # Upstream's expander scopes global_(xyz|vel|rgba|points_trail|life_data|
+    # <behavior>_base_color) into the current particle pipeline; a merely
+    # global_-prefixed scratch texture stays outside.
+    %w[global_xyz global_vel global_rgba global_life_data global_dla_trail global_dla_base_color global_flock_base_color].each do |name|
       assert iteration.particle_state_name?(name), name
     end
     refute iteration.particle_state_name?("global_rd_state")

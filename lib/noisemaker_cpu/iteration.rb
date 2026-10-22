@@ -2,7 +2,7 @@
 
 module NoisemakerCpu
   module Iteration
-    PARTICLE_STATE_PATTERN = /\Aglobal_(?:xyz|vel|rgba|life_data)\z|\Aglobal_.*_trail\z/
+    PARTICLE_STATE_PATTERN = /\Aglobal_(?:xyz|vel|rgba|life_data)\z|\Aglobal_.*_trail\z|\Aglobal_[a-z]+_base_color\z/
     DELTA_TIME = 1.0 / 600
 
     def self.particle_state_name?(name)

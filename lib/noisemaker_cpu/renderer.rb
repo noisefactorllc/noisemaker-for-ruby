@@ -368,15 +368,51 @@ module NoisemakerCpu
       uniforms
     end
 
+    # A texture dimension spec reading the group's shared `stateSize` through
+    # the `inherit: true` flag (upstream's inherited texture dimension): it
+    # resolves against the scope's stateSize — `pointsEmit`'s value — and never
+    # the behavior's own default over it. Every particle behavior's
+    # `global_<behavior>_base_color` memory is sized this way, and several
+    # behaviors (flock, hydraulic, lenia, physarum) declare no `stateSize`
+    # global of their own.
+    def self._declares_inherited_state_size_textures(eff)
+      (eff["textures"] || {}).each_value do |texture|
+        next unless texture.is_a?(Hash)
+
+        %w[width height].each do |axis|
+          spec = texture[axis]
+          return true if spec.is_a?(Hash) && spec["inherit"] == true && spec["param"] == "stateSize"
+        end
+      end
+      false
+    end
+
+    # The stateSize a step's normalized params observe: the group owner's value
+    # whenever the step declares a `stateSize` param — or when its own textures
+    # read the scope's stateSize through an `inherit: true` dimension (a joining
+    # behavior's base-color memory) — and otherwise the shared particle fallback
+    # size for an un-declared inherit-sized texture without an owner. Nil leaves
+    # the step's own params untouched.
+    def self._inherited_state_size(eff, owner_state_size)
+      declares_state_size = (eff["params"] || {}).key?("stateSize")
+      inherit_sized = _declares_inherited_state_size_textures(eff)
+      if !owner_state_size.nil? && (declares_state_size || inherit_sized)
+        owner_state_size
+      elsif !declares_state_size && inherit_sized
+        PARTICLE_STATE_FALLBACK_SIZE
+      end
+    end
+
     def self._initialize_iteration_state(eff, params, inputs, seed, width, height, owner_state_size: nil,
       time: 0.0)
       params = _inherit_volume_size(eff, params, _input_bundle(inputs))
       normalized, effect_uniforms, surface_params = _normalize_iteration_params(eff, params, inputs, seed,
                                                                                 time: time)
-      if !owner_state_size.nil? && (eff["params"] || {}).key?("stateSize")
-        normalized["stateSize"] = owner_state_size
+      inherited_state_size = _inherited_state_size(eff, owner_state_size)
+      unless inherited_state_size.nil?
+        normalized["stateSize"] = inherited_state_size
         state_size_spec = eff["params"]["stateSize"]
-        effect_uniforms[state_size_spec["uniform"]] = owner_state_size unless state_size_spec["uniform"].nil?
+        effect_uniforms[state_size_spec["uniform"]] = inherited_state_size unless state_size_spec.nil? || state_size_spec["uniform"].nil?
       end
       resources = {}
       inputs.each { |name, surface| resources[name] = surface unless surface.nil? }
@@ -419,10 +455,11 @@ module NoisemakerCpu
       params = _inherit_volume_size(eff, raw, input_bundle)
       normalized, effect_uniforms, = _normalize_iteration_params(eff, params, state["inputs"], seed, time: time)
       owner = state["owner_state_size"]
-      if !owner.nil? && (eff["params"] || {}).key?("stateSize")
-        normalized["stateSize"] = owner
+      inherited_state_size = _inherited_state_size(eff, owner)
+      unless inherited_state_size.nil?
+        normalized["stateSize"] = inherited_state_size
         state_size_spec = eff["params"]["stateSize"]
-        effect_uniforms[state_size_spec["uniform"]] = owner unless state_size_spec["uniform"].nil?
+        effect_uniforms[state_size_spec["uniform"]] = inherited_state_size unless state_size_spec.nil? || state_size_spec["uniform"].nil?
       end
       [normalized, effect_uniforms]
     end
@@ -446,6 +483,8 @@ module NoisemakerCpu
         resources[name] = _destination(eff, output_name, state["params"], width, height).clear
       end
     end
+
+    PARTICLE_STATE_FALLBACK_SIZE = 256
 
     PARTICLE_STATE_FALLBACK_FORMATS = {
       "global_xyz" => "rgba32f",
