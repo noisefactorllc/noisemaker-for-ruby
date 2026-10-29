@@ -20,7 +20,12 @@
 # Usage:
 #   ruby scripts/parity-sweep.rb [--report PATH] [--only id,id]
 #                                [--skip-case NAME,...] [--all-params]
-#                                [--shard I/M] [--merge FILE,...]
+#                                [--shard I/M] [--case-shard I/M]
+#                                [--merge FILE,...]
+#
+# --shard I/M partitions the effect list (i % M == I). --case-shard I/M
+# partitions each selected effect's case grid the same way, so one heavy
+# effect's grid can be split into bounded invocations.
 #
 # --all-params drops the 3-parameter cap and renders a nondefault case for
 # every parameter with a deterministic nondefault value (opt-in; the default
@@ -50,6 +55,7 @@ report_path = nil
 only = nil
 skip_cases = {}
 shard = nil
+case_shard = nil
 merge_files = nil
 all_params = false
 raw_command = "ruby #{$PROGRAM_NAME} #{ARGV.join(' ')}".strip
@@ -59,10 +65,12 @@ OptionParser.new do |opts|
   opts.on("--skip-case NAMES", String) { |value| skip_cases = value.split(",").to_h { |c| [c, true] } }
   opts.on("--all-params") { all_params = true }
   opts.on("--shard I/M") { |value| shard = value.split("/").map { |p| Integer(p, 10) } }
+  opts.on("--case-shard I/M") { |value| case_shard = value.split("/").map { |p| Integer(p, 10) } }
   opts.on("--merge FILES", String) { |value| merge_files = value.split(",") }
 end.parse!
 abort "unexpected arguments: #{ARGV.join(' ')}" unless ARGV.empty?
 abort "--shard expects I/M with 0 <= I < M" if shard && !(shard.length == 2 && (0...shard[1]).cover?(shard[0]))
+abort "--case-shard expects I/M with 0 <= I < M" if case_shard && !(case_shard.length == 2 && (0...case_shard[1]).cover?(case_shard[0]))
 
 def sha256_file(path)
   Digest::SHA256.file(path).hexdigest
@@ -348,6 +356,7 @@ report = {
   "schema" => "noisemaker-for-ruby/parity-sweep/1",
   "shard" => shard ? "#{shard[0]}/#{shard[1]}" : nil,
   "shard_effects" => shard ? ids.length : nil,
+  "case_shard" => case_shard ? "#{case_shard[0]}/#{case_shard[1]}" : nil,
   "total_effects" => all_ids.length,
   "started" => started.utc.iso8601,
   "command" => raw_command,
@@ -390,6 +399,7 @@ if merge_files
     runs << {
       "report" => File.expand_path(f),
       "shard" => src["shard"],
+      "case_shard" => src["case_shard"],
       "command" => src["command"],
       "ruby" => src["ruby"],
       "started" => src["started"],
@@ -448,7 +458,8 @@ ids.each do |eid|
   grid, exclusions = case_grid(eff, skip_cases, all_params)
   report["exclusions"] ||= []
   report["exclusions"].concat(exclusions.map { |x| x.merge("effect" => eid) })
-  grid.each do |cs|
+  grid.each_with_index do |cs, case_index|
+    next if case_shard && case_index % case_shard[1] != case_shard[0]
     size = cs["size"]
     seed = cs["seed"]
     render_time = cs["time"]
@@ -538,9 +549,9 @@ ids.each do |eid|
       print "DIFF #{eid} #{cs['name']} maxdiff #{d}\n"
     end
     report["cases"] << row
-  end
-  if report_path
-    File.write(report_path, JSON.pretty_generate(report))
+    # Write after every case: a bounded invocation that is stopped by an
+    # outer timeout still leaves the finished cases and their timings on disk.
+    File.write(report_path, JSON.pretty_generate(report)) if report_path
   end
 end
 
