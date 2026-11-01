@@ -41,13 +41,26 @@ def effective_cores
 end
 
 # Same selection rule scripts/test applies: a changed test file runs itself,
-# and a changed other path selects the test files that name its stem.
+# and a changed other path selects the test files that name its stem. Returns
+# the selected test files and the changed kernel parity case ids: changed
+# kernel files have no minitest coverage by name, so the scope must exercise
+# them through the parity gate instead (same mapping scripts/test applies).
 def select_changed_files(files)
   changed = ENV["NM_CHANGED_FILES"]
-  return [files, false] if changed.nil? || changed.strip.empty?
+  return [files, [], false] if changed.nil? || changed.strip.empty?
   wanted = []
+  parity_ids = []
   changed.split(/\s+/).reject(&:empty?).each do |path|
-    if path.start_with?("test/test_") && path.end_with?(".rb")
+    case path
+    when /\Alib\/noisemaker_cpu\/bundle\/kernels\/ruby\/.*\.rb\z/
+      # Kernel files are named <family>__<effect>__<variant>.rb and several
+      # variants of one effect share the case id <family>/<effect>.
+      base = File.basename(path, ".rb")
+      family = base.split("__", 2).first
+      rest = base.split("__", 2).last || ""
+      effect = rest.split("__", 2).first
+      parity_ids << "#{family}/#{effect}" if family && effect && !effect.empty?
+    when /\Atest\/test_.*\.rb\z/
       wanted << path if File.file?(path)
     else
       stem = File.basename(path).sub(/\.[^.]+\z/, "")
@@ -55,7 +68,17 @@ def select_changed_files(files)
       files.each { |t| wanted << t if File.read(t).include?(stem) }
     end
   end
-  [wanted.uniq.sort, true]
+  [wanted.uniq.sort, parity_ids.uniq, true]
+end
+
+# Changed kernels render through the parity gate under the changed-path
+# scope: run scripts/parity-summary for exactly their case ids.
+def run_kernel_parity(parity_ids)
+  return if parity_ids.empty?
+  warn "rake test: changed-path scope runs the parity gate for the changed kernels: #{parity_ids.join(' ')}"
+  ok = system(RbConfig.ruby, "--yjit", File.expand_path("parity-summary.rb", "scripts"),
+              *parity_ids, out: $stderr, err: $stderr)
+  abort "rake test: parity gate failed for the changed kernels" unless ok
 end
 
 def apply_shard_selector(files)
@@ -72,10 +95,12 @@ end
 task :test do
   all_files = Dir["test/test_*.rb"].sort
   abort "rake test: no test files found" if all_files.empty?
-  files, scoped = select_changed_files(all_files)
+  files, parity_ids, scoped = select_changed_files(all_files)
   if scoped
     warn "rake test: changed-path scope selected: #{files.empty? ? '(none)' : files.join(' ')}"
-    next if files.empty?
+    if files.empty? && parity_ids.empty?
+      next
+    end
   end
   files = apply_shard_selector(files)
   float_choices = "test/test_dsl_float_choices.rb"
@@ -131,6 +156,7 @@ task :test do
     warn "rake test: #{failed.size} shard(s) failed"
     exit! 1
   end
+  run_kernel_parity(parity_ids)
 end
 
 task default: :test
