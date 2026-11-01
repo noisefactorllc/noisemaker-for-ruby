@@ -10,9 +10,11 @@ require "tempfile"
 #
 # - NM_CHANGED_FILES (one path per line): run only the test files that
 #   exercise the changed paths. A changed test file runs itself; a changed
-#   source path selects every test file whose text names its basename stem.
-#   Every selected test keeps running; nothing is dropped. An empty
-#   selection runs nothing by design (the whole suite runs unscoped).
+#   scripts/oracle-lock.json selects the lock test; a changed source path
+#   selects every test file whose text names its basename stem. A changed
+#   path that no test names selects the whole suite, so the runner and any
+#   unowned path stay covered. Every selected test keeps running; nothing
+#   is dropped. Unscoped runs select the whole suite.
 # - .nm-test-shards at the repository root holds the shard count (2-8).
 #   When NM_SHARD_INDEX and NM_SHARD_COUNT are set, this task runs only
 #   shard NM_SHARD_INDEX (from 0) of NM_SHARD_COUNT of the selected files,
@@ -50,6 +52,7 @@ def select_changed_files(files)
   return [files, [], false] if changed.nil? || changed.strip.empty?
   wanted = []
   parity_ids = []
+  unmatched = []
   changed.split(/\s+/).reject(&:empty?).each do |path|
     case path
     when /\Alib\/noisemaker_cpu\/bundle\/kernels\/ruby\/.*\.rb\z/
@@ -62,11 +65,25 @@ def select_changed_files(files)
       parity_ids << "#{family}/#{effect}" if family && effect && !effect.empty?
     when /\Atest\/test_.*\.rb\z/
       wanted << path if File.file?(path)
+    when "scripts/oracle-lock.json"
+      # The oracle pin: test_parity.rb asserts the oracle checkout's source
+      # lock and snapshot against this lock, so it exercises the changed pin.
+      wanted << "test/test_parity.rb" if File.file?("test/test_parity.rb")
     else
       stem = File.basename(path).sub(/\.[^.]+\z/, "")
-      next if stem.empty?
-      files.each { |t| wanted << t if File.read(t).include?(stem) }
+      if stem.empty?
+        unmatched << path
+        next
+      end
+      hits = files.select { |t| File.read(t).include?(stem) }
+      hits.empty? ? unmatched << path : wanted.concat(hits)
     end
+  end
+  unless unmatched.empty?
+    # A changed path that no test names (the runner itself, or an unowned
+    # path) stays covered: run the whole suite, which exercises it.
+    warn "rake test: no test names #{unmatched.join(' ')}; running the whole suite to cover them"
+    wanted = files
   end
   [wanted.uniq.sort, parity_ids.uniq, true]
 end
