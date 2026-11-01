@@ -5,14 +5,26 @@ require "etc"
 require "rbconfig"
 require "tempfile"
 
-# Bounded wall time: the suite runs as concurrent file shards (same files,
-# same cases; each shard is one minitest invocation over a disjoint file
-# subset); any shard failure fails the task. This is the same shard plan
-# scripts/test drives for the container gate, so local and CI runs exercise
-# identical coverage in bounded wall time. test_dsl_float_choices.rb is the
-# slowest single unit; it runs as concurrent file shards of its own
-# (NOISEMAKER_TEST_FILE_SHARD=i/n; each shard covers a disjoint
-# (effect, choice) subset, union = the whole file).
+# Test entrypoint for CI. Implements the operator's changed-files contract
+# and keeps wall time bounded:
+#
+# - NM_CHANGED_FILES (one path per line): run only the test files that
+#   exercise the changed paths. A changed test file runs itself; a changed
+#   source path selects every test file whose text names its basename stem.
+#   Every selected test keeps running; nothing is dropped. An empty
+#   selection runs nothing by design (the whole suite runs unscoped).
+# - .nm-test-shards at the repository root holds the shard count (2-8).
+#   When NM_SHARD_INDEX and NM_SHARD_COUNT are set, this task runs only
+#   shard NM_SHARD_INDEX (from 0) of NM_SHARD_COUNT of the selected files,
+#   so together the shards cover every selected test.
+# - Unscoped runs execute the whole suite as concurrent file shards (same
+#   files, same cases; each shard is one minitest invocation over a disjoint
+#   file subset); any shard failure fails the task. This is the same shard
+#   plan scripts/test drives for the container gate, so local and CI runs
+#   exercise identical coverage in bounded wall time.
+#   test_dsl_float_choices.rb is the slowest single unit; it runs as
+#   concurrent file shards of its own (NOISEMAKER_TEST_FILE_SHARD=i/n; each
+#   shard covers a disjoint (effect, choice) subset, union = the whole file).
 def effective_cores
   cores = Etc.nprocessors
   if RUBY_PLATFORM.include?("linux")
@@ -28,9 +40,44 @@ def effective_cores
   [cores, 1].max
 end
 
+# Same selection rule scripts/test applies: a changed test file runs itself,
+# and a changed other path selects the test files that name its stem.
+def select_changed_files(files)
+  changed = ENV["NM_CHANGED_FILES"]
+  return [files, false] if changed.nil? || changed.strip.empty?
+  wanted = []
+  changed.split(/\s+/).reject(&:empty?).each do |path|
+    if path.start_with?("test/test_") && path.end_with?(".rb")
+      wanted << path if File.file?(path)
+    else
+      stem = File.basename(path).sub(/\.[^.]+\z/, "")
+      next if stem.empty?
+      files.each { |t| wanted << t if File.read(t).include?(stem) }
+    end
+  end
+  [wanted.uniq.sort, true]
+end
+
+def apply_shard_selector(files)
+  index = ENV["NM_SHARD_INDEX"]
+  count = ENV["NM_SHARD_COUNT"]
+  return files if index.nil? || index.empty? || count.nil? || count.empty?
+  abort "rake test: NM_SHARD_INDEX/NM_SHARD_COUNT require .nm-test-shards" unless File.file?(".nm-test-shards")
+  n = File.read(".nm-test-shards").strip.to_i
+  i = index.to_i
+  abort "rake test: invalid shard selector #{i} of #{n}" if n.negative? || i.negative? || i >= n || n < 1 || n > 8
+  files.select.with_index { |_f, file_index| file_index % n == i }
+end
+
 task :test do
-  files = Dir["test/test_*.rb"].sort
-  abort "rake test: no test files found" if files.empty?
+  all_files = Dir["test/test_*.rb"].sort
+  abort "rake test: no test files found" if all_files.empty?
+  files, scoped = select_changed_files(all_files)
+  if scoped
+    warn "rake test: changed-path scope selected: #{files.empty? ? '(none)' : files.join(' ')}"
+    next if files.empty?
+  end
+  files = apply_shard_selector(files)
   float_choices = "test/test_dsl_float_choices.rb"
   shards = files.reject { |f| f == float_choices }
   eff_n = effective_cores
@@ -54,7 +101,7 @@ task :test do
                                 ruby, *loader, *group_files, out: log, err: log)
     log.close
   end
-  if File.file?(float_choices)
+  if File.file?(float_choices) && files.include?(float_choices)
     eff_n.times do |split_i|
       log = Tempfile.create(["rake-split-#{split_i}.", ".log"])
       logs[:"split#{split_i}"] = log.path
