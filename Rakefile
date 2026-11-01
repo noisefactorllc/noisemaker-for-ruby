@@ -10,7 +10,8 @@ require "tempfile"
 #
 # - NM_CHANGED_FILES (one path per line): run only the test files that
 #   exercise the changed paths. A changed test file runs itself; a changed
-#   scripts/oracle-lock.json selects the lock test; a changed source path
+#   scripts/oracle-lock.json selects the lock test and demands a real
+#   oracle checkout; a changed source path
 #   selects every test file whose text names its basename stem. A changed
 #   path that no test names selects the whole suite, so the runner and any
 #   unowned path stay covered. Every selected test keeps running; nothing
@@ -44,15 +45,17 @@ end
 
 # Same selection rule scripts/test applies: a changed test file runs itself,
 # and a changed other path selects the test files that name its stem. Returns
-# the selected test files and the changed kernel parity case ids: changed
-# kernel files have no minitest coverage by name, so the scope must exercise
-# them through the parity gate instead (same mapping scripts/test applies).
+# the selected test files, the changed kernel parity case ids, and a
+# require-oracle flag: changed kernel files have no minitest coverage by
+# name, so the scope must exercise them through the parity gate instead
+# (same mapping scripts/test applies).
 def select_changed_files(files)
   changed = ENV["NM_CHANGED_FILES"]
   return [files, [], false] if changed.nil? || changed.strip.empty?
   wanted = []
   parity_ids = []
   unmatched = []
+  require_oracle = false
   changed.split(/\s+/).reject(&:empty?).each do |path|
     case path
     when /\Alib\/noisemaker_cpu\/bundle\/kernels\/ruby\/.*\.rb\z/
@@ -62,13 +65,21 @@ def select_changed_files(files)
       family = base.split("__", 2).first
       rest = base.split("__", 2).last || ""
       effect = rest.split("__", 2).first
-      parity_ids << "#{family}/#{effect}" if family && effect && !effect.empty?
+      if family && effect && !effect.empty?
+        parity_ids << "#{family}/#{effect}"
+      else
+        unmatched << path
+      end
     when /\Atest\/test_.*\.rb\z/
       wanted << path if File.file?(path)
     when "scripts/oracle-lock.json"
-      # The oracle pin: test_parity.rb asserts the oracle checkout's source
-      # lock and snapshot against this lock, so it exercises the changed pin.
+      # The oracle pin: test/test_parity.rb's lock-and-snapshot test asserts
+      # the oracle checkout's source-lock.js and snapshot against every
+      # field of this lock (revision via the checkout HEAD check,
+      # upstreamRevision and sourceDigest via the pinned constants). It runs
+      # only against a real oracle checkout, so the scope demands one.
       wanted << "test/test_parity.rb" if File.file?("test/test_parity.rb")
+      require_oracle = true
     else
       stem = File.basename(path).sub(/\.[^.]+\z/, "")
       if stem.empty?
@@ -85,7 +96,7 @@ def select_changed_files(files)
     warn "rake test: no test names #{unmatched.join(' ')}; running the whole suite to cover them"
     wanted = files
   end
-  [wanted.uniq.sort, parity_ids.uniq, true]
+  [wanted.uniq.sort, parity_ids.uniq, require_oracle, true]
 end
 
 # Changed kernels render through the parity gate under the changed-path
@@ -112,18 +123,24 @@ end
 task :test do
   all_files = Dir["test/test_*.rb"].sort
   abort "rake test: no test files found" if all_files.empty?
-  files, parity_ids, scoped = select_changed_files(all_files)
+  files, parity_ids, require_oracle, scoped = select_changed_files(all_files)
   if scoped
     warn "rake test: changed-path scope selected: #{files.empty? ? '(none)' : files.join(' ')}"
     if files.empty? && parity_ids.empty?
       next
     end
   end
+  # The lock-selection scope demands a real oracle checkout: with
+  # NOISEMAKER_REQUIRE_ORACLE=1 an absent oracle fails the run instead of
+  # silently skipping the pin assertions.
+  spawn_env = { "NM_EFF_CORES" => nil }
+  spawn_env["NOISEMAKER_REQUIRE_ORACLE"] = "1" if require_oracle
   files = apply_shard_selector(files)
   float_choices = "test/test_dsl_float_choices.rb"
   shards = files.reject { |f| f == float_choices }
   eff_n = effective_cores
   ENV["NM_EFF_CORES"] = eff_n.to_s
+  spawn_env["NM_EFF_CORES"] = eff_n.to_s
   shard_n = [eff_n, 6].min
   ruby = RbConfig.ruby
   loader = ["--yjit", "-Ilib", "-Itest", "-e", "ARGV.each { |f| require File.expand_path(f) }"]
@@ -139,7 +156,7 @@ task :test do
     log = Tempfile.create(["rake-shard-#{group}.", ".log"])
     logs[group] = log.path
     spawned[group] = group_files.join(" ")
-    pids[group] = Process.spawn({ "NM_EFF_CORES" => eff_n.to_s },
+    pids[group] = Process.spawn(spawn_env,
                                 ruby, *loader, *group_files, out: log, err: log)
     log.close
   end
@@ -148,7 +165,7 @@ task :test do
       log = Tempfile.create(["rake-split-#{split_i}.", ".log"])
       logs[:"split#{split_i}"] = log.path
       spawned[:"split#{split_i}"] = float_choices
-      env = { "NOISEMAKER_TEST_FILE_SHARD" => "#{split_i}/#{eff_n}", "NM_EFF_CORES" => eff_n.to_s }
+      env = spawn_env.merge("NOISEMAKER_TEST_FILE_SHARD" => "#{split_i}/#{eff_n}")
       pids[:"split#{split_i}"] = Process.spawn(env, ruby, *loader, float_choices, out: log, err: log)
       log.close
     end
