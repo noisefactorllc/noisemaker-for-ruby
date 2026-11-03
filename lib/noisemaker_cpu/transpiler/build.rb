@@ -275,16 +275,14 @@ module NoisemakerCpu
           end
         end
         if effect_id == "synth/polygon"
-          # The oracle's adaptCanonicalSource special-cases smoothing == 0
-          # (smoothstep with equal edges is a division by zero): the m
-          # test becomes a hard threshold.
-          adapted = source.sub(
-            "float m = smoothstep(radius, radius - smoothing, d);",
-            "float m = smoothing == 0.0 ? (d <= radius ? 1.0 : 0.0) : smoothstep(radius, radius - smoothing, d);"
-          )
-          raise "cannot locate synth/polygon smoothstep line for CPU lowering\n" if adapted == source
-
-          source = adapted
+          # The pinned GLSL now draws zero smoothing as a hard edge itself
+          # (smoothstep with equal edges was a division by zero), so the
+          # oracle compiles the m test without its old smoothing == 0
+          # special-case; guard against pinned-GLSL drift instead of
+          # rewriting the line.
+          unless source.include?("float m = smoothing > 0.0 ? smoothstep(radius, radius - smoothing, d) : float(d < radius);")
+            raise "cannot locate synth/polygon zero-smoothing hard edge for CPU lowering\n"
+          end
         end
         if effect_id == "filter/dither" && program == "dither"
           # The oracle's compiled kernel truncates the int cell/FS_BLOCK

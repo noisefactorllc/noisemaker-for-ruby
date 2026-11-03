@@ -42,7 +42,7 @@ run_pixel = lambda do |ctx, out|
       st.replace((cpu_vector_assignment_2).map { |c| rt.f32(c) })
     end
     d = rt.fdiv(polygon__vec2_float.call(st, sidesF), rt.component_wise('cos', rt.fdiv(rt.f(3.1415927410125732), sidesF)))
-    m = (rt.bool(rt.binary('==', _u_smoothing, rt.f(0))) ? ((rt.bool(rt.binary('<=', d, _u_radius)) ? (rt.f(1)) : (rt.f(0)))) : (rt.component_wise('smoothstep', _u_radius, rt.binary('-', _u_radius, _u_smoothing, 1, 'float'), d)))
+    m = (rt.bool(rt.binary('>', _u_smoothing, rt.f(0))) ? (rt.component_wise('smoothstep', _u_radius, rt.binary('-', _u_radius, _u_smoothing, 1, 'float'), d)) : (rt.construct(1, rt.binary('<', d, _u_radius))))
     fgMask = rt.binary('*', m, _u_fgAlpha, 1, 'float')
     bgMask = rt.binary('*', rt.binary('-', rt.f(1), m, 1, 'float'), _u_bgAlpha, 1, 'float')
     totalAlpha = rt.binary('+', fgMask, bgMask, 1, 'float')
