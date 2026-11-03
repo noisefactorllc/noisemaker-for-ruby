@@ -8,9 +8,7 @@
 # oracle checkout, located via NOISEMAKER_CPU_DIR like scripts/parity.rb).
 # Given case ids as arguments, it renders and counts only those; with no
 # arguments it covers the whole port (every id in the current authority's
-# manifest). --shard=I/N covers only shard I of N of the authority manifest
-# (round-robin over the sorted ids), so bounded invocations can split the
-# whole-port gate; together the shards cover every case.
+# manifest).
 #
 # The last output line is:
 #   PARITY-SUMMARY {"expected":N,"executed":N,"exact":N,"strict":N,"near":N,"defer":N,"skip":N,"fail":N,"missing":N}
@@ -137,8 +135,6 @@ if shard_arg
   shard_i = shard[1].to_i
   shard_n = shard[2].to_i
   abort "parity-summary: shard index #{shard_i} out of range for count #{shard_n}" unless shard_n >= 1 && shard_i < shard_n
-  # Round-robin assignment interleaves the slow cases across shards, so no
-  # shard carries a cluster of them; together the shards cover the manifest.
   ids = authority_ids.select.with_index { |_id, index| index % shard_n == shard_i }
 else
   ids = args.empty? ? authority_ids : args.uniq.sort

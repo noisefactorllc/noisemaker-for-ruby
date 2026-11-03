@@ -190,10 +190,10 @@ echo "scripts/test: using $($RUBY_BIN -v)" >&2
 # shards, so it starts now and runs concurrently with them; its result is
 # audited after the suite joins.
 # Operator-scoped iteration: when NM_CHANGED_FILES is set, the whole-port
-# parity render cannot fit one bounded invocation (it renders the entire
-# authority manifest), so it does not start here; the scoped phase runs the
-# changed paths' tests directly (below), and the exact-source pass (no
-# NM_CHANGED_FILES) runs the whole-port parity gate plus the release gate.
+# parity render cannot fit the bounded gate (it renders the entire authority
+# manifest), so it does not run here; the scoped minitest set exercises the
+# changed paths, and the exact-source pass (no NM_CHANGED_FILES) runs the
+# whole-port parity gate plus the release gate.
 if [ -n "${NM_CHANGED_FILES:-}" ]; then
   PARITY_PID=""
 else
@@ -205,9 +205,8 @@ fi
 # paths. When set, the minitest phase runs only the test files that exercise
 # them (a changed test file runs itself; a changed source path selects the
 # test files that reference it). Exact-source verification still runs the
-# whole suite. An empty minitest selection is not a pass by itself: the
-# scoped phase below still runs the parity gate for changed kernels, and
-# (with .nm-test-shards) one shard of the whole-port gate for other changes.
+# whole suite. The parity gate below always covers the whole rendered
+# catalog, so source changes stay exercised even with an empty selection.
 suite_files=$(ls test/test_*.rb | sort)
 if [ -n "${NM_CHANGED_FILES:-}" ]; then
   selected=""
@@ -340,21 +339,12 @@ if [ -z "${PARITY_PID:-}" ]; then
     tail -n 2 "$PARITY_LOG" >&2
     rm -f "$PARITY_LOG"
   elif [ -n "${NM_SHARD_COUNT:-}" ] && [ -n "${NM_SHARD_INDEX:-}" ]; then
-    # A pin move (scripts/oracle-lock.json) or another non-kernel change
-    # still changes what the gate compares, so the scoped pass must execute
-    # the gate, not skip it. The whole catalog does not fit one bounded
-    # invocation, so .nm-test-shards splits it: this invocation runs only
-    # its round-robin shard of the authority manifest's case ids.
-    case "$NM_SHARD_COUNT" in ''|*[!0-9]*) echo "scripts/test: bad NM_SHARD_COUNT '$NM_SHARD_COUNT'" >&2; exit 1 ;; esac
-    case "$NM_SHARD_INDEX" in ''|*[!0-9]*) echo "scripts/test: bad NM_SHARD_INDEX '$NM_SHARD_INDEX'" >&2; exit 1 ;; esac
-    [ "$NM_SHARD_INDEX" -lt "$NM_SHARD_COUNT" ] || { echo "scripts/test: shard index $NM_SHARD_INDEX out of range for count $NM_SHARD_COUNT" >&2; exit 1; }
-    echo "scripts/test: changed-path scope runs parity shard $NM_SHARD_INDEX/$NM_SHARD_COUNT" >&2
     PARITY_LOG=$(mktemp "${TMPDIR:-/tmp}/noisemaker-parity-gate.XXXXXX")
     ./scripts/parity-summary --shard="$NM_SHARD_INDEX/$NM_SHARD_COUNT" >"$PARITY_LOG" 2>&1 || { cat "$PARITY_LOG" >&2; rm -f "$PARITY_LOG"; exit 1; }
     tail -n 2 "$PARITY_LOG" >&2
     rm -f "$PARITY_LOG"
   else
-    echo "scripts/test: changed-path scope active with no shard selector; the whole-port parity gate runs in the exact-source pass" >&2
+    echo "scripts/test: changed-path scope active; the whole-port parity gate runs in the exact-source pass" >&2
   fi
   exit 0
 fi
