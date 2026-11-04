@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  hash22__vec2 = lum__vec3 = lumGradient__vec2 = main__void = nil
+  pcg3d__uvec3 = lum__vec3 = lumGradient__vec2 = main__void = nil
   _retc = nil
   _u__MODE = u.key?('MODE') ? u['MODE'] : 0
   _u_inputTex = ctx.texture_binding('inputTex')
@@ -12,12 +12,9 @@ run_pixel = lambda do |ctx, out|
   _u_radius = u.key?('radius') ? u['radius'] : rt.f(0.0)
   _u_seed = u.key?('seed') ? u['seed'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
-  hash22__vec2 = lambda do |p|
-    p = rt.copy(p, 'float')
-    __sc1 = nil; p3 = nil
-    p3 = rt.component_wise('fract', rt.construct(3, (((rt.swizzle(rt.swizzle(p, 'xyx'), 'x'))) * ((rt.f(0.1031000018119812)))), (((rt.swizzle(rt.swizzle(p, 'xyx'), 'y'))) * ((rt.f(0.10300000011920929)))), (((rt.swizzle(rt.swizzle(p, 'xyx'), 'z'))) * ((rt.f(0.097300000488758087))))))
-    __sc1 = rt.dot(p3, rt.binary_raw('+', rt.swizzle(p3, 'yzx'), rt.f(33.330001831054688), 3, 'float')); p3[0] = rt.f32(rt.binary('+', p3[0], __sc1, 1, 'float')); p3[1] = rt.f32(rt.binary('+', p3[1], __sc1, 1, 'float')); p3[2] = rt.f32(rt.binary('+', p3[2], __sc1, 1, 'float'))
-    return rt.component_wise('fract', rt.construct(2, rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'y'), 1, 'float')), rt.swizzle(p3, 'z'), 1, 'float')), rt.construct(1, rt.binary('*', rt.construct(1, rt.binary('+', rt.swizzle(p3, 'x'), rt.swizzle(p3, 'z'), 1, 'float')), rt.swizzle(p3, 'y'), 1, 'float'))))
+  pcg3d__uvec3 = lambda do |value|
+    value = rt.copy(value, 'uint')
+    return rt.pcg3d(value)
   end
   lum__vec3 = lambda do |c|
     c = rt.copy(c, 'float')
@@ -38,15 +35,19 @@ run_pixel = lambda do |ctx, out|
     return rt.construct(2, rt.binary('-', rt.binary('-', rt.binary('-', rt.binary('+', rt.binary('+', tr, rt.binary('*', rt.f(2), r, 1, 'float'), 1, 'float'), br, 1, 'float'), tl, 1, 'float'), rt.binary('*', rt.f(2), l, 1, 'float'), 1, 'float'), bl, 1, 'float'), rt.binary('-', rt.binary('-', rt.binary('-', rt.binary('+', rt.binary('+', tl, rt.binary('*', rt.f(2), _t, 1, 'float'), 1, 'float'), tr, 1, 'float'), bl, 1, 'float'), rt.binary('*', rt.f(2), b, 1, 'float'), 1, 'float'), br, 1, 'float'))
   end
   main__void = lambda do
-    globalCoord = nil; grad = nil; gradLen = nil; hashCoord = nil; offset = nil; perp = nil; result = nil; rnd = nil; samp = nil; sampleUV = nil; src = nil; uv = nil
+    globalCoord = nil; grad = nil; gradLen = nil; h = nil; hashCoord = nil; offset = nil; perp = nil; r256 = nil; result = nil; samp = nil; sampleTexel = nil; src = nil; steps = nil; texSize = nil; texel = nil; uv = nil
     uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
+    texel = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
+    texSize = rt.texture_size(_u_inputTex)
     globalCoord = rt.construct(2, rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'))
     hashCoord = rt.copy(globalCoord, 'float')
     if rt.bool(rt.binary('==', _u__MODE, rt.i(4)))
       hashCoord.replace((rt.construct(2, rt.binary('*', rt.component_wise('floor', rt.construct(2, ((globalCoord[0]) / (rt.f(3))), ((globalCoord[1]) / (rt.f(3))))), rt.f(3), 2, 'float'))).map { |c| rt.f32(c) })
     end
-    rnd = rt.construct(2, rt.binary('-', hash22__vec2.call(rt.construct(2, ((hashCoord[0]) + (rt.construct(1, rt.binary('*', rt.construct(1, _u_seed), rt.f(101.69999694824219), 1, 'float')))), ((hashCoord[1]) + (rt.construct(1, rt.binary('*', rt.construct(1, _u_seed), rt.f(101.69999694824219), 1, 'float')))))), rt.f(0.5), 2, 'float'))
-    offset = rt.construct(2, rt.binary_raw('*', rt.binary_raw('*', rnd, rt.f(2), 2, 'float'), _u_radius, 2, 'float'))
+    h = rt.pcg3d(rt.construct(3, rt.construct(2, rt.construct(2, rt.construct(2, rt.component_wise('floor', hashCoord)), 'int'), 'uint'), rt.construct(1, _u_seed, 'uint'), 'uint'))
+    r256 = rt.construct(1, rt.binary('*', rt.component_wise('min', rt.component_wise('abs', _u_radius), rt.f(128)), rt.f(256), 1, 'float'), 'uint')
+    steps = rt.binary('>>', rt.binary('*', rt.binary('>>', rt.swizzle(h, 'xy'), rt.construct(2, rt.i(16), 'uint'), 2, 'uint'), rt.binary('*', rt.i(2), r256, 1, 'uint'), 2, 'uint'), rt.construct(2, rt.i(16), 'uint'), 2, 'uint')
+    offset = rt.construct(2, rt.binary_raw('/', rt.construct_raw(2, rt.construct(2, rt.binary('-', rt.construct(2, steps, 'int'), rt.construct(1, r256, 'int'), 2, 'int'))), rt.f(256), 2, 'float'))
     grad = rt.construct(2, 0.0)
     gradLen = rt.f(0.0)
     if rt.bool(rt.binary('==', _u__MODE, rt.i(3)))
@@ -58,9 +59,9 @@ run_pixel = lambda do |ctx, out|
         offset.replace((rt.binary_raw('*', rt.dot(offset, perp), perp, 2, 'float')).map { |c| rt.f32(c) })
       end
     end
-    sampleUV = rt.component_wise('clamp', rt.construct(2, rt.fdiv(((rt.swizzle(ctx.frag_coord, 'x')) + (offset[0])), _u_resolution[0]), rt.fdiv(((rt.swizzle(ctx.frag_coord, 'y')) + (offset[1])), _u_resolution[1])), rt.f(0), rt.f(1))
-    src = rt.texture(_u_inputTex, uv)
-    samp = rt.texture(_u_inputTex, sampleUV)
+    sampleTexel = rt.component_wise('clamp', rt.binary('+', texel, rt.construct(2, rt.construct(2, rt.component_wise('floor', rt.construct(2, ((offset[0]) + (rt.f(0.5))), ((offset[1]) + (rt.f(0.5)))))), 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', texSize, rt.i(1), 2, 'int'))
+    src = rt.texel_fetch(_u_inputTex, texel, rt.i(0))
+    samp = rt.texel_fetch(_u_inputTex, sampleTexel, rt.i(0))
     result = rt.copy(samp, 'float')
     if rt.bool(rt.binary('==', _u__MODE, rt.i(1)))
       result.replace((rt.component_wise('min', src, samp)).map { |c| rt.f32(c) })

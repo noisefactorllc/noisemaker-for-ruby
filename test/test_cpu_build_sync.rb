@@ -19,7 +19,12 @@ class TestCpuBuildSync < Minitest::Test
     NoisemakerCpu::PassRunner.run_pass(kernel, context, 1, 1).data
   end
 
-  def test_scatter_rounds_seed_before_the_coordinate_add
+  def test_scatter_jitter_requires_the_integer_pcg3d_hash
+    # Upstream 7aa54b54 derives the jitter from the integer PCG3D hash of the
+    # tile-aware coordinate (the float hash22 form and its float(seed) * 101.7
+    # rounding quirk are gone). The build guards the pinned integer form and
+    # fails closed on pinned-GLSL drift instead of silently lowering a stale
+    # source.
     source = <<~GLSL
       uniform int seed;
       out vec4 fragColor;
@@ -32,8 +37,10 @@ class TestCpuBuildSync < Minitest::Test
           fragColor = vec4(rnd, 0.0, 1.0);
       }
     GLSL
-    assert_equal [1224.39990234375, 727.3999633789062, 0.0, 1.0],
-                 render_probe("filter/scatter", "scatterJitter", source, "seed" => 7)
+    error = assert_raises(RuntimeError) do
+      Build._adapt_source("filter/scatter", "scatterJitter", source)
+    end
+    assert_match(/integer pcg3d hash/, error.message)
   end
 
   def test_navier_stokes_hash_rounds_before_fract

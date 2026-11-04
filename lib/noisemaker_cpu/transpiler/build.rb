@@ -141,8 +141,15 @@ module NoisemakerCpu
             "return fract(float(float(sin(float(float(x) * 12.9898))) * 43758.5453));")
         end
         if effect_id == "filter/scatter" && program == "scatterJitter"
-          source = _replace_source_once(effect_id, source,
-            "hash22(hashCoord + float(seed) * 101.7)", "hash22(hashCoord + float(float(seed) * 101.7))")
+          # Upstream 7aa54b54 derives the jitter from the integer PCG3D hash of
+          # the tile-aware pixel coordinate (the float hash22 form and its
+          # float(seed) * 101.7 rounding quirk are gone); the oracle's
+          # canonical kernel and this port's natural lowering agree on the
+          # integer form, so guard against pinned-GLSL drift instead of
+          # rewriting the line.
+          unless source.include?("uvec3 h = pcg3d(uvec3(uvec2(ivec2(floor(hashCoord))), uint(seed)));")
+            raise "cannot locate filter/scatter integer pcg3d hash for CPU lowering\n"
+          end
         end
         if effect_id == "filter/extrude"
           source = _replace_source_once(effect_id, source,

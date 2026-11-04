@@ -132,7 +132,7 @@
     "filter/rotate:rot": "14a7bba1b448f5f0c97c56316aa110fe63215dfb8ee96bb71b8733abdb24f0e1",
     "filter/scale:scale": "e0902531c605af1fefd15fe7f1df7e53d892647531df8df58b3c707637b70d27",
     "filter/scanlineError:scanlineError": "91646e936d7bb142ab9ac14370c8434bf7122959debc8a00bd8518b555b08372",
-    "filter/scatter:scatterJitter": "94704b2a7051954d4dd043bc386a3eee46d029d68354b18045e9e398dc70830f",
+    "filter/scatter:scatterJitter": "f667c340d27e91a75752b9c147ad279c0e749a9235e36ab068543fdf2098d4f5",
     "filter/scatter:scatterSmooth": "5a805ba355d7fc90068a5476d42445c4d7c6e82ac32a742934b1d4e0b1ab364b",
     "filter/scratches:scratchesBlend": "4421ced9bbe7f26e876077378c6dd5393e33dcfbf60d9529032ef86f78d55ac6",
     "filter/scroll:scroll": "ce2117916b0d9513890942332835c6cfd1753a39d9d773626c66c6107050d457",
