@@ -271,6 +271,34 @@ module NoisemakerCpu
 
           source = adapted
         end
+        if effect_id == "filter/craquelure"
+          # The oracle's restoreCraquelureUintHash (noisemaker-for-cpu
+          # 0670ceace1c0) guards its lowerings on these exact upstream GLSL
+          # forms; raise when the pinned GLSL drifts instead of silently
+          # keeping the miscompiled hash/division lowerings (see Codegen's
+          # _restored_uint_binary).
+          unless source.include?("pcg3d(uvec3(uvec2(p), 0u)).x >> 8u") &&
+                 source.include?("pcg3d(uvec3(uvec2(p), uint(seedVal))).xy >> uvec2(8u)") &&
+                 source.include?("(gc + wob) / spacingPx")
+            raise "cannot locate filter/craquelure integer-hash forms for CPU lowering\n"
+          end
+        end
+        if effect_id == "filter/stipple"
+          # The oracle's restoreStippleUintSemantics guards its lowerings on
+          # these exact upstream GLSL forms (same 0670ceace1c0 sync).
+          needles = [
+            [".x >> 16u", "hash16 unsigned shift"],
+            ["(n - i * d) << uvec2(12u)) / d", "vnoise fixed-point division"],
+            ["(ivec2(g) - 1) * int(c256)", "cell anchor multiply"],
+            ["(uint(d - radius + aa) << 12u) / uint(2 * aa)", "edge fixed-point"],
+            ["1638u * (65535u - lum16(seedColor))", "radius shift"],
+          ]
+          needles.each do |needle, label|
+            next if source.include?(needle)
+
+            raise "cannot locate filter/stipple #{label} for CPU lowering\n"
+          end
+        end
         if effect_id == "synth/testPattern"
           # The oracle's compile-glsl.js restoreIntegerDivision (synced at
           # noisemaker-for-cpu 7d11682c42d5) guards its statement-level

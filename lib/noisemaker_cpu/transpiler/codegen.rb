@@ -1171,6 +1171,58 @@ module NoisemakerCpu
         literal_float_of(l_code) && literal_float_of(r_code) ? true : false
       end
 
+      # The oracle's compile-glsl.js restoreCraquelureUintHash and
+      # restoreStippleUintSemantics (synced at noisemaker-for-cpu
+      # 0670ceace1c0) repair two effect-scoped integer-lowering losses that
+      # the generic uint paths must not widen:
+      # - filter/craquelure: hash12's scalar `pcg3d(...).x >> 8u` is a
+      #   LOGICAL shift (`>>> 8`), and crackMask's `p = (gc + wob) /
+      #   spacingPx` divides by a run-time function parameter, which the
+      #   Metal authority compiles as `a * rcp(spacingPx)` — the $runtime.fdiv
+      #   route, like every other run-time divisor.
+      # - filter/stipple: every fixed-point shift the rewrite touches is
+      #   unsigned (`>>> 12/14/16`, and the vector shifts route through the
+      #   runtime's logical vector ops), and every GLSL uint division
+      #   truncates (the transpiler's raw f64 quotient is wrong for
+      #   uvec/scaled fixed point). build.rb's _adapt_source guards pin the
+      #   exact upstream GLSL forms these lowerings translate.
+      def _restored_uint_binary(node, scope, l_code, l_t, r_code, r_t)
+        return nil unless node.is_a?(Hash) && node["k"] == "binary"
+
+        width = [Codegen.width_of(l_t), Codegen.width_of(r_t)].max
+        lb = Codegen.base_of(l_t)
+        rb = Codegen.base_of(r_t)
+        uint = lb == "uint" || rb == "uint"
+        if @effect_id == "filter/craquelure"
+          if node["op"] == ">>" && uint && width == 1
+            return ["rt.ushr(#{l_code}, #{r_code})", { "base" => "uint", "width" => 1 }]
+          end
+          if node["op"] == "/" && (lb == "float" || rb == "float") &&
+             node["r"].is_a?(Hash) && node["r"]["k"] == "id" && node["r"]["name"] == "spacingPx"
+            return ["rt.fdiv(#{l_code}, #{r_code})", { "base" => "float", "width" => width }]
+          end
+          return nil
+        end
+        return nil unless @effect_id == "filter/stipple"
+
+        case node["op"]
+        when ">>"
+          return nil unless uint
+          return ["rt.ushr(#{l_code}, #{r_code})", { "base" => "uint", "width" => 1 }] if width == 1
+
+          ["rt.binary('>>', #{l_code}, #{r_code}, #{width}, 'uint')", { "base" => "uint", "width" => width }]
+        when "/"
+          return nil unless uint
+
+          if width == 1
+            ["rt.trunc_div(#{l_code}, #{r_code})", { "base" => "uint", "width" => 1 }]
+          else
+            ["rt.construct(#{width}, rt.component_wise('trunc', rt.binary('/', #{l_code}, #{r_code}, #{width}, 'uint')))",
+             { "base" => "uint", "width" => width }]
+          end
+        end
+      end
+
       def _e_binary(node, scope)
         op = node["op"]
         was_root = @vec_assign_root
@@ -1195,6 +1247,14 @@ module NoisemakerCpu
             v = FOLD_OPS[op].call(lv, rv)
             return ["rt.f(#{Codegen._fmt_num([v].pack("e").unpack1("e"))})", FLOAT]
           end
+        end
+        # The oracle's compile-glsl.js restores (synced at noisemaker-for-cpu
+        # 0670ceace1c0) make two effect-scoped integer-lowering repairs the
+        # generic uint paths must not widen: filter/craquelure's hash12 shift
+        # and crackMask's run-time-parameter division, and filter/stipple's
+        # fixed-point shifts and divisions (see _restored_uint_binary).
+        if (restored = _restored_uint_binary(node, scope, l_code, l_t, r_code, r_t))
+          return restored
         end
         if COMPARE_LOGIC_OPS[op]
           return ["(#{_bool(l_code)} && #{_bool(r_code)} ? 1 : 0)", BOOL] if op == "&&"

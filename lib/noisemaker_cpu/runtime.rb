@@ -1202,7 +1202,18 @@ module NoisemakerCpu
           when "&" then _s32(_s32(x) & _s32(y))
           when "|" then _s32(_s32(x) | _s32(y))
           when "^" then _s32(_s32(x) ^ _s32(y))
-          when "<<" then _s32(_s32(x) << (_s32(y) & 31))
+          when "<<"
+            # A uvecN << uvecN lowers to the oracle's integer-vector lshift
+            # op (noisemaker-for-cpu 0670ceace1c0): a LOGICAL shift on the
+            # full uint32 range (out = (left << right) >>> 0), matching GPU
+            # semantics -- stipple's `f = ((n - i * d) << uvec2(12u)) / d`
+            # needs the shifted fraction unsigned. Scalar uint << keeps
+            # the signed JS-operator form below.
+            if a.is_a?(Array) || b.is_a?(Array)
+              NoisemakerCpu::UintMath.ushl(x, y)
+            else
+              _s32(_s32(x) << (_s32(y) & 31))
+            end
           when ">>"
             # A uvecN >> uvecN lowers to the oracle's integer-vector rshift
             # op (noisemaker-for-cpu 61f1877): a LOGICAL shift on the full

@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  map__float_float_float_float_float = blendOverlay__float_float = blendSoftLight__float_float = cloak__vec2 = blend__vec4_vec4_int_float = brightnessContrast__vec3 = rotate2D__vec2_float = hsv2rgb__vec3 = rgb2hsv__vec3 = getImage__vec2 = main__void = nil
+  pin__float = productError__float_float_float = divRound__float_float = map__float_float_float_float_float = blendOverlay__float_float = blendSoftLight__float_float = cloak__vec2 = blend__vec4_vec4_int_float = brightnessContrast__vec3 = rotate2D__vec2_float = hsv2rgb__vec3 = rgb2hsv__vec3 = getImage__vec2 = main__void = nil
   _retc = nil
   _u_inputTex = ctx.texture_binding('inputTex')
   _u_selfTex = ctx.texture_binding('selfTex')
@@ -24,6 +24,28 @@ run_pixel = lambda do |ctx, out|
   _u_refractBDir = u.key?('refractBDir') ? u['refractBDir'] : rt.f(0.0)
   _u_resetState = u.key?('resetState') ? u['resetState'] : 0
   g['fragColor'] = rt.construct(4, 0.0)
+  pin__float = lambda do |x|
+    bound = nil
+    bound = rt.binary('*', rt.f(1.0000000150474662e+30), rt.swizzle(_u_resolution, 'x'), 1, 'float')
+    return rt.component_wise('min', rt.component_wise('max', x, rt.unary('-', bound)), bound)
+  end
+  productError__float_float_float = lambda do |a, b, p|
+    ah = nil; al = nil; bh = nil; bl = nil; sa = nil; sb = nil
+    sa = pin__float.call(rt.binary('*', rt.f(4097), a, 1, 'float'))
+    ah = pin__float.call(rt.binary('-', sa, pin__float.call(rt.binary('-', sa, a, 1, 'float')), 1, 'float'))
+    al = rt.binary('-', a, ah, 1, 'float')
+    sb = pin__float.call(rt.binary('*', rt.f(4097), b, 1, 'float'))
+    bh = pin__float.call(rt.binary('-', sb, pin__float.call(rt.binary('-', sb, b, 1, 'float')), 1, 'float'))
+    bl = rt.binary('-', b, bh, 1, 'float')
+    return rt.binary('+', pin__float.call(rt.binary('+', pin__float.call(rt.binary('+', pin__float.call(rt.binary('-', pin__float.call(rt.binary('*', ah, bh, 1, 'float')), p, 1, 'float')), pin__float.call(rt.binary('*', ah, bl, 1, 'float')), 1, 'float')), pin__float.call(rt.binary('*', al, bh, 1, 'float')), 1, 'float')), pin__float.call(rt.binary('*', al, bl, 1, 'float')), 1, 'float')
+  end
+  divRound__float_float = lambda do |a, b|
+    p = nil; q = nil; r = nil
+    q = pin__float.call(rt.binary('/', a, b, 1, 'float'))
+    p = pin__float.call(rt.binary('*', q, b, 1, 'float'))
+    r = pin__float.call(rt.binary('-', pin__float.call(rt.binary('-', a, p, 1, 'float')), productError__float_float_float.call(q, b, p), 1, 'float'))
+    return rt.binary('+', q, pin__float.call(rt.binary('/', r, b, 1, 'float')), 1, 'float')
+  end
   map__float_float_float_float_float = lambda do |value, inMin, inMax, outMin, outMax|
     return rt.binary('+', outMin, rt.binary('/', rt.binary('*', rt.binary('-', outMax, outMin, 1, 'float'), rt.binary('-', value, inMin, 1, 'float'), 1, 'float'), rt.binary('-', inMax, inMin, 1, 'float'), 1, 'float'), 1, 'float')
   end
@@ -282,7 +304,7 @@ run_pixel = lambda do |ctx, out|
     return tex
   end
   main__void = lambda do
-    color = nil; hsv = nil; leftColor = nil; leftLen = nil; leftUV = nil; ra = nil; rb = nil; rightColor = nil; rightLen = nil; rightUV = nil; uv = nil
+    color = nil; hsv = nil; hueShift = nil; leftColor = nil; leftLen = nil; leftUV = nil; ra = nil; rb = nil; rightColor = nil; rightLen = nil; rightUV = nil; uv = nil
     uv = rt.construct(2, rt.fdiv(rt.swizzle(ctx.frag_coord, 'xy'), _u_resolution))
     if rt.bool(_u_resetState)
       g['fragColor'].replace((rt.texture(_u_inputTex, uv)).map { |c| rt.f32(c) })
@@ -315,7 +337,8 @@ run_pixel = lambda do |ctx, out|
       color.replace((blend__vec4_vec4_int_float.call(rt.texture(_u_inputTex, leftUV), getImage__vec2.call(rightUV), _u_blendMode, rt.binary('*', _u_mixAmt, rt.f(0.0099999997764825821), 1, 'float'))).map { |c| rt.f32(c) })
     end
     hsv = rgb2hsv__vec3.call(rt.swizzle(color, 'rgb'))
-    hsv[(rt.i(0)).to_i] = rt.f32(rt.component_wise('mod', rt.binary('+', hsv[(rt.i(0)).to_i], map__float_float_float_float_float.call(_u_hueRotation, rt.unary('-', rt.f(180)), rt.f(180), rt.unary('-', rt.f(0.05000000074505806)), rt.f(0.05000000074505806)), 1, 'float'), rt.f(1)))
+    hueShift = pin__float.call(rt.binary('+', rt.unary('-', rt.f(0.05000000074505806)), divRound__float_float.call(pin__float.call(rt.binary('*', rt.f(0.10000000149011612), rt.binary('+', _u_hueRotation, rt.f(180), 1, 'float'), 1, 'float')), rt.f(360)), 1, 'float'))
+    hsv[(rt.i(0)).to_i] = rt.f32(rt.component_wise('fract', rt.binary('+', hsv[(rt.i(0)).to_i], hueShift, 1, 'float')))
     color = rt.assign_swizzle(color, 'rgb', hsv2rgb__vec3.call(hsv))
     color = rt.assign_swizzle(color, 'rgb', brightnessContrast__vec3.call(rt.swizzle(color, 'rgb')))
     g['fragColor'].replace((color).map { |c| rt.f32(c) })
