@@ -1171,21 +1171,6 @@ module NoisemakerCpu
         literal_float_of(l_code) && literal_float_of(r_code) ? true : false
       end
 
-      # The oracle's compile-glsl.js restoreCraquelureUintHash and
-      # restoreStippleUintSemantics (synced at noisemaker-for-cpu
-      # 0670ceace1c0) repair two effect-scoped integer-lowering losses that
-      # the generic uint paths must not widen:
-      # - filter/craquelure: hash12's scalar `pcg3d(...).x >> 8u` is a
-      #   LOGICAL shift (`>>> 8`), and crackMask's `p = (gc + wob) /
-      #   spacingPx` divides by a run-time function parameter, which the
-      #   Metal authority compiles as `a * rcp(spacingPx)` — the $runtime.fdiv
-      #   route, like every other run-time divisor.
-      # - filter/stipple: every fixed-point shift the rewrite touches is
-      #   unsigned (`>>> 12/14/16`, and the vector shifts route through the
-      #   runtime's logical vector ops), and every GLSL uint division
-      #   truncates (the transpiler's raw f64 quotient is wrong for
-      #   uvec/scaled fixed point). build.rb's _adapt_source guards pin the
-      #   exact upstream GLSL forms these lowerings translate.
       def _restored_uint_binary(node, scope, l_code, l_t, r_code, r_t)
         return nil unless node.is_a?(Hash) && node["k"] == "binary"
 
