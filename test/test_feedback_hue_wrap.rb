@@ -30,9 +30,17 @@ class TestFeedbackHueWrap < Minitest::Test
     src[start...stop]
   end
 
-  def hsv2rgb
-    rt = NoisemakerCpu::Runtime.new
+  def hsv2rgb(runtime = NoisemakerCpu::Runtime.new)
+    rt = runtime
     eval(extract_hsv2rgb_source + "\nhsv2rgb__vec3", binding, "feedback-hue-wrap") # rubocop:disable Security/Eval -- generated kernel probe
+  end
+
+  # The folded case: hsv2rgb's own fract() is compiled away, as a folding
+  # compiler would do, so the raw h reaches the sector chain unchanged.
+  def folded_runtime
+    rt = NoisemakerCpu::Runtime.new
+    rt.stdlib_override["fract"] = ->(value) { value }
+    rt
   end
 
   def vec3(*components)
@@ -46,6 +54,12 @@ class TestFeedbackHueWrap < Minitest::Test
 
   def test_h_1_renders_as_h_0_not_black
     hsv = hsv2rgb
+    assert_equal hsv.call(vec3(0, 1, 1)), hsv.call(vec3(1, 1, 1))
+    assert_equal [1.0, 0.0, 0.0], hsv.call(vec3(1, 1, 1))
+  end
+
+  def test_the_folded_case_takes_raw_h_1_as_h_0_not_black
+    hsv = hsv2rgb(folded_runtime)
     assert_equal hsv.call(vec3(0, 1, 1)), hsv.call(vec3(1, 1, 1))
     assert_equal [1.0, 0.0, 0.0], hsv.call(vec3(1, 1, 1))
   end
