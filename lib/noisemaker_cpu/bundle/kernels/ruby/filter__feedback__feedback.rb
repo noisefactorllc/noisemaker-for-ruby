@@ -44,7 +44,7 @@ run_pixel = lambda do |ctx, out|
     q = pin__float.call(rt.binary('/', a, b, 1, 'float'))
     p = pin__float.call(rt.binary('*', q, b, 1, 'float'))
     r = pin__float.call(rt.binary('-', pin__float.call(rt.binary('-', a, p, 1, 'float')), productError__float_float_float.call(q, b, p), 1, 'float'))
-    return rt.binary('+', q, pin__float.call(rt.binary('/', r, b, 1, 'float')), 1, 'float')
+    return pin__float.call(rt.binary('+', q, pin__float.call(rt.binary('/', r, b, 1, 'float')), 1, 'float'))
   end
   map__float_float_float_float_float = lambda do |value, inMin, inMax, outMin, outMax|
     return rt.binary('+', outMin, rt.binary('/', rt.binary('*', rt.binary('-', outMax, outMin, 1, 'float'), rt.binary('-', value, inMin, 1, 'float'), 1, 'float'), rt.binary('-', inMax, inMin, 1, 'float'), 1, 'float'), 1, 'float')
@@ -229,11 +229,7 @@ run_pixel = lambda do |ctx, out|
             if rt.bool((rt.bool(rt.binary('<=', rt.f(0.66666668653488159), h)) && rt.bool(rt.binary('<', h, rt.f(0.83333331346511841))) ? 1 : 0))
               (begin rgb[0] = rt.f32(x); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(c); rgb end)
             else
-              if rt.bool((rt.bool(rt.binary('<=', rt.f(0.83333331346511841), h)) && rt.bool(rt.binary('<', h, rt.f(1))) ? 1 : 0))
-                (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
-              else
-                (begin rgb[0] = rt.f32(rt.f(0)); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(rt.f(0)); rgb end)
-              end
+              (begin rgb[0] = rt.f32(c); rgb[1] = rt.f32(rt.f(0)); rgb[2] = rt.f32(x); rgb end)
             end
           end
         end
