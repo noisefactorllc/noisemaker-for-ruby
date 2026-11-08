@@ -71,6 +71,25 @@ class TestStatefulInstances < Minitest::Test
     ],
   }.freeze
 
+  # Two loop regions in one chain share the chain-scoped accumulator (the
+  # upstream chain-instances test added with this sync): the pair form renders
+  # the same bytes as the single-region form, and a step between the two
+  # regions makes the shared feedback observable -- the second region reads
+  # the first region's accumulator, which still holds the pre-invert image,
+  # so the chain is not the flattened fresh-per-region form. Internal
+  # comparisons, like the upstream test's.
+  def test_loop_regions_share_the_chain_accumulator
+    bytes = ->(source) do
+      NoisemakerCpu::Renderer.render_dsl(source, width: 8, height: 8, seed: 1, time: 0.25).to_rgba8
+    end
+    single = "search synth, render\nperlin(seed: 1).loopBegin().loopEnd().write(o0)\nrender(o0)"
+    pair = "search synth, render\nperlin(seed: 1).loopBegin().loopEnd().loopBegin().loopEnd().write(o0)\nrender(o0)"
+    shared = "search synth, filter, render\nperlin(seed: 1).loopBegin(alpha: 100).loopEnd().invert().loopBegin(alpha: 100).loopEnd().write(o0)\nrender(o0)"
+    fresh = "search synth, filter, render\nperlin(seed: 1).loopBegin(alpha: 100).loopEnd().write(o1)\nread(o1).invert().loopBegin(alpha: 100).loopEnd().write(o0)\nrender(o0)"
+    assert_equal bytes.call(single), bytes.call(pair), "pair vs single"
+    refute_equal bytes.call(shared), bytes.call(fresh), "shared vs fresh"
+  end
+
   CASES.each do |name, (program, size)|
     define_method("test_#{name}_byte_exact") do
       require_oracle

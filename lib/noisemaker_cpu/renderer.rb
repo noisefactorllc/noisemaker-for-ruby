@@ -1103,7 +1103,7 @@ module NoisemakerCpu
       inputs
     end
 
-    def self._render_iteration_group(group, group_input, surfaces, external_textures, width, height, seed, time)
+    def self._render_iteration_group(group, group_input, surfaces, external_textures, width, height, seed, time, chain_resources)
       # The authority runs the group's steps in chain order. The iterationCount
       # owner is the group's iterated effect (the merged flow3d group's noise3d
       # input is not iterated and carries no group count); the shared stateSize
@@ -1162,9 +1162,23 @@ module NoisemakerCpu
         image = _chain_bundle(group_input)["image"]
         raise "Loop iteration group requires an image input" if image.nil?
 
-        accum = NoisemakerCpu::Surface.new(image.width, image.height)
-        accum.format = image.format
-        group_resources["global_accum"] = accum
+        # Upstream scopes the loop accumulator by chain (a global that different
+        # effects share keeps its chain scope), so a second loop region in the
+        # same chain continues the first region's feedback surface instead of a
+        # zeroed one. An inherited surface of the wrong size (cannot arise in one
+        # chain's image stream, but guarded) is discarded and re-created.
+        inherited = chain_resources && chain_resources["global_accum"]
+        if inherited && (inherited.width != image.width || inherited.height != image.height)
+          chain_resources.delete("global_accum")
+        elsif inherited
+          chain_resources.delete("global_accum")
+          group_resources["global_accum"] = inherited
+        end
+        unless group_resources.key?("global_accum")
+          accum = NoisemakerCpu::Surface.new(image.width, image.height)
+          accum.format = image.format
+          group_resources["global_accum"] = accum
+        end
       end
       result = nil
       count.times do |index|
@@ -1179,6 +1193,10 @@ module NoisemakerCpu
         end
         result = step_input
       end
+      # The loop accumulator is chain-scoped: hand it to the chain's next loop
+      # region instead of releasing it with the group's other scratch resources.
+      accum = group_resources.delete("global_accum")
+      chain_resources["global_accum"] = accum if chain_resources && accum
       result
     end
 
@@ -1192,6 +1210,11 @@ module NoisemakerCpu
     # under its two names (`none` stores nothing) and passes the chain through, as
     # upstream's `_write3d` blits and passes through.
     def self._render_chain(chain, surfaces, external_textures, width, height, seed, time, external_inputs)
+      # The chain-scoped resource map carries the loop accumulator across the
+      # chain's loop regions, matching upstream's chain-scoped shared globals.
+      # Each inline chain argument is its own chain scope (fresh map inside the
+      # recursive call).
+      chain_resources = {}
       current = nil
       steps = chain["steps"].map do |step|
         next step unless step["kind"] == "effect"
@@ -1235,7 +1258,7 @@ module NoisemakerCpu
           end
           if group["iterated"]
             current = _render_iteration_group(
-              group, current, surfaces, external_textures, width, height, seed, time
+              group, current, surfaces, external_textures, width, height, seed, time, chain_resources
             )
           else
             group["steps"].each do |effect_step|
