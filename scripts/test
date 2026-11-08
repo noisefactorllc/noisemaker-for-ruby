@@ -225,7 +225,7 @@ if [ -n "${NM_CHANGED_FILES:-}" ]; then
   done
   suite_files=$(printf '%s\n' $selected | sort -u)
 fi
-# Supervisor shard split (operator rule): when NM_SHARD_INDEX/NM_SHARD_COUNT
+# Changed-path shard split: when NM_SHARD_INDEX/NM_SHARD_COUNT
 # are set on top of the changed-path selection, this invocation runs only the
 # selection's shard NM_SHARD_INDEX (from 0); together the shards cover every
 # selected test. With the variables unset the selection stays untouched.
@@ -292,8 +292,8 @@ if printf '%s\n' $suite_files | grep -q '^test/test_dsl_float_choices.rb$'; then
     # The float-choices file's render loop is the slowest single unit; it runs
     # as concurrent file shards of its own (same cases; each shard covers a
     # disjoint (effect, choice) subset, union = the whole file). Under the
-    # supervisor's shard split this invocation owns the matching fraction, so
-    # the shards together still cover the whole file.
+    # shard split this invocation owns the matching fraction, so the shards
+    # together still cover the whole file.
     split_n=$eff_n
     split_start=0
     split_end=$((split_n - 1))
