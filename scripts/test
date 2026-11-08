@@ -225,6 +225,26 @@ if [ -n "${NM_CHANGED_FILES:-}" ]; then
   done
   suite_files=$(printf '%s\n' $selected | sort -u)
 fi
+# Supervisor shard split (operator rule): when NM_SHARD_INDEX/NM_SHARD_COUNT
+# are set on top of the changed-path selection, this invocation runs only the
+# selection's shard NM_SHARD_INDEX (from 0); together the shards cover every
+# selected test. With the variables unset the selection stays untouched.
+sharded_selection=0
+if [ -n "${NM_SHARD_COUNT:-}" ] && [ -n "${NM_SHARD_INDEX:-}" ] && [ -n "${NM_CHANGED_FILES:-}" ]; then
+  case "$NM_SHARD_COUNT" in ''|*[!0-9]*) NM_SHARD_COUNT=1 ;; esac
+  case "$NM_SHARD_INDEX" in ''|*[!0-9]*) NM_SHARD_INDEX=0 ;; esac
+  [ "$NM_SHARD_COUNT" -ge 1 ] || NM_SHARD_COUNT=1
+  sharded=""
+  index=0
+  for file in $suite_files; do
+    if [ $((index % NM_SHARD_COUNT)) -eq "$NM_SHARD_INDEX" ]; then
+      sharded="$sharded $file"
+    fi
+    index=$((index + 1))
+  done
+  suite_files=$sharded
+  sharded_selection=1
+fi
 # Bounded wall time: the container may cap CPU below nproc (cgroup quota).
 # Derive the effective core count once and use it for every worker pool.
 eff_n=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
@@ -271,10 +291,19 @@ if printf '%s\n' $suite_files | grep -q '^test/test_dsl_float_choices.rb$'; then
     ran_splits=1
     # The float-choices file's render loop is the slowest single unit; it runs
     # as concurrent file shards of its own (same cases; each shard covers a
-    # disjoint (effect, choice) subset, union = the whole file).
+    # disjoint (effect, choice) subset, union = the whole file). Under the
+    # supervisor's shard split this invocation owns the matching fraction, so
+    # the shards together still cover the whole file.
     split_n=$eff_n
-    split_i=0
-    while [ "$split_i" -lt "$split_n" ]; do
+    split_start=0
+    split_end=$((split_n - 1))
+    if [ "$sharded_selection" -eq 1 ]; then
+      split_n=$NM_SHARD_COUNT
+      split_start=$NM_SHARD_INDEX
+      split_end=$split_start
+    fi
+    split_i=$split_start
+    while [ "$split_i" -le "$split_end" ]; do
       (
         set +e
         NOISEMAKER_TEST_FILE_SHARD="$split_i/$split_n" "$RUBY_BIN" --yjit -Ilib -Itest \
@@ -299,9 +328,19 @@ while [ "$group" -lt "$shard_n" ]; do
   group=$((group + 1))
 done
 split_n=${split_n:-0}
+# Under the shard split only this invocation's own split ran; auditing the
+# other fractions' rc files would fail on their absence.
+split_end=$((split_n - 1))
 split_i=0
-while [ "$ran_splits" -eq 1 ] && [ "$split_i" -lt "$split_n" ]; do
-  if [ "$(cat "$shard_dir/rc.split.$split_i" 2>/dev/null)" != "0" ]; then
+if [ "$sharded_selection" -eq 1 ]; then
+  split_end=$NM_SHARD_INDEX
+  split_i=$NM_SHARD_INDEX
+fi
+while [ "$ran_splits" -eq 1 ] && [ "$split_i" -le "$split_end" ]; do
+  if [ ! -f "$shard_dir/rc.split.$split_i" ]; then
+    echo "scripts/test: float-choices split $split_i did not run" >&2
+    suite_ok=0
+  elif [ "$(cat "$shard_dir/rc.split.$split_i" 2>/dev/null)" != "0" ]; then
     cat "$shard_dir/log.split.$split_i" >&2
     suite_ok=0
   else

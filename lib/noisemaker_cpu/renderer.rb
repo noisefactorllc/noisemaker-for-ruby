@@ -947,26 +947,6 @@ module NoisemakerCpu
       end
 
       (eff["passes"] || []).each do |p|
-        textures = {}
-        surface_params.keys.sort.each do |sampler|
-          surf = surface_params[sampler]
-          next if surf.nil?
-
-          surf.filter((!external_tex.nil? && sampler == external_tex) ? "linear" : "nearest")
-          textures[sampler] = surf
-        end
-        (p["inputs"] || {}).keys.sort.each do |sampler_name|
-          source = p["inputs"][sampler_name]
-          # An earlier pass's named attachment wins over a same-named
-          # external input; external-input data textures (midiNoteGrid,
-          # global_mesh0_*) bind from renderOptions.externalInputs.
-          surf = attachments[source] || inputs[source] ||
-            external_textures[source] || inputs[sampler_name] || result
-          next if surf.nil?
-
-          surf.filter((!external_tex.nil? && sampler_name == external_tex) ? "linear" : "nearest")
-          textures[sampler_name] = surf
-        end
         # Pass-level uniform aliases: the definition may expose a param under
         # one name while this pass's GLSL declares another.
         pass_uniforms = uniforms.dup
@@ -978,64 +958,95 @@ module NoisemakerCpu
             pass_uniforms[glsl_name] = uniforms[param_name]
           end
         end
-        # Sorted for determinism: every current pass has at most one output,
-        # but hash order must never pick the format-defining attachment.
-        out_names = (p["outputs"] || {}).keys.sort.map { |k| p["outputs"][k] }
-        destination_name = out_names[0] || "outputTex"
-        dest = _destination(eff, destination_name, params, width, height, pass: p)
-        fmt = dest.format
-        draw_op = p["drawMode"] ? NoisemakerCpu::DrawOps.get_draw_op(effect_id, p["program"]) : nil
-        if p["drawMode"] == "triangles"
-          # CPU triangle-mesh rasterizer (render/meshRender): fresh
-          # destination seeds from the prior same-name attachment (the clear
-          # pass output) or clears, then the hand-ported adapter rasterizes
-          # the external mesh data (renderer.js drawMode 'triangles' branch).
-          raise "#{effect_id} pass \"#{p['name']}\" has no fragment output" if out_names.empty?
+        # The authority resolves pass.repeat against the pass's uniforms and
+        # runs the pass that many times per frame, each iteration reading the
+        # previous iteration's output through the re-bound textures (the
+        # ping-pong the global_ state textures rely on; the CPU authority's
+        # runCanonicalEffectSync). Watercolor's wcSimplify (repeat: 2) is the
+        # only non-iterated effect that reaches this path.
+        repeat = _repeat_count(p, pass_uniforms)
+        next unless repeat.positive?
 
-          adapter = NoisemakerCpu::MeshRender.get_adapter(effect_id, p["program"])
-          raise "Missing CPU mesh adapter \"#{effect_id}:#{p['program']}\"" unless adapter
+        repeat.times do
+          textures = {}
+          surface_params.keys.sort.each do |sampler|
+            surf = surface_params[sampler]
+            next if surf.nil?
 
-          previous = attachments[out_names[0]]
-          dest.data.replace(previous.data) if previous && previous.data.length == dest.data.length
-          result = dest
-          adapter.call(result, pass_uniforms, external_inputs)
-        elsif draw_op
-          # CPU-only draw op (e.g. point-scatter): fresh destination seeds
-          # from the prior same-name attachment (accumulator) or clears.
-          src_name = (p["inputs"] || {}).keys.sort.map { |k| p["inputs"][k] }.first
-          src_name = "inputTex" if src_name.nil?
-          src = textures[src_name] || textures["inputTex"] || blank
-          result = dest
-          prev = out_names.empty? ? nil : attachments[out_names[0]]
-          result.data.replace(prev.data) if !prev.nil? && prev.data.length == result.data.length
-          draw_op.call(src, result, pass_uniforms)
-        else
-          pass_uniforms = pass_uniforms.merge(
-            "resolution" => [0.0 + dest.width, 0.0 + dest.height]
-          )
-          ctx = NoisemakerCpu::Ctx.new(
-            rt: rt,
-            uniforms: pass_uniforms,
-            textures: textures,
-            resolution: [0.0 + dest.width, 0.0 + dest.height],
-            time: time,
-            seed: seed,
-            blank: blank
-          )
-          compiled = _kernel_for(p["key"])
-          kernel = compiled[:kernel]
-          adapter = NoisemakerCpu::Adapters.get_adapter(effect_id, p["program"])
-          kernel = adapter.call(rt, compiled) if adapter
-          result =
-            if compiled[:uses_derivatives]
-              NoisemakerCpu::PassRunner.run_pass_deriv(kernel, ctx, dest.width, dest.height)
-            else
-              NoisemakerCpu::PassRunner.run_pass(kernel, ctx, dest.width, dest.height)
-            end
+            surf.filter((!external_tex.nil? && sampler == external_tex) ? "linear" : "nearest")
+            textures[sampler] = surf
+          end
+          (p["inputs"] || {}).keys.sort.each do |sampler_name|
+            source = p["inputs"][sampler_name]
+            # An earlier pass's named attachment wins over a same-named
+            # external input; external-input data textures (midiNoteGrid,
+            # global_mesh0_*) bind from renderOptions.externalInputs.
+            surf = attachments[source] || inputs[source] ||
+              external_textures[source] || inputs[sampler_name] || result
+            next if surf.nil?
+
+            surf.filter((!external_tex.nil? && sampler_name == external_tex) ? "linear" : "nearest")
+            textures[sampler_name] = surf
+          end
+          # Sorted for determinism: every current pass has at most one output,
+          # but hash order must never pick the format-defining attachment.
+          out_names = (p["outputs"] || {}).keys.sort.map { |k| p["outputs"][k] }
+          destination_name = out_names[0] || "outputTex"
+          dest = _destination(eff, destination_name, params, width, height, pass: p)
+          fmt = dest.format
+          draw_op = p["drawMode"] ? NoisemakerCpu::DrawOps.get_draw_op(effect_id, p["program"]) : nil
+          if p["drawMode"] == "triangles"
+            # CPU triangle-mesh rasterizer (render/meshRender): fresh
+            # destination seeds from the prior same-name attachment (the clear
+            # pass output) or clears, then the hand-ported adapter rasterizes
+            # the external mesh data (renderer.js drawMode 'triangles' branch).
+            raise "#{effect_id} pass \"#{p['name']}\" has no fragment output" if out_names.empty?
+
+            adapter = NoisemakerCpu::MeshRender.get_adapter(effect_id, p["program"])
+            raise "Missing CPU mesh adapter \"#{effect_id}:#{p['program']}\"" unless adapter
+
+            previous = attachments[out_names[0]]
+            dest.data.replace(previous.data) if previous && previous.data.length == dest.data.length
+            result = dest
+            adapter.call(result, pass_uniforms, external_inputs)
+          elsif draw_op
+            # CPU-only draw op (e.g. point-scatter): fresh destination seeds
+            # from the prior same-name attachment (accumulator) or clears.
+            src_name = (p["inputs"] || {}).keys.sort.map { |k| p["inputs"][k] }.first
+            src_name = "inputTex" if src_name.nil?
+            src = textures[src_name] || textures["inputTex"] || blank
+            result = dest
+            prev = out_names.empty? ? nil : attachments[out_names[0]]
+            result.data.replace(prev.data) if !prev.nil? && prev.data.length == result.data.length
+            draw_op.call(src, result, pass_uniforms)
+          else
+            pass_uniforms = pass_uniforms.merge(
+              "resolution" => [0.0 + dest.width, 0.0 + dest.height]
+            )
+            ctx = NoisemakerCpu::Ctx.new(
+              rt: rt,
+              uniforms: pass_uniforms,
+              textures: textures,
+              resolution: [0.0 + dest.width, 0.0 + dest.height],
+              time: time,
+              seed: seed,
+              blank: blank
+            )
+            compiled = _kernel_for(p["key"])
+            kernel = compiled[:kernel]
+            adapter = NoisemakerCpu::Adapters.get_adapter(effect_id, p["program"])
+            kernel = adapter.call(rt, compiled) if adapter
+            result =
+              if compiled[:uses_derivatives]
+                NoisemakerCpu::PassRunner.run_pass_deriv(kernel, ctx, dest.width, dest.height)
+              else
+                NoisemakerCpu::PassRunner.run_pass(kernel, ctx, dest.width, dest.height)
+              end
+          end
+          # Quantize the pass output to its declared texture format.
+          NoisemakerCpu::TextureFormat.quantize_texture(result, fmt)
+          out_names.each { |name| attachments[name] = result }
         end
-        # Quantize the pass output to its declared texture format.
-        NoisemakerCpu::TextureFormat.quantize_texture(result, fmt)
-        out_names.each { |name| attachments[name] = result }
       end
       result
     end
