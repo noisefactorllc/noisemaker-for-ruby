@@ -1295,7 +1295,20 @@ module NoisemakerCpu
   class CpuRenderer
     attr_reader :sink_manager
 
+    # Pass an isolated sink failure to the sink that threw it. A sink opts in
+    # with an optional on_error(error) method, for example to end an output
+    # whose new size it cannot send. Rendering and the other sinks continue
+    # either way. `onError` is accepted under the engine's own name.
+    SINK_ERROR_METHODS = %i[on_error onError].freeze
+
+    def self.report_sink_error(error, sink)
+      name = SINK_ERROR_METHODS.find { |candidate| sink.respond_to?(candidate) }
+      sink.public_send(name, error) if name
+    end
+
     def initialize(on_sink_error: nil)
+      on_sink_error ||=
+        ->(error, sink) { NoisemakerCpu::CpuRenderer.report_sink_error(error, sink) }
       @sink_manager = NoisemakerCpu::SinkManager.new(on_error: on_sink_error)
       @sink_descriptor = {
         "width" => 0, "height" => 0, "format" => "rgba8unorm",

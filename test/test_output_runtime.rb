@@ -573,6 +573,71 @@ class TestOutputRuntime < Minitest::Test
     assert_empty untouched.events
   end
 
+  def test_cpu_renderer_passes_each_sink_its_own_isolated_errors
+    renderer = NoisemakerCpu::CpuRenderer.new
+    configure_error = RuntimeError.new("configure failed")
+    defer_error = RuntimeError.new("defer probe failed")
+    submit_error = RuntimeError.new("submit failed")
+    reported = []
+    failing = false
+    failed = Object.new
+    failed.define_singleton_method(:configure) { |_descriptor| raise configure_error if failing }
+    failed.define_singleton_method(:defer_render) { raise defer_error if failing; false }
+    failed.define_singleton_method(:submit) { |_frame, _timestamp| raise submit_error if failing; true }
+    failed.define_singleton_method(:close) { |*| }
+    failed.define_singleton_method(:on_error) { |error| reported << [:failed, error] }
+    # A sink without on_error fails exactly as before: counted and isolated.
+    silent = Object.new
+    silent.define_singleton_method(:configure) { |_descriptor| raise "silent configure failed" if failing }
+    silent.define_singleton_method(:submit) { |_frame, _timestamp| raise "silent submit failed" if failing; true }
+    silent.define_singleton_method(:close) { |*| }
+    # A sink whose reporter throws does not stop the render or the frame.
+    reporter_calls = 0
+    throwing_reporter = Object.new
+    throwing_reporter.define_singleton_method(:configure) { |_descriptor| raise "configure failed again" }
+    throwing_reporter.define_singleton_method(:submit) { |_frame, _timestamp| true }
+    throwing_reporter.define_singleton_method(:close) { |*| }
+    throwing_reporter.define_singleton_method(:on_error) do |_error|
+      reporter_calls += 1
+      raise "reporter failed"
+    end
+    # A sink that does not fail sees the same calls and no report.
+    healthy_calls = []
+    healthy = Object.new
+    healthy.define_singleton_method(:configure) do |descriptor|
+      healthy_calls << [:configure, descriptor["width"], descriptor["height"]]
+    end
+    healthy.define_singleton_method(:defer_render) { healthy_calls << [:defer_render]; false }
+    healthy.define_singleton_method(:submit) do |_frame, timestamp|
+      healthy_calls << [:submit, timestamp]
+      true
+    end
+    healthy.define_singleton_method(:close) { |*| }
+    healthy.define_singleton_method(:on_error) { |error| reported << [:healthy, error] }
+    renderer.add_sink(failed)
+    renderer.add_sink(silent)
+    renderer.add_sink(throwing_reporter)
+    renderer.add_sink(healthy)
+    failing = true
+
+    frame = renderer.render(
+      "search synth\nsolid(color: [0.2, 0.4, 0.6]).write(o0)\nrender(o0)",
+      width: 2, height: 1, presentation_timestamp: 7
+    )
+    deferred = renderer.should_defer_render
+
+    refute deferred
+    assert_equal [[:failed, configure_error], [:failed, submit_error], [:failed, defer_error]], reported
+    assert_equal 1, reporter_calls
+    assert_equal [[:configure, 2, 1], [:submit, 7], [:defer_render]], healthy_calls
+    assert_equal({ accepted: 0, dropped: 0, failed: 3 }, renderer.sink_manager.stats[failed])
+    assert_equal({ accepted: 0, dropped: 0, failed: 2 }, renderer.sink_manager.stats[silent])
+    assert_equal({ accepted: 1, dropped: 0, failed: 1 }, renderer.sink_manager.stats[throwing_reporter])
+    assert_equal({ accepted: 1, dropped: 0, failed: 0 }, renderer.sink_manager.stats[healthy])
+    assert_equal 2, frame.width
+    assert_equal 1, frame.height
+  end
+
   def test_cpu_renderer_does_not_submit_failures_and_disposal_is_idempotent
     renderer = NoisemakerCpu::CpuRenderer.new
     sink = RecordingSink.new
