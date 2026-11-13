@@ -484,15 +484,6 @@ module NoisemakerCpu
       end
     end
 
-    # Fallback size/format for a group-scoped particle-state texture
-    # (`global_xyz`/`global_vel`/`global_rgba`/`global_life_data`/
-    # `global_*_trail`) that nobody in its iteration group declares in
-    # `definition.textures` (e.g. a `points/*` effect used without a
-    # `pointsEmit` ahead of it). Sized from the referencing step's own
-    # `stateSize` param when it has one (never the screen-size fallback — an
-    # undeclared particle buffer is agent-count-shaped, not image-shaped) and
-    # 256 otherwise, matching every declared `{param:'stateSize',
-    # default:256}` spec in the real catalog.
     PARTICLE_STATE_FALLBACK_SIZE = 256
 
     PARTICLE_STATE_FALLBACK_FORMATS = {
