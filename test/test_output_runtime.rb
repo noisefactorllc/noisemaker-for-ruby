@@ -586,22 +586,19 @@ class TestOutputRuntime < Minitest::Test
     failed.define_singleton_method(:submit) { |_frame, _timestamp| raise submit_error if failing; true }
     failed.define_singleton_method(:close) { |*| }
     failed.define_singleton_method(:on_error) { |error| reported << [:failed, error] }
-    # A sink without on_error fails exactly as before: counted and isolated.
     silent = Object.new
     silent.define_singleton_method(:configure) { |_descriptor| raise "silent configure failed" if failing }
     silent.define_singleton_method(:submit) { |_frame, _timestamp| raise "silent submit failed" if failing; true }
     silent.define_singleton_method(:close) { |*| }
-    # A sink whose reporter throws does not stop the render or the frame.
     reporter_calls = 0
     throwing_reporter = Object.new
     throwing_reporter.define_singleton_method(:configure) { |_descriptor| raise "configure failed again" }
     throwing_reporter.define_singleton_method(:submit) { |_frame, _timestamp| true }
     throwing_reporter.define_singleton_method(:close) { |*| }
-    throwing_reporter.define_singleton_method(:on_error) do |_error|
+    throwing_reporter.define_singleton_method(:onError) do |_error|
       reporter_calls += 1
       raise "reporter failed"
     end
-    # A sink that does not fail sees the same calls and no report.
     healthy_calls = []
     healthy = Object.new
     healthy.define_singleton_method(:configure) do |descriptor|
