@@ -105,6 +105,28 @@ class TestRuntime < Minitest::Test
     assert_equal(-1073741824, @rt.binary("<<", @rt.i(3), @rt.i(30), 1, "uint"), "uint shift")
   end
 
+  def test_integer_constructors_broadcast_one_scalar_and_fill_left_to_right
+    # Ported from noisemaker-for-cpu bee1eb7 (test/glsl-runtime.test.js):
+    # one scalar argument broadcasts, otherwise the arguments' components
+    # fill left to right and the remainder fills with 0. Unsigned vectors
+    # store the ToInt32 image of the oracle's unsigned values -- the same
+    # 32-bit patterns sign-extended; every consuming op masks back through
+    # u32 (see test_int_and_uint_vectors).
+    floats = [1.5, -2.25, 3000.0, 65536.7]
+    assert_equal [1, -2, 3000, 65536], @rt.construct(4, *floats, "int").to_a
+    assert_equal [1, -2, 3000, 65536], @rt.construct(4, *floats, "uint").to_a
+    assert_equal [7, 9, 5],
+                 @rt.construct(3, @rt.construct(2, 7, 9, "uint"), 5, "uint").to_a
+    assert_equal [1, 2, 3, 4],
+                 @rt.construct(4, @rt.construct(2, 1, 2, "uint"),
+                                  @rt.construct(2, 3, 4, "uint"), "uint").to_a
+    assert_equal [-4, 5, 0], @rt.construct(3, @rt.construct(2, -4, 5, "int"), "int").to_a
+    assert_equal [6, 7], @rt.construct(2, @rt.construct(4, 6, 7, 8, 9, "int"), "int").to_a
+    assert_equal [3, 3], @rt.construct(2, 3.9, "int").to_a
+    assert_equal [-1, -1, -1], @rt.construct(3, -1, "uint").to_a
+    assert_equal [0, 0, 0], @rt.construct(3, "uint").to_a
+  end
+
   def test_cpu_noise3d_hash4_matches_canonical_javascript_number_semantics
     # Since noisemaker-for-cpu d13b0a2 the canonical hash4 LCG mixing wraps
     # exactly mod 2^32 (cpu_umul / >>> 0) and the final xor chain is unsigned

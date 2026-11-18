@@ -429,6 +429,11 @@ module NoisemakerCpu
             ivals << wrap.call(c)
           end
         end
+        # GLSL integer-vector constructors fill the remaining components
+        # with 0 (the oracle's `?? 0` fill, pinned by noisemaker-for-cpu
+        # bee1eb7): ivec3(ivec2(-4, 5)) is [-4, 5, 0] and a zero-argument
+        # integer construct is all zeros.
+        ivals.concat(Array.new(width - ivals.length, 0)) if ivals.length < width
         return ivals[0] if width == 1
 
         return IVec.new(ivals[0...width])
