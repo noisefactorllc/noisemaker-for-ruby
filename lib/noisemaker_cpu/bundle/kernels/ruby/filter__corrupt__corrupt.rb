@@ -27,7 +27,9 @@ run_pixel = lambda do |ctx, out|
   end
   prng__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
-    p.replace((rt.component_wise('mix', rt.construct(3, ((((rt.unary('-', p[0])) * (rt.f(2)))) + (rt.f(1))), ((((rt.unary('-', p[1])) * (rt.f(2)))) + (rt.f(1))), ((((rt.unary('-', p[2])) * (rt.f(2)))) + (rt.f(1)))), rt.construct(3, ((p[0]) * (rt.f(2))), ((p[1]) * (rt.f(2))), ((p[2]) * (rt.f(2)))), rt.component_wise('greaterThanEqual', p, rt.construct(3, rt.f(0))))).map { |c| rt.f32(c) })
+    p = rt.assign_swizzle(p, 'x', (rt.bool(rt.binary('>=', rt.swizzle(p, 'x'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'x'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'x')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
+    p = rt.assign_swizzle(p, 'y', (rt.bool(rt.binary('>=', rt.swizzle(p, 'y'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'y'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'y')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
+    p = rt.assign_swizzle(p, 'z', (rt.bool(rt.binary('>=', rt.swizzle(p, 'z'), rt.f(0))) ? (rt.binary('*', rt.swizzle(p, 'z'), rt.f(2), 1, 'float')) : (rt.binary('+', rt.binary('*', rt.unary('-', rt.swizzle(p, 'z')), rt.f(2), 1, 'float'), rt.f(1), 1, 'float'))))
     return rt.construct(3, rt.binary('/', rt.construct(3, rt.pcg3d(rt.construct(3, rt.construct(3, p), 'uint'))), rt.f(4294967296), 3, 'float'))
   end
   rowTime__float_float = lambda do |row, _t|
