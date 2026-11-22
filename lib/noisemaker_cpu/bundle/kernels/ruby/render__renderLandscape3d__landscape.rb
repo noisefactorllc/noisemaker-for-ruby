@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  lighting__vec3_vec3_vec3 = sampleAtlasTexel__sampler2D_ivec3_bool = interpolateAtlas__vec4_vec4_float = atlasCoords__vec3 = sampleAtlasCoords__sampler2D_struct1_bool = sampleAtlas__sampler2D_vec3_bool = isSolid__struct1 = traceIsosurface__vec3_vec3_float_float = isosurfaceNormal__vec3_vec3 = inverseRotation__vec3 = forwardRotation__vec3 = renderPerspective__vec2 = main__void = nil
+  lighting__vec3_vec3_vec3 = sampleAtlasTexel__sampler2D_ivec3_bool = interpolateAtlas__vec4_vec4_float = atlasCoords__vec3 = sampleAtlasCoords__sampler2D_struct1_bool = sampleAtlas__sampler2D_vec3_bool = isSolid__struct1 = traceIsosurface__vec3_vec3_float_float = isosurfaceNormal__vec3_vec3 = voxelOccupied__ivec3 = exposedFace__ivec3_bvec3_ivec3_vec3 = inverseRotation__vec3 = forwardRotation__vec3 = renderPerspective__vec2 = main__void = nil
   _retc = nil
   _u__FILTERING = u.key?('FILTERING') ? u['FILTERING'] : 0
   _u__VIEW_MODE = u.key?('VIEW_MODE') ? u['VIEW_MODE'] : 0
@@ -165,6 +165,34 @@ run_pixel = lambda do |ctx, out|
     end
     return fallback
   end
+  voxelOccupied__ivec3 = lambda do |cell|
+    cell = rt.copy(cell, 'int')
+    density = nil
+    if rt.bool((rt.bool(rt.component_wise('any', rt.component_wise('lessThan', cell, rt.construct(3, rt.i(0), 'int')))) || rt.bool(rt.component_wise('any', rt.component_wise('greaterThanEqual', cell, rt.construct(3, _u_volumeSize, 'int')))) ? 1 : 0))
+      return 0
+    end
+    density = rt.swizzle(rt.texel_fetch(_u_analyticalGeo, rt.construct(2, rt.swizzle(cell, 'x'), rt.binary('+', rt.swizzle(cell, 'y'), rt.binary('*', rt.swizzle(cell, 'z'), _u_volumeSize, 1, 'int'), 1, 'int'), 'int'), rt.i(0)), 'a')
+    return (rt.bool(rt.binary('>', density, rt.f(0))) && rt.bool(rt.binary('>=', density, _u_threshold)) ? 1 : 0)
+  end
+  exposedFace__ivec3_bvec3_ivec3_vec3 = lambda do |cell, crossed, toward, normal|
+    cell = rt.copy(cell, 'int')
+    crossed = rt.copy(crossed, 'bool')
+    toward = rt.copy(toward, 'int')
+    normal = rt.copy(normal, 'float')
+    if rt.bool(rt.binary('<', rt.binary('+', rt.binary('+', rt.construct(1, rt.swizzle(crossed, 'x'), 'int'), rt.construct(1, rt.swizzle(crossed, 'y'), 'int'), 1, 'int'), rt.construct(1, rt.swizzle(crossed, 'z'), 'int'), 1, 'int'), rt.i(2)))
+      return normal
+    end
+    if rt.bool((rt.bool(rt.swizzle(crossed, 'y')) && rt.bool((rt.bool(voxelOccupied__ivec3.call(rt.binary('-', cell, rt.construct(3, rt.i(0), rt.swizzle(toward, 'y'), rt.i(0), 'int'), 3, 'int'))) ? 0 : 1)) ? 1 : 0))
+      return rt.construct(3, rt.f(0), rt.unary('-', rt.construct(1, rt.swizzle(toward, 'y'))), rt.f(0))
+    end
+    if rt.bool((rt.bool(rt.swizzle(crossed, 'x')) && rt.bool((rt.bool(voxelOccupied__ivec3.call(rt.binary('-', cell, rt.construct(3, rt.swizzle(toward, 'x'), rt.i(0), rt.i(0), 'int'), 3, 'int'))) ? 0 : 1)) ? 1 : 0))
+      return rt.construct(3, rt.unary('-', rt.construct(1, rt.swizzle(toward, 'x'))), rt.f(0), rt.f(0))
+    end
+    if rt.bool((rt.bool(rt.swizzle(crossed, 'z')) && rt.bool((rt.bool(voxelOccupied__ivec3.call(rt.binary('-', cell, rt.construct(3, rt.i(0), rt.i(0), rt.swizzle(toward, 'z'), 'int'), 3, 'int'))) ? 0 : 1)) ? 1 : 0))
+      return rt.construct(3, rt.f(0), rt.f(0), rt.unary('-', rt.construct(1, rt.swizzle(toward, 'z'))))
+    end
+    return normal
+  end
   inverseRotation__vec3 = lambda do |p|
     p = rt.copy(p, 'float')
     c = nil; cpu_vector_assignment_1 = nil; cpu_vector_assignment_2 = nil; s = nil
@@ -280,6 +308,7 @@ run_pixel = lambda do |ctx, out|
       g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', worldNormal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.binary('/', hit[0], rt.f(320), 1, 'float'), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
       return
     end
+    crossed = rt.construct(3, 0)
     step = rt.i(0)
     _for4_first = true
     (0..1048575).each do |_for4|
@@ -296,13 +325,13 @@ run_pixel = lambda do |ctx, out|
       atlas = rt.construct(2, rt.swizzle(cell, 'x'), rt.binary('+', rt.swizzle(cell, 'y'), rt.binary('*', rt.swizzle(cell, 'z'), _u_volumeSize, 1, 'int'), 1, 'int'), 'int')
       density = rt.swizzle(rt.texel_fetch(_u_analyticalGeo, atlas, rt.i(0)), 'a')
       if rt.bool((rt.bool(rt.binary('>', density, rt.f(0))) && rt.bool(rt.binary('>=', density, _u_threshold)) ? 1 : 0))
-        worldNormal = forwardRotation__vec3.call(normal)
+        worldNormal = forwardRotation__vec3.call(exposedFace__ivec3_bvec3_ivec3_vec3.call(cell, crossed, stepDir, normal))
         g['fragColor'].replace((rt.construct(4, lighting__vec3_vec3_vec3.call(rt.swizzle(rt.texel_fetch(_u_volumeCache, atlas, rt.i(0)), 'rgb'), worldNormal, viewDirection), rt.f(1))).map { |c| rt.f32(c) })
         g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', worldNormal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.binary('/', distance, rt.f(320), 1, 'float'), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
         return
       end
       distance = rt.component_wise('min', rt.component_wise('min', rt.swizzle(nextT, 'x'), rt.swizzle(nextT, 'y')), rt.swizzle(nextT, 'z'))
-      crossed = rt.component_wise('lessThanEqual', nextT, rt.construct(3, distance))
+      crossed.replace((rt.component_wise('lessThanEqual', nextT, rt.construct(3, distance))).map { |c| rt.f32(c) })
       normal.replace((rt.construct(3, rt.f(0))).map { |c| rt.f32(c) })
       if rt.bool(rt.swizzle(crossed, 'y'))
         normal = rt.assign_swizzle(normal, 'y', rt.unary('-', rt.construct(1, rt.swizzle(stepDir, 'y'))))
@@ -325,6 +354,7 @@ run_pixel = lambda do |ctx, out|
     uv = rt.construct(2, rt.fdiv(rt.binary_raw('-', rt.binary_raw('+', rt.swizzle(ctx.frag_coord, 'xy'), _u_tileOffset, 2, 'float'), rt.binary_raw('*', fullRes, rt.f(0.5), 2, 'float'), 2, 'float'), rt.swizzle(fullRes, 'y')))
     aspect = rt.f(0.0)
     cell = rt.construct(3, 0.0, 'int')
+    crossed = rt.construct(3, 0.0)
     distance = rt.f(0.0)
     enter = rt.f(0.0)
     leave = rt.f(0.0)
@@ -377,6 +407,7 @@ run_pixel = lambda do |ctx, out|
         g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.fdiv(hit[0], rt.binary('*', size, rt.f(4), 1, 'float')), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
         return
       end
+      crossed = rt.construct(3, 0)
       step = rt.i(0)
       _for5_first = true
       (0..1048575).each do |_for5|
@@ -394,13 +425,14 @@ run_pixel = lambda do |ctx, out|
         density = rt.swizzle(rt.texel_fetch(_u_analyticalGeo, atlas, rt.i(0)), 'a')
         color = rt.construct(3, 0.0)
         if rt.bool((rt.bool(rt.binary('>', density, rt.f(0))) && rt.bool(rt.binary('>=', density, _u_threshold)) ? 1 : 0))
+          normal.replace((exposedFace__ivec3_bvec3_ivec3_vec3.call(cell, crossed, rt.construct(3, rt.unary('-', rt.i(1)), 'int'), normal)).map { |c| rt.f32(c) })
           color = rt.swizzle(rt.texel_fetch(_u_volumeCache, atlas, rt.i(0)), 'rgb')
           g['fragColor'].replace((rt.construct(4, lighting__vec3_vec3_vec3.call(color, normal, rt.construct(3, (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)), (rt.f(0.57735025882720947)))), rt.f(1))).map { |c| rt.f32(c) })
           g['geoOut'].replace((rt.construct(4, rt.binary_raw('+', rt.binary_raw('*', normal, rt.f(0.5), 3, 'float'), rt.f(0.5), 3, 'float'), rt.component_wise('clamp', rt.fdiv(distance, rt.binary('*', size, rt.f(4), 1, 'float')), rt.f(0), rt.f(1)))).map { |c| rt.f32(c) })
           return
         end
         distance = rt.component_wise('min', rt.component_wise('min', rt.swizzle(nextT, 'x'), rt.swizzle(nextT, 'y')), rt.swizzle(nextT, 'z'))
-        crossed = rt.component_wise('lessThanEqual', nextT, rt.construct(3, distance))
+        crossed.replace((rt.component_wise('lessThanEqual', nextT, rt.construct(3, distance))).map { |c| rt.f32(c) })
         if rt.bool(rt.swizzle(crossed, 'y'))
           (begin normal[0] = rt.f32(rt.f(0)); normal[1] = rt.f32(rt.f(1)); normal[2] = rt.f32(rt.f(0)); normal end)
         else
