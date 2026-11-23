@@ -293,7 +293,7 @@
     "synth3d/cellularAutomata3d:simulate": "d1f88b1bb7eedf31cedd23e59996d54efef8f3eb84bc24a3bed3a1cde0bc2b64",
     "synth3d/flythrough3d:precompute": "2694825664eef632449b197e1bce585f7878c6358a4d5260c72729b015d02a62",
     "synth3d/fractal3d:precompute": "4bc39fb7920cf0829cc6a6fc4670cdac9f5ea68c5438f569050a4732c1e6de19",
-    "synth3d/heightmap3d:precompute": "85d3d98f08181500765e54b01153163ac6a18a1db7766e88a32fa7de0628e0dc",
+    "synth3d/heightmap3d:precompute": "8797f5f7cd9a16e4a0bcb1de2ea5032748c90e0f371f0608130204666dc8d741",
     "synth3d/noise3d:precompute": "a34609b241a33e51d1d0fd60ea94b6ef681b37a196efa101c2af4a4f1239b208",
     "synth3d/reactionDiffusion3d:simulate": "2a234e02d3efc396cdd09eb876d01c37e225bbf6e4dd7781e4795fa0da0c6bcd",
     "synth3d/shape3d:precompute": "53b240191c2f0d2e61b5dacecb532ecd3b8aad3973bbf8e38d8712073d50d14f"

@@ -3,25 +3,43 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  imageTexel__ivec2_ivec2 = columnHeight__ivec2 = density__ivec3 = main__void = nil
+  terrainSpan__void = terrainColumn__ivec2 = inTerrain__ivec2 = imageTexel__ivec2_ivec2 = columnHeight__ivec2 = density__ivec3 = main__void = nil
   _retc = nil
   _u_heightTex = ctx.texture_binding('heightTex')
   _u_tex = ctx.texture_binding('tex')
   _u_volumeSize = u.key?('volumeSize') ? u['volumeSize'] : 0
   _u_heightScale = u.key?('heightScale') ? u['heightScale'] : rt.f(0.0)
   _u_baseHeight = u.key?('baseHeight') ? u['baseHeight'] : rt.f(0.0)
+  _u_aspect = u.key?('aspect') ? u['aspect'] : rt.f(0.0)
+  _u_aspectInv = u.key?('aspectInv') ? u['aspectInv'] : rt.f(0.0)
   g['fragColor'] = rt.construct(4, 0.0)
   g['geoOut'] = rt.construct(4, 0.0)
+  terrainSpan__void = lambda do
+    halfSize = nil
+    halfSize = rt.binary('*', rt.construct(1, _u_volumeSize), rt.f(0.5), 1, 'float')
+    return rt.construct(2, (rt.bool(rt.binary('<', _u_aspect, rt.f(1))) ? (rt.component_wise('max', rt.i(2), rt.binary('*', rt.i(2), rt.construct(1, rt.component_wise('floor', rt.binary('+', rt.binary('*', halfSize, _u_aspect, 1, 'float'), rt.f(0.5), 1, 'float')), 'int'), 1, 'int'))) : (_u_volumeSize)), (rt.bool(rt.binary('<', _u_aspectInv, rt.f(1))) ? (rt.component_wise('max', rt.i(2), rt.binary('*', rt.i(2), rt.construct(1, rt.component_wise('floor', rt.binary('+', rt.binary('*', halfSize, _u_aspectInv, 1, 'float'), rt.f(0.5), 1, 'float')), 'int'), 1, 'int'))) : (_u_volumeSize)), 'int')
+  end
+  terrainColumn__ivec2 = lambda do |column|
+    column = rt.copy(column, 'int')
+    return rt.binary('-', rt.construct(2, rt.swizzle(column, 'x'), rt.binary('-', rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int'), rt.swizzle(column, 'y'), 1, 'int'), 'int'), rt.binary('/', rt.binary('-', _u_volumeSize, terrainSpan__void.call(), 2, 'int'), rt.i(2), 2, 'int'), 2, 'int')
+  end
+  inTerrain__ivec2 = lambda do |column|
+    column = rt.copy(column, 'int')
+    image = nil
+    image = terrainColumn__ivec2.call(column)
+    return (rt.bool(rt.component_wise('all', rt.component_wise('greaterThanEqual', image, rt.construct(2, rt.i(0), 'int')))) && rt.bool(rt.component_wise('all', rt.component_wise('lessThan', image, terrainSpan__void.call()))) ? 1 : 0)
+  end
   imageTexel__ivec2_ivec2 = lambda do |column, size|
     column = rt.copy(column, 'int')
     size = rt.copy(size, 'int')
-    image = nil
-    image = rt.construct(2, rt.swizzle(column, 'x'), rt.binary('-', rt.binary('-', _u_volumeSize, rt.i(1), 1, 'int'), rt.swizzle(column, 'y'), 1, 'int'), 'int')
-    return rt.component_wise('clamp', rt.binary('/', rt.binary('*', rt.binary('+', rt.binary('*', image, rt.i(2), 2, 'int'), rt.i(1), 2, 'int'), size, 2, 'int'), rt.binary('*', _u_volumeSize, rt.i(2), 1, 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int'))
+    return rt.component_wise('clamp', rt.binary('/', rt.binary('*', rt.binary('+', rt.binary('*', terrainColumn__ivec2.call(column), rt.i(2), 2, 'int'), rt.i(1), 2, 'int'), size, 2, 'int'), rt.binary('*', terrainSpan__void.call(), rt.i(2), 2, 'int'), 2, 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int'))
   end
   columnHeight__ivec2 = lambda do |column|
     column = rt.copy(column, 'int')
     luminance = nil; rgb = nil
+    if rt.bool((rt.bool(inTerrain__ivec2.call(column)) ? 0 : 1))
+      return rt.f(0)
+    end
     rgb = rt.swizzle(rt.texel_fetch(_u_heightTex, imageTexel__ivec2_ivec2.call(column, rt.texture_size(_u_heightTex)), rt.i(0)), 'rgb')
     luminance = rt.dot(rgb, rt.construct(3, rt.f(0.2125999927520752), rt.f(0.71520000696182251), rt.f(0.072200000286102295)))
     return rt.component_wise('floor', rt.binary('+', rt.binary('*', rt.component_wise('clamp', rt.binary('+', rt.binary('*', luminance, _u_heightScale, 1, 'float'), _u_baseHeight, 1, 'float'), rt.f(0), rt.f(1)), rt.construct(1, _u_volumeSize), 1, 'float'), rt.f(0.5), 1, 'float'))
