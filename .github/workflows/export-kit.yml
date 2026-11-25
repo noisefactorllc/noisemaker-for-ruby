@@ -14,7 +14,7 @@ on:
   schedule:
     - cron: '23 7 * * 1'
   push:
-    branches: [main]
+    branches: [main, 2.x]
     # Inert documentation does not build. README.md stays in: the gem ships
     # it and test/test_packaging.rb checks it.
     paths:
@@ -154,7 +154,9 @@ jobs:
 
   dispatch:
     needs: [test, parity, windows]
-    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # The same rule as a schedule or dispatch on main, written with no
+    # alternative so the condition alone holds the release to main.
+    if: contains(fromJSON('["schedule", "workflow_dispatch"]'), github.event_name) && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       # The release mints a new kit version for every dispatch, so a weekly run on
