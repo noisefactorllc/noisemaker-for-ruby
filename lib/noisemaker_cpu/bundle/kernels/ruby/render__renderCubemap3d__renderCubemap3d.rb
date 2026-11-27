@@ -22,6 +22,7 @@ run_pixel = lambda do |ctx, out|
   g['PI'] = rt.f(3.1415927410125732)
   g['MAX_STEPS'] = rt.i(256)
   g['MAX_DIST'] = rt.f(10)
+  g['MARCHER_LIGHT_X'] = rt.f(1)
   atlasTexel__ivec3_int = lambda do |p, volSize|
     p = rt.copy(p, 'int')
     return rt.construct(2, rt.swizzle(p, 'x'), rt.binary('+', rt.swizzle(p, 'y'), rt.binary('*', rt.swizzle(p, 'z'), volSize, 1, 'int'), 1, 'int'), 'int')
@@ -278,7 +279,7 @@ run_pixel = lambda do |ctx, out|
     rd = rt.copy(rd, 'float')
     amb = nil; baseColor = nil; colorVariance = nil; diff = nil; halfVec = nil; lightDir = nil; n = nil; rim = nil; spec = nil; volColor = nil
     n = calcNormal__vec3.call(p)
-    lightDir = rt.normalize(rt.construct(3, rt.f(1), rt.f(1), rt.unary('-', rt.f(1))))
+    lightDir = rt.normalize(rt.construct(3, g['MARCHER_LIGHT_X'], rt.f(1), rt.unary('-', rt.f(1))))
     diff = rt.component_wise('max', rt.dot(n, lightDir), rt.f(0))
     amb = rt.f(0.15000000596046448)
     halfVec = rt.normalize(rt.binary_raw('-', lightDir, rd, 3, 'float'))
@@ -298,7 +299,7 @@ run_pixel = lambda do |ctx, out|
     n = rt.copy(n, 'float')
     voxel = rt.copy(voxel, 'int')
     amb = nil; baseColor = nil; colorVariance = nil; diff = nil; faceShade = nil; lightDir = nil; volColor = nil
-    lightDir = rt.normalize(rt.construct(3, rt.f(1), rt.f(1), rt.unary('-', rt.f(1))))
+    lightDir = rt.normalize(rt.construct(3, g['MARCHER_LIGHT_X'], rt.f(1), rt.unary('-', rt.f(1))))
     diff = rt.component_wise('max', rt.dot(n, lightDir), rt.f(0))
     amb = rt.f(0.30000001192092896)
     volColor = sampleVoxel__ivec3.call(voxel)

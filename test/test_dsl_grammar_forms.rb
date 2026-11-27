@@ -28,13 +28,6 @@ def text_texture
   surface
 end
 
-def render_bytes(source)
-  NoisemakerCpu::Renderer.render_dsl(
-    source, width: SIZE, height: SIZE, time: 0.25, seed: 1,
-            external_textures: { "textTex" => text_texture }
-  ).to_rgba8
-end
-
 def step_params(source, id)
   plan = D.compile_dsl(source, EFFECTS)
   plan["chains"].flat_map { |chain| chain["steps"] }
@@ -129,6 +122,13 @@ GRAMMAR_REJECTED = [
 ].freeze
 
 class TestDslGrammarForms < Minitest::Test
+  def render_bytes(source)
+    NoisemakerCpu::Renderer.render_dsl(
+      source, width: SIZE, height: SIZE, time: 0.25, seed: 1,
+              external_textures: { "textTex" => text_texture }
+    ).to_rgba8
+  end
+
   def test_each_authority_form_renders_the_same_rgba_bytes_as_its_plain_equivalent
     GRAMMAR_PAIRS.each_value do |pairs|
       pairs.each do |authority, plain|

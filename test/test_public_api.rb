@@ -45,6 +45,57 @@ class TestPublicApi < Minitest::Test
     assert_raises(ArgumentError) { render("render/pointsEmit", typo: 1) }
   end
 
+  def test_roll_starts_with_its_own_cleared_feedback
+    options = { width: 16, height: 8, seed: 1, time: 0.25 }
+    reference = Renderer.render_effect("synth/roll", {}, {}, **options)
+    supplied = NoisemakerCpu::Surface.new(16, 8).clear([0.875, 0.5, 0.25, 1])
+    result = Renderer.render_effect("synth/roll", {}, { "_rollFb" => supplied }, **options)
+    assert_equal reference.to_rgba8, result.to_rgba8
+    assert_equal [0.875, 0.5, 0.25, 1], supplied.data.first(4)
+  end
+
+  def test_generated_overlays_keep_their_own_textures
+    base = NoisemakerCpu::Surface.new(9, 5).clear([0.125, 0.25, 0.5, 1])
+    supplied = NoisemakerCpu::Surface.new(9, 5).clear([1, 1, 1, 1])
+    %w[filter/fibers filter/scratches filter/strayHair].each do |id|
+      render = ->(inputs) { Renderer.render_effect(id, {}, inputs, width: 9, height: 5).to_rgba8 }
+      assert_equal render.call(inputTex: base), render.call(inputTex: base, overlayTex: supplied), id
+    end
+  end
+
+  def test_standalone_filters_sample_regular_inputs_with_nearest_filtering
+    gradient = 6.times.flat_map { |i| [i / 5.0, (5 - i) / 5.0, 0, 1] }
+    input = NoisemakerCpu::Surface.new(3, 2, gradient)
+    input.filter("linear")
+    height_grid = Renderer.render_effect("points/heightGrid", {}, { inputTex: input }, width: 5, height: 3)
+    assert_equal [0, 1, 0, 1], height_grid.data[4, 4]
+    warp = Renderer.render_effect("filter/warp", {}, { inputTex: input }, width: 5, height: 3)
+    assert_equal 0, warp.data[0]
+    assert_equal "linear", input.filter
+  end
+
+  def test_standalone_iterated_effects_keep_the_input_surfaces_sampler_mode
+    gradient = 6.times.flat_map { |i| [i / 5.0, (5 - i) / 5.0, 0, 1] }
+    input = NoisemakerCpu::Surface.new(3, 2, gradient)
+    input.filter("linear")
+    result = Renderer.render_effect("filter/motionBlur", { iterationCount: 1 }, { inputTex: input }, width: 5, height: 3)
+    assert_equal [0.0479736328125, 0.5517578125, 0, 0.599609375], result.data[4, 4]
+    assert_equal "linear", input.filter
+  end
+
+  def test_volume_size_accepts_either_key_spelling_before_inheriting_the_atlas_dimensions
+    atlas = NoisemakerCpu::Surface.new(2, 4)
+    render_volume = ->(params) {
+      Renderer.render_effect("filter3d/palette3d", params, { inputTex3d: atlas }, width: 2, height: 2).fetch("volume")
+    }
+    expected = render_volume.call("volumeSize" => 2)
+    actual = render_volume.call(volumeSize: 2)
+    assert_equal [2, 4], [actual.width, actual.height]
+    assert_equal expected.data, actual.data
+    error = assert_raises(ArgumentError) { render_volume.call("volumeSize" => 2, volumeSize: 2) }
+    assert_match(/duplicate parameter "volumeSize"/, error.message)
+  end
+
   def test_surface_defaults_and_explicit_unbinding
     bytes = (0...12).flat_map { |i| [i * 21, 255 - i * 21, i * 13, 255] }.pack("C*")
     input = NoisemakerCpu::Surface.from_rgba8(4, 3, bytes)

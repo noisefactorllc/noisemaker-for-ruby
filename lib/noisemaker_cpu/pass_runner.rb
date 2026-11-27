@@ -45,6 +45,40 @@ module NoisemakerCpu
   end
 
   module PassRunner
+    def self._blend_factor(factor)
+      case factor.is_a?(String) ? factor.downcase.tr("_", "-") : factor
+      when 0, "zero" then ->(*) { 0 }
+      when 0x300, "src-color", "src" then ->(s, *) { s }
+      when 0x301, "one-minus-src-color", "one-minus-src" then ->(s, *) { 1 - s }
+      when 0x302, "src-alpha" then ->(_s, _d, a, _) { a }
+      when 0x303, "one-minus-src-alpha" then ->(_s, _d, a, _) { 1 - a }
+      when 0x304, "dst-alpha" then ->(_s, _d, _, a) { a }
+      when 0x305, "one-minus-dst-alpha" then ->(_s, _d, _, a) { 1 - a }
+      when 0x306, "dst-color", "dst" then ->(_s, d, *) { d }
+      when 0x307, "one-minus-dst-color", "one-minus-dst" then ->(_s, d, *) { 1 - d }
+      else ->(*) { 1 }
+      end
+    end
+
+    def self.blend_pass_output(blend, destination, previous)
+      src_factor, dst_factor = blend.is_a?(Array) ? blend : [1, 1]
+      source_weight = _blend_factor(src_factor)
+      destination_weight = _blend_factor(dst_factor)
+      backdrop = previous.data if previous && previous.width == destination.width && previous.height == destination.height
+      output = destination.data
+      (0...output.length).step(4) do |pixel|
+        src_alpha = output[pixel + 3]
+        dst_alpha = backdrop ? backdrop[pixel + 3] : 0
+        4.times do |channel|
+          i = pixel + channel
+          src = output[i]
+          dst = backdrop ? backdrop[i] : 0
+          output[i] = _f32(src * source_weight.call(src, dst, src_alpha, dst_alpha) +
+                           dst * destination_weight.call(src, dst, src_alpha, dst_alpha))
+        end
+      end
+    end
+
     def self.run_pass(kernel, ctx, width, height)
       surf = NoisemakerCpu::Surface.new(width, height)
       data = surf.data

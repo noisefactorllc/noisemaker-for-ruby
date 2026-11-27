@@ -181,6 +181,25 @@ class TestExternalInput < Minitest::Test
     assert_nil NoisemakerCpu::MeshRender.get_adapter("render/meshRender", "clear")
   end
 
+  def test_mesh_triangle_count_uses_the_bound_extent_and_positive_uniform
+    vertices = [-1, -1, 0, 0, -1, 0, -1, 1, 0, 0, -1, 0, 1, -1, 0, 0, 1, 0]
+    mesh = NoisemakerCpu::ExternalInput.pack_mesh_data_for_textures(vertices, [0, 0, 1] * 6, [0] * 12, 3, 2)
+    effect = NoisemakerCpu::Renderer.meta.fetch("effects").fetch("render/meshRender")
+    pass = effect.fetch("passes").find { |p| p["drawMode"] == "triangles" }
+    defaults = effect.fetch("params").values.to_h { |spec| [spec.fetch("uniform"), spec.fetch("default")] }
+    uniforms = pass.fetch("uniforms").transform_values { |name| defaults.fetch(name) }
+    adapter = NoisemakerCpu::MeshRender.get_adapter("render/meshRender", "render")
+    inputs = { "meshPositions" => NoisemakerCpu::Surface.new(3, 2) }
+    [["screen", 3, 0], [3, nil, 0], [nil, nil, 0], [3, 6, 1], ["screen", 0, 1],
+     ["auto", -1, 1], ["input", "unused", 1], [100, nil, 1]].each do |count, uniform, right_alpha|
+      target = NoisemakerCpu::Surface.new(8, 8)
+      adapter.call(target, uniforms.merge("vertices" => uniform), { "meshData" => mesh },
+                   pass: pass.merge("count" => count, "countUniform" => "vertices"), inputs: inputs)
+      assert_equal 1, target.data[(5 * 8 + 1) * 4 + 3]
+      assert_equal right_alpha, target.data[(5 * 8 + 5) * 4 + 3], [count, uniform].inspect
+    end
+  end
+
   def test_midi_program_change_three_bytes_routes_and_updates_program
     midi = NoisemakerCpu::ExternalInput::MidiState.new
     # Oracle semantics verified with node against the pinned checkout

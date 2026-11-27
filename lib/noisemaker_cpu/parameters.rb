@@ -14,7 +14,7 @@ module NoisemakerCpu
       Transpiler::SharedEnums::SHARED_ENUMS[enum] || {}
     end
 
-    def self.normalize(effect, params)
+    def self.normalize(effect, params, float32 = true)
       raise ArgumentError, "parameters must be a Hash" unless params.is_a?(Hash)
 
       id = "#{effect['namespace']}/#{effect['func']}"
@@ -25,21 +25,25 @@ module NoisemakerCpu
         raise ArgumentError, "#{id}: unknown parameter #{name.inspect}" unless spec
         begin
           raise ArgumentError, "bind surfaces in the inputs Hash" if spec["type"] == "surface"
-          result[name] = coerce(spec, value)
+          result[name] = coerce(spec, value, float32)
         rescue ArgumentError, TypeError => error
           raise ArgumentError, "#{id} parameter #{name.inspect}: #{error.message}"
         end
       end
     end
 
-    def self.number(value)
+    def self.number(value, float32: true)
       number = Float(value)
+      unless float32
+        raise ArgumentError, "expected a finite number" unless number.finite?
+        return number
+      end
       rounded = [number].pack("e").unpack1("e")
       raise ArgumentError, "expected a finite float32 number" unless rounded.finite?
       rounded
     end
 
-    def self.coerce(spec, value)
+    def self.coerce(spec, value, float32 = true)
       value = spec["default"] if value.nil?
       type = spec["type"]
       # An `osc(...)` automation value (numeric params only, matching the
@@ -63,7 +67,7 @@ module NoisemakerCpu
           end
           value = options[key]
         end
-        number(value.nil? ? 0 : value)
+        number(value.nil? ? 0 : value, float32: float32)
       when "int", "enum", "member", "palette"
         options = choices(spec)
         if value.is_a?(String) || value.is_a?(Symbol)
@@ -101,7 +105,7 @@ module NoisemakerCpu
         unless value.is_a?(Array) && lengths.include?(value.length)
           raise ArgumentError, "expected #{lengths.join(' or ')} numeric components"
         end
-        value.map { |component| number(component) }
+        value.map { |component| number(component, float32: float32) }
       else
         value
       end

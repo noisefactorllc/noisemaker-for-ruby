@@ -3,6 +3,7 @@
 module NoisemakerCpu
   module Iteration
     PARTICLE_STATE_PATTERN = /\Aglobal_(?:xyz|vel|rgba|life_data)\z|\Aglobal_.*_trail\z|\Aglobal_[a-z]+_base_color\z/
+    PARTICLE_INPUTS = %w[inputXyz inputVel inputRgba].freeze
     DELTA_TIME = 1.0 / 600
 
     def self.particle_state_name?(name)
@@ -87,8 +88,10 @@ module NoisemakerCpu
         end
 
         references_state = (definition["passes"] || []).any? do |pass|
-          values = (pass["inputs"] || {}).values + (pass["outputs"] || {}).values
-          values.any? { |name| particle_state_name?(name) }
+          outputs = pass["outputs"]
+          outputs = pass["storageTextures"] if outputs.nil? || outputs.empty?
+          values = (pass["inputs"] || {}).values + (outputs || {}).values
+          values.any? { |name| particle_state_name?(name) || PARTICLE_INPUTS.include?(name) }
         end
         if open_group && references_state
           open_group["steps"] << step

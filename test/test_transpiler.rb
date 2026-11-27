@@ -309,7 +309,15 @@ class TestTranspilerPipeline < Minitest::Test
     remap = defs["synth/remap"]
     assert_equal "synth", remap["namespace"]
     assert_includes remap["params"], "zone7_tex"
-    assert_equal(%w[zoneCount bgColor bgAlpha smoothEdge] + (0..7).map { |z| "zone#{z}_tex" }, remap["paramOrder"])
+    fields = %w[zoneCount bgColor bgAlpha smoothEdge]
+    8.times do |zone|
+      fields.concat(%w[tex count alpha bounds].map { |suffix| "zone#{zone}_#{suffix}" })
+      fields.concat(32.times.map { |pair| "zone#{zone}_v#{pair}" })
+      assert_equal 64, remap.fetch("params").fetch("zone#{zone}_count").fetch("max")
+      assert_equal [0, 0, 1, 1], remap.fetch("params").fetch("zone#{zone}_bounds").fetch("default")
+    end
+    assert_equal fields, remap.fetch("params").keys
+    assert_equal fields, remap.fetch("paramOrder")
   end
 
   # ---- Lexer ----

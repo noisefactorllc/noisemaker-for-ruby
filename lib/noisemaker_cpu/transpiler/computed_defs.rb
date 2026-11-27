@@ -66,24 +66,32 @@ module NoisemakerCpu
 
       def self._remap
         params = {
-          "zoneCount" => { "type" => "int", "default" => 0, "uniform" => "zoneCount" },
+          "zoneCount" => { "type" => "int", "default" => 0, "uniform" => "zoneCount", "min" => 0, "max" => REMAP_ZONES },
           "bgColor" => { "type" => "color", "default" => [0, 0, 0], "uniform" => "bgColor" },
-          "bgAlpha" => { "type" => "float", "default" => 1, "uniform" => "bgAlpha" },
-          "smoothEdge" => { "type" => "float", "default" => 0.04, "uniform" => "smoothEdge" },
+          "bgAlpha" => { "type" => "float", "default" => 1, "uniform" => "bgAlpha", "min" => 0, "max" => 1 },
+          "smoothEdge" => { "type" => "float", "default" => 0.04, "uniform" => "smoothEdge", "min" => 0, "max" => 1 },
         }
-        order = %w[zoneCount bgColor bgAlpha smoothEdge]
         inputs = {}
         (0...REMAP_ZONES).each do |z|
           name = "zone#{z}_tex"
           params[name] = { "type" => "surface", "default" => "none", "colorModeUniform" => "zone#{z}_active" }
           inputs[name] = name
-          order << name
+          count = "zone#{z}_count"
+          alpha = "zone#{z}_alpha"
+          bounds = "zone#{z}_bounds"
+          params[count] = { "type" => "int", "default" => 0, "uniform" => count, "min" => 0, "max" => 64 }
+          params[alpha] = { "type" => "float", "default" => 1, "uniform" => alpha, "min" => 0, "max" => 1 }
+          params[bounds] = { "type" => "vec4", "default" => [0, 0, 1, 1], "uniform" => bounds }
+          32.times do |pair|
+            vertex = "zone#{z}_v#{pair}"
+            params[vertex] = { "type" => "vec4", "default" => [0, 0, 0, 0], "uniform" => vertex }
+          end
         end
         {
           "namespace" => "synth",
           "func" => "remap",
           "params" => params,
-          "paramOrder" => order,
+          "paramOrder" => params.keys,
           "passes" => [
             { "name" => "render", "program" => "remap", "inputs" => inputs, "outputs" => { "fragColor" => "outputTex" } },
           ],

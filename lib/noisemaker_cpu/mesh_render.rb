@@ -169,19 +169,17 @@ module NoisemakerCpu
       _vec3(_f32(color[0]**gamma), _f32(color[1]**gamma), _f32(color[2]**gamma))
     end
 
-    register("render/meshRender", "render", lambda do |destination, uniforms, external_inputs|
-      mesh_render_triangles_adapter(destination, uniforms, external_inputs)
+    register("render/meshRender", "render", lambda do |destination, uniforms, external_inputs, pass: nil, inputs: {}|
+      mesh_render_triangles_adapter(destination, uniforms, external_inputs, pass: pass, inputs: inputs)
     end)
 
-    def self.mesh_render_triangles_adapter(destination, resolved_uniforms, external_inputs)
+    def self.mesh_render_triangles_adapter(destination, resolved_uniforms, external_inputs, pass: nil, inputs: {})
       mesh_data = external_inputs && (external_inputs["meshData"] || external_inputs[:meshData])
       # With no meshData, draw the zero mesh upstream samples before an upload.
       mesh_data ||= NoisemakerCpu::ExternalInput.empty_mesh_data
 
       positions = mesh_data["positions"] || mesh_data["positionData"]
       normals = mesh_data["normalData"]
-      tex_width = mesh_data["texWidth"]
-      tex_height = mesh_data["texHeight"]
       width = destination.width
       height = destination.height
       data = destination.data
@@ -191,16 +189,24 @@ module NoisemakerCpu
       # Per-pixel depth buffer cleared to 1.0 (gl.clear(DEPTH_BUFFER_BIT) each pass).
       depth = Array.new(width * height, 1.0)
       covered = 0
-      vertex_count = tex_width * tex_height
-      triangle_count = (vertex_count / 3).to_i
+      available = positions.length / 4
+      vertex_count = available
+      if pass
+        vertex_count = pass["count"]
+        vertex_count = 3 if vertex_count.nil? || vertex_count == 0
+        override = resolved_uniforms[pass["countUniform"]]
+        vertex_count = override if override.is_a?(Numeric) && override.positive?
+        if %w[auto input screen].include?(vertex_count)
+          mesh_texture = inputs["meshPositions"] || inputs["inputTex"]
+          vertex_count = mesh_texture ? mesh_texture.width * mesh_texture.height : 3
+        end
+      end
+      triangle_count = [vertex_count.to_i, available].min / 3
       (0...triangle_count).each do |tri|
         verts = []
         all_invalid = true
         3.times do |v|
-          texel = tri * 3 + v
-          x = texel % tex_width
-          y = (texel / tex_width).to_i
-          pi = (y * tex_width + x) * 4
+          pi = (tri * 3 + v) * 4
           pos_data = [positions[pi], positions[pi + 1], positions[pi + 2], positions[pi + 3]]
           normal_data = [normals[pi], normals[pi + 1], normals[pi + 2], normals[pi + 3]]
           all_invalid = false if pos_data[3] != 0

@@ -8,6 +8,14 @@ class TestCpuBuildSync < Minitest::Test
   Build = NoisemakerCpu::Transpiler::Build
   Transpiler = NoisemakerCpu::Transpiler
 
+  def test_remap_packs_each_zone_bounding_box_after_the_frame_dimensions
+    require_relative "../lib/noisemaker_cpu/renderer"
+    data = NoisemakerCpu::Renderer._remap_uniform_data({ "zone7_bounds" => [0.25, 0.5, 0.75, 1] }, 32, 48)
+    assert_equal [32, 48, 0, 0], data.fetch(266)
+    assert_equal [0, 0, 1, 1], data.fetch(267)
+    assert_equal [0.25, 0.5, 0.75, 1], data.fetch(274)
+  end
+
   def render_probe(effect, program, source, uniforms = {})
     adapted = Build._adapt_source(effect, program, source)
     normalized = Transpiler::Preprocess.normalize(adapted)

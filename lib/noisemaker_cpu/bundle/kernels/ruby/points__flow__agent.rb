@@ -3,7 +3,7 @@ run_pixel = lambda do |ctx, out|
   rt = ctx.rt
   u = ctx.uniforms
   g = {}
-  selectedDiffuse__vec2 = hash_uint_lcg__uint = hash__uint = srgb_to_linear__float = cube_root__float = oklab_l__vec3 = normalized_sine__float = computeRotationBias__int_float_float_float_int_int = main__void = nil
+  selectedDiffuse__vec2 = spawnColor__vec2 = baseColor__ivec2_vec4_vec2 = keptBaseColor__vec4 = hash_uint_lcg__uint = hash__uint = srgb_to_linear__float = cube_root__float = oklab_l__vec3 = normalized_sine__float = computeRotationBias__int_float_float_float_int_int = main__void = nil
   _retc = nil
   _u_resolution = u.key?('resolution') ? u['resolution'] : rt.construct(2, 0.0)
   _u_time = u.key?('time') ? u['time'] : rt.f(0.0)
@@ -14,16 +14,18 @@ run_pixel = lambda do |ctx, out|
   _u_inputWeight = u.key?('inputWeight') ? u['inputWeight'] : rt.f(0.0)
   _u_fieldActive = u.key?('fieldActive') ? u['fieldActive'] : rt.f(0.0)
   _u_behavior = u.key?('behavior') ? u['behavior'] : rt.f(0.0)
-  _u_fieldTex = ctx.texture_binding('fieldTex')
+  _u_heightTex = ctx.texture_binding('heightTex')
   _u_inputTex = ctx.texture_binding('inputTex')
   _u_xyzTex = ctx.texture_binding('xyzTex')
   _u_velTex = ctx.texture_binding('velTex')
   _u_rgbaTex = ctx.texture_binding('rgbaTex')
   _u_diffuseTex = ctx.texture_binding('diffuseTex')
   _u_diffuseActive = u.key?('diffuseActive') ? u['diffuseActive'] : rt.f(0.0)
+  _u_baseColorTex = ctx.texture_binding('baseColorTex')
   g['outXYZ'] = rt.construct(4, 0.0)
   g['outVel'] = rt.construct(4, 0.0)
   g['outRGBA'] = rt.construct(4, 0.0)
+  g['outBaseColor'] = rt.construct(4, 0.0)
   g['TAU'] = rt.f(6.2831854820251465)
   g['RIGHT_ANGLE'] = rt.f(1.5707963705062866)
   selectedDiffuse__vec2 = lambda do |uv|
@@ -32,6 +34,29 @@ run_pixel = lambda do |ctx, out|
     size = rt.texture_size(_u_diffuseTex)
     pixel = rt.component_wise('clamp', rt.construct(2, rt.construct(2, rt.construct(2, rt.binary('*', rt.component_wise('clamp', uv, rt.construct(2, rt.f(0)), rt.construct(2, rt.f(0.99999898672103882))), rt.construct(2, size), 2, 'float'))), 'int'), rt.construct(2, rt.i(0), 'int'), rt.binary('-', size, rt.i(1), 2, 'int'))
     return rt.texel_fetch(_u_diffuseTex, pixel, rt.i(0))
+  end
+  spawnColor__vec2 = lambda do |pos|
+    pos = rt.copy(pos, 'float')
+    dims = nil; sampled = nil
+    dims = rt.texture_size(_u_inputTex)
+    sampled = rt.texel_fetch(_u_inputTex, rt.construct(2, rt.construct(2, rt.binary_raw('*', pos, rt.construct_raw(2, rt.construct(2, dims)), 2, 'float')), 'int'), rt.i(0))
+    return rt.construct(4, (rt.bool(rt.binary('>', rt.swizzle(sampled, 'a'), rt.f(0))) ? (sampled) : (rt.construct(4, rt.f(1)))))
+  end
+  baseColor__ivec2_vec4_vec2 = lambda do |coord, rgba, pos|
+    coord = rt.copy(coord, 'int')
+    rgba = rt.copy(rgba, 'float')
+    pos = rt.copy(pos, 'float')
+    kept = nil; spawnDelta = nil
+    kept = rt.texel_fetch(_u_baseColorTex, coord, rt.i(0))
+    if rt.bool(rt.binary('==', rt.swizzle(kept, 'a'), rt.f(0)))
+      return rgba
+    end
+    spawnDelta = rt.component_wise('abs', rt.construct(4, rt.f32(((rt.component_wise('round', rt.f32(((rgba[0]) * (rt.f(255)))))) - (rt.component_wise('round', rt.f32(rt.f32(((rt.component_wise('clamp', spawnColor__vec2.call(pos), rt.f(0), rt.f(1))) * (rt.f(255))))))))), rt.f32(((rt.component_wise('round', rt.f32(((rgba[1]) * (rt.f(255)))))) - (rt.component_wise('round', rt.f32(rt.f32(((rt.component_wise('clamp', spawnColor__vec2.call(pos), rt.f(0), rt.f(1))) * (rt.f(255))))))))), rt.f32(((rt.component_wise('round', rt.f32(((rgba[2]) * (rt.f(255)))))) - (rt.component_wise('round', rt.f32(rt.f32(((rt.component_wise('clamp', spawnColor__vec2.call(pos), rt.f(0), rt.f(1))) * (rt.f(255))))))))), rt.f32(((rt.component_wise('round', rt.f32(((rgba[3]) * (rt.f(255)))))) - (rt.component_wise('round', rt.f32(rt.f32(((rt.component_wise('clamp', spawnColor__vec2.call(pos), rt.f(0), rt.f(1))) * (rt.f(255)))))))))))
+    return rt.construct(4, (rt.bool(rt.component_wise('all', rt.component_wise('lessThanEqual', spawnDelta, rt.construct(4, rt.f(1))))) ? (rgba) : (kept)))
+  end
+  keptBaseColor__vec4 = lambda do |base|
+    base = rt.copy(base, 'float')
+    return rt.construct(4, (rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (rt.construct(4, rt.swizzle(base, 'rgb'), rt.component_wise('max', rt.swizzle(base, 'a'), rt.f(0.0039215688593685627)))) : (rt.construct(4, rt.f(0)))))
   end
   hash_uint_lcg__uint = lambda do |seed|
     state = nil; word = nil
@@ -119,12 +144,13 @@ run_pixel = lambda do |ctx, out|
     end
   end
   main__void = lambda do
-    actualStride = nil; agentIndex = nil; alive = nil; baseHeading = nil; behaviorMode = nil; coord = nil; devFactor = nil; finalAngle = nil; indexValue = nil; inputLuma = nil; newX = nil; newY = nil; px = nil; py = nil; pz = nil; rgba = nil; rotRand = nil; rotationBias = nil; scale = nil; stateSize = nil; strideRand = nil; texCoord = nil; texSize = nil; texel = nil; totalAgents = nil; vel = nil; weightBlend = nil; xyz = nil
+    actualStride = nil; agentIndex = nil; alive = nil; base = nil; baseHeading = nil; behaviorMode = nil; coord = nil; devFactor = nil; finalAngle = nil; indexValue = nil; inputLuma = nil; newX = nil; newY = nil; px = nil; py = nil; pz = nil; rgba = nil; rotRand = nil; rotationBias = nil; scale = nil; stateSize = nil; strideRand = nil; texCoord = nil; texSize = nil; texel = nil; totalAgents = nil; vel = nil; weightBlend = nil; xyz = nil
     coord = rt.construct(2, rt.construct(2, rt.swizzle(ctx.frag_coord, 'xy')), 'int')
     stateSize = rt.texture_size(_u_xyzTex)
     xyz = rt.texel_fetch(_u_xyzTex, coord, rt.i(0))
     vel = rt.texel_fetch(_u_velTex, coord, rt.i(0))
     rgba = rt.texel_fetch(_u_rgbaTex, coord, rt.i(0))
+    base = baseColor__ivec2_vec4_vec2.call(coord, rgba, rt.swizzle(xyz, 'xy'))
     px = rt.swizzle(xyz, 'x')
     py = rt.swizzle(xyz, 'y')
     pz = rt.swizzle(xyz, 'z')
@@ -135,12 +161,13 @@ run_pixel = lambda do |ctx, out|
       g['outXYZ'].replace((xyz).map { |c| rt.f32(c) })
       g['outVel'].replace((vel).map { |c| rt.f32(c) })
       g['outRGBA'].replace((rgba).map { |c| rt.f32(c) })
+      g['outBaseColor'].replace((keptBaseColor__vec4.call(base)).map { |c| rt.f32(c) })
       return
     end
-    texSize = (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.texture_size(_u_fieldTex)) : (rt.texture_size(_u_inputTex)))
+    texSize = (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.texture_size(_u_heightTex)) : (rt.texture_size(_u_inputTex)))
     texCoord = rt.construct(2, rt.binary('*', px, rt.construct(1, rt.swizzle(texSize, 'x')), 1, 'float'), rt.binary('*', py, rt.construct(1, rt.swizzle(texSize, 'y')), 1, 'float'), 'int')
     texCoord.replace(rt.component_wise('clamp', texCoord, rt.construct(2, rt.i(0), 'int'), rt.binary('-', texSize, rt.i(1), 2, 'int')))
-    texel = rt.construct(4, (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.texel_fetch(_u_fieldTex, texCoord, rt.i(0))) : (rt.texel_fetch(_u_inputTex, texCoord, rt.i(0)))))
+    texel = rt.construct(4, (rt.bool(rt.binary('>', _u_fieldActive, rt.f(0.5))) ? (rt.texel_fetch(_u_heightTex, texCoord, rt.i(0))) : (rt.texel_fetch(_u_inputTex, texCoord, rt.i(0)))))
     inputLuma = oklab_l__vec3.call(rt.swizzle(texel, 'rgb'))
     weightBlend = rt.component_wise('clamp', rt.binary('*', _u_inputWeight, rt.f(0.0099999997764825821), 1, 'float'), rt.f(0), rt.f(1))
     indexValue = rt.component_wise('mix', rt.f(0.5), inputLuma, weightBlend)
@@ -162,7 +189,8 @@ run_pixel = lambda do |ctx, out|
     newY = rt.component_wise('fract', newY)
     (begin g['outXYZ'][0] = rt.f32(newX); g['outXYZ'][1] = rt.f32(newY); g['outXYZ'][2] = rt.f32(pz); g['outXYZ'][3] = rt.f32(rt.f(1)); g['outXYZ'] end)
     (begin g['outVel'][0] = rt.f32(rt.f(0)); g['outVel'][1] = rt.f32(rt.f(0)); g['outVel'][2] = rt.f32(rotRand); g['outVel'][3] = rt.f32(strideRand); g['outVel'] end)
-    g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(rt.swizzle(g['outXYZ'], 'xy'))) : (rgba))).map { |c| rt.f32(c) })
+    g['outRGBA'].replace(((rt.bool(rt.binary('>', _u_diffuseActive, rt.f(0.5))) ? (selectedDiffuse__vec2.call(rt.swizzle(g['outXYZ'], 'xy'))) : (base))).map { |c| rt.f32(c) })
+    g['outBaseColor'].replace((keptBaseColor__vec4.call(base)).map { |c| rt.f32(c) })
   end
   main__void.call
   c0 = g['outXYZ']
@@ -171,5 +199,7 @@ run_pixel = lambda do |ctx, out|
   out[4] = rt.f32(c1[0]); out[5] = rt.f32(c1[1]); out[6] = rt.f32(c1[2]); out[7] = rt.f32(c1[3])
   c2 = g['outRGBA']
   out[8] = rt.f32(c2[0]); out[9] = rt.f32(c2[1]); out[10] = rt.f32(c2[2]); out[11] = rt.f32(c2[3])
+  c3 = g['outBaseColor']
+  out[12] = rt.f32(c3[0]); out[13] = rt.f32(c3[1]); out[14] = rt.f32(c3[2]); out[15] = rt.f32(c3[3])
 end
-{ kernel: run_pixel, uses_derivatives: false, output_names: ["outXYZ", "outVel", "outRGBA"] }
+{ kernel: run_pixel, uses_derivatives: false, output_names: ["outXYZ", "outVel", "outRGBA", "outBaseColor"] }

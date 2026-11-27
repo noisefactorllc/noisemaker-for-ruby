@@ -15,6 +15,7 @@
 
 require_relative "sampler"
 require_relative "palette_data"
+require_relative "remap"
 
 module NoisemakerCpu
   module Adapters
@@ -27,6 +28,8 @@ module NoisemakerCpu
     def self.get_adapter(effect_id, program)
       @adapters["#{effect_id}:#{program}"]
     end
+
+    register("synth/remap", "remap", Remap.method(:kernel))
 
     def self._f32(x)
       [x].pack("e").unpack1("e")
