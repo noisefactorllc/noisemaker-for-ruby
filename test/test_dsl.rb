@@ -220,10 +220,6 @@ class TestDsl < Minitest::Test
     end
   end
 
-  # Mirrors upstream commit e9b37133 (limit lexer keywords to own properties): a
-  # lexeme named like an Object prototype property must lex as an identifier and
-  # bind as a let variable. The keyword table is a Hash, so a
-  # prototype-inheriting lookup would turn those names into keywords.
   def test_prototype_property_names_lex_as_identifiers_and_bind_as_let_variables
     %w[toString valueOf constructor hasOwnProperty __proto__].each do |name|
       assert_equal "identifier", D.tokenize_dsl(name)[0]["type"]
