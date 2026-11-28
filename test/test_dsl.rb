@@ -220,6 +220,24 @@ class TestDsl < Minitest::Test
     end
   end
 
+  # Mirrors upstream commit e9b37133 (limit lexer keywords to own properties): a
+  # lexeme named like an Object prototype property must lex as an identifier and
+  # bind as a let variable. The keyword table is a Hash, so a
+  # prototype-inheriting lookup would turn those names into keywords.
+  def test_prototype_property_names_lex_as_identifiers_and_bind_as_let_variables
+    %w[toString valueOf constructor hasOwnProperty __proto__].each do |name|
+      assert_equal "identifier", D.tokenize_dsl(name)[0]["type"]
+    end
+    assert_equal %w[identifier punctuation identifier eof],
+                 D.tokenize_dsl("scale.toString").map { |t| t["type"] }
+
+    plan = D.compile_dsl(
+      "search synth\nlet constructor = 2\nnoise(scaleX: constructor).write(o0)\nrender(o0)",
+      EFFECTS
+    )
+    assert_equal 2, plan["chains"][0]["steps"][0]["params"]["scaleX"]
+  end
+
   # --- render_dsl integration --------------------------------------------------
 
   def test_render_solid_exact_color_bytes
